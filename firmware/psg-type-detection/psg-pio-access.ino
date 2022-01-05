@@ -42,10 +42,20 @@
 // Control Bus and Data Bus handling
 // -----------------------------------------------------------------------------
 
+byte _lsb(byte d)
+{
+  static byte v[] = 
+  {
+    0x00, 0x08, 0x04, 0x0C, 0x02, 0x0A, 0x06, 0x0E,
+    0x01, 0x09, 0x05, 0x0D, 0x03, 0x0B, 0x07, 0x0F 
+  };
+  return v[d & 0x0F];
+}
+
 INLINE void PSG_GetDataBus(byte& data)
 {
     // get bata bits from input ports
-    data = (LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
+    data = _lsb(LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
 }
 
 INLINE void PSG_SetDataBus(byte data)
@@ -55,7 +65,7 @@ INLINE void PSG_SetDataBus(byte data)
     MSB_DDR |= MSB_MASK;
 
     // set data bits to output ports
-    LSB_PORT = (LSB_PORT & ~LSB_MASK) | (data & LSB_MASK);
+    LSB_PORT = (LSB_PORT & ~LSB_MASK) | _lsb(data & LSB_MASK);
     MSB_PORT = (MSB_PORT & ~MSB_MASK) | (data & MSB_MASK);
 }
 
@@ -141,6 +151,10 @@ void PSG_Init()
     BUS_DDR |= (1 << PIN_BC1);
     PSG_SetControlBusInactive();
     PSG_FreeDataBus();
+
+    // chip enable
+    DDRD  |= (1 << PD2);
+    PORTD |= (1 << PD2);
 }
 
 void PSG_Send(byte reg, byte data)

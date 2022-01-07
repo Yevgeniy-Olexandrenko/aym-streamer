@@ -1,8 +1,8 @@
-#include <util/delay.h>
+// -----------------------------------------------------------------------------
+// PSG Access via Parallel Bus
+// -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-// Configuration
-// -----------------------------------------------------------------------------
+#include <util/delay.h>
 
 // data bus bits D0-D3 (Arduino pins A0-A3)
 #define LSB_DDR  DDRC
@@ -30,10 +30,6 @@
 #define tDA 500 // max 500 ns by datasheet
 #define tTS 100 // max 200 ns by datasheet
 
-// MCU clock to PSG clock deviders
-#define CLK_177_MHz 9
-#define CLK_200_MHz 8
-
 // Helpers
 #define PSG_Delay(ns) _delay_us(0.001f * (ns))
 #define INLINE __attribute__ ((inline))
@@ -42,7 +38,7 @@
 // Control Bus and Data Bus handling
 // -----------------------------------------------------------------------------
 
-byte _lsb(byte d)
+byte LSB_FIX(byte d)
 {
   static byte v[] = 
   {
@@ -55,7 +51,7 @@ byte _lsb(byte d)
 INLINE void PSG_GetDataBus(byte& data)
 {
     // get bata bits from input ports
-    data = _lsb(LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
+    data = LSB_FIX(LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
 }
 
 INLINE void PSG_SetDataBus(byte data)
@@ -65,7 +61,7 @@ INLINE void PSG_SetDataBus(byte data)
     MSB_DDR |= MSB_MASK;
 
     // set data bits to output ports
-    LSB_PORT = (LSB_PORT & ~LSB_MASK) | _lsb(data & LSB_MASK);
+    LSB_PORT = (LSB_PORT & ~LSB_MASK) | LSB_FIX(data & LSB_MASK);
     MSB_PORT = (MSB_PORT & ~MSB_MASK) | (data & MSB_MASK);
 }
 
@@ -137,20 +133,37 @@ void PSG_Read(byte& data)
 // High Level Access
 // -----------------------------------------------------------------------------
 
+enum
+{
+    PSG_CLK_1_00_MHZ = 0x10,
+    PSG_CLK_1_77_MHZ = 0x09,
+    PSG_CLK_2_00_MHZ = 0x08
+};
+
 void PSG_Init()
 {
-    // 1.77 MHz on pin D3 (PD3)
-    DDRD  |= (1 << PD3);
-    TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
-    TCCR2B = (1 << WGM22) | (1 << CS20);
-    OCR2A  = (CLK_177_MHz - 1);
-    OCR2B  = (CLK_177_MHz / 2); 
-
     // setup control and data bus
     BUS_DDR |= (1 << PIN_BDIR);
     BUS_DDR |= (1 << PIN_BC1);
     PSG_SetControlBusInactive();
     PSG_FreeDataBus();
+
+    // chip enable
+    DDRD  |= (1 << PD2);
+    PORTD |= (1 << PD2);
+
+    // setup default clock
+    PSG_Clock(PSG_CLK_1_77_MHZ);
+}
+
+void PSG_Clock(byte clk)
+{
+    // clock on pin PD3 (Arduino D3)
+    DDRD  |= (1 << PD3);
+    TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
+    TCCR2B = (1 << WGM22) | (1 << CS20);
+    OCR2A  = (clk - 1);
+    OCR2B  = (clk / 2); 
 }
 
 void PSG_Send(byte reg, byte data)

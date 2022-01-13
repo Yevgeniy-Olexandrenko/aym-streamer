@@ -1,26 +1,13 @@
 // -----------------------------------------------------------------------------
-// PSG Access via Parallel Bus
+// PSG Access via PIO
 // -----------------------------------------------------------------------------
 
+#include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <util/delay.h>
 
-// data bus bits D0-D3 (Arduino pins A0-A3)
-#define LSB_DDR  DDRC
-#define LSB_PORT PORTC
-#define LSB_PIN  PINC
-#define LSB_MASK 0x0F
-
-// data bus bits D4-D7 (Arduino pins D4-D7)
-#define MSB_DDR  DDRD
-#define MSB_PORT PORTD
-#define MSB_PIN  PIND
-#define MSB_MASK 0xF0
-
-// control bus BC1 and BDIR signals
-#define BUS_PORT PORTB
-#define BUS_DDR  DDRB
-#define PIN_BC1  PB0   // Arduino pin D8
-#define PIN_BDIR PB1   // Arduino pin D9
+#include "psg-access.h"
+#include "firmware_config.h"
 
 // timing delays (nano seconds)
 #define tAS 800 // min 400 ns by datasheet
@@ -31,41 +18,43 @@
 #define tTS 100 // max 200 ns by datasheet
 
 // Helpers
-#define PSG_Delay(ns) _delay_us(0.001f * (ns))
+#define control_bus_delay(ns) _delay_us(0.001f * (ns))
 #define INLINE __attribute__ ((inline))
 
 // -----------------------------------------------------------------------------
 // Control Bus and Data Bus handling
 // -----------------------------------------------------------------------------
 
-byte LSB_FIX(byte d)
+#if HARDWARE_VERSION > 211206
+    #define fix_lsb
+#else
+// workaround for D0-D3 on pcb prototype
+const uint8_t fix_lsb_array[] PROGMEM = 
 {
-  static byte v[] = 
-  {
     0x00, 0x08, 0x04, 0x0C, 0x02, 0x0A, 0x06, 0x0E,
     0x01, 0x09, 0x05, 0x0D, 0x03, 0x0B, 0x07, 0x0F 
-  };
-  return v[d & 0x0F];
-}
+};
+uint8_t fix_lsb(uint8_t lsb) { return pgm_read_byte(fix_lsb_array + lsb); }
+#endif
 
-INLINE void PSG_GetDataBus(byte& data)
+INLINE void get_data_bus(uint8_t& data)
 {
     // get bata bits from input ports
-    data = LSB_FIX(LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
+    data = fix_lsb(LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
 }
 
-INLINE void PSG_SetDataBus(byte data)
+INLINE void set_data_bus(uint8_t data)
 {
     // set ports to output
     LSB_DDR |= LSB_MASK;
     MSB_DDR |= MSB_MASK;
 
     // set data bits to output ports
-    LSB_PORT = (LSB_PORT & ~LSB_MASK) | LSB_FIX(data & LSB_MASK);
+    LSB_PORT = (LSB_PORT & ~LSB_MASK) | fix_lsb(data & LSB_MASK);
     MSB_PORT = (MSB_PORT & ~MSB_MASK) | (data & MSB_MASK);
 }
 
-INLINE void PSG_FreeDataBus()
+INLINE void release_data_bus()
 {
     // setup ports to input
     LSB_DDR &= ~LSB_MASK;
@@ -76,87 +65,62 @@ INLINE void PSG_FreeDataBus()
     MSB_PORT |= MSB_MASK;
 }
 
-INLINE void PSG_SetControlBusAddr()
-{
-    BUS_PORT |= (1 << PIN_BDIR | 1 << PIN_BC1);
-}
-
-INLINE void PSG_SetControlBusWrite()
-{
-    BUS_PORT |= (1 << PIN_BDIR);
-}
-
-INLINE void PSG_SetControlBusRead()
-{
-    BUS_PORT |= (1 << PIN_BC1);
-}
-
-INLINE void PSG_SetControlBusInactive()
-{
-    BUS_PORT &= ~(1 << PIN_BDIR | 1 << PIN_BC1);
-}
+INLINE void set_control_bus_addr()  { BUS_PORT |=  (1 << PIN_BDIR | 1 << PIN_BC1);  }
+INLINE void set_control_bus_write() { BUS_PORT |=  (1 << PIN_BDIR);                 }
+INLINE void set_control_bus_read()  { BUS_PORT |=  (1 << PIN_BC1);                  }
+INLINE void set_control_bus_inact() { BUS_PORT &= ~(1 << PIN_BDIR | 1 << PIN_BC1);  }
 
 // -----------------------------------------------------------------------------
 // Low Level Access
 // -----------------------------------------------------------------------------
 
-void PSG_Address(byte reg)
+void PSG_Address(psg_reg reg)
 {
-    PSG_SetDataBus(reg);
-    PSG_SetControlBusAddr();
-    PSG_Delay(tAS);
-    PSG_SetControlBusInactive();
-    PSG_Delay(tAH);
-    PSG_FreeDataBus();
+    set_data_bus(reg);
+    set_control_bus_addr();
+    control_bus_delay(tAS);
+    set_control_bus_inact();
+    control_bus_delay(tAH);
+    release_data_bus();
 }
 
-void PSG_Write(byte data)
+void PSG_Write(psg_data data)
 {
-    PSG_SetDataBus(data);
-    PSG_SetControlBusWrite();
-    PSG_Delay(tDW);
-    PSG_SetControlBusInactive();
-    PSG_Delay(tDH);
-    PSG_FreeDataBus();
+    set_data_bus(data);
+    set_control_bus_write();
+    control_bus_delay(tDW);
+    set_control_bus_inact();
+    control_bus_delay(tDH);
+    release_data_bus();
 }
 
-void PSG_Read(byte& data)
+void PSG_Read(psg_data& data)
 {
-    PSG_SetControlBusRead();
-    PSG_Delay(tDA);
-    PSG_GetDataBus(data);
-    PSG_SetControlBusInactive();
-    PSG_Delay(tTS);
+    set_control_bus_read();
+    control_bus_delay(tDA);
+    get_data_bus(data);
+    set_control_bus_inact();
+    control_bus_delay(tTS);
 }
 
 // -----------------------------------------------------------------------------
 // High Level Access
 // -----------------------------------------------------------------------------
 
-enum
-{
-    PSG_CLK_1_00_MHZ = 0x10,
-    PSG_CLK_1_77_MHZ = 0x09,
-    PSG_CLK_2_00_MHZ = 0x08
-};
-
 void PSG_Init()
 {
     // setup control and data bus
     BUS_DDR |= (1 << PIN_BDIR);
     BUS_DDR |= (1 << PIN_BC1);
-    PSG_SetControlBusInactive();
-    PSG_FreeDataBus();
+    set_control_bus_inact();
+    release_data_bus();
 
-    // chip enable
-    DDRD  |= (1 << PD2);
-    PORTD |= (1 << PD2);
-
-    // setup default clock
+    // setup default clock and reset
     PSG_Clock(PSG_CLK_1_77_MHZ);
+    PSG_Reset();
 }
 
-void PSG_Clock(byte clk)
+void PSG_Clock(psg_clk clk)
 {
     // clock on pin PD3 (Arduino D3)
     DDRD  |= (1 << PD3);
@@ -166,15 +130,24 @@ void PSG_Clock(byte clk)
     OCR2B  = (clk / 2); 
 }
 
-void PSG_Send(byte reg, byte data)
+void PSG_Reset()
+{
+#if HARDWARE_VERSION > 211206
+    // TODO: reset on dedicated MCU pin
+#else
+    for (psg_reg r = 0; r < 14; ++r) PSG_Send(r, 0x00);
+#endif
+}
+
+void PSG_Send(psg_reg reg, psg_data data)
 {
     PSG_Address(reg);
     PSG_Write(data);
 }
 
-byte PSG_Receive(byte reg)
+psg_data PSG_Receive(psg_reg reg)
 {
-    byte data;
+    psg_data data;
     PSG_Address(reg);
     PSG_Read(data);
     return data;

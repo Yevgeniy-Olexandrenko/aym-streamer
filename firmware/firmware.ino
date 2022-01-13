@@ -1,10 +1,8 @@
 
-
-#define BAUD_RATE_INFO          9600
-#define BAUD_RATE_STREAM        57000
-
-#define F_CPU                   16000000
-#define BAUD_RATE_CALC(baud)    ((F_CPU / 16 / baud) - 1)
+#include "firmware_config.h"
+#include "psg-access.h"
+                
+#define BAUD_RATE_CALC(baud) ((16000000 / 16 / baud) - 1)
 
 void setup()
 {
@@ -12,6 +10,7 @@ void setup()
 
     PSG_Init();
     PSG_Detect();
+    PSG_Reset();
 
     SerialToPSG_Init();
 }

@@ -1,3 +1,3 @@
-# -> AY/YM USB Streamer ->
+# => AY/YM Streamer =>
 
 ![Photo](/hardware/prototype.jpg)

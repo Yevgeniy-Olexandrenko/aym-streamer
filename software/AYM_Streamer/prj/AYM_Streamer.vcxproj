@@ -20,6 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\AYM_Streamer.cpp" />
+    <ClCompile Include="..\src\SerialPort\SerialPort.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\SerialPort\SerialPort.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

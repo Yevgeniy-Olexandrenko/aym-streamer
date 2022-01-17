@@ -4,10 +4,21 @@
     <Filter Include="Sources">
       <UniqueIdentifier>{d7bc11e3-f114-41ee-ba23-c8598479458b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\SerialPort">
+      <UniqueIdentifier>{6f347449-211c-4829-bd0e-cc4b399afc65}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\AYM_Streamer.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\SerialPort\SerialPort.cpp">
+      <Filter>Sources\SerialPort</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\SerialPort\SerialPort.h">
+      <Filter>Sources\SerialPort</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

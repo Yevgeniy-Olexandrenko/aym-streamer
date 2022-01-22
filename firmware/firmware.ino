@@ -1,8 +1,8 @@
 
-#include "firmware_config.h"
-#include "psg-access.h"
-                
-#define BAUD_RATE_CALC(baud) ((16000000 / 16 / baud) - 1)
+#include "firmware.h"
+#include "src/psg-access.h"
+#include "src/psg-detect.h"
+#include "src/uart-stream.h"
 
 void setup()
 {
@@ -12,13 +12,13 @@ void setup()
     PSG_Detect();
     PSG_Reset();
 
-    SerialToPSG_Init();
+    UARTStream_Open();
 }
 
 void loop()
 {
     while(true)
     {
-        SerialToPSG_Update();
+        UARTStream_Update();
     }
 }

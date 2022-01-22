@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "avr-support.h"
+
 // data bus bits D0-D3 (Arduino pins A0-A3)
 #define LSB_DDR  DDRC
 #define LSB_PORT PORTC

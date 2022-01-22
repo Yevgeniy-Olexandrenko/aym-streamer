@@ -2,12 +2,8 @@
 // PSG Access via PIO
 // -----------------------------------------------------------------------------
 
-#include <avr/io.h>
-#include <avr/pgmspace.h>
-#include <util/delay.h>
-
+#include "../firmware.h"
 #include "psg-access.h"
-#include "firmware_config.h"
 
 // timing delays (nano seconds)
 #define tAS 800 // min 400 ns by datasheet

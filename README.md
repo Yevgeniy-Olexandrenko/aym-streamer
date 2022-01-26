@@ -1,3 +1,3 @@
-# => AY/YM Streamer =>
+# AYM Streamer
 
 ![Photo](/hardware/prototype.jpg)

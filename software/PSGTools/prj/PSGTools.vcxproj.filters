@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{1fc6a27e-93ab-493e-8525-7b8b8240d582}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\encoders">
+      <UniqueIdentifier>{49040456-cd88-44f9-83c8-b1ef6b6cfd28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\decoders">
+      <UniqueIdentifier>{038e6189-8da3-46ef-b548-0bdafde6015c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\Decoder.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Encoder.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Frame.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Register.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\EncodePSG.h">
+      <Filter>Sources\encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\decoders\DecodePSG.h">
+      <Filter>Sources\decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Module.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Frame.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\PSGTools.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Register.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\EncodePSG.cpp">
+      <Filter>Sources\encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\DecodePSG.cpp">
+      <Filter>Sources\decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Module.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,22 +1,31 @@
-
 #include "SerialPort.h"
 
-PORT OpenPort(int idx)
+SerialPort::SerialPort()
+	: m_port(NULL)
 {
-	HANDLE hComm;
-	TCHAR comname[100];
-	wsprintf(comname, TEXT("\\\\.\\COM%d"), idx);
-	hComm = CreateFile(
-		comname,      //port name 
-		GENERIC_READ | GENERIC_WRITE, //Read/Write   				 
+}
+
+SerialPort::~SerialPort()
+{
+	Close();
+}
+
+void SerialPort::Open(int index)
+{
+	TCHAR comName[100];
+	wsprintf(comName, TEXT("\\\\.\\COM%d"), index);
+
+	HANDLE hComm = CreateFile(
+		comName,      //port name 
+		GENERIC_READ | GENERIC_WRITE,		 
 		0,            // No Sharing                               
 		NULL,         // No Security                              
 		OPEN_EXISTING,// Open existing port only                     
 		0,            // Non Overlapped I/O                           
 		NULL);        // Null for Comm Devices
-	
-	if (hComm == INVALID_HANDLE_VALUE)
-		return NULL;
+
+	if (hComm == INVALID_HANDLE_VALUE) return;
+
 	COMMTIMEOUTS timeouts = { 0 };
 	timeouts.ReadIntervalTimeout = 50;
 	timeouts.ReadTotalTimeoutConstant = 50;
@@ -24,143 +33,150 @@ PORT OpenPort(int idx)
 	timeouts.WriteTotalTimeoutConstant = 50;
 	timeouts.WriteTotalTimeoutMultiplier = 10;
 
-	if (SetCommTimeouts(hComm, &timeouts) == FALSE)
-		return NULL;
+	if (SetCommTimeouts(hComm, &timeouts) == FALSE) return;
+	if (SetCommMask(hComm, EV_RXCHAR) == FALSE) return;
 
-	if (SetCommMask(hComm, EV_RXCHAR) == FALSE)
-		return NULL;
-
-	return hComm;
+	Close();
+	m_port = hComm;
 }
-void ClosePort(PORT com_port)
+
+void SerialPort::Close()
 {
-	CloseHandle(com_port);
-}
-
-int SetPortBoudRate(PORT com_port, int rate)
-{
-	DCB dcbSerialParams = { 0 };
-	BOOL Status;
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	Status = GetCommState(com_port, &dcbSerialParams);
-	if (Status == FALSE)
-		return FALSE;
-	dcbSerialParams.BaudRate = rate;
-	Status = SetCommState(com_port, &dcbSerialParams);
-	return Status;
-}
-
-int SetPortDataBits(PORT com_port, int bits)
-{
-	DCB dcbSerialParams = { 0 };
-	BOOL Status;
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	Status = GetCommState(com_port, &dcbSerialParams);
-	if (Status == FALSE)
-		return FALSE;
-	dcbSerialParams.ByteSize = bits;
-	Status = SetCommState(com_port, &dcbSerialParams);
-	return Status;
-}
-
-int SetPortStopBits(PORT com_port, int bits)
-{
-	DCB dcbSerialParams = { 0 };
-	BOOL Status;
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	Status = GetCommState(com_port, &dcbSerialParams);
-	if (Status == FALSE)
-		return FALSE;
-	dcbSerialParams.StopBits = bits;
-	Status = SetCommState(com_port, &dcbSerialParams);
-	return Status;
-}
-
-int SetPortParity(PORT com_port, int parity)
-{
-	DCB dcbSerialParams = { 0 };
-	BOOL Status;
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	Status = GetCommState(com_port, &dcbSerialParams);
-	if (Status == FALSE)
-		return FALSE;
-	dcbSerialParams.Parity = parity;
-	Status = SetCommState(com_port, &dcbSerialParams);
-	return Status;
-}
-
-int GetPortBoudRate(PORT com_port)
-{
-	DCB dcbSerialParams = { 0 };
-	BOOL Status;
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	Status = GetCommState(com_port, &dcbSerialParams);
-	if (Status == FALSE)
-		return -1;
-	return dcbSerialParams.BaudRate;
-}
-int GetPortDataBits(PORT com_port) {
-	DCB dcbSerialParams = { 0 };
-	BOOL Status;
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	Status = GetCommState(com_port, &dcbSerialParams);
-	if (Status == FALSE)
-		return -1;
-	return dcbSerialParams.ByteSize;
-}
-int GetPortStopBits(PORT com_port) {
-	DCB dcbSerialParams = { 0 };
-	BOOL Status;
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	Status = GetCommState(com_port, &dcbSerialParams);
-	if (Status == FALSE)
-		return -1;
-	return dcbSerialParams.StopBits;
-}
-int GetPortParity(PORT com_port) {
-	DCB dcbSerialParams = { 0 };
-	BOOL Status;
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	Status = GetCommState(com_port, &dcbSerialParams);
-	if (Status == FALSE)
-		return -1;
-	return dcbSerialParams.Parity;
-}
-
-int SendData(PORT com_port, const char * data)
-{
-	int len = strlen(data);
-	return SendData(com_port, data, len);
-}
-
-int SendData(PORT com_port, const char* data, int len)
-{
-	DWORD  dNoOFBytestoWrite = len;
-	DWORD  dNoOfBytesWritten;
-	BOOL Status = WriteFile(com_port,
-		data,
-		dNoOFBytestoWrite,
-		&dNoOfBytesWritten,
-		NULL);
-	if (Status == FALSE)
-		return -1;
-	return dNoOfBytesWritten;
-}
-
-int ReciveData(PORT com_port, char * data,int len)
-{
-	DWORD dwEventMask;
-	DWORD NoBytesRead;
-	BOOL Status = WaitCommEvent(com_port, &dwEventMask, NULL);
-	if (Status == FALSE) 
+	if (m_port)
 	{
-		return FALSE;
+		CloseHandle(m_port);
+		m_port = NULL;
 	}
-	Status = ReadFile(com_port, data, len, &NoBytesRead, NULL);
-	data[NoBytesRead] = 0;
-	if (Status == FALSE) 
-	{
-		return FALSE;
-	}
-	return TRUE;
+}
+
+bool SerialPort::SetBaudRate(BaudRate rate)
+{
+	DCB serialParams = { 0 };
+	serialParams.DCBlength = sizeof(serialParams);
+
+	BOOL status = GetCommState(m_port, &serialParams);
+	if (status == FALSE) return FALSE;
+
+	serialParams.BaudRate = DWORD(rate);
+	status = SetCommState(m_port, &serialParams);
+
+	return status;
+}
+
+bool SerialPort::SetDataBits(DataBits databits)
+{
+	DCB serialParams = { 0 };
+	serialParams.DCBlength = sizeof(serialParams);
+
+	BOOL status = GetCommState(m_port, &serialParams);
+	if (status == FALSE) return FALSE;
+
+	serialParams.ByteSize = BYTE(databits);
+	status = SetCommState(m_port, &serialParams);
+
+	return status;
+}
+
+bool SerialPort::SetStopBits(StopBits stopbits)
+{
+	DCB serialParams = { 0 };
+	serialParams.DCBlength = sizeof(serialParams);
+
+	BOOL status = GetCommState(m_port, &serialParams);
+	if (status == FALSE) return FALSE;
+
+	serialParams.StopBits = BYTE(stopbits);
+	status = SetCommState(m_port, &serialParams);
+
+	return status;
+}
+
+bool SerialPort::SetParity(Parity parity)
+{
+	DCB serialParams = { 0 };
+	serialParams.DCBlength = sizeof(serialParams);
+
+	BOOL status = GetCommState(m_port, &serialParams);
+	if (status == FALSE) return FALSE;
+
+	serialParams.Parity = BYTE(parity);
+	status = SetCommState(m_port, &serialParams);
+
+	return status;
+}
+
+int SerialPort::GetBoudRate()
+{
+	DCB serialParams = { 0 };
+	serialParams.DCBlength = sizeof(serialParams);
+
+	BOOL status = GetCommState(m_port, &serialParams);
+	if (status == FALSE) return -1;
+
+	return serialParams.BaudRate;
+}
+
+int SerialPort::GetDataBits()
+{
+	DCB serialParams = { 0 };
+	serialParams.DCBlength = sizeof(serialParams);
+
+	BOOL status = GetCommState(m_port, &serialParams);
+	if (status == FALSE) return -1;
+
+	return serialParams.ByteSize;
+}
+
+int SerialPort::GetStopBits()
+{
+	DCB serialParams = { 0 };
+	serialParams.DCBlength = sizeof(serialParams);
+
+	BOOL status = GetCommState(m_port, &serialParams);
+	if (status == FALSE) return -1;
+
+	return serialParams.StopBits;
+}
+
+int SerialPort::GetParity()
+{
+	DCB serialParams = { 0 };
+	serialParams.DCBlength = sizeof(serialParams);
+
+	BOOL status = GetCommState(m_port, &serialParams);
+	if (status == FALSE) return -1;
+
+	return serialParams.Parity;
+}
+
+int SerialPort::SendText(const char* data)
+{
+	int size = int(strlen(data));
+	return SendBinary(data, size);
+}
+
+int SerialPort::SendBinary(const char* data, int size)
+{
+	DWORD bytesToWrite = size;
+	DWORD bytesWritten;
+
+	BOOL status = WriteFile(m_port, data, bytesToWrite, &bytesWritten, NULL);
+	if (status == FALSE) return -1;
+
+	return bytesWritten;
+}
+
+int SerialPort::ReciveText(char* buffer, int size)
+{
+	DWORD eventMask;
+	DWORD bytesRead;
+
+	BOOL status = WaitCommEvent(m_port, &eventMask, NULL);
+	if (status == FALSE) return FALSE;
+	
+	status = ReadFile(m_port, buffer, size, &bytesRead, NULL);
+	if (status == FALSE) return -1;
+	
+	buffer[bytesRead] = 0;
+	return bytesRead;
 }

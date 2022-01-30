@@ -21,7 +21,9 @@ private:
 	void OutFrame(const Frame& frame, bool force);
 
 private:
-	PORT m_comPort;
+	SerialPort m_port;
+	bool m_isPortOK;
+
 	const Module* m_module;
 	size_t m_frame;
 

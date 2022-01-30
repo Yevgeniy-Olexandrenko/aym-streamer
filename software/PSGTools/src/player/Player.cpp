@@ -2,27 +2,20 @@
 #include "../module/Module.h"
 
 Player::Player(int comPortIndex)
-	: m_comPort(nullptr)
+	: m_isPortOK(false)
 	, m_module(nullptr)
 	, m_frame(0)
 	, m_isMuted(false)
 	, m_wasMuted(false)
 {
-	m_comPort = OpenPort(comPortIndex);
-
-	if (m_comPort)
-	{
-		SetPortBoudRate(m_comPort, CP_BOUD_RATE_57600);
-	}
+	m_port.Open(comPortIndex);
+	m_isPortOK =  m_port.SetBaudRate(SerialPort::BaudRate::_57600);
 }
 
 Player::~Player()
 {
-	if (m_comPort)
-	{
-		Mute(true);
-		ClosePort(m_comPort);
-	}
+	Mute(true);
+	m_port.Close();
 }
 
 bool Player::InitWithModule(const Module& module)
@@ -31,7 +24,7 @@ bool Player::InitWithModule(const Module& module)
 	m_module = nullptr;
 	m_frame  = 0;
 
-	if (m_comPort && module.GetFrameCount() > 0)
+	if (m_isPortOK && module.GetFrameCount() > 0)
 	{
 		m_module = &module;
 		Mute(false);
@@ -42,7 +35,7 @@ bool Player::InitWithModule(const Module& module)
 
 bool Player::PlayModuleFrame()
 {
-	if (m_comPort && m_module)
+	if (m_isPortOK && m_module)
 	{
 		if (m_isMuted) return true;
 
@@ -80,7 +73,7 @@ void Player::Mute(bool on)
 
 void Player::OutFrame(const Frame& frame, bool force)
 {
-	if (m_comPort)
+	if (m_isPortOK)
 	{
 		char buffer[size_t(Register::Index::COUNT) * 2 + 1];
 		int  bufPtr = 0;
@@ -98,11 +91,11 @@ void Player::OutFrame(const Frame& frame, bool force)
 
 		// frame end marker
 		buffer[bufPtr++] = char(0xFF);
-		int wasSent = SendData(m_comPort, buffer, bufPtr);
+		int bytesSent = m_port.SendBinary(buffer, bufPtr);
 
-		if (wasSent != bufPtr)
+		if (bytesSent != bufPtr)
 		{
-			std::cout << wasSent << " != " << bufPtr << std::endl;
+			m_isPortOK = false;
 		}
 	}
 }

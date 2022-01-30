@@ -32,12 +32,12 @@ int main()
                     frame.FixValues();
                     module.AddFrame(frame);
 
-                    output << frame << std::endl;
+//                  output << frame << std::endl;
                 }
                 else break;
             }
 
-            output << "Frames: " << module.GetFrameCount() << std::endl;
+//          output << "Frames: " << module.GetFrameCount() << std::endl;
         }
     }
 

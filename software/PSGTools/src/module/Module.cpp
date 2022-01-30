@@ -5,7 +5,7 @@ void Module::AddFrame(const Frame& frame)
 	m_frames.push_back(frame);
 }
 
-const Frame& Module::GetFrame(size_t index)
+const Frame& Module::GetFrame(size_t index) const
 {
 	return m_frames[index];
 }

@@ -10,7 +10,7 @@ class Module
 public:
 	// frames
 	void AddFrame(const Frame& frame);
-	const Frame& GetFrame(size_t index);
+	const Frame& GetFrame(size_t index) const;
 	size_t GetFrameCount() const;
 
 private:

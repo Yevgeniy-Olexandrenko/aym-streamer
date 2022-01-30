@@ -13,7 +13,7 @@ Frame::operator bool() const
 {
 	for (const Register& reg : m_registers)
 	{
-		if (reg) return true;
+		if (reg.IsChanged()) return true;
 	}
 	return false;
 }
@@ -38,12 +38,14 @@ const Register& Frame::operator[](Register::Index index) const
 	return m_registers[size_t(index)];
 }
 
-void Frame::ResChanges()
+void Frame::MarkChanged(bool isChanged)
 {
 	for (Register& reg : m_registers)
 	{
-		uint8_t data = reg;
-		reg = Register(data);
+		if (isChanged)
+			reg = reg.GetData();
+		else
+			reg = Register(reg.GetData());
 	}
 }
 
@@ -52,9 +54,9 @@ void Frame::FixValues()
 	for (size_t i = 0; i < size_t(Register::Index::COUNT); ++i)
 	{
 		Register& reg = m_registers[i];
-		if (reg)
+		if (reg.IsChanged())
 		{
-			uint8_t data = reg;
+			uint8_t data = reg.GetData();
 			switch (Register::Index(i))
 			{
 			case Register::Index::TonA_PeriodH:
@@ -102,7 +104,10 @@ std::ostream& operator<<(std::ostream& stream, const Frame& frame)
 	auto out_reg = [&](Register::Index index)
 	{
 		const Register& reg = frame[index];
-		if (reg) out_byte(reg); else stream << "--";
+		if (reg.IsChanged())
+			out_byte(reg.GetData());
+		else
+			stream << "--";
 	};
 
 	out_reg(Register::Index::Mixer_Flags);  stream << '|';

@@ -10,38 +10,44 @@
     <Filter Include="Sources\decoders">
       <UniqueIdentifier>{038e6189-8da3-46ef-b548-0bdafde6015c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\module">
+      <UniqueIdentifier>{a61c2248-7658-45e0-be9d-23f4187b8bb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\player">
+      <UniqueIdentifier>{70a71753-5205-41ad-bf7a-541821d71cb5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\Decoder.h">
-      <Filter>Sources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Encoder.h">
-      <Filter>Sources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Frame.h">
-      <Filter>Sources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Register.h">
-      <Filter>Sources</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\encoders\EncodePSG.h">
       <Filter>Sources\encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\decoders\DecodePSG.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Module.h">
-      <Filter>Sources</Filter>
+    <ClInclude Include="..\src\decoders\Decoder.h">
+      <Filter>Sources\decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\Encoder.h">
+      <Filter>Sources\encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\module\Frame.h">
+      <Filter>Sources\module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\module\Module.h">
+      <Filter>Sources\module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\module\Register.h">
+      <Filter>Sources\module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\Player.h">
+      <Filter>Sources\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\SerialPort.h">
+      <Filter>Sources\player</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\Frame.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\PSGTools.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Register.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="..\src\encoders\EncodePSG.cpp">
@@ -50,8 +56,20 @@
     <ClCompile Include="..\src\decoders\DecodePSG.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Module.cpp">
-      <Filter>Sources</Filter>
+    <ClCompile Include="..\src\module\Frame.cpp">
+      <Filter>Sources\module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\module\Module.cpp">
+      <Filter>Sources\module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\module\Register.cpp">
+      <Filter>Sources\module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\Player.cpp">
+      <Filter>Sources\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\SerialPort.cpp">
+      <Filter>Sources\player</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

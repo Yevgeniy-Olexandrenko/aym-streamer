@@ -1,6 +1,6 @@
 #include "DecodePSG.h"
-#include "../Module.h"
-#include "../Frame.h"
+#include "../module/Module.h"
+#include "../module/Frame.h"
 
 struct PSG_Header
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Decoder.h"
+#include "Decoder.h"
 
 class DecodePSG : public Decoder
 {

@@ -26,14 +26,16 @@ public:
 		COUNT
 	};
 
-	Register(); // zero
-	Register(uint8_t data); // init
-	Register(const Register& other); // copy
+	Register();
+	Register(uint8_t data);
 
 public:
-	operator bool() const; // get changed
-	operator uint8_t() const; // get value
-	Register& operator=(uint8_t data); // assign
+	bool IsChanged() const;
+	uint8_t GetData() const;
+	void SetData(uint8_t data);
+
+public:
+	Register& operator=(uint8_t data);
 
 private:
 	uint8_t m_data;

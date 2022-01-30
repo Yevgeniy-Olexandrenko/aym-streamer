@@ -20,7 +20,7 @@ public:
 	const Register& operator[](size_t index) const; // access register
 	const Register& operator[](Register::Index index) const; // access register
 
-	void ResChanges();
+	void MarkChanged(bool isChanged);
 	void FixValues();
 
 private:

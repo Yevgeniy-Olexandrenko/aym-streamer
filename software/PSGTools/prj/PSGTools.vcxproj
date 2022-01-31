@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\decoders\DecodePSG.h" />
+    <ClInclude Include="..\src\decoders\DecodePT3.h" />
     <ClInclude Include="..\src\decoders\Decoder.h" />
     <ClInclude Include="..\src\encoders\EncodePSG.h" />
     <ClInclude Include="..\src\encoders\Encoder.h" />
@@ -31,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\decoders\DecodePSG.cpp" />
+    <ClCompile Include="..\src\decoders\DecodePT3.cpp" />
     <ClCompile Include="..\src\encoders\EncodePSG.cpp" />
     <ClCompile Include="..\src\module\Frame.cpp" />
     <ClCompile Include="..\src\module\Module.cpp" />

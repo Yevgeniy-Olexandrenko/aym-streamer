@@ -45,6 +45,9 @@
     <ClInclude Include="..\src\player\SerialPort.h">
       <Filter>Sources\player</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\decoders\DecodePT3.h">
+      <Filter>Sources\decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -70,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="..\src\player\SerialPort.cpp">
       <Filter>Sources\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\DecodePT3.cpp">
+      <Filter>Sources\decoders</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

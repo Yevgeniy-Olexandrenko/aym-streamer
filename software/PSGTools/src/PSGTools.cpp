@@ -1,6 +1,7 @@
 #include <iostream>
 #include <windows.h>
 #include "module/Module.h"
+#include "decoders/DecodePT3.h"
 #include "decoders/DecodePSG.h"
 #include "player/Player.h"
 
@@ -8,41 +9,45 @@ const std::string k_file = "sample.psg";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
-int main()
+bool DecodeFileToModule(const std::string& filePath, Module& module)
 {
-    std::ifstream file;
-    file.open(k_file, std::fstream::in | std::fstream::binary);
+    std::shared_ptr<Decoder> decoders[]{
+        std::shared_ptr<Decoder>(new DecodePT3()),
+        std::shared_ptr<Decoder>(new DecodePSG()),
+    };
 
-    std::ofstream output;
-    output.open(k_output, std::fstream::out);
-
-    Module module;
-
-    if (file && output)
+    module.SetFilePath(filePath);
+    for (std::shared_ptr<Decoder> decoder : decoders)
     {
-        DecodePSG decoder;
-        if (decoder.InitModule(file, module))
+        if (decoder->Open(module))
         {
             Frame frame;
-            while (true)
+            while (decoder->Decode(frame))
             {
-                frame.MarkChanged(false);
-                if (decoder.DecodeFrame(file, frame))
-                {
-                    frame.FixValues();
-                    module.AddFrame(frame);
-
-//                  output << frame << std::endl;
-                }
-                else break;
+                frame.FixValues();
+                module.AddFrame(frame);
+                frame.SetUnchanged();
             }
 
-//          output << "Frames: " << module.GetFrameCount() << std::endl;
+            decoder->Close(module);
+            return true;
         }
     }
+    return false;
+}
 
-    file.close();
-    output.close();
+int main()
+{
+    Module module;
+    DecodeFileToModule(k_file, module);
+
+    std::cout << "File: " << module.GetFileName() << std::endl;
+    if (module.HasTitle()) std::cout << "Title: " << module.GetTitle() << std::endl;
+    if (module.HasArtist()) std::cout << "Artist: " << module.GetArtist() << std::endl;
+    std::cout << "Type: " << module.GetType() << std::endl;
+    std::cout << "Frames cound: " << module.GetFrameCount() << std::endl;
+    if (module.IsLoopFrameAvailable()) std::cout << "Loop frame: " << module.GetLoopFrameIndex() << std::endl;
+    std::cout << "Frame rate: " << module.GetFrameRate() << std::endl;
 
     ////////////////////////////////////////////////////////////////////////////
 

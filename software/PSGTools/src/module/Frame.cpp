@@ -38,14 +38,11 @@ const Register& Frame::operator[](Register::Index index) const
 	return m_registers[size_t(index)];
 }
 
-void Frame::MarkChanged(bool isChanged)
+void Frame::SetUnchanged()
 {
 	for (Register& reg : m_registers)
 	{
-		if (isChanged)
-			reg = reg.GetData();
-		else
-			reg = Register(reg.GetData());
+		reg = Register(reg.GetData());
 	}
 }
 

@@ -140,7 +140,7 @@ void Module::SetLoopFrameIndex(FrameIndex index)
 	m_loopFrameIndex = index;
 }
 
-bool Module::IsLoopFrameAvailable() const
+bool Module::HasLoopFrameIndex() const
 {
 	return (GetLoopFrameIndex() < GetFrameCount());
 }
@@ -148,4 +148,16 @@ bool Module::IsLoopFrameAvailable() const
 Module::FrameIndex Module::GetLoopFrameIndex() const
 {
 	return m_loopFrameIndex;
+}
+
+std::ostream& operator<<(std::ostream& stream, const Module& module)
+{
+	stream << "File........: " << module.GetFileName() << std::endl;
+	if (module.HasTitle())stream << "Title.......: " << module.GetTitle() << std::endl;
+	if (module.HasArtist()) stream << "Artist......: " << module.GetArtist() << std::endl;
+	stream << "Type........: " << module.GetType() << std::endl;
+	stream << "Frames count: " << module.GetFrameCount() << std::endl;
+	if (module.HasLoopFrameIndex()) stream << "Loop frame..: " << module.GetLoopFrameIndex() << std::endl;
+	stream << "Frame rate..: " << module.GetFrameRate() << std::endl;
+	return stream;
 }

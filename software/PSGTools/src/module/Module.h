@@ -5,6 +5,8 @@
 
 class Module
 {
+	friend std::ostream& operator<<(std::ostream& stream, const Module& module);
+
 public:
 	using FrameArray = std::vector<Frame>;
 	using FrameIndex = uint32_t;
@@ -45,7 +47,7 @@ public:
 	// loop frame
 	void SetLoopFrameUnavailable();
 	void SetLoopFrameIndex(FrameIndex index);
-	bool IsLoopFrameAvailable() const;
+	bool HasLoopFrameIndex() const;
 	FrameIndex GetLoopFrameIndex() const;
 
 private:

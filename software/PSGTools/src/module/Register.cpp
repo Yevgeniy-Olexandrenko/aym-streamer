@@ -21,14 +21,13 @@ uint8_t Register::GetData() const
 	return m_data;
 }
 
-void Register::SetData(uint8_t data)
+void Register::OverrideData(uint8_t data)
 {
 	m_changed = true;
 	m_data = data;
 }
 
-Register& Register::operator=(uint8_t data)
+void Register::UpdateData(uint8_t data)
 {
-	SetData(data);
-	return *this;
+	if (data != m_data) OverrideData(data);
 }

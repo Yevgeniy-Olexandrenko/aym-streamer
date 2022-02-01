@@ -1,5 +1,6 @@
 #include <iostream>
-#include <windows.h>
+#include <iomanip>
+
 #include "module/Module.h"
 #include "decoders/DecodePT3.h"
 #include "decoders/DecodePSG.h"
@@ -36,18 +37,43 @@ bool DecodeFileToModule(const std::string& filePath, Module& module)
     return false;
 }
 
+void SaveModuleDebugOutput(const Module& module)
+{
+    std::ofstream file;
+    file.open(k_output);
+
+    if (file)
+    {
+        auto delimiter = [&file]()
+        {
+            for (int i = 0; i < 48; ++i) file << '-';
+            file << std::endl;
+        };
+
+        delimiter();
+        file << module;
+        delimiter();
+
+        file << "frame  [ r7|r1r0 r8|r3r2 r9|r5r4 rA|rCrB rD|r6 ]" << std::endl;
+        delimiter();
+
+        for (Module::FrameIndex i = 0; i < module.GetFrameCount(); ++i)
+        {
+            if (i && module.HasLoopFrameIndex() && i == module.GetLoopFrameIndex()) delimiter();
+            file << std::setfill('0') << std::setw(5) << i;
+            file << "  [ " << module.GetFrame(i) << " ]" << std::endl;
+            
+        }
+        delimiter();
+        file.close();
+    }
+}
+
 int main()
 {
     Module module;
     DecodeFileToModule(k_file, module);
-
-    std::cout << "File: " << module.GetFileName() << std::endl;
-    if (module.HasTitle()) std::cout << "Title: " << module.GetTitle() << std::endl;
-    if (module.HasArtist()) std::cout << "Artist: " << module.GetArtist() << std::endl;
-    std::cout << "Type: " << module.GetType() << std::endl;
-    std::cout << "Frames cound: " << module.GetFrameCount() << std::endl;
-    if (module.IsLoopFrameAvailable()) std::cout << "Loop frame: " << module.GetLoopFrameIndex() << std::endl;
-    std::cout << "Frame rate: " << module.GetFrameRate() << std::endl;
+    SaveModuleDebugOutput(module);
 
     ////////////////////////////////////////////////////////////////////////////
 

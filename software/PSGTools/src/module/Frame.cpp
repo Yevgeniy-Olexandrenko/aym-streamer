@@ -79,7 +79,7 @@ void Frame::FixValues()
 				data = 0x00;
 				break;
 			}
-			reg = data;
+			reg.OverrideData(data);
 		}
 	}
 }

@@ -12,5 +12,5 @@ public:
 
 private:
 	std::ifstream m_fileStream;
-	int m_skipFrames;
+	int m_skipFrames = 0;
 };

@@ -6,7 +6,7 @@
 #include "decoders/DecodePSG.h"
 #include "player/Player.h"
 
-const std::string k_file = "sample.psg";
+const std::string k_file = "Davos - Simply.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -78,6 +78,7 @@ int main()
     ////////////////////////////////////////////////////////////////////////////
 
     Player player(k_comPortIndex);
+    Sleep(5000);
 
     if (player.InitWithModule(module))
     {

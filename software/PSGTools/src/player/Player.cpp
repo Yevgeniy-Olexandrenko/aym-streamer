@@ -9,7 +9,7 @@ Player::Player(int comPortIndex)
 	, m_wasMuted(false)
 {
 	m_port.Open(comPortIndex);
-	m_isPortOK =  m_port.SetBaudRate(SerialPort::BaudRate::_57600);
+	m_isPortOK = m_port.SetBaudRate(SerialPort::BaudRate::_57600);
 }
 
 Player::~Player()
@@ -39,18 +39,28 @@ bool Player::PlayModuleFrame()
 	{
 		if (m_isMuted) return true;
 
-		if (m_frame < m_module->GetFrameCount())
+		if (m_frame == m_module->GetFrameCount())
 		{
-			const Frame& frame = m_module->GetFrame(m_frame);
-			m_frame++;
-
-			// frame output ignoring differential
-			// mode just after unmute
-			OutFrame(frame, m_wasMuted);
-			m_wasMuted = false;
-
-			return true;
+			if (m_module->HasLoopFrameIndex())
+			{
+				m_frame = m_module->GetLoopFrameIndex();
+			}
+			else
+			{
+				// no loop, so stop playback
+				return false;
+			}
 		}
+
+		const Frame& frame = m_module->GetFrame(m_frame);
+		m_frame++;
+
+		// frame output ignoring differential
+		// mode just after unmute
+		OutFrame(frame, m_wasMuted);
+		m_wasMuted = false;
+
+		return true;
 	}
 	return false;
 }

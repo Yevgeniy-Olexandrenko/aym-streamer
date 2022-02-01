@@ -142,7 +142,7 @@ bool DecodePT3::Open(Module& module)
 
             Init();
             tick = 0;
-            loop = -1;
+            loop = 0;
 
             module.SetType(GetTextProperty(0x00, 14) + " module");
             module.SetTitle(GetTextProperty(0x1E, 32));
@@ -178,10 +178,11 @@ bool DecodePT3::Decode(Frame& frame)
 
 void DecodePT3::Close(Module& module)
 {
-    if (loop == -1)
-        module.SetLoopFrameUnavailable();
-    else
+    if (loop > 0)
         module.SetLoopFrameIndex(loop);
+    else
+        module.SetLoopFrameUnavailable();
+        
     delete[] body;
 }
 
@@ -250,12 +251,20 @@ bool DecodePT3::Step()
     bool isNewLoop = GetRegisters(0);
     if (tsMode) GetRegisters(1);
 
-    if (loop == -1 && chip[0].mod.CurrentPosition == chip[0].header->LoopPosition)
+    if (loop == 0)
     {
-        loop = tick;
-    }
-    tick++;
+        uint8_t currPosition = chip[0].mod.CurrentPosition;
+        uint8_t loopPosition = chip[0].header->LoopPosition;
+        uint8_t lastPosition = chip[0].header->NumberOfPositions - 1;
 
+        // detect true loop frame (ommit loop to first or last position)
+        if (loopPosition > 0 && loopPosition < lastPosition && currPosition == loopPosition)
+        {
+            loop = tick;
+        }
+    }
+    
+    tick++;
     return isNewLoop;
 }
 

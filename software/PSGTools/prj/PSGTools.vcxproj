@@ -27,8 +27,11 @@
     <ClInclude Include="..\src\module\Frame.h" />
     <ClInclude Include="..\src\module\Module.h" />
     <ClInclude Include="..\src\module\Register.h" />
+    <ClInclude Include="..\src\output\AY38910\AY38910.h" />
+    <ClInclude Include="..\src\output\AYMStreamer\AYMStreamer.h" />
+    <ClInclude Include="..\src\output\AYMStreamer\SerialPort.h" />
+    <ClInclude Include="..\src\output\Output.h" />
     <ClInclude Include="..\src\player\Player.h" />
-    <ClInclude Include="..\src\player\SerialPort.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\decoders\DecodePSG.cpp" />
@@ -37,8 +40,10 @@
     <ClCompile Include="..\src\module\Frame.cpp" />
     <ClCompile Include="..\src\module\Module.cpp" />
     <ClCompile Include="..\src\module\Register.cpp" />
+    <ClCompile Include="..\src\output\AY38910\AY38910.cpp" />
+    <ClCompile Include="..\src\output\AYMStreamer\AYMStreamer.cpp" />
+    <ClCompile Include="..\src\output\AYMStreamer\SerialPort.cpp" />
     <ClCompile Include="..\src\player\Player.cpp" />
-    <ClCompile Include="..\src\player\SerialPort.cpp" />
     <ClCompile Include="..\src\PSGTools.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

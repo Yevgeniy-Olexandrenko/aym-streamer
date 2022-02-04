@@ -1,14 +1,12 @@
 #pragma once
 
-#include "SerialPort.h"
-
+class Output;
 class Module;
-class Frame;
 
 class Player
 {
 public:
-	Player(int comPortIndex);
+	Player(Output& output);
 	~Player();
 
 public:
@@ -17,13 +15,9 @@ public:
 
 	void Mute(bool on);
 
-private:
-	void OutFrame(const Frame& frame, bool force);
 
 private:
-	SerialPort m_port;
-	bool m_isPortOK;
-
+	Output& m_output;
 	const Module* m_module;
 	size_t m_frame;
 

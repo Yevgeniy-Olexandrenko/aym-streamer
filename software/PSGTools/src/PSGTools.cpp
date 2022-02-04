@@ -4,6 +4,8 @@
 #include "module/Module.h"
 #include "decoders/DecodePT3.h"
 #include "decoders/DecodePSG.h"
+
+#include "output/AYMStreamer/AYMStreamer.h"
 #include "player/Player.h"
 
 const std::string k_file = "Davos - Simply.pt3";
@@ -77,7 +79,8 @@ int main()
 
     ////////////////////////////////////////////////////////////////////////////
 
-    Player player(k_comPortIndex);
+    AYMStreamer output(k_comPortIndex);
+    Player player(output);
     Sleep(5000);
 
     if (player.InitWithModule(module))

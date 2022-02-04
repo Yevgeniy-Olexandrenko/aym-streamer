@@ -16,6 +16,15 @@
     <Filter Include="Sources\player">
       <UniqueIdentifier>{70a71753-5205-41ad-bf7a-541821d71cb5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\output">
+      <UniqueIdentifier>{ed5e2415-9dc9-40e5-b12f-f9c14b1de61d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\output\AYMStreamer">
+      <UniqueIdentifier>{d8709f9e-51ca-46b5-9705-8a9e1ab44b87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\output\AY38910">
+      <UniqueIdentifier>{8d4f9387-bbb9-4ae9-a9bb-e751abd8e619}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\encoders\EncodePSG.h">
@@ -42,11 +51,20 @@
     <ClInclude Include="..\src\player\Player.h">
       <Filter>Sources\player</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\player\SerialPort.h">
-      <Filter>Sources\player</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\decoders\DecodePT3.h">
       <Filter>Sources\decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\Output.h">
+      <Filter>Sources\output</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\AYMStreamer\SerialPort.h">
+      <Filter>Sources\output\AYMStreamer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\AYMStreamer\AYMStreamer.h">
+      <Filter>Sources\output\AYMStreamer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\AY38910\AY38910.h">
+      <Filter>Sources\output\AY38910</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -71,11 +89,17 @@
     <ClCompile Include="..\src\player\Player.cpp">
       <Filter>Sources\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\player\SerialPort.cpp">
-      <Filter>Sources\player</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\decoders\DecodePT3.cpp">
       <Filter>Sources\decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\AYMStreamer\SerialPort.cpp">
+      <Filter>Sources\output\AYMStreamer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\AYMStreamer\AYMStreamer.cpp">
+      <Filter>Sources\output\AYMStreamer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\AY38910\AY38910.cpp">
+      <Filter>Sources\output\AY38910</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

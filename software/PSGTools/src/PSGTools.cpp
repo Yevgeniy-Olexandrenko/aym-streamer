@@ -8,7 +8,7 @@
 #include "output/AYMStreamer/AYMStreamer.h"
 #include "player/Player.h"
 
-const std::string k_file = "Davos - Simply.pt3";
+const std::string k_file = "Mmcm - Doubtful Future.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 

@@ -56,6 +56,7 @@ public:
     bool Init();
     bool Step();
 
+private:
     int  GetNoteFreq(int cnum, int j);
     bool GetRegisters(int cnum);
     void PatternInterpreter(int cnum, PT3_Channel& chan);

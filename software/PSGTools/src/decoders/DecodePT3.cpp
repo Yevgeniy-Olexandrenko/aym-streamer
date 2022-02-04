@@ -110,15 +110,27 @@ uint8_t PT3VolumeTable_35[16][16] = {
   {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E},
   {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F} };
 
+const std::string SignaturePT = "ProTracker 3.";
+const std::string SignatureVT = "Vortex Tracker II";
+
 bool DecodePT3::Open(Module& module)
 {
-    if (module.GetFileExt() == "pt3")
-    {
-        std::ifstream fileStream;
-        fileStream.open(module.GetFilePath(), std::fstream::binary);
+    bool isDetected = false;
+    std::ifstream fileStream;
+    fileStream.open(module.GetFilePath(), std::fstream::binary);
 
-        if (fileStream)
+    if (fileStream)
+    {
+        uint8_t signature[30];
+        fileStream.read((char*)signature, 30);
+
+        bool isPT = !memcmp(signature, SignaturePT.data(), SignaturePT.size());
+        bool isVT = !memcmp(signature, SignatureVT.data(), SignatureVT.size());
+
+        if (isPT || isVT)
         {
+            isDetected = true;
+
             fileStream.seekg(0, fileStream.end);
             mod_size = (uint32_t)fileStream.tellg();
 
@@ -127,6 +139,10 @@ bool DecodePT3::Open(Module& module)
 
             fileStream.read((char*)body, mod_size);
             fileStream.close();
+
+            Init();
+            tick = 0;
+            loop = 0;
 
             auto GetTextProperty = [&](int offset, int size)
             {
@@ -140,18 +156,14 @@ bool DecodePT3::Open(Module& module)
                 return std::string(buf);
             };
 
-            Init();
-            tick = 0;
-            loop = 0;
-
-            module.SetType(GetTextProperty(0x00, 14) + " module");
+            module.SetType(GetTextProperty(0x00, isVT ? 21 : 14) + " module");
             module.SetTitle(GetTextProperty(0x1E, 32));
             module.SetArtist(GetTextProperty(0x42, 32));
             module.SetFrameRate(50);
-            return true;
         }
+        fileStream.close();
     }
-	return false;
+	return isDetected;
 }
 
 bool DecodePT3::Decode(Frame& frame)

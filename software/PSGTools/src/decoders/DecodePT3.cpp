@@ -171,12 +171,12 @@ bool DecodePT3::Decode(Frame& frame)
     // stop decoding on new loop
     if (Step()) return false;
 
-    for (size_t i = 0; i < size_t(Register::Index::COUNT); ++i)
+    for (uint8_t i = 0; i < 16; ++i)
     {
         Register& reg = frame[i];
         uint8_t reg_d = regs[0][i];
 
-        if (Register::Index(i) == Register::Index::Env_Shape)
+        if (i == Env_Shape)
         {
             if (reg_d != 0xFF) reg.OverrideData(reg_d);
         }

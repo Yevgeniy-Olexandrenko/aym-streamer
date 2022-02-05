@@ -3,7 +3,7 @@
 
 AYMStreamer::AYMStreamer(int portIndex)
 	: m_portIndex(portIndex)
-	, m_isPortOK(false)
+	, m_isOpened(false)
 {
 }
 
@@ -15,22 +15,22 @@ AYMStreamer::~AYMStreamer()
 void AYMStreamer::Open()
 {
 	m_port.Open(m_portIndex);
-	m_isPortOK = m_port.SetBaudRate(SerialPort::BaudRate::_57600);
+	m_isOpened = m_port.SetBaudRate(SerialPort::BaudRate::_57600);
 }
 
 bool AYMStreamer::IsOpened() const
 {
-	return m_isPortOK;
+	return m_isOpened;
 }
 
 bool AYMStreamer::OutFrame(const Frame& frame, bool force)
 {
-	if (m_isPortOK)
+	if (m_isOpened)
 	{
-		char buffer[size_t(Register::Index::COUNT) * 2 + 1];
+		char buffer[16 * 2 + 1];
 		int  bufPtr = 0;
 
-		for (size_t i = 0; i < size_t(Register::Index::COUNT); ++i)
+		for (uint8_t i = 0; i < 16; ++i)
 		{
 			const Register& reg = frame[i];
 			if (force || reg.IsChanged())
@@ -44,9 +44,9 @@ bool AYMStreamer::OutFrame(const Frame& frame, bool force)
 		// frame end marker
 		buffer[bufPtr++] = char(0xFF);
 		int bytesSent = m_port.SendBinary(buffer, bufPtr);
-		if (bytesSent != bufPtr) m_isPortOK = false;
+		if (bytesSent != bufPtr) m_isOpened = false;
 	}
-	return m_isPortOK;
+	return m_isOpened;
 }
 
 void AYMStreamer::Close()

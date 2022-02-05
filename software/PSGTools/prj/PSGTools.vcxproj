@@ -28,6 +28,7 @@
     <ClInclude Include="..\src\module\Module.h" />
     <ClInclude Include="..\src\module\Register.h" />
     <ClInclude Include="..\src\output\AY38910\AY38910.h" />
+    <ClInclude Include="..\src\output\AY38910\ayumi.h" />
     <ClInclude Include="..\src\output\AYMStreamer\AYMStreamer.h" />
     <ClInclude Include="..\src\output\AYMStreamer\SerialPort.h" />
     <ClInclude Include="..\src\output\Output.h" />
@@ -41,6 +42,7 @@
     <ClCompile Include="..\src\module\Module.cpp" />
     <ClCompile Include="..\src\module\Register.cpp" />
     <ClCompile Include="..\src\output\AY38910\AY38910.cpp" />
+    <ClCompile Include="..\src\output\AY38910\ayumi.cpp" />
     <ClCompile Include="..\src\output\AYMStreamer\AYMStreamer.cpp" />
     <ClCompile Include="..\src\output\AYMStreamer\SerialPort.cpp" />
     <ClCompile Include="..\src\player\Player.cpp" />

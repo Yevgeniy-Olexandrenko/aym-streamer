@@ -8,9 +8,18 @@
 #include "output/AYMStreamer/AYMStreamer.h"
 #include "player/Player.h"
 
-const std::string k_file = "Mmcm - Doubtful Future.pt3";
+const std::string k_file = "Mmcm - Beg!nSum.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
+
+static Player * g_player = nullptr;
+
+static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
+{
+    if (g_player) g_player->Mute(true);
+    return TRUE;
+}
+
 
 bool DecodeFileToModule(const std::string& filePath, Module& module)
 {
@@ -73,6 +82,8 @@ void SaveModuleDebugOutput(const Module& module)
 
 int main()
 {
+    SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
+
     Module module;
     DecodeFileToModule(k_file, module);
     SaveModuleDebugOutput(module);
@@ -83,6 +94,7 @@ int main()
     Player player(output);
     Sleep(5000);
 
+    g_player = &player;
     if (player.InitWithModule(module))
     {
         while (true)
@@ -90,7 +102,6 @@ int main()
             if (!player.PlayModuleFrame()) break;
             Sleep(20);
         }
-
         player.Mute(true);
     }
 }

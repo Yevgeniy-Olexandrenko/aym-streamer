@@ -66,6 +66,9 @@
     <ClInclude Include="..\src\output\AY38910\AY38910.h">
       <Filter>Sources\output\AY38910</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\output\AY38910\ayumi.h">
+      <Filter>Sources\output\AY38910</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -99,6 +102,9 @@
       <Filter>Sources\output\AYMStreamer</Filter>
     </ClCompile>
     <ClCompile Include="..\src\output\AY38910\AY38910.cpp">
+      <Filter>Sources\output\AY38910</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\AY38910\ayumi.cpp">
       <Filter>Sources\output\AY38910</Filter>
     </ClCompile>
   </ItemGroup>

@@ -18,5 +18,5 @@ public:
 private:
 	int m_portIndex;
 	SerialPort m_port;
-	bool m_isPortOK;
+	bool m_isOpened;
 };

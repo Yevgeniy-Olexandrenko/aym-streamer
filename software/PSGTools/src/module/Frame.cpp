@@ -18,24 +18,14 @@ Frame::operator bool() const
 	return false;
 }
 
-Register& Frame::operator[](size_t index)
+Register& Frame::operator[](uint8_t index)
 {
 	return m_registers[index];
 }
 
-Register& Frame::operator[](Register::Index index)
-{
-	return m_registers[size_t(index)];
-}
-
-const Register& Frame::operator[](size_t index) const
+const Register& Frame::operator[](uint8_t index) const
 {
 	return m_registers[index];
-}
-
-const Register& Frame::operator[](Register::Index index) const
-{
-	return m_registers[size_t(index)];
 }
 
 void Frame::SetUnchanged()
@@ -48,34 +38,34 @@ void Frame::SetUnchanged()
 
 void Frame::FixValues()
 {
-	for (size_t i = 0; i < size_t(Register::Index::COUNT); ++i)
+	for (uint8_t i = 0; i < 16; ++i)
 	{
 		Register& reg = m_registers[i];
 		if (reg.IsChanged())
 		{
 			uint8_t data = reg.GetData();
-			switch (Register::Index(i))
+			switch (i)
 			{
-			case Register::Index::TonA_PeriodH:
-			case Register::Index::TonB_PeriodH:
-			case Register::Index::TonC_PeriodH:
-			case Register::Index::Env_Shape:
+			case TonA_PeriodH:
+			case TonB_PeriodH:
+			case TonC_PeriodH:
+			case Env_Shape:
 				data &= 0x0F;
 				break;
 
-			case Register::Index::VolA_EnvFlg:
-			case Register::Index::VolB_EnvFlg:
-			case Register::Index::VolC_EnvFlg:
-			case Register::Index::Noise_Period:
+			case VolA_EnvFlg:
+			case VolB_EnvFlg:
+			case VolC_EnvFlg:
+			case Noise_Period:
 				data &= 0x1F;
 				break;
 
-			case Register::Index::Mixer_Flags:
+			case Mixer_Flags:
 				data &= 0x3F;
 				break;
 
-			case Register::Index::PortA_Data:
-			case Register::Index::PortB_Data:
+			case PortA_Data:
+			case PortB_Data:
 				data = 0x00;
 				break;
 			}
@@ -98,7 +88,7 @@ std::ostream& operator<<(std::ostream& stream, const Frame& frame)
 		out_nibble(data);
 	};
 
-	auto out_reg = [&](Register::Index index)
+	auto out_reg = [&](uint8_t index)
 	{
 		const Register& reg = frame[index];
 		if (reg.IsChanged())
@@ -107,20 +97,20 @@ std::ostream& operator<<(std::ostream& stream, const Frame& frame)
 			stream << "--";
 	};
 
-	out_reg(Register::Index::Mixer_Flags);  stream << '|';
-	out_reg(Register::Index::TonA_PeriodH);
-	out_reg(Register::Index::TonA_PeriodL); stream << ' ';
-	out_reg(Register::Index::VolA_EnvFlg);  stream << '|';
-	out_reg(Register::Index::TonB_PeriodH);
-	out_reg(Register::Index::TonB_PeriodL); stream << ' ';
-	out_reg(Register::Index::VolB_EnvFlg);  stream << '|';
-	out_reg(Register::Index::TonC_PeriodH);
-	out_reg(Register::Index::TonC_PeriodL); stream << ' ';
-	out_reg(Register::Index::VolC_EnvFlg);  stream << '|';
-	out_reg(Register::Index::Env_PeriodH);
-	out_reg(Register::Index::Env_PeriodL);  stream << ' ';
-	out_reg(Register::Index::Env_Shape);    stream << '|';
-	out_reg(Register::Index::Noise_Period);
+	out_reg(Mixer_Flags);  stream << '|';
+	out_reg(TonA_PeriodH);
+	out_reg(TonA_PeriodL); stream << ' ';
+	out_reg(VolA_EnvFlg);  stream << '|';
+	out_reg(TonB_PeriodH);
+	out_reg(TonB_PeriodL); stream << ' ';
+	out_reg(VolB_EnvFlg);  stream << '|';
+	out_reg(TonC_PeriodH);
+	out_reg(TonC_PeriodL); stream << ' ';
+	out_reg(VolC_EnvFlg);  stream << '|';
+	out_reg(Env_PeriodH);
+	out_reg(Env_PeriodL);  stream << ' ';
+	out_reg(Env_Shape);    stream << '|';
+	out_reg(Noise_Period);
 
 	return stream;
 }

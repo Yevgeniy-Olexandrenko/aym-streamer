@@ -42,7 +42,7 @@ public:
 	// add/get frames
 	void AddFrame(const Frame& frame);
 	const Frame& GetFrame(FrameIndex index) const;
-	size_t GetFrameCount() const;
+	uint32_t GetFrameCount() const;
 
 	// loop frame
 	void SetLoopFrameUnavailable();

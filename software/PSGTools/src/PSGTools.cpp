@@ -6,7 +6,7 @@
 #include "decoders/DecodePSG.h"
 
 #include "output/AYMStreamer/AYMStreamer.h"
-#include "player/Player.h"
+#include "module/Player.h"
 
 const std::string k_file = "Mmcm - Beg!nSum.pt3";
 const std::string k_output = "output.txt";

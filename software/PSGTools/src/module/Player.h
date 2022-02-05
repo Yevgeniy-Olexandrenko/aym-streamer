@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Module.h"
+
 class Output;
 class Module;
 
@@ -19,7 +21,7 @@ public:
 private:
 	Output& m_output;
 	const Module* m_module;
-	size_t m_frame;
+	Module::FrameIndex m_frame;
 
 	bool m_isMuted;
 	bool m_wasMuted;

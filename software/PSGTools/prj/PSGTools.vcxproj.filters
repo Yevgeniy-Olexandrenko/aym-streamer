@@ -13,9 +13,6 @@
     <Filter Include="Sources\module">
       <UniqueIdentifier>{a61c2248-7658-45e0-be9d-23f4187b8bb0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\player">
-      <UniqueIdentifier>{70a71753-5205-41ad-bf7a-541821d71cb5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources\output">
       <UniqueIdentifier>{ed5e2415-9dc9-40e5-b12f-f9c14b1de61d}</UniqueIdentifier>
     </Filter>
@@ -48,9 +45,6 @@
     <ClInclude Include="..\src\module\Register.h">
       <Filter>Sources\module</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\player\Player.h">
-      <Filter>Sources\player</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\decoders\DecodePT3.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
@@ -67,6 +61,12 @@
       <Filter>Sources\output\AY38910</Filter>
     </ClInclude>
     <ClInclude Include="..\src\output\AY38910\ayumi.h">
+      <Filter>Sources\output\AY38910</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\module\Player.h">
+      <Filter>Sources\module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\AY38910\WaveAudio.h">
       <Filter>Sources\output\AY38910</Filter>
     </ClInclude>
   </ItemGroup>
@@ -89,9 +89,6 @@
     <ClCompile Include="..\src\module\Register.cpp">
       <Filter>Sources\module</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\player\Player.cpp">
-      <Filter>Sources\player</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\decoders\DecodePT3.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
@@ -105,6 +102,12 @@
       <Filter>Sources\output\AY38910</Filter>
     </ClCompile>
     <ClCompile Include="..\src\output\AY38910\ayumi.cpp">
+      <Filter>Sources\output\AY38910</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\module\Player.cpp">
+      <Filter>Sources\module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\AY38910\WaveAudio.cpp">
       <Filter>Sources\output\AY38910</Filter>
     </ClCompile>
   </ItemGroup>

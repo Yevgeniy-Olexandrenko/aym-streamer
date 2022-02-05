@@ -1,6 +1,5 @@
 #include "Player.h"
 #include "../output/Output.h"
-#include "../module/Module.h"
 
 Player::Player(Output& output)
 	: m_output(output)

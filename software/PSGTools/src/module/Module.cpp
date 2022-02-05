@@ -125,9 +125,9 @@ const Frame& Module::GetFrame(FrameIndex index) const
 	return m_frames[index];
 }
 
-size_t Module::GetFrameCount() const
+uint32_t Module::GetFrameCount() const
 {
-	return m_frames.size();
+	return (uint32_t)m_frames.size();
 }
 
 void Module::SetLoopFrameUnavailable()

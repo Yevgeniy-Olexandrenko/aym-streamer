@@ -3,14 +3,15 @@
 #include <mmsystem.h>
 #pragma comment(lib, "winmm.lib")
 
-#define BUFFER_SIZE 960
-
-WaveAudio::WaveAudio()
+WaveAudio::WaveAudio(int sampleRate, int frameRate, int sampleChannels, int sampleBytes)
 	: m_working(false)
 	, m_waveout(NULL)
 {
-	InitAudioBuffers();
-	InitAudioDevice();
+	int samplesPerFrame = sampleRate / frameRate;
+	int bytesPerSample = sampleBytes * sampleChannels;
+
+	InitAudioBuffers(samplesPerFrame, bytesPerSample);
+	InitAudioDevice(sampleRate, sampleChannels, bytesPerSample);
 }
 
 WaveAudio::~WaveAudio()
@@ -24,7 +25,7 @@ void WaveAudio::Start()
 	if (!m_working) 
 	{
 		m_working = true;
-		for (int i = 0; i < 4; i++) 
+		for (int i = 0; i < 4; ++i)
 		{
 			MMRESULT res = waveOutPrepareHeader(m_waveout, &m_buffers[i], sizeof(WAVEHDR));
 			CheckForError(res, "waveOutPrepareHeader failed");
@@ -46,7 +47,7 @@ void WaveAudio::Stop()
 		MMRESULT res = waveOutReset(m_waveout);
 		CheckForError(res, "waveOutReset failed");
 
-		for (int i = 0; i < 4; i++) 
+		for (int i = 0; i < 4; ++i)
 		{
 			res = waveOutUnprepareHeader(m_waveout, &m_buffers[i], sizeof(WAVEHDR));
 			CheckForError(res, "waveOutUnprepareHeader failed");
@@ -67,13 +68,13 @@ void WaveAudio::CheckForError(MMRESULT res, const char* msg)
 	}
 }
 
-void WaveAudio::InitAudioBuffers()
+void WaveAudio::InitAudioBuffers(int samplesPerFrame, int bytesPerSample)
 {
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 4; ++i)
 	{
 		ZeroMemory(&m_buffers[i], sizeof(WAVEHDR));
-		m_buffers[i].dwBufferLength = BUFFER_SIZE * 2;
-		m_buffers[i].lpData = (char*)malloc(BUFFER_SIZE * 2);
+		m_buffers[i].dwBufferLength = samplesPerFrame * bytesPerSample;
+		m_buffers[i].lpData = (char*)malloc(samplesPerFrame * bytesPerSample);
 	}
 }
 
@@ -85,15 +86,15 @@ void WaveAudio::FreeAudioBuffers()
 	}
 }
 
-void WaveAudio::InitAudioDevice()
+void WaveAudio::InitAudioDevice(int sampleRate, int sampleChannels, int bytesPerSample)
 {
 	ZeroMemory(&m_format, sizeof(m_format));
-	m_format.cbSize = 0;
 	m_format.wFormatTag = WAVE_FORMAT_PCM;
-	m_format.nSamplesPerSec = 48000;
-	m_format.wBitsPerSample = 16;
-	m_format.nChannels = 1;
-	m_format.nBlockAlign = 2;
+	m_format.nSamplesPerSec = sampleRate;
+	m_format.wBitsPerSample = (bytesPerSample / sampleChannels) * 8;
+	m_format.nChannels = sampleChannels;
+	m_format.nBlockAlign = bytesPerSample;
+	m_format.cbSize = 0;
 
 	MMRESULT res = waveOutOpen(&m_waveout, WAVE_MAPPER, &m_format, (DWORD_PTR)WaveAudio::WaveOutProc, (DWORD_PTR)this, CALLBACK_FUNCTION);
 	CheckForError(res, "waveOutOpen failed");

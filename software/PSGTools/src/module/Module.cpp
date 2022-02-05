@@ -1,9 +1,10 @@
 #include <sstream>
+#include <iomanip>
 #include "Module.h"
 
 Module::Module()
 	: m_frameRate(0)
-	, m_loopFrameIndex(0)
+	, m_loopFrameId(0)
 {
 }
 
@@ -120,9 +121,9 @@ void Module::AddFrame(const Frame& frame)
 	m_frames.push_back(frame);
 }
 
-const Frame& Module::GetFrame(FrameIndex index) const
+const Frame& Module::GetFrame(FrameId id) const
 {
-	return m_frames[index];
+	return m_frames[id];
 }
 
 uint32_t Module::GetFrameCount() const
@@ -130,34 +131,55 @@ uint32_t Module::GetFrameCount() const
 	return (uint32_t)m_frames.size();
 }
 
-void Module::SetLoopFrameUnavailable()
+void Module::SetLoopUnavailable()
 {
-	SetLoopFrameIndex(GetFrameCount());
+	SetLoopFrameId(GetFrameCount());
 }
 
-void Module::SetLoopFrameIndex(FrameIndex index)
+void Module::SetLoopFrameId(FrameId id)
 {
-	m_loopFrameIndex = index;
+	m_loopFrameId = id;
 }
 
-bool Module::HasLoopFrameIndex() const
+Module::FrameId Module::GetLoopFrameId() const
 {
-	return (GetLoopFrameIndex() < GetFrameCount());
+	return m_loopFrameId;
 }
 
-Module::FrameIndex Module::GetLoopFrameIndex() const
+uint32_t Module::GetLoopFrameCount() const
 {
-	return m_loopFrameIndex;
+	return GetFrameCount() - GetLoopFrameId();
+}
+
+bool Module::HasLoop() const
+{
+	return (GetLoopFrameCount() > 0);
+}
+
+void Module::GetDuration(int& hh, int& mm, int& ss, int& ms) const
+{
+	int duration = 1000 * GetFrameCount() / GetFrameRate();
+	ms = duration % 1000; duration /= 1000;
+	ss = duration % 60; duration /= 60;
+	mm = duration % 60; duration /= 60;
+	hh = duration;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Module& module)
 {
+	int hh, mm, ss, ms;
+	module.GetDuration(hh, mm, ss, ms);
+
 	stream << "File........: " << module.GetFileName() << std::endl;
 	if (module.HasTitle())stream << "Title.......: " << module.GetTitle() << std::endl;
 	if (module.HasArtist()) stream << "Artist......: " << module.GetArtist() << std::endl;
 	stream << "Type........: " << module.GetType() << std::endl;
+	stream << "Duration....: " << 
+		std::setfill('0') << std::setw(2) << hh << ':' << 
+		std::setfill('0') << std::setw(2) << mm << ':' << 
+		std::setfill('0') << std::setw(2) << ss << std::endl;
 	stream << "Frames count: " << module.GetFrameCount() << std::endl;
-	if (module.HasLoopFrameIndex()) stream << "Loop frame..: " << module.GetLoopFrameIndex() << std::endl;
+	if (module.HasLoop()) stream << "Loop frame..: " << module.GetLoopFrameId() << std::endl;
 	stream << "Frame rate..: " << module.GetFrameRate() << std::endl;
 	return stream;
 }

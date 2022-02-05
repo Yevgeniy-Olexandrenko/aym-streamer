@@ -1,9 +1,9 @@
 #include "AYMStreamer.h"
 #include "../../module/Frame.h"
 
-AYMStreamer::AYMStreamer(int portIndex)
-	: m_portIndex(portIndex)
-	, m_isOpened(false)
+AYMStreamer::AYMStreamer(const Module& module, int portIndex)
+	: Output(module)
+	, m_portIndex(portIndex)
 {
 }
 
@@ -16,11 +16,7 @@ void AYMStreamer::Open()
 {
 	m_port.Open(m_portIndex);
 	m_isOpened = m_port.SetBaudRate(SerialPort::BaudRate::_57600);
-}
-
-bool AYMStreamer::IsOpened() const
-{
-	return m_isOpened;
+	Sleep(5000);
 }
 
 bool AYMStreamer::OutFrame(const Frame& frame, bool force)

@@ -40,9 +40,9 @@ bool Player::PlayModuleFrame()
 
 		if (m_frame == m_module->GetFrameCount())
 		{
-			if (m_module->HasLoopFrameIndex())
+			if (m_module->HasLoop())
 			{
-				m_frame = m_module->GetLoopFrameIndex();
+				m_frame = m_module->GetLoopFrameId();
 			}
 			else
 			{
@@ -78,4 +78,9 @@ void Player::Mute(bool on)
 		m_wasMuted = m_isMuted;
 		m_isMuted = on;
 	}
+}
+
+Module::FrameId Player::GetFrameId() const
+{
+	return m_frame;
 }

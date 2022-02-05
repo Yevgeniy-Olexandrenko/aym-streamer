@@ -16,12 +16,12 @@ public:
 	bool PlayModuleFrame();
 
 	void Mute(bool on);
-
+	Module::FrameId GetFrameId() const;
 
 private:
 	Output& m_output;
 	const Module* m_module;
-	Module::FrameIndex m_frame;
+	Module::FrameId m_frame;
 
 	bool m_isMuted;
 	bool m_wasMuted;

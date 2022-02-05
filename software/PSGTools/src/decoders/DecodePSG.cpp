@@ -74,6 +74,6 @@ bool DecodePSG::Decode(Frame& frame)
 
 void DecodePSG::Close(Module& module)
 {
-    module.SetLoopFrameUnavailable();
+    module.SetLoopUnavailable();
     m_fileStream.close();
 }

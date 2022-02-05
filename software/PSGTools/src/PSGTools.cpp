@@ -9,7 +9,8 @@
 #include "output/AY38910/AY38910.h"
 #include "module/Player.h"
 
-const std::string k_file = "sample.psg";
+const std::string k_folder = "../../chiptunes/Mmmc/selected/";
+const std::string k_file = "Mmcm - Perseve.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -69,9 +70,9 @@ void SaveModuleDebugOutput(const Module& module)
         file << "frame  [ r7|r1r0 r8|r3r2 r9|r5r4 rA|rCrB rD|r6 ]" << std::endl;
         delimiter();
 
-        for (Module::FrameIndex i = 0; i < module.GetFrameCount(); ++i)
+        for (Module::FrameId i = 0; i < module.GetFrameCount(); ++i)
         {
-            if (i && module.HasLoopFrameIndex() && i == module.GetLoopFrameIndex()) delimiter();
+            if (i && module.HasLoop() && i == module.GetLoopFrameId()) delimiter();
             file << std::setfill('0') << std::setw(5) << i;
             file << "  [ " << module.GetFrame(i) << " ]" << std::endl;
             
@@ -86,15 +87,21 @@ int main()
     SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
 
     Module module;
-    DecodeFileToModule(k_file, module);
+    DecodeFileToModule(k_folder + k_file, module);
     SaveModuleDebugOutput(module);
 
     ////////////////////////////////////////////////////////////////////////////
 
-    //AYMStreamer output(k_comPortIndex);
-    AY38910 output;
+    //AYMStreamer output(module, k_comPortIndex);
+    AY38910 output(module);
     Player player(output);
-    Sleep(5000);
+
+    std::cout << std::setfill('-') << std::setw(48) << '-' << std::endl;
+    std::cout << "PSG Tools v1.0" << std::endl;
+    std::cout << "by Yevgeniy Olexandrenko" << std::endl;
+    std::cout << std::setfill('-') << std::setw(48) << '-' << std::endl;
+    std::cout << module;
+    std::cout << std::setfill('-') << std::setw(48) << '-' << std::endl;
 
     g_player = &player;
     if (player.InitWithModule(module))

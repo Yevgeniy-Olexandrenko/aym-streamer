@@ -7,7 +7,7 @@
 class WaveAudio
 {
 public:
-	WaveAudio();
+	WaveAudio(int sampleRate, int frameRate, int sampleChannels, int sampleBytes);
 	virtual ~WaveAudio();
 
 	void Start();
@@ -18,9 +18,9 @@ protected:
 
 private:
 	void CheckForError(MMRESULT res, const char* msg);
-	void InitAudioBuffers();
+	void InitAudioBuffers(int samplesPerFrame, int bytesPerSample);
 	void FreeAudioBuffers();
-	void InitAudioDevice();
+	void InitAudioDevice(int sampleRate, int sampleChannels, int bytesPerSample);
 	void FreeAudioDevice();
 	void OnBufferDone(WAVEHDR* hdr);
 

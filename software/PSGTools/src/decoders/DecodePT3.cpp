@@ -191,9 +191,9 @@ bool DecodePT3::Decode(Frame& frame)
 void DecodePT3::Close(Module& module)
 {
     if (loop > 0)
-        module.SetLoopFrameIndex(loop);
+        module.SetLoopFrameId(loop);
     else
-        module.SetLoopFrameUnavailable();
+        module.SetLoopUnavailable();
         
     delete[] body;
 }

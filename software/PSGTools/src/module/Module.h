@@ -9,7 +9,7 @@ class Module
 
 public:
 	using FrameArray = std::vector<Frame>;
-	using FrameIndex = uint32_t;
+	using FrameId = uint32_t;
 	using FrameRate  = uint16_t;
 
 	Module();
@@ -41,14 +41,18 @@ public:
 
 	// add/get frames
 	void AddFrame(const Frame& frame);
-	const Frame& GetFrame(FrameIndex index) const;
+	const Frame& GetFrame(FrameId id) const;
 	uint32_t GetFrameCount() const;
 
 	// loop frame
-	void SetLoopFrameUnavailable();
-	void SetLoopFrameIndex(FrameIndex index);
-	bool HasLoopFrameIndex() const;
-	FrameIndex GetLoopFrameIndex() const;
+	void SetLoopUnavailable();
+	void SetLoopFrameId(FrameId id);
+	FrameId  GetLoopFrameId() const;
+	uint32_t GetLoopFrameCount() const;
+	bool HasLoop() const;
+
+	// duration
+	void GetDuration(int& hh, int& mm, int& ss, int& ms) const;
 
 private:
 	std::string m_title;
@@ -62,6 +66,6 @@ private:
 	} m_file;
 
 	FrameRate  m_frameRate;
-	FrameIndex m_loopFrameIndex;
+	FrameId    m_loopFrameId;
 	FrameArray m_frames;
 };

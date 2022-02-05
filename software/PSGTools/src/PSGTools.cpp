@@ -6,9 +6,10 @@
 #include "decoders/DecodePSG.h"
 
 #include "output/AYMStreamer/AYMStreamer.h"
+#include "output/AY38910/AY38910.h"
 #include "module/Player.h"
 
-const std::string k_file = "Mmcm - Beg!nSum.pt3";
+const std::string k_file = "sample.psg";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -90,7 +91,8 @@ int main()
 
     ////////////////////////////////////////////////////////////////////////////
 
-    AYMStreamer output(k_comPortIndex);
+    //AYMStreamer output(k_comPortIndex);
+    AY38910 output;
     Player player(output);
     Sleep(5000);
 

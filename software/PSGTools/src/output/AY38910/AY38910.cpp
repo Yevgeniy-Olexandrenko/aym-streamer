@@ -3,7 +3,8 @@
 
 static const int is_ym = 0;
 static const double clock_rate = 1750000;
-static const int sample_rate = 44100;
+static const int sample_rate = 48000;
+static const bool dc_filter_on = !false;
 
 //
 //t->sample_rate = 44100;
@@ -15,7 +16,8 @@ static const int sample_rate = 44100;
 
 
 AY38910::AY38910()
-    : m_isOpened(false)
+    : WaveAudio("default")
+    , m_isOpened(false)
 {
 }
 
@@ -32,6 +34,7 @@ void AY38910::Open()
         ayumi_set_pan(&m_ay, 0, 0.1, false);
         ayumi_set_pan(&m_ay, 1, 0.5, false);
         ayumi_set_pan(&m_ay, 2, 0.9, false);
+        WaveAudio::Start();
     }
 }
 
@@ -107,4 +110,27 @@ bool AY38910::OutFrame(const Frame& frame, bool force)
 
 void AY38910::Close()
 {
+    WaveAudio::Stop();
+}
+
+void AY38910::FillBuffer(unsigned char* buffer, unsigned long size)
+{
+    uint16_t* buf = (uint16_t*)buffer;
+    uint32_t sz = size / sizeof(uint16_t);
+
+    for (uint32_t i = 0; i < sz; ++i)
+    {
+        ayumi_process(&m_ay);
+        if (dc_filter_on) {
+            ayumi_remove_dc(&m_ay);
+        }
+
+        float volume = 32767;
+        float out_0 = (float)(m_ay.left * volume);
+        float out_1 = (float)(m_ay.right * volume);
+
+        buf[i] = uint16_t(0.5f * (out_0 + out_1));
+
+        //std::cout << int(out_0) << "\t";
+    }
 }

@@ -16,7 +16,7 @@ static const bool dc_filter_on = !false;
 
 
 AY38910::AY38910()
-    : WaveAudio("default")
+    : WaveAudio()
     , m_isOpened(false)
 {
 }
@@ -34,7 +34,9 @@ void AY38910::Open()
         ayumi_set_pan(&m_ay, 0, 0.1, false);
         ayumi_set_pan(&m_ay, 1, 0.5, false);
         ayumi_set_pan(&m_ay, 2, 0.9, false);
+
         WaveAudio::Start();
+        m_isOpened &= m_working;
     }
 }
 

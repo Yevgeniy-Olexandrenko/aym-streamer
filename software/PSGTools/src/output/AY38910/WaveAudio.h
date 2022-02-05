@@ -7,22 +7,22 @@
 class WaveAudio
 {
 public:
-	WaveAudio(std::string deviceID);
-	~WaveAudio();
+	WaveAudio();
+	virtual ~WaveAudio();
 
-public:
 	void Start();
 	void Stop();
-	bool IsPlaying();
-	void SetCurrentDevice(std::string deviceID);
 
 protected:
 	virtual void FillBuffer(unsigned char* buffer, unsigned long size) = 0;
 
 private:
-	HWAVEOUT m_waveout;
-	WAVEFORMATEX m_format;
-	WAVEHDR m_buffers[4];
+	void CheckForError(MMRESULT res, const char* msg);
+	void InitAudioBuffers();
+	void FreeAudioBuffers();
+	void InitAudioDevice();
+	void FreeAudioDevice();
+	void OnBufferDone(WAVEHDR* hdr);
 
 	static void CALLBACK WaveOutProc(
 		HWAVEOUT hwo, UINT uMsg,
@@ -31,6 +31,9 @@ private:
 		DWORD_PTR dwParam2
 	);
 
-	void OnBufferDone(WAVEHDR* hdr);
-	bool m_isPlaying;
+protected:
+	HWAVEOUT m_waveout;
+	WAVEFORMATEX m_format;
+	WAVEHDR m_buffers[4];
+	bool m_working;
 };

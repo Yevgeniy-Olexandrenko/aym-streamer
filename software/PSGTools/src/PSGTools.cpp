@@ -18,7 +18,7 @@ static Player * g_player = nullptr;
 
 static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 {
-    if (g_player) g_player->Mute(true);
+    if (g_player) g_player->Stop();
     return TRUE;
 }
 
@@ -70,7 +70,7 @@ void SaveModuleDebugOutput(const Module& module)
         file << "frame  [ r7|r1r0 r8|r3r2 r9|r5r4 rA|rCrB rD|r6 ]" << std::endl;
         delimiter();
 
-        for (Module::FrameId i = 0; i < module.GetFrameCount(); ++i)
+        for (FrameId i = 0; i < module.GetFrameCount(); ++i)
         {
             if (i && module.HasLoop() && i == module.GetLoopFrameId()) delimiter();
             file << std::setfill('0') << std::setw(5) << i;
@@ -104,13 +104,50 @@ int main()
     std::cout << std::setfill('-') << std::setw(48) << '-' << std::endl;
 
     g_player = &player;
-    if (player.InitWithModule(module))
+    if (player.Init(module))
     {
-        while (true)
+        player.Play();
+        while (player.IsPlaying())
         {
-            if (!player.PlayModuleFrame()) break;
+#if 0
+            
+            bool left  = (GetAsyncKeyState(VK_LEFT ) & 0x1) != 0;
+            bool right = (GetAsyncKeyState(VK_RIGHT) & 0x1) != 0;
+            bool up    = (GetAsyncKeyState(VK_UP   ) & 0x1) != 0;
+            bool down  = (GetAsyncKeyState(VK_DOWN ) & 0x1) != 0;
+#else
+            bool left  = (GetKeyState(VK_LEFT  ) & 0x80) != 0;
+            bool right = (GetKeyState(VK_RIGHT ) & 0x80) != 0;
+            bool up    = (GetKeyState(VK_UP    ) & 0x80) != 0;
+            bool down  = (GetKeyState(VK_DOWN  ) & 0x80) != 0;
+            bool enter = (GetAsyncKeyState(VK_RETURN) & 0x1) != 0;
+#endif
+
+            if (right)
+            {
+                player.Step(+10);
+            }
+            else if (left)
+            {
+                player.Step(-10);
+            }
+            else
+            {
+                player.Step(+1);
+            }
+
+            if (enter)
+            {
+                if (player.IsPaused())
+                    player.Play();
+                else 
+                    player.Stop();
+            }
+
+            FrameId frameId = player.GetFrameId();
+            std::cout << "Frame: " << frameId << "     \r";
             Sleep(20);
         }
-        player.Mute(true);
     }
+    std::cout << "Stop" << std::endl;
 }

@@ -111,7 +111,7 @@ void Module::SetFrameRate(FrameRate frameRate)
 	m_frameRate = frameRate;
 }
 
-Module::FrameRate Module::GetFrameRate() const
+FrameRate Module::GetFrameRate() const
 {
 	return m_frameRate;
 }
@@ -141,7 +141,7 @@ void Module::SetLoopFrameId(FrameId id)
 	m_loopFrameId = id;
 }
 
-Module::FrameId Module::GetLoopFrameId() const
+FrameId Module::GetLoopFrameId() const
 {
 	return m_loopFrameId;
 }

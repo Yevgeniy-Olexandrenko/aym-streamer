@@ -3,18 +3,17 @@
 #include <vector>
 #include "Frame.h"
 
+using FrameId = uint32_t;
+using FrameRate = uint16_t;
+
 class Module
 {
+	using FrameList = std::vector<Frame>;
 	friend std::ostream& operator<<(std::ostream& stream, const Module& module);
 
 public:
-	using FrameArray = std::vector<Frame>;
-	using FrameId = uint32_t;
-	using FrameRate  = uint16_t;
-
 	Module();
 
-public:
 	// input/output file folder, name and ext
 	void SetFilePath(const std::string& filePath);
 	const std::string GetFilePath() const;
@@ -67,5 +66,5 @@ private:
 
 	FrameRate  m_frameRate;
 	FrameId    m_loopFrameId;
-	FrameArray m_frames;
+	FrameList m_frames;
 };

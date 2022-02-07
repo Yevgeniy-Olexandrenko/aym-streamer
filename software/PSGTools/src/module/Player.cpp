@@ -4,83 +4,128 @@
 Player::Player(Output& output)
 	: m_output(output)
 	, m_module(nullptr)
-	, m_frame(0)
-	, m_isMuted(false)
-	, m_wasMuted(false)
+	, m_step(+1)
+	, m_isPlaying(false)
+	, m_isPaused(false)
+	, m_frameId(0)
 {
 	m_output.Open();
 }
 
 Player::~Player()
 {
-	Mute(true);
+	Stop();
 	m_output.Close();
 }
 
-bool Player::InitWithModule(const Module& module)
+bool Player::Init(const Module& module)
 {
-	Mute(true);
-	m_module = nullptr;
-	m_frame  = 0;
+	Stop();
+	m_isPlaying = false;
 
 	if (m_output.IsOpened() && module.GetFrameCount() > 0)
 	{
 		m_module = &module;
-		Mute(false);
-		return true;
+		m_isPlaying = true;
+		m_frameId = 0;
 	}
-	return false;
+
+	return m_isPlaying;
 }
 
-bool Player::PlayModuleFrame()
+void Player::Step(int step)
 {
-	if (m_output.IsOpened() && m_module)
-	{
-		if (m_isMuted) return true;
+	m_step = step;
+}
 
-		if (m_frame == m_module->GetFrameCount())
+void Player::Play()
+{
+	if (m_isPaused)
+	{
+		m_isPaused = false;
+		m_playback = std::thread([this] { PlaybackThread(); });
+	}
+}
+
+void Player::Stop()
+{
+	if (!m_isPaused)
+	{
+		m_isPaused = true;
+		if (m_playback.joinable()) m_playback.join();
+	}
+}
+
+FrameId Player::GetFrameId() const
+{
+	return m_frameId;
+}
+
+bool Player::IsPlaying() const
+{
+	return m_isPlaying;
+}
+
+bool Player::IsPaused() const
+{
+	return m_isPaused;
+}
+
+void Player::PlaybackThread()
+{
+	Time timestamp = Clock::now();
+	Duration framePeriod(1.0 / m_module->GetFrameRate());
+
+	bool firstFrame = true;
+	while (!m_isPaused && m_output.IsOpened())
+	{
+		Time now = Clock::now();
+		Duration timeSpan = std::chrono::duration_cast<Duration>(now - timestamp);
+
+		if (timeSpan >= framePeriod)
 		{
-			if (m_module->HasLoop())
+			timestamp = now;
+
+			const Frame& frame = m_module->GetFrame(m_frameId);
+			m_output.OutFrame(frame, firstFrame);
+			firstFrame = false;
+
+			if (!GotoNextFrame())
 			{
-				m_frame = m_module->GetLoopFrameId();
-			}
-			else
-			{
-				// no loop, so stop playback
-				return false;
+				m_isPlaying = false;
+				break;
 			}
 		}
-
-		const Frame& frame = m_module->GetFrame(m_frame);
-		m_frame++;
-
-		// frame output ignoring differential
-		// mode just after unmute
-		m_output.OutFrame(frame, m_wasMuted);
-		m_wasMuted = false;
-
-		return true;
+		std::this_thread::yield();
 	}
-	return false;
+	m_output.OutFrame(Frame(), true);
 }
 
-void Player::Mute(bool on)
+bool Player::GotoNextFrame()
 {
-	if (m_isMuted != on)
+	int step = m_step;
+	if (step > 0)
 	{
-		if (on)
+		// move forward
+		if ((m_frameId += step) >= m_module->GetFrameCount())
 		{
-			// silence output ignoring
-			// differential mode
-			m_output.OutFrame(Frame(), true);
+			if (!m_module->HasLoop()) return false;
+			m_frameId = m_module->GetLoopFrameId();
 		}
-
-		m_wasMuted = m_isMuted;
-		m_isMuted = on;
 	}
-}
-
-Module::FrameId Player::GetFrameId() const
-{
-	return m_frame;
+	else if (step < 0)
+	{
+		// move backward
+		int firstId = m_module->HasLoop() ? m_module->GetLoopFrameId() : 0;
+		int frameId = int(m_frameId) + step;
+		
+		if (frameId < firstId)
+		{
+			if (frameId < 0) return false;
+			if (m_frameId >= firstId) 
+				frameId = m_module->GetFrameCount() - 1;
+		}
+		m_frameId = FrameId(frameId);
+	}
+	return true;
 }

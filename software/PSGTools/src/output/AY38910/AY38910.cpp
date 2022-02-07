@@ -1,3 +1,4 @@
+#include <thread>
 #include "AY38910.h"
 #include "../../module/Module.h"
 
@@ -26,7 +27,11 @@ void AY38910::Open()
         ayumi_set_pan(&m_ay, 2, 0.9, false);
 
         WaveAudio::Start();
-        m_isOpened &= m_working;
+        if (m_isOpened &= m_working)
+        {
+            // make some delay for wave audio warm up
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
     }
 }
 

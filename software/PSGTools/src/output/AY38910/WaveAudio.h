@@ -1,8 +1,6 @@
 #pragma once
 
-#include <string>
 #include <windows.h>
-//#include <mmsystem.h>
 
 class WaveAudio
 {

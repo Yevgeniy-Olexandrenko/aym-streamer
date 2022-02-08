@@ -1,5 +1,5 @@
 #include "AYMStreamer.h"
-#include "../../module/Frame.h"
+#include "module/Frame.h"
 
 AYMStreamer::AYMStreamer(const Module& module, int portIndex)
 	: Output(module)

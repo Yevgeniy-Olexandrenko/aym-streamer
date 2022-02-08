@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Output.h"
+#include "output/Output.h"
 #include "WaveAudio.h"
-#include "ayumi.h"
+#include "commons/ayumi/ayumi.h"
 
 class AY38910 : public Output, public WaveAudio
 {
@@ -19,5 +19,5 @@ protected:
 	void FillBuffer(unsigned char* buffer, unsigned long size) override;
 
 private:
-	ayumi m_ay;
+	struct ayumi m_ay;
 };

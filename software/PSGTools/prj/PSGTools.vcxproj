@@ -19,32 +19,36 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\commons\ayumi\ayumi.h" />
     <ClInclude Include="..\src\decoders\DecodePSG.h" />
     <ClInclude Include="..\src\decoders\DecodePT3.h" />
     <ClInclude Include="..\src\decoders\Decoder.h" />
     <ClInclude Include="..\src\encoders\EncodePSG.h" />
     <ClInclude Include="..\src\encoders\Encoder.h" />
+    <ClInclude Include="..\src\encoders\EncodeTXT.h" />
+    <ClInclude Include="..\src\encoders\EncodeWAV.h" />
     <ClInclude Include="..\src\module\Frame.h" />
     <ClInclude Include="..\src\module\Module.h" />
     <ClInclude Include="..\src\module\Player.h" />
     <ClInclude Include="..\src\module\Register.h" />
     <ClInclude Include="..\src\output\AY38910\AY38910.h" />
-    <ClInclude Include="..\src\output\AY38910\ayumi.h" />
     <ClInclude Include="..\src\output\AY38910\WaveAudio.h" />
     <ClInclude Include="..\src\output\AYMStreamer\AYMStreamer.h" />
     <ClInclude Include="..\src\output\AYMStreamer\SerialPort.h" />
     <ClInclude Include="..\src\output\Output.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\commons\ayumi\ayumi.cpp" />
     <ClCompile Include="..\src\decoders\DecodePSG.cpp" />
     <ClCompile Include="..\src\decoders\DecodePT3.cpp" />
     <ClCompile Include="..\src\encoders\EncodePSG.cpp" />
+    <ClCompile Include="..\src\encoders\EncodeTXT.cpp" />
+    <ClCompile Include="..\src\encoders\EncodeWAV.cpp" />
     <ClCompile Include="..\src\module\Frame.cpp" />
     <ClCompile Include="..\src\module\Module.cpp" />
     <ClCompile Include="..\src\module\Player.cpp" />
     <ClCompile Include="..\src\module\Register.cpp" />
     <ClCompile Include="..\src\output\AY38910\AY38910.cpp" />
-    <ClCompile Include="..\src\output\AY38910\ayumi.cpp" />
     <ClCompile Include="..\src\output\AY38910\WaveAudio.cpp" />
     <ClCompile Include="..\src\output\AYMStreamer\AYMStreamer.cpp" />
     <ClCompile Include="..\src\output\AYMStreamer\SerialPort.cpp" />
@@ -120,6 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,6 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,6 +154,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,6 +169,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

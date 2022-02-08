@@ -1,7 +1,5 @@
-
 #include "DecodePSG.h"
-#include "../module/Module.h"
-#include "../module/Frame.h"
+#include "module/Module.h"
 
 struct PSG_Header
 {
@@ -74,6 +72,5 @@ bool DecodePSG::Decode(Frame& frame)
 
 void DecodePSG::Close(Module& module)
 {
-    module.SetLoopUnavailable();
     m_fileStream.close();
 }

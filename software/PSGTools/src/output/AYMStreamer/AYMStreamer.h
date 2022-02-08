@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Output.h"
+#include "output/Output.h"
 #include "SerialPort.h"
 
 class AYMStreamer : public Output

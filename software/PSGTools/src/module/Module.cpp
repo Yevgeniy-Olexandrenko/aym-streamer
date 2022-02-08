@@ -133,6 +133,11 @@ const Frame& Module::GetFrame(FrameId id) const
 	return m_frames[id];
 }
 
+FrameId Module::GetLastFrameId() const
+{
+	return GetFrameCount() - 1;
+}
+
 uint32_t Module::GetFrameCount() const
 {
 	return (uint32_t)m_frames.size();
@@ -143,22 +148,24 @@ void Module::GetDuration(int& hh, int& mm, int& ss, int& ms) const
 	ComputeDuration(GetFrameCount(), hh, mm, ss, ms);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-void Module::SetLoopUnavailable()
+void Module::GetDuration(int& hh, int& mm, int& ss) const
 {
-	SetLoopFrameId(GetFrameCount());
+	ComputeDuration(GetFrameCount(), hh, mm, ss);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 void Module::SetLoopFrameId(FrameId id)
 {
 	m_loopFrameId = id;
+
+	UpdateLoopFrameChanges();
 	ComputeExtraLoops();
 }
 
 FrameId Module::GetLoopFrameId() const
 {
-	return m_loopFrameId;
+	return (m_loopFrameId ? m_loopFrameId : GetFrameCount());
 }
 
 uint32_t Module::GetLoopFrameCount() const
@@ -183,15 +190,24 @@ const Frame& Module::GetPlaybackFrame(FrameId id) const
 	return GetFrame(id);
 }
 
+FrameId Module::GetPlaybackLastFrameId() const
+{
+	return GetPlaybackFrameCount() - 1;
+}
+
 uint32_t Module::GetPlaybackFrameCount() const
 {
 	return GetFrameCount() + m_extraLoops * GetLoopFrameCount();
 }
 
-
 void Module::GetPlaybackDuration(int& hh, int& mm, int& ss, int& ms) const
 {
 	ComputeDuration(GetPlaybackFrameCount(), hh, mm, ss, ms);
+}
+
+void Module::GetPlaybackDuration(int& hh, int& mm, int& ss) const
+{
+	ComputeDuration(GetPlaybackFrameCount(), hh, mm, ss);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -210,6 +226,26 @@ void Module::ComputeExtraLoops()
 	}
 }
 
+void Module::UpdateLoopFrameChanges()
+{
+	if (HasLoop())
+	{
+		const Frame& lastFrame = GetFrame(GetLastFrameId());
+		Frame& loopFrame = const_cast<Frame&>(GetFrame(GetLoopFrameId()));
+
+		for (uint8_t i = 0; i < 16; ++i)
+		{
+			if (loopFrame[i].IsChanged()) continue;
+
+			uint8_t loopFrameData = loopFrame[i].GetData();
+			uint8_t lastFrameData = lastFrame[i].GetData();
+
+			if (loopFrameData != lastFrameData)
+				loopFrame[i].OverrideData(loopFrameData);
+		}
+	}
+}
+
 void Module::ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int& ms) const
 {
 	uint32_t duration = (frameCount * 1000) / GetFrameRate();
@@ -219,20 +255,34 @@ void Module::ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int
 	hh = duration;
 }
 
+void Module::ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss) const
+{
+	uint32_t duration = (((frameCount * 1000) / GetFrameRate()) + 500) / 1000;
+	ss = duration % 60; duration /= 60;
+	mm = duration % 60; duration /= 60;
+	hh = duration;
+}
+
 std::ostream& operator<<(std::ostream& stream, const Module& module)
 {
 	int hh, mm, ss, ms;
-	module.GetDuration(hh, mm, ss, ms);
+	
 
 	stream << "File........: " << module.GetFileName() << std::endl;
 	if (module.HasTitle())stream << "Title.......: " << module.GetTitle() << std::endl;
 	if (module.HasArtist()) stream << "Artist......: " << module.GetArtist() << std::endl;
 	stream << "Type........: " << module.GetType() << std::endl;
-	stream << "Duration....: " << 
-		std::setfill('0') << std::setw(2) << hh << ':' << 
-		std::setfill('0') << std::setw(2) << mm << ':' << 
-		std::setfill('0') << std::setw(2) << ss << '.' <<
-		std::setfill('0') << std::setw(3) << ms << std::endl;
+
+	module.GetDuration(hh, mm, ss);
+	//stream << "Duration....: " << 
+	//	std::setfill('0') << std::setw(2) << hh << ':' << 
+	//	std::setfill('0') << std::setw(2) << mm << ':' << 
+	//	std::setfill('0') << std::setw(2) << ss << '.' <<
+	//	std::setfill('0') << std::setw(3) << ms << std::endl;
+	stream << "Duration....: " <<
+		std::setfill('0') << std::setw(2) << hh << ':' <<
+		std::setfill('0') << std::setw(2) << mm << ':' <<
+		std::setfill('0') << std::setw(2) << ss << std::endl;
 
 	module.GetPlaybackDuration(hh, mm, ss, ms);
 	stream << "Duration....: " <<

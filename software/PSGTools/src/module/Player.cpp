@@ -1,11 +1,48 @@
 #include <Windows.h>
 #include "Player.h"
-#include "../output/Output.h"
+#include "output/Output.h"
+
+////////////////////////////////////////////////////////////////////////////////
+
+double GetTime()
+{
+	LARGE_INTEGER frequency;
+	QueryPerformanceFrequency(&frequency);
+	LARGE_INTEGER time;
+	QueryPerformanceCounter(&time);
+	return time.QuadPart / double(frequency.QuadPart);
+}
+
+void WaitFor(const double period)
+{
+	static double accumulator = 0;
+	double start, finish, elapsed;
+
+	accumulator += period;
+	finish = (GetTime() + accumulator);
+
+	while (true)
+	{
+		start = GetTime(); Sleep(1U);
+		elapsed = (GetTime() - start);
+
+		if ((accumulator -= elapsed) < 0) return;
+
+		if (accumulator < elapsed)
+		{
+			accumulator = 0;
+			while (GetTime() < finish) SwitchToThread();
+			return;
+		}
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 Player::Player(Output& output)
 	: m_output(output)
 	, m_module(nullptr)
-	, m_step(+1)
+	, m_playbackStep(1)
 	, m_isPlaying(false)
 	, m_isPaused(false)
 	, m_frameId(0)
@@ -18,6 +55,8 @@ Player::~Player()
 	Stop();
 	m_output.Close();
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 bool Player::Init(const Module& module)
 {
@@ -34,17 +73,21 @@ bool Player::Init(const Module& module)
 	return m_isPlaying;
 }
 
-void Player::Step(int step)
+void Player::Play(int playbackStep)
 {
-	m_step = step;
-}
+	if (playbackStep >= -10 && playbackStep <= +10)
+	{
+		m_playbackStep = playbackStep;
+	}
 
-void Player::Play()
-{
 	if (m_isPaused)
 	{
 		m_isPaused = false;
-		m_playback = std::thread([this] { PlaybackThread(); });
+		m_playback = std::thread([this] {
+			auto hndl = reinterpret_cast<HANDLE>(m_playback.native_handle());
+			SetThreadPriority(hndl, THREAD_PRIORITY_TIME_CRITICAL);
+			PlaybackThread();
+			});
 	}
 }
 
@@ -72,99 +115,32 @@ bool Player::IsPaused() const
 	return m_isPaused;
 }
 
-#if 1
+////////////////////////////////////////////////////////////////////////////////
+
 void Player::PlaybackThread()
 {
-	int result = SetThreadPriority(reinterpret_cast<HANDLE>(m_playback.native_handle()), THREAD_PRIORITY_TIME_CRITICAL);
+	auto framePeriod = 1.0 / m_module->GetFrameRate();
+	bool firstFrame  = true;
 
-	Duration framePeriod{ 1000 / m_module->GetFrameRate() };
-	Duration correction{ framePeriod / 4 };
-
-	bool firstFrame = true;
 	while (!m_isPaused && m_output.IsOpened())
 	{
-		auto timestamp = Clock::now() + framePeriod;
-
+		// play current frame
 		const Frame& frame = m_module->GetPlaybackFrame(m_frameId);
 		m_output.OutFrame(frame, firstFrame);
 		firstFrame = false;
 
-		if (!GotoNextFrame())
+		// go to next frame
+		m_frameId += m_playbackStep;
+		if (int(m_frameId) < 0 || m_frameId > m_module->GetPlaybackLastFrameId())
 		{
 			m_isPlaying = false;
 			break;
 		}
 
-		std::this_thread::sleep_until(timestamp - correction);
-		while(Clock::now() < timestamp) std::this_thread::yield();
+		// next frame timestamp waiting
+		WaitFor(framePeriod);
 	}
+
+	// silence output when job is done
 	m_output.OutFrame(Frame(), true);
-}
-#else
-void Player::PlaybackThread()
-{
-	int result = SetThreadPriority(reinterpret_cast<HANDLE>(m_playback.native_handle()), THREAD_PRIORITY_TIME_CRITICAL);
-
-	Time timestamp = Clock::now();
-	Duration framePeriod{ 1.0 / m_module->GetFrameRate() };
-
-	bool firstFrame = true;
-	while (!m_isPaused && m_output.IsOpened())
-	{
-		Time now = Clock::now();
-		Duration timeSpan = (now - timestamp);
-
-		if (timeSpan >= framePeriod)
-		{
-			timestamp = now;
-
-			const Frame& frame = m_module->GetPlaybackFrame(m_frameId);
-			m_output.OutFrame(frame, firstFrame);
-			firstFrame = false;
-
-			if (!GotoNextFrame())
-			{
-				m_isPlaying = false;
-				break;
-			}
-		}
-		std::this_thread::yield();
-		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	}
-	m_output.OutFrame(Frame(), true);
-}
-#endif
-
-bool Player::GotoNextFrame()
-{
-#if 1
-	m_frameId += m_step;
-	return (int(m_frameId) >= 0 && m_frameId < m_module->GetPlaybackFrameCount());
-#else
-	int step = m_step;
-	if (step > 0)
-	{
-		// move forward
-		if ((m_frameId += step) >= m_module->GetFrameCount())
-		{
-			if (!m_module->HasLoop()) return false;
-			m_frameId = m_module->GetLoopFrameId();
-		}
-	}
-	else if (step < 0)
-	{
-		// move backward
-		int firstId = m_module->HasLoop() ? m_module->GetLoopFrameId() : 0;
-		int frameId = int(m_frameId) + step;
-		
-		if (frameId < firstId)
-		{
-			if (frameId < 0) return false;
-			if (m_frameId >= firstId) 
-				frameId = m_module->GetFrameCount() - 1;
-		}
-		m_frameId = FrameId(frameId);
-	}
-	return true;
-#endif
 }

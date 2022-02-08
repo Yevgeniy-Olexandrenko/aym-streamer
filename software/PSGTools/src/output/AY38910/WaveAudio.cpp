@@ -1,6 +1,6 @@
 #include "WaveAudio.h"
-
 #include <mmsystem.h>
+
 #pragma comment(lib, "winmm.lib")
 
 WaveAudio::WaveAudio(int sampleRate, int frameRate, int sampleChannels, int sampleBytes)
@@ -64,7 +64,7 @@ void WaveAudio::CheckForError(MMRESULT res, const char* msg)
 		wchar_t buf[1024];
 		waveOutGetErrorTextW(res, buf, 1024);
 
-		::printf("%s: %ws (MMRESULT=0x%08X)", msg, buf, res);
+	//	::printf("%s: %ws (MMRESULT=0x%08X)", msg, buf, res);
 	}
 }
 

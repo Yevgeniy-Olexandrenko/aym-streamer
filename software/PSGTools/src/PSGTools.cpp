@@ -11,7 +11,7 @@
 #include "module/Player.h"
 
 const std::string k_folder = "../../chiptunes/Mmmc/selected/";
-const std::string k_file = "Mmcm - YamahAY.pt3";
+const std::string k_file = "Mmcm - Beg!nSum.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -111,40 +111,40 @@ int main()
         player.Play();
         while (player.IsPlaying())
         {
-#if 0
-            
-            bool left  = (GetAsyncKeyState(VK_LEFT ) & 0x1) != 0;
-            bool right = (GetAsyncKeyState(VK_RIGHT) & 0x1) != 0;
-            bool up    = (GetAsyncKeyState(VK_UP   ) & 0x1) != 0;
-            bool down  = (GetAsyncKeyState(VK_DOWN ) & 0x1) != 0;
-#else
-            bool left  = (GetKeyState(VK_LEFT  ) & 0x80) != 0;
-            bool right = (GetKeyState(VK_RIGHT ) & 0x80) != 0;
-            bool up    = (GetKeyState(VK_UP    ) & 0x80) != 0;
-            bool down  = (GetKeyState(VK_DOWN  ) & 0x80) != 0;
-            bool enter = (GetAsyncKeyState(VK_RETURN) & 0x1) != 0;
-#endif
-
-            if (right)
-            {
-                player.Step(+10);
-            }
-            else if (left)
-            {
-                player.Step(-10);
-            }
-            else
-            {
-                player.Step(+1);
-            }
-
-            if (enter)
-            {
-                if (player.IsPaused())
-                    player.Play();
-                else 
-                    player.Stop();
-            }
+//#if 0
+//            
+//            bool left  = (GetAsyncKeyState(VK_LEFT ) & 0x1) != 0;
+//            bool right = (GetAsyncKeyState(VK_RIGHT) & 0x1) != 0;
+//            bool up    = (GetAsyncKeyState(VK_UP   ) & 0x1) != 0;
+//            bool down  = (GetAsyncKeyState(VK_DOWN ) & 0x1) != 0;
+//#else
+//            bool left  = (GetKeyState(VK_LEFT  ) & 0x80) != 0;
+//            bool right = (GetKeyState(VK_RIGHT ) & 0x80) != 0;
+//            bool up    = (GetKeyState(VK_UP    ) & 0x80) != 0;
+//            bool down  = (GetKeyState(VK_DOWN  ) & 0x80) != 0;
+//            bool enter = (GetAsyncKeyState(VK_RETURN) & 0x1) != 0;
+//#endif
+//
+//            if (right)
+//            {
+//                player.Step(+10);
+//            }
+//            else if (left)
+//            {
+//                player.Step(-10);
+//            }
+//            else
+//            {
+//                player.Step(+1);
+//            }
+//
+//            if (enter)
+//            {
+//                if (player.IsPaused())
+//                    player.Play();
+//                else 
+//                    player.Stop();
+//            }
 
             FrameId frameId = player.GetFrameId();
             std::cout << "\r" << "Frame: " << frameId << "     ";

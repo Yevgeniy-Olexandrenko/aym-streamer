@@ -38,27 +38,32 @@ public:
 	void SetFrameRate(FrameRate frameRate);
 	FrameRate GetFrameRate() const;
 
-	// add/get frames
+	// frames
 	void AddFrame(const Frame& frame);
 	const Frame& GetFrame(FrameId id) const;
+	FrameId GetLastFrameId() const;
 	uint32_t GetFrameCount() const;
 	void GetDuration(int& hh, int& mm, int& ss, int& ms) const;
+	void GetDuration(int& hh, int& mm, int& ss) const;
 
 	// loop frame
-	void SetLoopUnavailable();
 	void SetLoopFrameId(FrameId id);
-	FrameId  GetLoopFrameId() const;
+	FrameId GetLoopFrameId() const;
 	uint32_t GetLoopFrameCount() const;
 	bool HasLoop() const;
 
-	// playback
+	// playback frames
 	const Frame& GetPlaybackFrame(FrameId id) const;
+	FrameId GetPlaybackLastFrameId() const;
 	uint32_t GetPlaybackFrameCount() const;
 	void GetPlaybackDuration(int& hh, int& mm, int& ss, int& ms) const;
+	void GetPlaybackDuration(int& hh, int& mm, int& ss) const;
 
 private:
 	void ComputeExtraLoops();
+	void UpdateLoopFrameChanges();
 	void ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int& ms) const;
+	void ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss) const;
 
 private:
 	std::string m_title;

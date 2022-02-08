@@ -9,7 +9,7 @@ class Output;
 
 class Player
 {
-	using Duration = std::chrono::duration<double>;
+	using Duration = std::chrono::duration<int, std::milli>;
 	using Clock = std::chrono::high_resolution_clock;
 	using Time = Clock::time_point;
 

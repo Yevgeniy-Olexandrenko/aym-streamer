@@ -2,9 +2,16 @@
 #include <iomanip>
 #include "Module.h"
 
+namespace
+{
+	const int k_durationMin = 3;
+	const int k_durationSec = 30;
+}
+
 Module::Module()
 	: m_frameRate(0)
 	, m_loopFrameId(0)
+	, m_extraLoops(0)
 {
 }
 
@@ -131,6 +138,13 @@ uint32_t Module::GetFrameCount() const
 	return (uint32_t)m_frames.size();
 }
 
+void Module::GetDuration(int& hh, int& mm, int& ss, int& ms) const
+{
+	ComputeDuration(GetFrameCount(), hh, mm, ss, ms);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void Module::SetLoopUnavailable()
 {
 	SetLoopFrameId(GetFrameCount());
@@ -139,6 +153,7 @@ void Module::SetLoopUnavailable()
 void Module::SetLoopFrameId(FrameId id)
 {
 	m_loopFrameId = id;
+	ComputeExtraLoops();
 }
 
 FrameId Module::GetLoopFrameId() const
@@ -156,12 +171,51 @@ bool Module::HasLoop() const
 	return (GetLoopFrameCount() > 0);
 }
 
-void Module::GetDuration(int& hh, int& mm, int& ss, int& ms) const
+////////////////////////////////////////////////////////////////////////////////
+
+const Frame& Module::GetPlaybackFrame(FrameId id) const
 {
-	int duration = 1000 * GetFrameCount() / GetFrameRate();
+	uint32_t frameCount = GetFrameCount();
+	if (id >= frameCount)
+	{
+		id = GetLoopFrameId() + ((id - frameCount) % GetLoopFrameCount());
+	}
+	return GetFrame(id);
+}
+
+uint32_t Module::GetPlaybackFrameCount() const
+{
+	return GetFrameCount() + m_extraLoops * GetLoopFrameCount();
+}
+
+
+void Module::GetPlaybackDuration(int& hh, int& mm, int& ss, int& ms) const
+{
+	ComputeDuration(GetPlaybackFrameCount(), hh, mm, ss, ms);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Module::ComputeExtraLoops()
+{
+	m_extraLoops = 0;
+	if (HasLoop())
+	{
+		uint32_t frameCount = GetFrameCount();
+		uint32_t maxPlaybackFrames = (k_durationMin * 60 + k_durationSec) * GetFrameRate();
+		if (maxPlaybackFrames > frameCount)
+		{
+			m_extraLoops = (maxPlaybackFrames - frameCount) / GetLoopFrameCount();
+		}
+	}
+}
+
+void Module::ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int& ms) const
+{
+	uint32_t duration = (frameCount * 1000) / GetFrameRate();
 	ms = duration % 1000; duration /= 1000;
-	ss = duration % 60; duration /= 60;
-	mm = duration % 60; duration /= 60;
+	ss = duration % 60;   duration /= 60;
+	mm = duration % 60;   duration /= 60;
 	hh = duration;
 }
 
@@ -177,7 +231,16 @@ std::ostream& operator<<(std::ostream& stream, const Module& module)
 	stream << "Duration....: " << 
 		std::setfill('0') << std::setw(2) << hh << ':' << 
 		std::setfill('0') << std::setw(2) << mm << ':' << 
-		std::setfill('0') << std::setw(2) << ss << std::endl;
+		std::setfill('0') << std::setw(2) << ss << '.' <<
+		std::setfill('0') << std::setw(3) << ms << std::endl;
+
+	module.GetPlaybackDuration(hh, mm, ss, ms);
+	stream << "Duration....: " <<
+		std::setfill('0') << std::setw(2) << hh << ':' <<
+		std::setfill('0') << std::setw(2) << mm << ':' <<
+		std::setfill('0') << std::setw(2) << ss << '.' <<
+		std::setfill('0') << std::setw(3) << ms << std::endl;
+
 	stream << "Frames count: " << module.GetFrameCount() << std::endl;
 	if (module.HasLoop()) stream << "Loop frame..: " << module.GetLoopFrameId() << std::endl;
 	stream << "Frame rate..: " << module.GetFrameRate() << std::endl;

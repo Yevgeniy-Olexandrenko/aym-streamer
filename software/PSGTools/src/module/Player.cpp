@@ -1,3 +1,4 @@
+#include <Windows.h>
 #include "Player.h"
 #include "../output/Output.h"
 
@@ -71,22 +72,53 @@ bool Player::IsPaused() const
 	return m_isPaused;
 }
 
+#if 1
 void Player::PlaybackThread()
 {
+	int result = SetThreadPriority(reinterpret_cast<HANDLE>(m_playback.native_handle()), THREAD_PRIORITY_TIME_CRITICAL);
+
+	Duration framePeriod{ 1000 / m_module->GetFrameRate() };
+	Duration correction{ framePeriod / 4 };
+
+	bool firstFrame = true;
+	while (!m_isPaused && m_output.IsOpened())
+	{
+		auto timestamp = Clock::now() + framePeriod;
+
+		const Frame& frame = m_module->GetPlaybackFrame(m_frameId);
+		m_output.OutFrame(frame, firstFrame);
+		firstFrame = false;
+
+		if (!GotoNextFrame())
+		{
+			m_isPlaying = false;
+			break;
+		}
+
+		std::this_thread::sleep_until(timestamp - correction);
+		while(Clock::now() < timestamp) std::this_thread::yield();
+	}
+	m_output.OutFrame(Frame(), true);
+}
+#else
+void Player::PlaybackThread()
+{
+	int result = SetThreadPriority(reinterpret_cast<HANDLE>(m_playback.native_handle()), THREAD_PRIORITY_TIME_CRITICAL);
+
 	Time timestamp = Clock::now();
-	Duration framePeriod(1.0 / m_module->GetFrameRate());
+	Duration framePeriod{ 1.0 / m_module->GetFrameRate() };
 
 	bool firstFrame = true;
 	while (!m_isPaused && m_output.IsOpened())
 	{
 		Time now = Clock::now();
-		Duration timeSpan = std::chrono::duration_cast<Duration>(now - timestamp);
+		Duration timeSpan = (now - timestamp);
 
 		if (timeSpan >= framePeriod)
 		{
 			timestamp = now;
 
-			const Frame& frame = m_module->GetFrame(m_frameId);
+			const Frame& frame = m_module->GetPlaybackFrame(m_frameId);
 			m_output.OutFrame(frame, firstFrame);
 			firstFrame = false;
 
@@ -97,12 +129,18 @@ void Player::PlaybackThread()
 			}
 		}
 		std::this_thread::yield();
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 	m_output.OutFrame(Frame(), true);
 }
+#endif
 
 bool Player::GotoNextFrame()
 {
+#if 1
+	m_frameId += m_step;
+	return (int(m_frameId) >= 0 && m_frameId < m_module->GetPlaybackFrameCount());
+#else
 	int step = m_step;
 	if (step > 0)
 	{
@@ -128,4 +166,5 @@ bool Player::GotoNextFrame()
 		m_frameId = FrameId(frameId);
 	}
 	return true;
+#endif
 }

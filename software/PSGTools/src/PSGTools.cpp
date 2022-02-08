@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 
 #include "module/Module.h"
 #include "decoders/DecodePT3.h"
@@ -10,7 +11,7 @@
 #include "module/Player.h"
 
 const std::string k_folder = "../../chiptunes/Mmmc/selected/";
-const std::string k_file = "Mmcm - Perseve.pt3";
+const std::string k_file = "Mmcm - YamahAY.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -88,7 +89,7 @@ int main()
 
     Module module;
     DecodeFileToModule(k_folder + k_file, module);
-    SaveModuleDebugOutput(module);
+    //SaveModuleDebugOutput(module);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -106,6 +107,7 @@ int main()
     g_player = &player;
     if (player.Init(module))
     {
+        auto start = std::chrono::steady_clock::now();
         player.Play();
         while (player.IsPlaying())
         {
@@ -145,9 +147,21 @@ int main()
             }
 
             FrameId frameId = player.GetFrameId();
-            std::cout << "Frame: " << frameId << "     \r";
+            std::cout << "\r" << "Frame: " << frameId << "     ";
             Sleep(20);
         }
+
+        uint32_t duration = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+        int ms = duration % 1000; duration /= 1000;
+        int ss = duration % 60;   duration /= 60;
+        int mm = duration % 60;   duration /= 60;
+        int hh = duration;
+
+        std::cout << "Duration: " <<
+            std::setfill('0') << std::setw(2) << hh << ':' <<
+            std::setfill('0') << std::setw(2) << mm << ':' <<
+            std::setfill('0') << std::setw(2) << ss << '.' <<
+            std::setfill('0') << std::setw(3) << ms << std::endl;
     }
     std::cout << "Stop" << std::endl;
 }

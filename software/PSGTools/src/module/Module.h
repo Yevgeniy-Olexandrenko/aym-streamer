@@ -42,6 +42,7 @@ public:
 	void AddFrame(const Frame& frame);
 	const Frame& GetFrame(FrameId id) const;
 	uint32_t GetFrameCount() const;
+	void GetDuration(int& hh, int& mm, int& ss, int& ms) const;
 
 	// loop frame
 	void SetLoopUnavailable();
@@ -50,8 +51,14 @@ public:
 	uint32_t GetLoopFrameCount() const;
 	bool HasLoop() const;
 
-	// duration
-	void GetDuration(int& hh, int& mm, int& ss, int& ms) const;
+	// playback
+	const Frame& GetPlaybackFrame(FrameId id) const;
+	uint32_t GetPlaybackFrameCount() const;
+	void GetPlaybackDuration(int& hh, int& mm, int& ss, int& ms) const;
+
+private:
+	void ComputeExtraLoops();
+	void ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int& ms) const;
 
 private:
 	std::string m_title;
@@ -64,7 +71,8 @@ private:
 		std::string m_ext;
 	} m_file;
 
-	FrameRate  m_frameRate;
-	FrameId    m_loopFrameId;
 	FrameList m_frames;
+	FrameRate m_frameRate;
+	FrameId   m_loopFrameId;
+	int       m_extraLoops;
 };

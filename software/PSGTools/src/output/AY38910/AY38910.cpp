@@ -14,7 +14,7 @@ AY38910::AY38910(const Module& module)
     , WaveAudio(k_sample_rate, 100, 2, 2)
     , m_ay{0}
 {
-    uint32_t clockRate = module.GetClockRateValue(k_clock_rate);
+    uint32_t clockRate = module.GetChipFreqValue(k_clock_rate);
     m_isOpened = ayumi_configure(&m_ay, k_is_ym, clockRate, k_sample_rate);
 }
 

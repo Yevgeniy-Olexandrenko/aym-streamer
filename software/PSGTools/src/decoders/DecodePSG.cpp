@@ -1,23 +1,12 @@
 #include "DecodePSG.h"
 #include "module/Module.h"
 
-struct PSG_Header
-{
-    uint8_t m_psg[3];
-    uint8_t m_1Ah;
-    uint8_t m_ver;
-    uint8_t m_fps;
-    uint8_t m_bin[10];
-};
-
 bool DecodePSG::Open(Module& module)
 {
-    const std::string filePath = module.GetFilePath();
-    m_fileStream.open(filePath, std::fstream::in | std::fstream::binary);
-
+    m_fileStream.open(module.GetFilePath(), std::fstream::binary);
     if (m_fileStream)
     {
-        PSG_Header hdr;
+        PSGHeader hdr;
         m_fileStream.read((char*)(&hdr), sizeof(hdr));
 
         if (m_fileStream && hdr.m_1Ah == 0x1A

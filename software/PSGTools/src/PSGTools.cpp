@@ -7,6 +7,7 @@
 #include <indicators/progress_bar.hpp>
 
 #include "module/Module.h"
+#include "decoders/DecodeVTX.h"
 #include "decoders/DecodePT3.h"
 #include "decoders/DecodePSG.h"
 
@@ -14,8 +15,8 @@
 #include "output/AY38910/AY38910.h"
 #include "module/Player.h"
 
-const std::string k_folder = "../../chiptunes/Mmmc/selected/";
-const std::string k_file = "Mmcm - Iteration.pt3";
+const std::string k_folder = "../../chiptunes/";
+const std::string k_file = "rElaTed_.vtx";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -31,6 +32,7 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 bool DecodeFileToModule(const std::string& filePath, Module& module)
 {
     std::shared_ptr<Decoder> decoders[]{
+        std::shared_ptr<Decoder>(new DecodeVTX()),
         std::shared_ptr<Decoder>(new DecodePT3()),
         std::shared_ptr<Decoder>(new DecodePSG()),
     };

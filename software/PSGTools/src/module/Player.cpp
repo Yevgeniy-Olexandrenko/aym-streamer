@@ -82,11 +82,7 @@ void Player::Play(int playbackStep)
 	if (m_isPaused)
 	{
 		m_isPaused = false;
-		m_playback = std::thread([this] {
-			auto hndl = reinterpret_cast<HANDLE>(m_playback.native_handle());
-			SetThreadPriority(hndl, THREAD_PRIORITY_TIME_CRITICAL);
-			PlaybackThread();
-			});
+		m_playback = std::thread([this] { PlaybackThread(); });
 	}
 }
 
@@ -118,6 +114,9 @@ bool Player::IsPaused() const
 
 void Player::PlaybackThread()
 {
+	auto hndl = reinterpret_cast<HANDLE>(m_playback.native_handle());
+	SetThreadPriority(hndl, THREAD_PRIORITY_TIME_CRITICAL);
+
 	auto framePeriod = 1.0 / m_module->GetFrameRate();
 	bool firstFrame  = true;
 

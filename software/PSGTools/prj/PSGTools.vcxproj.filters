@@ -72,8 +72,8 @@
     <ClInclude Include="..\src\encoders\EncodeWAV.h">
       <Filter>Sources\encoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\commons\ayumi\ayumi.h">
-      <Filter>Sources\output\AY38910</Filter>
+    <ClInclude Include="..\src\decoders\DecodeVTX.h">
+      <Filter>Sources\decoders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -119,8 +119,8 @@
     <ClCompile Include="..\src\encoders\EncodeWAV.cpp">
       <Filter>Sources\encoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\commons\ayumi\ayumi.cpp">
-      <Filter>Sources\output\AY38910</Filter>
+    <ClCompile Include="..\src\decoders\DecodeVTX.cpp">
+      <Filter>Sources\decoders</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

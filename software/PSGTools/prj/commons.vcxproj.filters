@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{d2a7245d-289d-48fd-9387-5ba9060ac7e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\ayumi">
+      <UniqueIdentifier>{dee13561-826a-4f97-8c68-9a20f90f8a7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\lh5_decode">
+      <UniqueIdentifier>{b07c8312-8bc1-4e3c-adb3-d24ca97fa5df}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\commons\ayumi\ayumi.cpp">
+      <Filter>Sources\ayumi</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\commons\ayumi\ayumi.h">
+      <Filter>Sources\ayumi</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

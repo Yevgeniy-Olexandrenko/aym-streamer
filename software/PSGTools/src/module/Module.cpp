@@ -9,7 +9,7 @@ namespace
 }
 
 Module::Module()
-	: m_clockRate(ClockRate::Unknown)
+	: m_chipFreq(ChipFreq::Unknown)
 	, m_frameRate(0)
 	, m_loopFrameId(0)
 	, m_extraLoops(0)
@@ -114,31 +114,73 @@ const std::string& Module::GetType() const
 	return m_type;
 }
 
-void Module::SetClockRate(ClockRate clockRate)
+void Module::SetChipType(ChipType chipType)
 {
-	m_clockRate = clockRate;
+	m_chipType = chipType;
 }
 
-ClockRate Module::GetClockRate() const
+ChipType Module::GetChipType() const
 {
-	return m_clockRate;
+	return m_chipType;
 }
 
-uint32_t Module::GetClockRateValue(uint32_t defaultClockRate) const
+bool Module::HasChipType() const
 {
-	switch (GetClockRate())
+	return (GetChipType() != ChipType::Unknown);
+}
+
+void Module::SetChipFreq(ChipFreq chipFreq)
+{
+	m_chipFreq = chipFreq;
+}
+
+void Module::SetChipFreqValue(uint32_t chipFreqValue)
+{
+	switch (chipFreqValue)
 	{
-	case ClockRate::F1000000: return 1000000;
-	case ClockRate::F1750000: return 1750000;
-	case ClockRate::F1773400: return 1773400;
-	case ClockRate::F2000000: return 2000000;
+	case 1000000: SetChipFreq(ChipFreq::F1000000); break;
+	case 1750000: SetChipFreq(ChipFreq::F1750000); break;
+	case 1773400: SetChipFreq(ChipFreq::F1773400); break;
+	case 2000000: SetChipFreq(ChipFreq::F2000000); break;
+	default: SetChipFreq(ChipFreq::Unknown); break;
+	}
+}
+
+ChipFreq Module::GetChipFreq() const
+{
+	return m_chipFreq;
+}
+
+uint32_t Module::GetChipFreqValue(uint32_t defaultClockRate) const
+{
+	switch (GetChipFreq())
+	{
+	case ChipFreq::F1000000: return 1000000;
+	case ChipFreq::F1750000: return 1750000;
+	case ChipFreq::F1773400: return 1773400;
+	case ChipFreq::F2000000: return 2000000;
 	}
 	return defaultClockRate;
 }
 
-bool Module::HasClockRate() const
+bool Module::HasChipFreq() const
 {
-	return (GetClockRate() != ClockRate::Unknown);
+	return (GetChipFreq() != ChipFreq::Unknown);
+}
+
+void Module::SetChipStereo(ChipStereo chipStereo)
+{
+	m_chipStereo = chipStereo;
+}
+
+ChipStereo Module::GetChipStereo() const
+{
+	return m_chipStereo;
+}
+
+bool Module::HasChipStereo() const
+{
+	return (GetChipStereo() == ChipStereo::Unknown);
 }
 
 void Module::SetFrameRate(FrameRate frameRate)
@@ -300,7 +342,7 @@ std::ostream& operator<<(std::ostream& stream, const Module& module)
 	if (module.HasTitle())stream << "Title.......: " << module.GetTitle() << std::endl;
 	if (module.HasArtist()) stream << "Artist......: " << module.GetArtist() << std::endl;
 	stream << "Type........: " << module.GetType() << std::endl;
-	if (module.HasClockRate()) stream << "Clock rate..: " << module.GetClockRateValue(0) << " Hz" << std::endl;
+	if (module.HasChipFreq()) stream << "Clock rate..: " << module.GetChipFreqValue(0) << " Hz" << std::endl;
 
 	module.GetDuration(hh, mm, ss, ms);
 	stream << "Duration....: " << 

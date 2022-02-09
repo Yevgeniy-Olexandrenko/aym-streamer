@@ -6,9 +6,19 @@
 using FrameId = uint32_t;
 using FrameRate = uint16_t;
 
-enum class ClockRate
+enum class ChipType
+{
+	Unknown, AY, YM
+};
+
+enum class ChipFreq
 {
 	Unknown, F1000000, F1750000, F1773400, F2000000
+};
+
+enum class ChipStereo
+{
+	Unknown, MONO, ABC, ACB
 };
 
 class Module
@@ -39,11 +49,22 @@ public:
 	void SetType(const std::string& type);
 	const std::string& GetType() const;
 
-	// chip clock rate
-	void SetClockRate(ClockRate clockRate);
-	ClockRate GetClockRate() const;
-	uint32_t GetClockRateValue(uint32_t defaultClockRate) const;
-	bool HasClockRate() const;
+	// chip type
+	void SetChipType(ChipType chipType);
+	ChipType GetChipType() const;
+	bool HasChipType() const;
+
+	// chip clock frequency
+	void SetChipFreq(ChipFreq chipFreq);
+	void SetChipFreqValue(uint32_t chipFreqValue);
+	ChipFreq GetChipFreq() const;
+	uint32_t GetChipFreqValue(uint32_t defChipFreq) const;
+	bool HasChipFreq() const;
+
+	// chip stereo mode
+	void SetChipStereo(ChipStereo chipStereo);
+	ChipStereo GetChipStereo() const;
+	bool HasChipStereo() const;
 
 	// frame rate
 	void SetFrameRate(FrameRate frameRate);
@@ -87,7 +108,9 @@ private:
 	std::string m_artist;
 	std::string m_type;
 
-	ClockRate m_clockRate;
+	ChipType m_chipType;
+	ChipFreq m_chipFreq;
+	ChipStereo m_chipStereo;
 
 	FrameList m_frames;
 	FrameRate m_frameRate;

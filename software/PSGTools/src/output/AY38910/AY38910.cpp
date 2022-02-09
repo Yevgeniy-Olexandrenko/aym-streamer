@@ -2,15 +2,20 @@
 #include "AY38910.h"
 #include "module/Module.h"
 
-static const int is_ym = true;
-static const int clock_rate = 1750000;
-static const int sample_rate = 44100;
+namespace
+{
+    const int k_is_ym = true;
+    const int k_clock_rate = 1750000;
+    const int k_sample_rate = 44100;
+}
 
 AY38910::AY38910(const Module& module)
     : Output(module)
-    , WaveAudio(sample_rate, 100, 2, 2)
+    , WaveAudio(k_sample_rate, 100, 2, 2)
     , m_ay{0}
 {
+    uint32_t clockRate = module.GetClockRateValue(k_clock_rate);
+    m_isOpened = ayumi_configure(&m_ay, k_is_ym, clockRate, k_sample_rate);
 }
 
 AY38910::~AY38910()
@@ -20,7 +25,6 @@ AY38910::~AY38910()
 
 void AY38910::Open()
 {
-    m_isOpened = ayumi_configure(&m_ay, is_ym, clock_rate, sample_rate);
     if (m_isOpened)
     {
         ayumi_set_pan(&m_ay, 0, 0.1, false);

@@ -1,6 +1,10 @@
-#include <iostream>
+﻿#include <iostream>
 #include <iomanip>
 #include <chrono>
+
+#include <indicators/cursor_control.hpp>
+#include <indicators/termcolor.hpp>
+#include <indicators/progress_bar.hpp>
 
 #include "module/Module.h"
 #include "decoders/DecodePT3.h"
@@ -11,7 +15,7 @@
 #include "module/Player.h"
 
 const std::string k_folder = "../../chiptunes/Mmmc/selected/";
-const std::string k_file = "Mmcm - Beg!nSum.pt3";
+const std::string k_file = "Mmcm - Iteration.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -93,22 +97,42 @@ int main()
 
     ////////////////////////////////////////////////////////////////////////////
 
-    //AYMStreamer output(module, k_comPortIndex);
+    indicators::show_console_cursor(false);
+    size_t w = indicators::terminal_width() - 1;
+
+#if 0
+    AYMStreamer output(module, k_comPortIndex);
+#else
     AY38910 output(module);
+#endif
     Player player(output);
 
-    std::cout << std::setfill('-') << std::setw(48) << '-' << std::endl;
-    std::cout << "PSG Tools v1.0" << std::endl;
-    std::cout << "by Yevgeniy Olexandrenko" << std::endl;
-    std::cout << std::setfill('-') << std::setw(48) << '-' << std::endl;
+    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
+    std::cout << termcolor::bright_red << "PSG Tools v1.0" << termcolor::reset << std::endl;
+    std::cout << termcolor::bright_red << "by Yevgeniy Olexandrenko" << termcolor::reset << std::endl;
+    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
     std::cout << module;
-    std::cout << std::setfill('-') << std::setw(48) << '-' << std::endl;
+    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
+
+    indicators::ProgressBar bar{
+        indicators::option::BarWidth{50},
+        indicators::option::Start{"["},
+        indicators::option::Fill{"|"},
+        indicators::option::Lead{"|"},
+        indicators::option::Remainder{"-"},
+        indicators::option::End{"]"},
+    //    indicators::option::PostfixText{"Loading dependency 1/4"},
+    //    indicators::option::ForegroundColor{indicators::Color::cyan},
+        indicators::option::FontStyles{std::vector<indicators::FontStyle>{indicators::FontStyle::bold}}
+    };
 
     g_player = &player;
     if (player.Init(module))
     {
+        FrameId oldFrame = -1;
         auto start = std::chrono::steady_clock::now();
         player.Play();
+
         while (player.IsPlaying())
         {
 //#if 0
@@ -146,9 +170,13 @@ int main()
 //                    player.Stop();
 //            }
 
-            FrameId frameId = player.GetFrameId();
-            std::cout << "\r" << "Frame: " << frameId << "     ";
-            Sleep(20);
+            FrameId newFrame = player.GetFrameId();
+            if (newFrame != oldFrame)
+            {
+                oldFrame = newFrame;
+                bar.set_progress(newFrame * 100 / module.GetPlaybackFrameCount());
+            }
+            Sleep(1000);
         }
 
         uint32_t duration = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
@@ -157,11 +185,13 @@ int main()
         int mm = duration % 60;   duration /= 60;
         int hh = duration;
 
+        std::cout << std::endl;
         std::cout << "Duration: " <<
             std::setfill('0') << std::setw(2) << hh << ':' <<
             std::setfill('0') << std::setw(2) << mm << ':' <<
             std::setfill('0') << std::setw(2) << ss << '.' <<
             std::setfill('0') << std::setw(3) << ms << std::endl;
     }
-    std::cout << "Stop" << std::endl;
+    
+    indicators::show_console_cursor(true);
 }

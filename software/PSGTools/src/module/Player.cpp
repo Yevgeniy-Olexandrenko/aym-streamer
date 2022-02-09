@@ -6,11 +6,10 @@
 
 double GetTime()
 {
-	LARGE_INTEGER frequency;
+	LARGE_INTEGER counter, frequency;
+	QueryPerformanceCounter(&counter);
 	QueryPerformanceFrequency(&frequency);
-	LARGE_INTEGER time;
-	QueryPerformanceCounter(&time);
-	return time.QuadPart / double(frequency.QuadPart);
+	return counter.QuadPart / double(frequency.QuadPart);
 }
 
 void WaitFor(const double period)
@@ -124,6 +123,8 @@ void Player::PlaybackThread()
 
 	while (!m_isPaused && m_output.IsOpened())
 	{
+		double payload = GetTime();
+
 		// play current frame
 		const Frame& frame = m_module->GetPlaybackFrame(m_frameId);
 		m_output.OutFrame(frame, firstFrame);
@@ -138,7 +139,8 @@ void Player::PlaybackThread()
 		}
 
 		// next frame timestamp waiting
-		WaitFor(framePeriod);
+		payload = GetTime() - payload;
+		WaitFor(framePeriod - payload);
 	}
 
 	// silence output when job is done

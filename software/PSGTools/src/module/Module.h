@@ -6,6 +6,11 @@
 using FrameId = uint32_t;
 using FrameRate = uint16_t;
 
+enum class ClockRate
+{
+	Unknown, F1000000, F1750000, F1773400, F2000000
+};
+
 class Module
 {
 	using FrameList = std::vector<Frame>;
@@ -33,6 +38,12 @@ public:
 	// input file type
 	void SetType(const std::string& type);
 	const std::string& GetType() const;
+
+	// chip clock rate
+	void SetClockRate(ClockRate clockRate);
+	ClockRate GetClockRate() const;
+	uint32_t GetClockRateValue(uint32_t defaultClockRate) const;
+	bool HasClockRate() const;
 
 	// frame rate
 	void SetFrameRate(FrameRate frameRate);
@@ -66,15 +77,17 @@ private:
 	void ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss) const;
 
 private:
-	std::string m_title;
-	std::string m_artist;
-	std::string m_type;
-
 	struct {
 		std::string m_folder;
 		std::string m_name;
 		std::string m_ext;
 	} m_file;
+
+	std::string m_title;
+	std::string m_artist;
+	std::string m_type;
+
+	ClockRate m_clockRate;
 
 	FrameList m_frames;
 	FrameRate m_frameRate;

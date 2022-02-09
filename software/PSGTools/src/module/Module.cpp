@@ -9,7 +9,8 @@ namespace
 }
 
 Module::Module()
-	: m_frameRate(0)
+	: m_clockRate(ClockRate::Unknown)
+	, m_frameRate(0)
 	, m_loopFrameId(0)
 	, m_extraLoops(0)
 {
@@ -111,6 +112,33 @@ void Module::SetType(const std::string& type)
 const std::string& Module::GetType() const
 {
 	return m_type;
+}
+
+void Module::SetClockRate(ClockRate clockRate)
+{
+	m_clockRate = clockRate;
+}
+
+ClockRate Module::GetClockRate() const
+{
+	return m_clockRate;
+}
+
+uint32_t Module::GetClockRateValue(uint32_t defaultClockRate) const
+{
+	switch (GetClockRate())
+	{
+	case ClockRate::F1000000: return 1000000;
+	case ClockRate::F1750000: return 1750000;
+	case ClockRate::F1773400: return 1773400;
+	case ClockRate::F2000000: return 2000000;
+	}
+	return defaultClockRate;
+}
+
+bool Module::HasClockRate() const
+{
+	return (GetClockRate() != ClockRate::Unknown);
 }
 
 void Module::SetFrameRate(FrameRate frameRate)
@@ -272,18 +300,15 @@ std::ostream& operator<<(std::ostream& stream, const Module& module)
 	if (module.HasTitle())stream << "Title.......: " << module.GetTitle() << std::endl;
 	if (module.HasArtist()) stream << "Artist......: " << module.GetArtist() << std::endl;
 	stream << "Type........: " << module.GetType() << std::endl;
+	if (module.HasClockRate()) stream << "Clock rate..: " << module.GetClockRateValue(0) << " Hz" << std::endl;
 
-	module.GetDuration(hh, mm, ss);
-	//stream << "Duration....: " << 
-	//	std::setfill('0') << std::setw(2) << hh << ':' << 
-	//	std::setfill('0') << std::setw(2) << mm << ':' << 
-	//	std::setfill('0') << std::setw(2) << ss << '.' <<
-	//	std::setfill('0') << std::setw(3) << ms << std::endl;
-	stream << "Duration....: " <<
-		std::setfill('0') << std::setw(2) << hh << ':' <<
-		std::setfill('0') << std::setw(2) << mm << ':' <<
-		std::setfill('0') << std::setw(2) << ss << std::endl;
-
+	module.GetDuration(hh, mm, ss, ms);
+	stream << "Duration....: " << 
+		std::setfill('0') << std::setw(2) << hh << ':' << 
+		std::setfill('0') << std::setw(2) << mm << ':' << 
+		std::setfill('0') << std::setw(2) << ss << '.' <<
+		std::setfill('0') << std::setw(3) << ms << std::endl;
+	
 	module.GetPlaybackDuration(hh, mm, ss, ms);
 	stream << "Duration....: " <<
 		std::setfill('0') << std::setw(2) << hh << ':' <<

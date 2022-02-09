@@ -1,8 +1,8 @@
 #pragma once
 
+#include <ayumi/ayumi.h>
 #include "output/Output.h"
 #include "WaveAudio.h"
-#include "commons/ayumi/ayumi.h"
 
 class AY38910 : public Output, public WaveAudio
 {

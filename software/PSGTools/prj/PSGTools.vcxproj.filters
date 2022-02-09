@@ -22,12 +22,6 @@
     <Filter Include="Sources\output\AY38910">
       <UniqueIdentifier>{8d4f9387-bbb9-4ae9-a9bb-e751abd8e619}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\commons">
-      <UniqueIdentifier>{ac2b2bdb-13d0-4ed2-ab2b-03b314d9d931}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Sources\commons\ayumi">
-      <UniqueIdentifier>{b5d005d8-ffda-45fb-b0e9-d863a1fd288b}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\encoders\EncodePSG.h">
@@ -72,14 +66,14 @@
     <ClInclude Include="..\src\output\AY38910\WaveAudio.h">
       <Filter>Sources\output\AY38910</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\commons\ayumi\ayumi.h">
-      <Filter>Sources\commons\ayumi</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\encoders\EncodeTXT.h">
       <Filter>Sources\encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\encoders\EncodeWAV.h">
       <Filter>Sources\encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\commons\ayumi\ayumi.h">
+      <Filter>Sources\output\AY38910</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -119,14 +113,14 @@
     <ClCompile Include="..\src\output\AY38910\WaveAudio.cpp">
       <Filter>Sources\output\AY38910</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\commons\ayumi\ayumi.cpp">
-      <Filter>Sources\commons\ayumi</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\encoders\EncodeTXT.cpp">
       <Filter>Sources\encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\encoders\EncodeWAV.cpp">
       <Filter>Sources\encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\commons\ayumi\ayumi.cpp">
+      <Filter>Sources\output\AY38910</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

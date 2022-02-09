@@ -162,6 +162,15 @@ bool DecodePT3::Open(Module& module)
             module.SetTitle(GetTextProperty(0x1E, 32));
             module.SetArtist(GetTextProperty(0x42, 32));
             module.SetFrameRate(50);
+
+            if (chip[0].header->TonTableId == 1)
+            {
+                module.SetClockRate(ClockRate::F1773400);
+            }
+            else if (chip[0].header->TonTableId == 2 && version > 3)
+            {
+                module.SetClockRate(ClockRate::F1750000);
+            }
         }
         fileStream.close();
     }

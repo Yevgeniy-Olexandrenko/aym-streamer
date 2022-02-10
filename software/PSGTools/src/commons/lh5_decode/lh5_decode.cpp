@@ -45,7 +45,7 @@ static unsigned short c_table[4096], pt_table[256];
 static int j;  /* remaining bytes to copy */
 
 
-static void error(char *msg)
+static void error(const char *msg)
 {
   fprintf(stderr, "libayemu: lh5dec.c: %s\n", msg);
   exit(EXIT_FAILURE);
@@ -266,7 +266,7 @@ static void decode(unsigned short count, unsigned char buffer[])
   }
 }
 
-void lh5_decode(const unsigned char *inp, unsigned char *outp, unsigned long original_size, unsigned long packed_size)
+bool lh5_decode(unsigned char *inp, unsigned char *outp, unsigned long original_size, unsigned long packed_size)
 {
   unsigned short n;
   unsigned char *buffer;
@@ -301,4 +301,7 @@ void lh5_decode(const unsigned char *inp, unsigned char *outp, unsigned long ori
 
   if (buffer) free (buffer);
   buffer = NULL;
+
+  // TODO:
+  return true;
 }

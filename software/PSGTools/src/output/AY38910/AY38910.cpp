@@ -4,7 +4,7 @@
 
 namespace
 {
-    const int k_is_ym = true;
+    const int k_is_ym = 0;
     const int k_clock_rate = 1750000;
     const int k_sample_rate = 44100;
 }
@@ -15,7 +15,32 @@ AY38910::AY38910(const Module& module)
     , m_ay{0}
 {
     uint32_t clockRate = module.GetChipFreqValue(k_clock_rate);
-    m_isOpened = ayumi_configure(&m_ay, k_is_ym, clockRate, k_sample_rate);
+    int isYM = module.HasChipType() ? (module.GetChipType() == ChipType::YM) : k_is_ym;
+
+    m_isOpened = ayumi_configure(&m_ay, isYM, clockRate, k_sample_rate);
+    if (m_isOpened)
+    {
+        switch (module.GetChipStereo())
+        {
+        case ChipStereo::MONO:
+            ayumi_set_pan(&m_ay, 0, 0.5, true);
+            ayumi_set_pan(&m_ay, 1, 0.5, true);
+            ayumi_set_pan(&m_ay, 2, 0.5, true);
+            break;
+
+        case ChipStereo::ACB:
+            ayumi_set_pan(&m_ay, 0, 0.1, true);
+            ayumi_set_pan(&m_ay, 1, 0.9, true);
+            ayumi_set_pan(&m_ay, 2, 0.5, true);
+            break;
+
+        default: // ABC
+            ayumi_set_pan(&m_ay, 0, 0.1, true);
+            ayumi_set_pan(&m_ay, 1, 0.5, true);
+            ayumi_set_pan(&m_ay, 2, 0.9, true);
+            break;
+        }
+    }
 }
 
 AY38910::~AY38910()
@@ -27,10 +52,6 @@ void AY38910::Open()
 {
     if (m_isOpened)
     {
-        ayumi_set_pan(&m_ay, 0, 0.1, false);
-        ayumi_set_pan(&m_ay, 1, 0.5, false);
-        ayumi_set_pan(&m_ay, 2, 0.9, false);
-
         WaveAudio::Start();
         if (m_isOpened &= m_working)
         {
@@ -89,7 +110,10 @@ void AY38910::FillBuffer(unsigned char* buffer, unsigned long size)
         ayumi_process(&m_ay);
         ayumi_remove_dc(&m_ay);
 
-        sampbuf[i++] = (int16_t)(INT16_MAX * m_ay.left);
-        sampbuf[i++] = (int16_t)(INT16_MAX * m_ay.right);
+        double L = m_ay.left  > +1.0 ? +1.0 : (m_ay.left  < -1.0 ? -1.0 : m_ay.left );
+        double R = m_ay.right > +1.0 ? +1.0 : (m_ay.right < -1.0 ? -1.0 : m_ay.right);
+        
+        sampbuf[i++] = (int16_t)(INT16_MAX * L + 0.5);
+        sampbuf[i++] = (int16_t)(INT16_MAX * R + 0.5);
     }
 }

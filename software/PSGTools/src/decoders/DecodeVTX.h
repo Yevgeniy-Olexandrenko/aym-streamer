@@ -8,13 +8,13 @@ class DecodeVTX : public Decoder
 	#pragma pack(push, 1)
 	struct VTXHeader
 	{
-		uint16_t signature;
-		uint8_t  stereo;
-		uint16_t loop;
-		uint32_t chipFreq;
-		uint8_t  frameFreq;
-		uint16_t year;
-		uint32_t dataSize;
+		uint16_t signature; //
+		uint8_t  stereo;    //
+		uint16_t loop;      //
+		uint32_t chipFreq;  //
+		uint8_t  frameFreq; //
+		uint16_t year;      // store in extras
+		uint32_t dataSize;  //
 	};
 	#pragma pack(pop)
 
@@ -38,5 +38,8 @@ private:
 	//
 
 private:
-	FrameId m_loopFrameId;
+	uint8_t* m_data;
+	FrameId  m_loopFrame;
+	FrameId  m_nextFrame;
+	uint32_t m_frameCount;
 };

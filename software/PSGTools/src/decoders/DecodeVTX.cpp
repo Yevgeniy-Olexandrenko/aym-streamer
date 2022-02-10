@@ -1,5 +1,6 @@
 #include <string>
 #include <fstream>
+#include <lh5_decode/lh5_decode.h>
 #include "DecodeVTX.h"
 
 namespace
@@ -12,6 +13,7 @@ namespace
 
 bool DecodeVTX::Open(Module& module)
 {
+	bool isDetected = false;
 	std::ifstream fileStream;
 	fileStream.open(module.GetFilePath(), std::fstream::binary);
 
@@ -35,12 +37,11 @@ bool DecodeVTX::Open(Module& module)
 				module.SetChipType(chipType);
 
 				if (hdr.stereo == VTXStereo::MONO) module.SetChipStereo(ChipStereo::MONO);
-				if (hdr.stereo == VTXStereo::ABC ) module.SetChipStereo(ChipStereo::ABC );
-				if (hdr.stereo == VTXStereo::ACB ) module.SetChipStereo(ChipStereo::ACB );
+				if (hdr.stereo == VTXStereo::ABC) module.SetChipStereo(ChipStereo::ABC);
+				if (hdr.stereo == VTXStereo::ACB) module.SetChipStereo(ChipStereo::ACB);
 
 				module.SetChipFreqValue(hdr.chipFreq);
 				module.SetFrameRate(hdr.frameFreq);
-				m_loopFrameId = hdr.loop;
 
 				auto GetTextProperty = [](std::ifstream& stream)
 				{
@@ -49,35 +50,71 @@ bool DecodeVTX::Open(Module& module)
 					return str;
 				};
 
-				std::string title   = GetTextProperty(fileStream);
-				std::string author  = GetTextProperty(fileStream);
-				std::string program = GetTextProperty(fileStream);
-				std::string tracker = GetTextProperty(fileStream);
-				std::string comment = GetTextProperty(fileStream);
+				// read all properties to move forward on stream
+				std::string title = GetTextProperty(fileStream);
+				std::string author = GetTextProperty(fileStream);
+				std::string program = GetTextProperty(fileStream); // store in extras
+				std::string tracker = GetTextProperty(fileStream); // store in extras
+				std::string comment = GetTextProperty(fileStream); // store in extras
 
 				module.SetTitle(title);
 				module.SetArtist(author);
 				module.SetType("VTX stream");
 
+				// unpack frames data
 				uint32_t packedSize = fileSize - (uint32_t)fileStream.tellg();
 				uint8_t* packedData = new uint8_t[packedSize];
+
 				if (fileStream.read((char*)packedData, packedSize))
 				{
 					uint32_t depackedSize = hdr.dataSize;
+					m_data = new uint8_t[depackedSize];
+
+					if (lh5_decode(packedData, m_data, depackedSize, packedSize)) 
+						isDetected = true;
+					else 
+						delete[] m_data;
 				}
+				delete[] packedData;
+
+				// prepare information on frames
+				m_frameCount = (hdr.dataSize / 14);
+				m_loopFrame  = hdr.loop;
+				m_nextFrame  = 0;
 			}
 		}
 		fileStream.close();
 	}
-
-	return false;
+	return isDetected;
 }
 
 bool DecodeVTX::Decode(Frame& frame)
 {
-	return false;
+	uint8_t* dataPtr = m_data + m_nextFrame;
+	m_nextFrame++;
+
+	for (uint8_t r = 0; r < 14; r++)
+	{
+		uint8_t data = *dataPtr;
+		if (r == Env_Shape)
+		{
+			if (data != 0xFF) 
+				frame[r].OverrideData(data);
+		}
+		else
+		{
+			frame[r].UpdateData(data);
+		}
+		dataPtr += m_frameCount;
+	}
+
+	return (m_nextFrame < m_frameCount);
 }
 
 void DecodeVTX::Close(Module& module)
 {
+	if (m_loopFrame > 0)
+		module.SetLoopFrameId(m_loopFrame);
+
+	delete[] m_data;
 }

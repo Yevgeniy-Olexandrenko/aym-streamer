@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\commons\ayumi\ayumi.cpp" />
+    <ClCompile Include="..\src\commons\lh5_decode\lh5_decode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\commons\ayumi\ayumi.h" />
+    <ClInclude Include="..\src\commons\lh5_decode\lh5_decode.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

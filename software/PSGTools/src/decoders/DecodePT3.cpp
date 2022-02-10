@@ -182,18 +182,17 @@ bool DecodePT3::Decode(Frame& frame)
     // stop decoding on new loop
     if (Step()) return false;
 
-    for (uint8_t i = 0; i < 16; ++i)
+    for (uint8_t r = 0; r < 16; ++r)
     {
-        Register& reg = frame[i];
-        uint8_t reg_d = regs[0][i];
-
-        if (i == Env_Shape)
+        uint8_t data = regs[0][r];
+        if (r == Env_Shape)
         {
-            if (reg_d != 0xFF) reg.OverrideData(reg_d);
+            if (data != 0xFF) 
+                frame[r].OverrideData(data);
         }
         else
         {
-            reg.UpdateData(reg_d);
+            frame[r].UpdateData(data);
         }
     }
     return true;

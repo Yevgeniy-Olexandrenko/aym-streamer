@@ -4,8 +4,9 @@
 
 namespace
 {
-	const int k_durationMin = 3;
-	const int k_durationSec = 30;
+	const int k_prefDurationMM = 3;
+	const int k_prefDurationSS = 30;
+	const int k_maxExtraLoops  = 4;
 }
 
 Module::Module()
@@ -114,6 +115,8 @@ const std::string& Module::GetType() const
 	return m_type;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 void Module::SetChipType(ChipType chipType)
 {
 	m_chipType = chipType;
@@ -180,7 +183,7 @@ ChipStereo Module::GetChipStereo() const
 
 bool Module::HasChipStereo() const
 {
-	return (GetChipStereo() == ChipStereo::Unknown);
+	return (GetChipStereo() != ChipStereo::Unknown);
 }
 
 void Module::SetFrameRate(FrameRate frameRate)
@@ -192,6 +195,8 @@ FrameRate Module::GetFrameRate() const
 {
 	return m_frameRate;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 void Module::AddFrame(const Frame& frame)
 {
@@ -245,7 +250,7 @@ uint32_t Module::GetLoopFrameCount() const
 
 bool Module::HasLoop() const
 {
-	return (GetLoopFrameCount() > 0);
+	return (GetLoopFrameCount() > GetFrameCount() / 2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -288,10 +293,11 @@ void Module::ComputeExtraLoops()
 	if (HasLoop())
 	{
 		uint32_t frameCount = GetFrameCount();
-		uint32_t maxPlaybackFrames = (k_durationMin * 60 + k_durationSec) * GetFrameRate();
+		uint32_t maxPlaybackFrames = (k_prefDurationMM * 60 + k_prefDurationSS) * GetFrameRate();
 		if (maxPlaybackFrames > frameCount)
 		{
 			m_extraLoops = (maxPlaybackFrames - frameCount) / GetLoopFrameCount();
+			m_extraLoops = std::min(m_extraLoops, k_maxExtraLoops);
 		}
 	}
 }
@@ -337,12 +343,30 @@ std::ostream& operator<<(std::ostream& stream, const Module& module)
 {
 	int hh, mm, ss, ms;
 	
-
 	stream << "File........: " << module.GetFileName() << std::endl;
-	if (module.HasTitle())stream << "Title.......: " << module.GetTitle() << std::endl;
-	if (module.HasArtist()) stream << "Artist......: " << module.GetArtist() << std::endl;
+	if (module.HasTitle())
+		stream << "Title.......: " << module.GetTitle() << std::endl;
+	if (module.HasArtist()) 
+		stream << "Artist......: " << module.GetArtist() << std::endl;
 	stream << "Type........: " << module.GetType() << std::endl;
-	if (module.HasChipFreq()) stream << "Clock rate..: " << module.GetChipFreqValue(0) << " Hz" << std::endl;
+	if (module.HasChipType())
+	{
+		stream << "Chip type...: ";
+		if (module.GetChipType() == ChipType::AY) stream << "AY-3-8910(12)";
+		if (module.GetChipType() == ChipType::YM) stream << "YM2149F";
+		stream << std::endl;
+	}
+	if (module.HasChipFreq()) 
+		stream << "Chip freq...: " << module.GetChipFreqValue(0) << " Hz" << std::endl;
+
+	if (module.HasChipStereo())
+	{
+		stream << "Chip stereo.: ";
+		if (module.GetChipStereo() == ChipStereo::MONO) stream << "MONO";
+		if (module.GetChipStereo() == ChipStereo::ABC ) stream << "ABC";
+		if (module.GetChipStereo() == ChipStereo::ACB ) stream << "ACB";
+		stream << std::endl;
+	}
 
 	module.GetDuration(hh, mm, ss, ms);
 	stream << "Duration....: " << 
@@ -359,7 +383,8 @@ std::ostream& operator<<(std::ostream& stream, const Module& module)
 		std::setfill('0') << std::setw(3) << ms << std::endl;
 
 	stream << "Frames count: " << module.GetFrameCount() << std::endl;
-	if (module.HasLoop()) stream << "Loop frame..: " << module.GetLoopFrameId() << std::endl;
+	if (module.HasLoop()) 
+		stream << "Loop frame..: " << module.GetLoopFrameId() << std::endl;
 	stream << "Frame rate..: " << module.GetFrameRate() << std::endl;
 	return stream;
 }

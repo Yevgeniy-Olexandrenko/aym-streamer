@@ -75,6 +75,9 @@
     <ClInclude Include="..\src\decoders\DecodeVTX.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\output\SoundChip.h">
+      <Filter>Sources\output</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">

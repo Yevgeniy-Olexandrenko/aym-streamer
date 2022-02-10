@@ -36,6 +36,7 @@
     <ClInclude Include="..\src\output\AYMStreamer\AYMStreamer.h" />
     <ClInclude Include="..\src\output\AYMStreamer\SerialPort.h" />
     <ClInclude Include="..\src\output\Output.h" />
+    <ClInclude Include="..\src\output\SoundChip.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\decoders\DecodePSG.cpp" />

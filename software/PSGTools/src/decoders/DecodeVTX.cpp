@@ -15,7 +15,7 @@ bool DecodeVTX::Open(Module& module)
 {
 	bool isDetected = false;
 	std::ifstream fileStream;
-	fileStream.open(module.GetFilePath(), std::fstream::binary);
+	fileStream.open(module.file.pathNameExt(), std::fstream::binary);
 
 	if (fileStream)
 	{
@@ -34,14 +34,14 @@ bool DecodeVTX::Open(Module& module)
 
 			if (chipType != ChipType::Unknown)
 			{
-				module.SetChipType(chipType);
+				module.chip.type(chipType);
 
-				if (hdr.stereo == VTXStereo::MONO) module.SetChipStereo(ChipStereo::MONO);
-				if (hdr.stereo == VTXStereo::ABC) module.SetChipStereo(ChipStereo::ABC);
-				if (hdr.stereo == VTXStereo::ACB) module.SetChipStereo(ChipStereo::ACB);
+				if (hdr.stereo == VTXStereo::MONO) module.chip.stereo(ChipStereo::MONO);
+				if (hdr.stereo == VTXStereo::ABC) module.chip.stereo(ChipStereo::ABC);
+				if (hdr.stereo == VTXStereo::ACB) module.chip.stereo(ChipStereo::ACB);
 
-				module.SetChipFreqValue(hdr.chipFreq);
-				module.SetFrameRate(hdr.frameFreq);
+				module.chip.freqValue(hdr.chipFreq);
+				module.playback.frameRate(hdr.frameFreq);
 
 				auto GetTextProperty = [](std::ifstream& stream)
 				{
@@ -57,9 +57,9 @@ bool DecodeVTX::Open(Module& module)
 				std::string tracker = GetTextProperty(fileStream); // store in extras
 				std::string comment = GetTextProperty(fileStream); // store in extras
 
-				module.SetTitle(title);
-				module.SetArtist(author);
-				module.SetType("VTX stream");
+				module.info.title(title);
+				module.info.artist(author);
+				module.info.type("VTX stream");
 
 				// unpack frames data
 				uint32_t packedSize = fileSize - (uint32_t)fileStream.tellg();
@@ -114,7 +114,7 @@ bool DecodeVTX::Decode(Frame& frame)
 void DecodeVTX::Close(Module& module)
 {
 	if (m_loopFrame > 0)
-		module.SetLoopFrameId(m_loopFrame);
+		module.loop.frameId(m_loopFrame);
 
 	delete[] m_data;
 }

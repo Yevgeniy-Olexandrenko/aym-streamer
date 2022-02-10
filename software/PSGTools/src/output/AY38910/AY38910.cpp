@@ -14,13 +14,13 @@ AY38910::AY38910(const Module& module)
     , WaveAudio(k_sample_rate, 100, 2, 2)
     , m_ay{0}
 {
-    uint32_t clockRate = module.GetChipFreqValue(k_clock_rate);
-    int isYM = module.HasChipType() ? (module.GetChipType() == ChipType::YM) : k_is_ym;
+    uint32_t clockRate = module.chip.freqValue(k_clock_rate);
+    int isYM = module.chip.typeKnown() ? (module.chip.type() == ChipType::YM) : k_is_ym;
 
     m_isOpened = ayumi_configure(&m_ay, isYM, clockRate, k_sample_rate);
     if (m_isOpened)
     {
-        switch (module.GetChipStereo())
+        switch (module.chip.stereo())
         {
         case ChipStereo::MONO:
             ayumi_set_pan(&m_ay, 0, 0.5, true);

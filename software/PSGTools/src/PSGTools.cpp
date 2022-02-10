@@ -16,7 +16,7 @@
 #include "module/Player.h"
 
 const std::string k_folder = "D:\\projects\\github\\aym-streamer\\chiptunes\\Power Blade\\";
-const std::string k_file = "finalcut.pt3";
+const std::string k_file = "2-2.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -37,7 +37,7 @@ bool DecodeFileToModule(const std::string& filePath, Module& module)
         std::shared_ptr<Decoder>(new DecodePSG()),
     };
 
-    module.SetFilePath(filePath);
+    module.file.pathNameExt(filePath);
     for (std::shared_ptr<Decoder> decoder : decoders)
     {
         if (decoder->Open(module))
@@ -46,7 +46,7 @@ bool DecodeFileToModule(const std::string& filePath, Module& module)
             while (decoder->Decode(frame))
             {
                 frame.FixValues();
-                module.AddFrame(frame);
+                module.frames.add(frame);
                 frame.SetUnchanged();
             }
 
@@ -77,11 +77,11 @@ void SaveModuleDebugOutput(const Module& module)
         file << "frame  [ r7|r1r0 r8|r3r2 r9|r5r4 rA|rCrB rD|r6 ]" << std::endl;
         delimiter();
 
-        for (FrameId i = 0; i < module.GetFrameCount(); ++i)
+        for (FrameId i = 0; i < module.frames.count(); ++i)
         {
-            if (i && module.HasLoop() && i == module.GetLoopFrameId()) delimiter();
+            if (i && module.loop.available() && i == module.loop.frameId()) delimiter();
             file << std::setfill('0') << std::setw(5) << i;
-            file << "  [ " << module.GetFrame(i) << " ]" << std::endl;
+            file << "  [ " << module.frames.get(i) << " ]" << std::endl;
             
         }
         delimiter();
@@ -179,7 +179,7 @@ int main()
             if (newFrame != oldFrame)
             {
                 oldFrame = newFrame;
-                bar.set_progress(newFrame * 100 / module.GetPlaybackFrameCount());
+                bar.set_progress(newFrame * 100 / module.playback.framesCount());
             }
             Sleep(200);
         }

@@ -62,7 +62,7 @@ bool Player::Init(const Module& module)
 	Stop();
 	m_isPlaying = false;
 
-	if (m_output.IsOpened() && module.GetFrameCount() > 0)
+	if (m_output.IsOpened() && module.frames.available())
 	{
 		m_module = &module;
 		m_isPlaying = true;
@@ -117,7 +117,7 @@ void Player::PlaybackThread()
 	auto hndl = reinterpret_cast<HANDLE>(m_playback.native_handle());
 	SetThreadPriority(hndl, THREAD_PRIORITY_TIME_CRITICAL);
 
-	auto framePeriod = 1.0 / m_module->GetFrameRate();
+	auto framePeriod = 1.0 / m_module->playback.frameRate();
 	bool firstFrame  = true;
 
 	while (!m_isPaused && m_output.IsOpened())
@@ -125,13 +125,13 @@ void Player::PlaybackThread()
 		double payload = GetTime();
 
 		// play current frame
-		const Frame& frame = m_module->GetPlaybackFrame(m_frameId);
+		const Frame& frame = m_module->frames.get(m_frameId);
 		m_output.OutFrame(frame, firstFrame);
 		firstFrame = false;
 
 		// go to next frame
 		m_frameId += m_playbackStep;
-		if (int(m_frameId) < 0 || m_frameId > m_module->GetPlaybackLastFrameId())
+		if (int(m_frameId) < 0 || m_frameId > m_module->playback.lastFrameId())
 		{
 			m_isPlaying = false;
 			break;

@@ -119,7 +119,7 @@ bool DecodePT3::Open(Module& module)
 {
     bool isDetected = false;
     std::ifstream fileStream;
-    fileStream.open(module.GetFilePath(), std::fstream::binary);
+    fileStream.open(module.file.pathNameExt(), std::fstream::binary);
 
     if (fileStream)
     {
@@ -158,19 +158,21 @@ bool DecodePT3::Open(Module& module)
                 return std::string(buf);
             };
 
-            module.SetType(GetTextProperty(0x00, isVT ? 21 : 14) + " module");
-            module.SetTitle(GetTextProperty(0x1E, 32));
-            module.SetArtist(GetTextProperty(0x42, 32));
-            module.SetFrameRate(50);
+            module.info.type(GetTextProperty(0x00, isVT ? 21 : 14) + " module");
+            module.info.title(GetTextProperty(0x1E, 32));
+            module.info.artist(GetTextProperty(0x42, 32));
+            module.playback.frameRate(50);
 
             if (chip[0].header->TonTableId == 1)
             {
-                module.SetChipFreq(ChipFreq::F1773400);
+                module.chip.freq(ChipFreq::F1773400);
             }
             else if (chip[0].header->TonTableId == 2 && version > 3)
             {
-                module.SetChipFreq(ChipFreq::F1750000);
+                module.chip.freq(ChipFreq::F1750000);
             }
+
+            if (tsMode) module.chip.config(ChipConfig::TurboSound);
         }
         fileStream.close();
     }
@@ -201,7 +203,7 @@ bool DecodePT3::Decode(Frame& frame)
 void DecodePT3::Close(Module& module)
 {
     if (loop > 0) 
-        module.SetLoopFrameId(loop);
+        module.loop.frameId(loop);
     
     delete[] body;
 }

@@ -12,18 +12,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\commons\ayumi\ayumi.cpp">
+    <ClCompile Include="..\..\src\commons\ayumi\ayumi.cpp">
       <Filter>Sources\ayumi</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\commons\lh5_decode\lh5_decode.cpp">
+    <ClCompile Include="..\..\src\commons\lh5_decode\lh5_decode.cpp">
       <Filter>Sources\lh5_decode</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\commons\ayumi\ayumi.h">
+    <ClInclude Include="..\..\src\commons\ayumi\ayumi.h">
       <Filter>Sources\ayumi</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\commons\lh5_decode\lh5_decode.h">
+    <ClInclude Include="..\..\src\commons\lh5_decode\lh5_decode.h">
       <Filter>Sources\lh5_decode</Filter>
     </ClInclude>
   </ItemGroup>

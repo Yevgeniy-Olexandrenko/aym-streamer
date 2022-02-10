@@ -1,4 +1,8 @@
-*/.vs
-*/Debug
-*/Release
-*/x64
+software/PSGTools/prj/.vs
+software/PSGTools/prj/Debug
+software/PSGTools/prj/Release
+software/PSGTools/prj/x64
+software/PSGTools/prj/commons/.vs
+software/PSGTools/prj/commons/Debug
+software/PSGTools/prj/commons/Release
+software/PSGTools/prj/commons/x64

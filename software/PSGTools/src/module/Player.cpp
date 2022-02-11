@@ -125,7 +125,7 @@ void Player::PlaybackThread()
 		double payload = GetTime();
 
 		// play current frame
-		const Frame& frame = m_module->frames.get(m_frameId);
+		const Frame& frame = m_module->playback.getFrame(m_frameId);
 		m_output.OutFrame(frame, firstFrame);
 		firstFrame = false;
 

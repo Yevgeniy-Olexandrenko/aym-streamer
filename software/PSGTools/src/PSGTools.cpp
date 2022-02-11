@@ -16,7 +16,7 @@
 #include "module/Player.h"
 
 const std::string k_folder = "D:\\projects\\github\\aym-streamer\\chiptunes\\Power Blade\\";
-const std::string k_file = "2-2.pt3";
+const std::string k_file = "1-1.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -180,6 +180,7 @@ int main()
             {
                 oldFrame = newFrame;
                 bar.set_progress(newFrame * 100 / module.playback.framesCount());
+                std::cout << '\r' << "Frame: " << newFrame << "     " << '\r';
             }
             Sleep(200);
         }

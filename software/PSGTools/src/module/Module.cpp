@@ -6,9 +6,9 @@
 
 namespace
 {
-	const int k_prefDurationMM = 3;
-	const int k_prefDurationSS = 30;
-	const int k_maxExtraLoops  = 4;
+	const int k_prefDurationMM = 4;
+	const int k_prefDurationSS = 0;
+	const int k_maxExtraLoops  = 3;
 }
 
 Module::Module()
@@ -406,7 +406,7 @@ const Frame& Module::Playback::getFrame(FrameId id) const
 	{
 		id = m_module.loop.frameId() + ((id - frameCount) % m_module.loop.framesCount());
 	}
-	return getFrame(id);
+	return m_module.frames.get(id);
 }
 
 uint32_t Module::Playback::framesCount() const

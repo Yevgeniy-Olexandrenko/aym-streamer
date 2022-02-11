@@ -117,13 +117,12 @@ void Player::PlaybackThread()
 	auto hndl = reinterpret_cast<HANDLE>(m_playback.native_handle());
 	SetThreadPriority(hndl, THREAD_PRIORITY_TIME_CRITICAL);
 
+	auto frameNextTS = GetTime();
 	auto framePeriod = 1.0 / m_module->playback.frameRate();
-	bool firstFrame  = true;
 
+	bool firstFrame = true;
 	while (!m_isPaused && m_output.IsOpened())
 	{
-		double payload = GetTime();
-
 		// play current frame
 		const Frame& frame = m_module->playback.getFrame(m_frameId);
 		m_output.OutFrame(frame, firstFrame);
@@ -138,8 +137,8 @@ void Player::PlaybackThread()
 		}
 
 		// next frame timestamp waiting
-		payload = GetTime() - payload;
-		WaitFor(framePeriod - payload);
+		frameNextTS += framePeriod;
+		WaitFor(frameNextTS - GetTime());
 	}
 
 	// silence output when job is done

@@ -15,8 +15,8 @@
 #include "output/AY38910/AY38910.h"
 #include "module/Player.h"
 
-const std::string k_folder = "D:\\projects\\github\\aym-streamer\\chiptunes\\Power Blade\\";
-const std::string k_file = "1-1.pt3";
+const std::string k_folder = "D:\\projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
+const std::string k_file = "Mmcm - Doubtful Future.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 

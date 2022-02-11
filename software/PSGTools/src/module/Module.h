@@ -2,11 +2,11 @@
 
 #include <vector>
 #include "Frame.h"
+#include "Filepath.h"
 #include "output/SoundChip.h"
 
 using FrameId = uint32_t;
 using FrameRate = uint16_t;
-
 
 class Module
 {
@@ -19,24 +19,6 @@ class Module
 	};
 
 public:
-
-	///////////////////////////////////////////////////////////////////////////////
-
-	struct File : public Delegate
-	{
-		File(Module& module);
-
-		void pathNameExt(const std::string& path);
-		const std::string pathNameExt() const;
-		const std::string nameExt() const;
-		const std::string name() const;
-		const std::string ext() const;
-
-	private:
-		std::string m_folder;
-		std::string m_name;
-		std::string m_ext;
-	};
 
 	///////////////////////////////////////////////////////////////////////////////
 
@@ -159,7 +141,7 @@ public:
 
 	Module();
 
-	File     file;
+	Filepath file;
 	Info     info;
 	Chip     chip;
 	Frames   frames;

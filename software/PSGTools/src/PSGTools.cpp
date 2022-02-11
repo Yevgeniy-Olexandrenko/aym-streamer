@@ -6,17 +6,21 @@
 #include <indicators/termcolor.hpp>
 #include <indicators/progress_bar.hpp>
 
+#include "module/Filelist.h"
 #include "module/Module.h"
+#include "module/Player.h"
+
 #include "decoders/DecodeVTX.h"
 #include "decoders/DecodePT3.h"
 #include "decoders/DecodePSG.h"
 
 #include "output/AYMStreamer/AYMStreamer.h"
 #include "output/AY38910/AY38910.h"
-#include "module/Player.h"
+
 
 const std::string k_folder = "D:\\projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
-const std::string k_file = "Mmcm - Doubtful Future.pt3";
+const std::string k_file = "Mmcm - YamahAY.pt3";
+const std::string k_filelist = "playlist.m3u";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -93,6 +97,8 @@ int main()
 {
     SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
 
+    Filelist filelist("pt3|psg|vtx", k_filelist);
+
     Module module;
     if (!DecodeFileToModule(k_folder + k_file, module))
     {
@@ -140,32 +146,32 @@ int main()
 
         while (player.IsPlaying())
         {
-#if 0
-            
-            bool left  = (GetAsyncKeyState(VK_LEFT ) & 0x1) != 0;
-            bool right = (GetAsyncKeyState(VK_RIGHT) & 0x1) != 0;
-            bool up    = (GetAsyncKeyState(VK_UP   ) & 0x1) != 0;
-            bool down  = (GetAsyncKeyState(VK_DOWN ) & 0x1) != 0;
-#else
-            bool left  = (GetKeyState(VK_LEFT  ) & 0x80) != 0;
-            bool right = (GetKeyState(VK_RIGHT ) & 0x80) != 0;
-            bool up    = (GetKeyState(VK_UP    ) & 0x80) != 0;
-            bool down  = (GetKeyState(VK_DOWN  ) & 0x80) != 0;
-            bool enter = (GetAsyncKeyState(VK_RETURN) & 0x1) != 0;
-#endif
-
-            if (right)
-            {
-                player.Play(+10);
-            }
-            else if (left)
-            {
-                player.Play(-10);
-            }
-            else
-            {
-                player.Play(+1);
-            }
+//#if 0
+//            
+//            bool left  = (GetAsyncKeyState(VK_LEFT ) & 0x1) != 0;
+//            bool right = (GetAsyncKeyState(VK_RIGHT) & 0x1) != 0;
+//            bool up    = (GetAsyncKeyState(VK_UP   ) & 0x1) != 0;
+//            bool down  = (GetAsyncKeyState(VK_DOWN ) & 0x1) != 0;
+//#else
+//            bool left  = (GetKeyState(VK_LEFT  ) & 0x80) != 0;
+//            bool right = (GetKeyState(VK_RIGHT ) & 0x80) != 0;
+//            bool up    = (GetKeyState(VK_UP    ) & 0x80) != 0;
+//            bool down  = (GetKeyState(VK_DOWN  ) & 0x80) != 0;
+//            bool enter = (GetAsyncKeyState(VK_RETURN) & 0x1) != 0;
+//#endif
+//
+//            if (right)
+//            {
+//                player.Play(+10);
+//            }
+//            else if (left)
+//            {
+//                player.Play(-10);
+//            }
+//            else
+//            {
+//                player.Play(+1);
+//            }
 
             //if (enter)
             //{

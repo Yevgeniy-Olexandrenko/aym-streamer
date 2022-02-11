@@ -1,4 +1,3 @@
-#include <sstream>
 #include <iomanip>
 #include "Module.h"
 
@@ -12,8 +11,7 @@ namespace
 }
 
 Module::Module()
-	: file(*this)
-	, info(*this)
+	: info(*this)
 	, chip(*this)
 	, frames(*this)
 	, loop(*this)
@@ -86,68 +84,6 @@ std::ostream& operator<<(std::ostream& stream, const Module& module)
 		stream << "Loop frame..: " << module.loop.frameId() << std::endl;
 	stream << "Frame rate..: " << module.playback.frameRate() << std::endl;
 	return stream;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-Module::File::File(Module& module)
-	: Delegate(module)
-{
-}
-
-void Module::File::pathNameExt(const std::string& path)
-{
-	size_t slashPos = path.find_last_of("/\\");
-	size_t dotPos = path.find_last_of(".");
-
-	if (slashPos != std::string::npos)
-	{
-		m_folder = path.substr(0, slashPos + 1);
-	}
-	else
-	{
-		m_folder.clear();
-		slashPos = -1;
-	}
-
-	if (dotPos != std::string::npos)
-	{
-		m_ext = path.substr(dotPos + 1);
-	}
-	else
-	{
-		m_ext.clear();
-		dotPos = path.length();
-	}
-
-	size_t namePos = slashPos + 1;
-	m_name = path.substr(namePos, dotPos - namePos);
-}
-
-const std::string Module::File::pathNameExt() const
-{
-	std::stringstream ss;
-	if (!m_folder.empty()) ss << m_folder;
-	ss << nameExt();
-	return ss.str();
-}
-
-const std::string Module::File::nameExt() const
-{
-	std::stringstream ss;
-	ss << m_name;
-	if (!m_ext.empty()) ss << '.' << m_ext;
-	return ss.str();
-}
-
-const std::string Module::File::name() const
-{
-	return m_name;
-}
-
-const std::string Module::File::ext() const
-{
-	return m_ext;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

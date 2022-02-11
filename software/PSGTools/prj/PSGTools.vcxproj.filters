@@ -78,6 +78,12 @@
     <ClInclude Include="..\src\output\SoundChip.h">
       <Filter>Sources\output</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\module\Filelist.h">
+      <Filter>Sources\module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\module\Filepath.h">
+      <Filter>Sources\module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -124,6 +130,12 @@
     </ClCompile>
     <ClCompile Include="..\src\decoders\DecodeVTX.cpp">
       <Filter>Sources\decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\module\Filelist.cpp">
+      <Filter>Sources\module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\module\Filepath.cpp">
+      <Filter>Sources\module</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

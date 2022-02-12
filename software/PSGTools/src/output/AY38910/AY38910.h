@@ -19,5 +19,10 @@ protected:
 	void FillBuffer(unsigned char* buffer, unsigned long size) override;
 
 private:
-	struct ayumi m_ay;
+	bool InitChip(uint8_t chip, const Module& module);
+	void WriteToChip(uint8_t chip, const Frame& frame, bool force);
+
+private:
+	bool  m_ts;
+	ayumi m_ay[2];
 };

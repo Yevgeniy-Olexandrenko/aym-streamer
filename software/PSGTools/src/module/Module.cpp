@@ -79,9 +79,11 @@ std::ostream& operator<<(std::ostream& stream, const Module& module)
 		std::setfill('0') << std::setw(2) << ss << '.' <<
 		std::setfill('0') << std::setw(3) << ms << std::endl;
 
-	stream << "Frames count: " << module.frames.count() << std::endl;
-	if (module.loop.available()) 
-		stream << "Loop frame..: " << module.loop.frameId() << std::endl;
+	stream << "Frames......: " << module.frames.count();
+	if (module.loop.available())
+		stream << " -> " << module.loop.frameId();
+	stream << std::endl;
+
 	stream << "Frame rate..: " << module.playback.frameRate() << std::endl;
 	return stream;
 }
@@ -311,18 +313,29 @@ void Module::Loop::UpdateLoopFrameChanges()
 {
 	if (available())
 	{
+		uint8_t loopFrameData, lastFrameData;
 		const Frame& lastFrame = m_module.frames.get(m_module.frames.lastFrameId());
 		Frame& loopFrame = const_cast<Frame&>(m_module.frames.get(frameId()));
 
 		for (uint8_t i = 0; i < 16; ++i)
 		{
-			if (loopFrame[i].changed()) continue;
+			if (!loopFrame.changed(0, i))
+			{
+				loopFrameData = loopFrame.data(0, i);
+				lastFrameData = lastFrame.data(0, i);
 
-			uint8_t loopFrameData = loopFrame[i].data();
-			uint8_t lastFrameData = lastFrame[i].data();
+				if (loopFrameData != lastFrameData)
+					loopFrame[i].first.override(loopFrameData);
+			}
 
-			if (loopFrameData != lastFrameData)
-				loopFrame[i].override(loopFrameData);
+			if (!loopFrame.changed(1, i))
+			{
+				loopFrameData = loopFrame.data(1, i);
+				lastFrameData = lastFrame.data(1, i);
+
+				if (loopFrameData != lastFrameData)
+					loopFrame[i].second.override(loopFrameData);
+			}
 		}
 	}
 }

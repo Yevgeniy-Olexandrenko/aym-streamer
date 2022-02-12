@@ -18,8 +18,8 @@
 #include "output/AY38910/AY38910.h"
 
 
-const std::string k_folder = "D:\\projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
-const std::string k_file = "Mmcm - YamahAY.pt3";
+const std::string k_folder = "D:\\Projects\\github\\aym-streamer\\chiptunes\\Power Blade\\";
+const std::string k_file = "stealth_2_ts.pt3";
 const std::string k_filelist = "playlist.m3u";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
@@ -104,7 +104,7 @@ int main()
     {
         return - 1;
     }
-    //SaveModuleDebugOutput(module);
+//    SaveModuleDebugOutput(module);
 
     ////////////////////////////////////////////////////////////////////////////
 

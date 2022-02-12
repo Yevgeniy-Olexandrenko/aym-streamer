@@ -24,9 +24,10 @@ enum
 	PortB_Data   = 0x0F
 };
 
+using RegisterPair = std::pair<Register, Register>;
+
 class Frame
 {
-	using RegisterArray = std::array<Register, 16>;
 	friend std::ostream& operator<<(std::ostream& stream, const Frame& frame);
 
 public:
@@ -34,13 +35,15 @@ public:
 	Frame(const Frame& other);
 
 public:
-	operator bool() const; // has changed registers
-	Register& operator[](uint8_t index); // access register
-	const Register& operator[](uint8_t index) const; // access register
+	RegisterPair& operator[](uint8_t index);
+	const RegisterPair& operator[](uint8_t index) const;
+
+	bool changed(uint8_t chip, uint8_t index) const;
+	uint8_t data(uint8_t chip, uint8_t index) const;
 
 	void SetUnchanged();
 	void FixValues();
 
 private:
-	RegisterArray m_registers;
+	RegisterPair m_registers[16];
 };

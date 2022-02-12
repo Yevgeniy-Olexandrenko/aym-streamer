@@ -190,11 +190,25 @@ bool DecodePT3::Decode(Frame& frame)
         if (r == Env_Shape)
         {
             if (data != 0xFF) 
-                frame[r].override(data);
+                frame[r].first.override(data);
         }
         else
         {
-            frame[r].update(data);
+            frame[r].first.update(data);
+        }
+
+        if (tsMode)
+        {
+            data = regs[1][r];
+            if (r == Env_Shape)
+            {
+                if (data != 0xFF) 
+                    frame[r].second.override(data);
+            }
+            else
+            {
+                frame[r].second.update(data);
+            }
         }
     }
     return true;

@@ -99,11 +99,11 @@ bool DecodeVTX::Decode(Frame& frame)
 		if (r == Env_Shape)
 		{
 			if (data != 0xFF) 
-				frame[r].override(data);
+				frame[r].first.override(data);
 		}
 		else
 		{
-			frame[r].update(data);
+			frame[r].first.update(data);
 		}
 		dataPtr += m_frameCount;
 	}

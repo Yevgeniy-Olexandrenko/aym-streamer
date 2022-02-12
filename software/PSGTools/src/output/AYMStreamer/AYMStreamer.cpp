@@ -28,7 +28,7 @@ bool AYMStreamer::OutFrame(const Frame& frame, bool force)
 
 		for (uint8_t i = 0; i < 16; ++i)
 		{
-			const Register& reg = frame[i];
+			const Register& reg = frame[i].first;
 			if (force || reg.changed())
 			{
 				// register number and value

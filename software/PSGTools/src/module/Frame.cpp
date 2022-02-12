@@ -5,42 +5,47 @@ Frame::Frame()
 }
 
 Frame::Frame(const Frame& other)
-	: m_registers(other.m_registers)
 {
-}
-
-Frame::operator bool() const
-{
-	for (const Register& reg : m_registers)
+	for (uint8_t i = 0; i < 16; ++i)
 	{
-		if (reg.changed()) return true;
+		m_registers[i].first = other.m_registers[i].first;
+		m_registers[i].second = other.m_registers[i].second;
 	}
-	return false;
 }
 
-Register& Frame::operator[](uint8_t index)
+RegisterPair& Frame::operator[](uint8_t index)
 {
 	return m_registers[index];
 }
 
-const Register& Frame::operator[](uint8_t index) const
+const RegisterPair& Frame::operator[](uint8_t index) const
 {
 	return m_registers[index];
+}
+
+bool Frame::changed(uint8_t chip, uint8_t index) const
+{
+	return (chip ? m_registers[index].second.changed() : m_registers[index].first.changed());
+}
+
+uint8_t Frame::data(uint8_t chip, uint8_t index) const
+{
+	return (chip ? m_registers[index].second.data() : m_registers[index].first.data());
 }
 
 void Frame::SetUnchanged()
 {
-	for (Register& reg : m_registers)
+	for (RegisterPair& reg : m_registers)
 	{
-		reg = Register(reg.data());
+		reg.first = Register(reg.first.data());
+		reg.second = Register(reg.second.data());
 	}
 }
 
 void Frame::FixValues()
 {
-	for (uint8_t i = 0; i < 16; ++i)
+	auto DoFix = [](uint8_t i, Register& reg)
 	{
-		Register& reg = m_registers[i];
 		if (reg.changed())
 		{
 			uint8_t data = reg.data();
@@ -71,6 +76,12 @@ void Frame::FixValues()
 			}
 			reg.override(data);
 		}
+	};
+
+	for (uint8_t i = 0; i < 16; ++i)
+	{
+		DoFix(i, m_registers[i].first);
+		DoFix(i, m_registers[i].second);
 	}
 }
 
@@ -90,7 +101,7 @@ std::ostream& operator<<(std::ostream& stream, const Frame& frame)
 
 	auto out_reg = [&](uint8_t index)
 	{
-		const Register& reg = frame[index];
+		const Register& reg = frame[index].first;
 		if (reg.changed())
 			out_byte(reg.data());
 		else

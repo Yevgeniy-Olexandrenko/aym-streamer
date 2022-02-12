@@ -316,13 +316,13 @@ void Module::Loop::UpdateLoopFrameChanges()
 
 		for (uint8_t i = 0; i < 16; ++i)
 		{
-			if (loopFrame[i].IsChanged()) continue;
+			if (loopFrame[i].changed()) continue;
 
-			uint8_t loopFrameData = loopFrame[i].GetData();
-			uint8_t lastFrameData = lastFrame[i].GetData();
+			uint8_t loopFrameData = loopFrame[i].data();
+			uint8_t lastFrameData = lastFrame[i].data();
 
 			if (loopFrameData != lastFrameData)
-				loopFrame[i].OverrideData(loopFrameData);
+				loopFrame[i].override(loopFrameData);
 		}
 	}
 }

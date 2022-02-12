@@ -190,11 +190,11 @@ bool DecodePT3::Decode(Frame& frame)
         if (r == Env_Shape)
         {
             if (data != 0xFF) 
-                frame[r].OverrideData(data);
+                frame[r].override(data);
         }
         else
         {
-            frame[r].UpdateData(data);
+            frame[r].update(data);
         }
     }
     return true;

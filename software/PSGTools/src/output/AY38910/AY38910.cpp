@@ -65,16 +65,16 @@ bool AY38910::OutFrame(const Frame& frame, bool force)
 {
     if (m_isOpened)
     {
-        uint8_t r7 = frame[Mixer_Flags].GetData();
-        uint8_t r8 = frame[VolA_EnvFlg].GetData();
-        uint8_t r9 = frame[VolB_EnvFlg].GetData();
-        uint8_t rA = frame[VolC_EnvFlg].GetData();
+        uint8_t r7 = frame[Mixer_Flags].data();
+        uint8_t r8 = frame[VolA_EnvFlg].data();
+        uint8_t r9 = frame[VolB_EnvFlg].data();
+        uint8_t rA = frame[VolC_EnvFlg].data();
 
-        ayumi_set_tone(&m_ay, 0, frame[TonA_PeriodL].GetData() | frame[TonA_PeriodH].GetData() << 8);
-        ayumi_set_tone(&m_ay, 1, frame[TonB_PeriodL].GetData() | frame[TonB_PeriodH].GetData() << 8);
-        ayumi_set_tone(&m_ay, 2, frame[TonC_PeriodL].GetData() | frame[TonC_PeriodH].GetData() << 8);
+        ayumi_set_tone(&m_ay, 0, frame[TonA_PeriodL].data() | frame[TonA_PeriodH].data() << 8);
+        ayumi_set_tone(&m_ay, 1, frame[TonB_PeriodL].data() | frame[TonB_PeriodH].data() << 8);
+        ayumi_set_tone(&m_ay, 2, frame[TonC_PeriodL].data() | frame[TonC_PeriodH].data() << 8);
 
-        ayumi_set_noise(&m_ay, frame[Noise_Period].GetData());
+        ayumi_set_noise(&m_ay, frame[Noise_Period].data());
 
         ayumi_set_mixer(&m_ay, 0, r7 >> 0 & 0x01, r7 >> 3 & 0x01, r8 >> 4);
         ayumi_set_mixer(&m_ay, 1, r7 >> 1 & 0x01, r7 >> 4 & 0x01, r9 >> 4);
@@ -84,11 +84,11 @@ bool AY38910::OutFrame(const Frame& frame, bool force)
         ayumi_set_volume(&m_ay, 1, r9 & 0x0F);
         ayumi_set_volume(&m_ay, 2, rA & 0x0F);
 
-        ayumi_set_envelope(&m_ay, frame[Env_PeriodL].GetData() | frame[Env_PeriodH].GetData() << 8);
+        ayumi_set_envelope(&m_ay, frame[Env_PeriodL].data() | frame[Env_PeriodH].data() << 8);
 
-        if (force || frame[Env_Shape].IsChanged())
+        if (force || frame[Env_Shape].changed())
         {
-            ayumi_set_envelope_shape(&m_ay, frame[Env_Shape].GetData());
+            ayumi_set_envelope_shape(&m_ay, frame[Env_Shape].data());
         }
     }
     return m_isOpened;

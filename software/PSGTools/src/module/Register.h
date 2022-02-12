@@ -10,11 +10,11 @@ public:
 	Register& operator=(uint8_t data) = delete;
 
 public:
-	bool IsChanged() const;
-	uint8_t GetData() const;
+	bool changed() const;
+	uint8_t data() const;
 
-	void OverrideData(uint8_t data);
-	void UpdateData(uint8_t data);
+	void override(uint8_t data);
+	void update(uint8_t data);
 
 private:
 	uint8_t m_data;

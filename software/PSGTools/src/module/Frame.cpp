@@ -13,7 +13,7 @@ Frame::operator bool() const
 {
 	for (const Register& reg : m_registers)
 	{
-		if (reg.IsChanged()) return true;
+		if (reg.changed()) return true;
 	}
 	return false;
 }
@@ -32,7 +32,7 @@ void Frame::SetUnchanged()
 {
 	for (Register& reg : m_registers)
 	{
-		reg = Register(reg.GetData());
+		reg = Register(reg.data());
 	}
 }
 
@@ -41,9 +41,9 @@ void Frame::FixValues()
 	for (uint8_t i = 0; i < 16; ++i)
 	{
 		Register& reg = m_registers[i];
-		if (reg.IsChanged())
+		if (reg.changed())
 		{
-			uint8_t data = reg.GetData();
+			uint8_t data = reg.data();
 			switch (i)
 			{
 			case TonA_PeriodH:
@@ -69,7 +69,7 @@ void Frame::FixValues()
 				data = 0x00;
 				break;
 			}
-			reg.OverrideData(data);
+			reg.override(data);
 		}
 	}
 }
@@ -91,8 +91,8 @@ std::ostream& operator<<(std::ostream& stream, const Frame& frame)
 	auto out_reg = [&](uint8_t index)
 	{
 		const Register& reg = frame[index];
-		if (reg.IsChanged())
-			out_byte(reg.GetData());
+		if (reg.changed())
+			out_byte(reg.data());
 		else
 			stream << "--";
 	};

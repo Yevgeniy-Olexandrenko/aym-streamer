@@ -29,11 +29,11 @@ bool AYMStreamer::OutFrame(const Frame& frame, bool force)
 		for (uint8_t i = 0; i < 16; ++i)
 		{
 			const Register& reg = frame[i];
-			if (force || reg.IsChanged())
+			if (force || reg.changed())
 			{
 				// register number and value
 				buffer[bufPtr++] = char(i);
-				buffer[bufPtr++] = char(reg.GetData());
+				buffer[bufPtr++] = char(reg.data());
 			}
 		}
 

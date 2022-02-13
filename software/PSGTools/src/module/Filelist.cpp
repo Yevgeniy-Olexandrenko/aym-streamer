@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <locale>
@@ -77,10 +78,9 @@ bool Filelist::prev(std::string& path) const
 {
     if (!empty())
     {
-        path = m_files[m_index--].dirNameExt();
-        if (m_index < 0)
+        if (m_index >= 0)
         {
-            m_index = int32_t(m_files.size() - 1);
+            path = m_files[m_index--].dirNameExt();
             return true;
         }
     }
@@ -91,10 +91,9 @@ bool Filelist::next(std::string& path) const
 {
     if (!empty())
     {
-        path = m_files[m_index++].dirNameExt();
-        if (m_index == m_files.size())
+        if (m_index < m_files.size())
         {
-            m_index = 0;
+            path = m_files[m_index++].dirNameExt();
             return true;
         }
     }
@@ -165,5 +164,10 @@ void Filelist::InsertItem(const Filepath& path)
             // TODO: Unicode support
             m_files.back().dir(ws2s(cwd()));
         }
+    }
+
+    else
+    {
+        std::cout << path.nameExt() << std::endl;
     }
 }

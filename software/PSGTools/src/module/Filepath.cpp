@@ -1,4 +1,5 @@
 #include <sstream>
+#include <algorithm>
 #include "Filepath.h"
 
 Filepath::Filepath()
@@ -27,7 +28,7 @@ void Filepath::dirNameExt(const std::string& path)
 
 	if (dotPos != std::string::npos)
 	{
-		m_ext = path.substr(dotPos + 1);
+		ext(path.substr(dotPos + 1));
 	}
 	else
 	{
@@ -36,7 +37,7 @@ void Filepath::dirNameExt(const std::string& path)
 	}
 
 	size_t namePos = slashPos + 1;
-	m_name = path.substr(namePos, dotPos - namePos);
+	name(path.substr(namePos, dotPos - namePos));
 }
 
 const std::string Filepath::dirNameExt() const
@@ -95,6 +96,9 @@ bool Filepath::hasName() const
 void Filepath::ext(const std::string& ext)
 {
 	m_ext = ext;
+	std::transform(
+		m_ext.begin(), m_ext.end(),
+		m_ext.begin(), [](unsigned char c) { return std::tolower(c); });
 }
 
 const std::string& Filepath::ext() const

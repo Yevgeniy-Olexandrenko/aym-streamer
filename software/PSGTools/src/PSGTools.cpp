@@ -18,9 +18,7 @@
 #include "output/AY38910/AY38910.h"
 
 
-const std::string k_folder = "D:\\Projects\\github\\aym-streamer\\chiptunes\\Power Blade\\";
-const std::string k_file = "stealth_2_ts.pt3";
-const std::string k_filelist = "playlist.m3u";
+const std::string k_filelist = "D:\\Projects\\github\\aym-streamer\\chiptunes\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -108,26 +106,27 @@ int main()
     indicators::show_console_cursor(false);
     size_t w = indicators::terminal_width() - 1;
 
+    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
+    std::cout << termcolor::bright_red << "PSG Tools v1.0" << termcolor::reset << std::endl;
+    std::cout << termcolor::bright_red << "by Yevgeniy Olexandrenko" << termcolor::reset << std::endl;
+    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
+
+    m_output.reset(new AY38910());
+    m_player.reset(new Player(*m_output));
     m_filelist.reset(new Filelist("pt3|psg|vtx", k_filelist));
+
     if (!m_filelist->empty())
     {
-        m_filelist->shuffle();
+        //m_filelist->shuffle();
 
         std::string path;
-        while (!m_filelist->next(path))
+        while (m_filelist->next(path))
         {
             m_module.reset(new Module());
             if (DecodeFileToModule(path, *m_module))
             {
-                std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
-                std::cout << termcolor::bright_red << "PSG Tools v1.0" << termcolor::reset << std::endl;
-                std::cout << termcolor::bright_red << "by Yevgeniy Olexandrenko" << termcolor::reset << std::endl;
-                std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
                 std::cout << *m_module;
                 std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
-
-                m_output.reset(new AY38910(*m_module));
-                m_player.reset(new Player(*m_output));
 
                 if (m_player->Init(*m_module))
                 {
@@ -144,8 +143,6 @@ int main()
                         }
                         Sleep(1);
                     }
-                    m_player.reset();
-                    m_output.reset();
                 }
                 else
                 {

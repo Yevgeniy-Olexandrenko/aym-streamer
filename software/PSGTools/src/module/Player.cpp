@@ -62,7 +62,7 @@ bool Player::Init(const Module& module)
 	Stop();
 	m_isPlaying = false;
 
-	if (m_output.IsOpened() && module.frames.available())
+	if (module.frames.available() && m_output.Init(module))
 	{
 		m_module = &module;
 		m_isPlaying = true;
@@ -121,11 +121,15 @@ void Player::PlaybackThread()
 	auto framePeriod = 1.0 / m_module->playback.frameRate();
 
 	bool firstFrame = true;
-	while (!m_isPaused && m_output.IsOpened())
+	while (m_isPlaying && !m_isPaused)
 	{
 		// play current frame
 		const Frame& frame = m_module->playback.getFrame(m_frameId);
-		m_output.OutFrame(frame, firstFrame);
+		if (!m_output.OutFrame(frame, firstFrame))
+		{
+			m_isPlaying = false;
+			continue;
+		}
 		firstFrame = false;
 
 		// go to next frame
@@ -133,7 +137,7 @@ void Player::PlaybackThread()
 		if (int(m_frameId) < 0 || m_frameId > m_module->playback.lastFrameId())
 		{
 			m_isPlaying = false;
-			break;
+			continue;
 		}
 
 		// next frame timestamp waiting

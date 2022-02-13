@@ -6,11 +6,12 @@
 class AYMStreamer : public Output
 {
 public:
-	AYMStreamer(const Module& module, int comPortIndex);
+	AYMStreamer(int comPortIndex);
 	virtual ~AYMStreamer();
 
 public:
-	void Open() override;
+	bool Open() override;
+	bool Init(const Module& module) override;
 	bool OutFrame(const Frame& frame, bool force) override;
 	void Close() override;
 

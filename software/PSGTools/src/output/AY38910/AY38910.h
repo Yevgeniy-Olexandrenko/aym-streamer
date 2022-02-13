@@ -7,11 +7,12 @@
 class AY38910 : public Output, public WaveAudio
 {
 public:
-	AY38910(const Module& module);
+	AY38910();
 	virtual ~AY38910();
 
 public:
-	void Open() override;
+	bool Open() override;
+	bool Init(const Module& module) override;
 	bool OutFrame(const Frame& frame, bool force) override;
 	void Close() override;
 

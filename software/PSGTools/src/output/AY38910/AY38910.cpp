@@ -6,17 +6,13 @@ namespace
 {
     const int k_is_ym = 0;
     const int k_clock_rate = 1750000;
-    const int k_sample_rate = 48000;// 44100;
+    const int k_sample_rate = 44100;
 }
 
-AY38910::AY38910(const Module& module)
-    : Output(module)
-    , WaveAudio(k_sample_rate, 100, 2, 2)
-    , m_ts(module.chip.config() == ChipConfig::TurboSound)
+AY38910::AY38910()
+    : m_ts(false)
     , m_ay{0}
 {
-    m_isOpened = InitChip(0, module);
-    if (m_ts) m_isOpened &= InitChip(1, module);
 }
 
 AY38910::~AY38910()
@@ -24,17 +20,32 @@ AY38910::~AY38910()
     Close();
 }
 
-void AY38910::Open()
+bool AY38910::Open()
 {
-    if (m_isOpened)
+    if (!m_isOpened)
     {
-        WaveAudio::Start();
-        if (m_isOpened &= m_working)
+        if (WaveAudio::Open(k_sample_rate, 100, 2, 2))
         {
-            // make some delay for wave audio warm up
+            m_isOpened = true;
+
+            // make some delay for warm up the wave audio
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }
+    return m_isOpened;
+}
+
+bool AY38910::Init(const Module& module)
+{
+    if (m_isOpened)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_ts = (module.chip.config() == ChipConfig::TurboSound);
+
+        m_isOpened &= InitChip(0, module);
+        if (m_ts) m_isOpened &= InitChip(1, module);
+    }
+    return m_isOpened;
 }
 
 bool AY38910::OutFrame(const Frame& frame, bool force)
@@ -49,7 +60,7 @@ bool AY38910::OutFrame(const Frame& frame, bool force)
 
 void AY38910::Close()
 {
-    WaveAudio::Stop();
+    WaveAudio::Close();
 }
 
 void AY38910::FillBuffer(unsigned char* buffer, unsigned long size)
@@ -85,8 +96,8 @@ void AY38910::FillBuffer(unsigned char* buffer, unsigned long size)
             ayumi_process(&chip);
             ayumi_remove_dc(&chip);
 
-            double L = chip.left  > +1.0 ? +1.0 : (chip.left  < -1.0 ? -1.0 : chip.left );
-            double R = chip.right > +1.0 ? +1.0 : (chip.right < -1.0 ? -1.0 : chip.right);
+            double L = 0.5 * chip.left;
+            double R = 0.5 * chip.right;
 
             sampbuf[i++] = (int16_t)(INT16_MAX * L + 0.5);
             sampbuf[i++] = (int16_t)(INT16_MAX * R + 0.5);

@@ -1,9 +1,9 @@
+#include <thread>
 #include "AYMStreamer.h"
 #include "module/Frame.h"
 
-AYMStreamer::AYMStreamer(const Module& module, int portIndex)
-	: Output(module)
-	, m_portIndex(portIndex)
+AYMStreamer::AYMStreamer(int comPortIndex)
+	: m_portIndex(comPortIndex)
 {
 }
 
@@ -12,11 +12,21 @@ AYMStreamer::~AYMStreamer()
 	Close();
 }
 
-void AYMStreamer::Open()
+bool AYMStreamer::Open()
 {
 	m_port.Open(m_portIndex);
-	m_isOpened = m_port.SetBaudRate(SerialPort::BaudRate::_57600);
-	Sleep(5000);
+	if (m_isOpened = m_port.SetBaudRate(SerialPort::BaudRate::_57600))
+	{
+		// wait before AYM Streame become ready
+		std::this_thread::sleep_for(std::chrono::seconds(5));
+	}
+	return m_isOpened;
+}
+
+bool AYMStreamer::Init(const Module& module)
+{
+	// do nothing for now
+	return true;
 }
 
 bool AYMStreamer::OutFrame(const Frame& frame, bool force)

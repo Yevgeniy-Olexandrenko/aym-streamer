@@ -1,6 +1,8 @@
 ﻿#include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <algorithm>
+#include <functional>
 
 #include <indicators/cursor_control.hpp>
 #include <indicators/termcolor.hpp>
@@ -18,7 +20,7 @@
 #include "output/AY38910/AY38910.h"
 
 
-const std::string k_filelist = "D:\\Projects\\github\\aym-streamer\\chiptunes\\";
+const std::string k_filelist = "D:\\Projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -36,6 +38,62 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
         m_player->Stop();
     }
     return TRUE;
+}
+
+void PrintDelimiter()
+{
+    size_t term_w = indicators::terminal_width() - 2;
+    std::cout << ' ' << termcolor::bright_cyan;
+    std::cout << std::string(term_w, '-');
+    std::cout << termcolor::reset << std::endl;
+}
+
+void PrintModuleFile(const Module& module, int number, int total)
+{
+    std::string filename = module.file.nameExt();
+    std::string filenumber = std::to_string(number) + '/' + std::to_string(total);
+
+    size_t strlen = filenumber.length() + filename.length();
+    size_t term_w = indicators::terminal_width() - 2;
+
+    std::cout << ' ' << termcolor::bright_cyan;
+    std::cout << std::string(term_w - strlen - 7, '-')  << "[ ";
+    std::cout << termcolor::bright_yellow << filenumber << ' ';
+    std::cout << termcolor::bright_white << module.file.name();
+    std::cout << termcolor::bright_magenta << '.';
+    std::cout << termcolor::white << module.file.ext();
+    std::cout << termcolor::bright_cyan << " ]--";
+    std::cout << termcolor::reset << std::endl;
+}
+
+
+void PrintModuleInfo(const Module& module)
+{
+    auto PrintProperty = [&module](const std::string& label, Module::Property property)
+    {
+        std::string str = module.property(property);
+        str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+        str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
+
+        if (!str.empty())
+        {
+            std::cout << ' ' << termcolor::bright_yellow << label;
+            std::cout << termcolor::white << std::string(9 - label.length(), '.');
+            std::cout << termcolor::bright_magenta << ": ";
+            if (property == Module::Property::Title)
+                std::cout << termcolor::bright_green;
+            else
+                std::cout << termcolor::bright_white;
+            std::cout << str << termcolor::reset << std::endl;
+        }
+    };
+
+    PrintProperty("Title", Module::Property::Title);
+    PrintProperty("Artist", Module::Property::Artist);
+    PrintProperty("Type", Module::Property::Type);
+    PrintProperty("Chip", Module::Property::Chip);
+    PrintProperty("Frames", Module::Property::Frames);
+    PrintProperty("Duration", Module::Property::Duration);
 }
 
 bool DecodeFileToModule(const std::string& filePath, Module& module)
@@ -68,34 +126,34 @@ bool DecodeFileToModule(const std::string& filePath, Module& module)
 
 void SaveModuleDebugOutput(const Module& module)
 {
-    std::ofstream file;
-    file.open(k_output);
+    //std::ofstream file;
+    //file.open(k_output);
 
-    if (file)
-    {
-        auto delimiter = [&file]()
-        {
-            for (int i = 0; i < 48; ++i) file << '-';
-            file << std::endl;
-        };
+    //if (file)
+    //{
+    //    auto delimiter = [&file]()
+    //    {
+    //        for (int i = 0; i < 48; ++i) file << '-';
+    //        file << std::endl;
+    //    };
 
-        delimiter();
-        file << module;
-        delimiter();
+    //    delimiter();
+    //    file << module;
+    //    delimiter();
 
-        file << "frame  [ r7|r1r0 r8|r3r2 r9|r5r4 rA|rCrB rD|r6 ]" << std::endl;
-        delimiter();
+    //    file << "frame  [ r7|r1r0 r8|r3r2 r9|r5r4 rA|rCrB rD|r6 ]" << std::endl;
+    //    delimiter();
 
-        for (FrameId i = 0; i < module.frames.count(); ++i)
-        {
-            if (i && module.loop.available() && i == module.loop.frameId()) delimiter();
-            file << std::setfill('0') << std::setw(5) << i;
-            file << "  [ " << module.frames.get(i) << " ]" << std::endl;
-            
-        }
-        delimiter();
-        file.close();
-    }
+    //    for (FrameId i = 0; i < module.frames.count(); ++i)
+    //    {
+    //        if (i && module.loop.available() && i == module.loop.frameId()) delimiter();
+    //        file << std::setfill('0') << std::setw(5) << i;
+    //        file << "  [ " << module.frames.get(i) << " ]" << std::endl;
+    //        
+    //    }
+    //    delimiter();
+    //    file.close();
+    //}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -106,10 +164,11 @@ int main()
     indicators::show_console_cursor(false);
     size_t w = indicators::terminal_width() - 1;
 
-    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
-    std::cout << termcolor::bright_red << "PSG Tools v1.0" << termcolor::reset << std::endl;
-    std::cout << termcolor::bright_red << "by Yevgeniy Olexandrenko" << termcolor::reset << std::endl;
-    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
+    PrintDelimiter();
+    std::cout << ' ' << termcolor::bright_red << "PSG Tools v1.0" << termcolor::reset << std::endl;
+    std::cout << ' ' << termcolor::bright_red << "by Yevgeniy Olexandrenko" << termcolor::reset << std::endl;
+    PrintDelimiter();
+    std::cout << std::endl;
 
     m_output.reset(new AY38910());
     m_player.reset(new Player(*m_output));
@@ -125,14 +184,14 @@ int main()
             m_module.reset(new Module());
             if (DecodeFileToModule(path, *m_module))
             {
-                std::cout << *m_module;
-                std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
+                PrintModuleFile(*m_module, m_filelist->index(), m_filelist->count());
+                PrintModuleInfo(*m_module);
 
                 if (m_player->Init(*m_module))
                 {
                     FrameId oldFrame = -1;
 
-                    m_player->Play();
+                    m_player->Play(+5);
                     while (m_player->IsPlaying())
                     {
                         FrameId newFrame = m_player->GetFrameId();

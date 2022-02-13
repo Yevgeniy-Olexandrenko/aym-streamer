@@ -1,4 +1,5 @@
 #include <iomanip>
+#include <sstream>
 #include "Module.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,74 +20,163 @@ Module::Module()
 {
 }
 
-std::ostream& operator<<(std::ostream& stream, const Module& module)
+std::string Module::property(Property property) const
 {
-	int hh, mm, ss, ms;
-	
-	stream << "File........: " << module.file.nameExt() << std::endl;
-	if (module.info.titleKnown())
-		stream << "Title.......: " << module.info.title() << std::endl;
-	if (module.info.artistKnown()) 
-		stream << "Artist......: " << module.info.artist() << std::endl;
-	stream << "Type........: " << module.info.type() << std::endl;
-	
-	if (module.chip.config() == ChipConfig::TurboSound)
+	auto PrintChipType = [](std::ostream& stream, ChipType type)
 	{
-		stream << "Chip config.: ";
-		if (module.chip.typeKnown())
+		switch (type)
 		{
-			stream << "2 x ";
-			if (module.chip.type() == ChipType::AY) stream << "AY-3-8910(12)";
-			if (module.chip.type() == ChipType::YM) stream << "YM2149F";
+		case ChipType::AY: stream << "AY-3-8910(12)"; break;
+		case ChipType::YM: stream << "YM2149F"; break;
+		case ChipType::Compatible: stream << "AY/YM Compatible"; break;
 		}
-		else
+	};
+
+	std::stringstream stream;
+	switch (property)
+	{
+	case Property::Title:
+		stream << info.title();
+		break;
+
+	case Property::Artist:
+		stream << info.artist();
+		break;
+
+	case Property::Type:
+		stream << info.type();
+		break;;
+
+	case Property::Chip:
+		if (chip.config() == ChipConfig::TurboSound)
 		{
-			stream << "Turbo Sound";
+			if (chip.typeKnown())
+			{
+				stream << "2 x ";
+				PrintChipType(stream, chip.type());
+			}
+			else
+			{
+				stream << "Turbo Sound";
+			}
+			stream << ' ';
 		}
-		stream << std::endl;
+		else if (chip.typeKnown())
+		{
+			PrintChipType(stream, chip.type());
+			stream << ' ';
+		}
+
+		if (chip.freqKnown())
+		{
+			stream << double(chip.freqValue(0)) / 1000000 << " MHz" << ' ';
+		}
+
+		if (chip.stereoKnown())
+		{
+			if (chip.stereo() == ChipStereo::MONO) stream << "MONO";
+			if (chip.stereo() == ChipStereo::ABC ) stream << "ABC";
+			if (chip.stereo() == ChipStereo::ACB ) stream << "ACB";
+		}
+		break;
+
+	case Property::Frames:
+		stream << frames.count();
+		if (loop.available()) stream << " -> " << loop.frameId();
+		stream << " @ " << playback.frameRate() << " Hz";
+		break;
+
+	case Property::Duration:
+		int hh0 = 0, mm0 = 0, ss0 = 0;
+		int hh1 = 0, mm1 = 0, ss1 = 0;
+		playback.realDuration(hh0, mm0, ss0);
+		playback.fakeDuration(hh1, mm1, ss1);
+
+		stream <<
+			std::setfill('0') << std::setw(2) << hh0 << ':' <<
+			std::setfill('0') << std::setw(2) << mm0 << ':' <<
+			std::setfill('0') << std::setw(2) << ss0;
+
+		if (hh0 != hh1 || mm0 != mm1 || ss0 != ss1)
+		{
+			stream << " (" <<
+				std::setfill('0') << std::setw(2) << hh1 << ':' <<
+				std::setfill('0') << std::setw(2) << mm1 << ':' <<
+				std::setfill('0') << std::setw(2) << ss1 << ')';
+		}
+		break;
 	}
-	else if (module.chip.typeKnown())
-	{
-		stream << "Chip type...: ";
-		if (module.chip.type() == ChipType::AY) stream << "AY-3-8910(12)";
-		if (module.chip.type() == ChipType::YM) stream << "YM2149F";
-		stream << std::endl;;
-	}
-
-	if (module.chip.freqKnown())
-		stream << "Chip freq...: " << module.chip.freqValue(0) << " Hz" << std::endl;
-
-	if (module.chip.stereoKnown())
-	{
-		stream << "Chip stereo.: ";
-		if (module.chip.stereo() == ChipStereo::MONO) stream << "MONO";
-		if (module.chip.stereo() == ChipStereo::ABC ) stream << "ABC";
-		if (module.chip.stereo() == ChipStereo::ACB ) stream << "ACB";
-		stream << std::endl;
-	}
-
-	module.playback.rawDuration(hh, mm, ss, ms);
-	stream << "Duration....: " << 
-		std::setfill('0') << std::setw(2) << hh << ':' << 
-		std::setfill('0') << std::setw(2) << mm << ':' << 
-		std::setfill('0') << std::setw(2) << ss << '.' <<
-		std::setfill('0') << std::setw(3) << ms << std::endl;
-	
-	module.playback.duration(hh, mm, ss, ms);
-	stream << "Duration....: " <<
-		std::setfill('0') << std::setw(2) << hh << ':' <<
-		std::setfill('0') << std::setw(2) << mm << ':' <<
-		std::setfill('0') << std::setw(2) << ss << '.' <<
-		std::setfill('0') << std::setw(3) << ms << std::endl;
-
-	stream << "Frames......: " << module.frames.count();
-	if (module.loop.available())
-		stream << " -> " << module.loop.frameId();
-	stream << std::endl;
-
-	stream << "Frame rate..: " << module.playback.frameRate() << std::endl;
-	return stream;
+	return stream.str();
 }
+
+//std::ostream& operator<<(std::ostream& stream, const Module& module)
+//{
+//	int hh, mm, ss, ms;
+//	
+//	stream << "File........: " << module.file.nameExt() << std::endl;
+//	if (module.info.titleKnown())
+//		stream << "Title.......: " << module.info.title() << std::endl;
+//	if (module.info.artistKnown()) 
+//		stream << "Artist......: " << module.info.artist() << std::endl;
+//	stream << "Type........: " << module.info.type() << std::endl;
+//	
+//	if (module.chip.config() == ChipConfig::TurboSound)
+//	{
+//		stream << "Chip config.: ";
+//		if (module.chip.typeKnown())
+//		{
+//			stream << "2 x ";
+//			if (module.chip.type() == ChipType::AY) stream << "AY-3-8910(12)";
+//			if (module.chip.type() == ChipType::YM) stream << "YM2149F";
+//		}
+//		else
+//		{
+//			stream << "Turbo Sound";
+//		}
+//		stream << std::endl;
+//	}
+//	else if (module.chip.typeKnown())
+//	{
+//		stream << "Chip type...: ";
+//		if (module.chip.type() == ChipType::AY) stream << "AY-3-8910(12)";
+//		if (module.chip.type() == ChipType::YM) stream << "YM2149F";
+//		stream << std::endl;;
+//	}
+//
+//	if (module.chip.freqKnown())
+//		stream << "Chip freq...: " << module.chip.freqValue(0) << " Hz" << std::endl;
+//
+//	if (module.chip.stereoKnown())
+//	{
+//		stream << "Chip stereo.: ";
+//		if (module.chip.stereo() == ChipStereo::MONO) stream << "MONO";
+//		if (module.chip.stereo() == ChipStereo::ABC ) stream << "ABC";
+//		if (module.chip.stereo() == ChipStereo::ACB ) stream << "ACB";
+//		stream << std::endl;
+//	}
+//
+//	module.playback.rawDuration(hh, mm, ss, ms);
+//	stream << "Duration....: " << 
+//		std::setfill('0') << std::setw(2) << hh << ':' << 
+//		std::setfill('0') << std::setw(2) << mm << ':' << 
+//		std::setfill('0') << std::setw(2) << ss << '.' <<
+//		std::setfill('0') << std::setw(3) << ms << std::endl;
+//	
+//	module.playback.duration(hh, mm, ss, ms);
+//	stream << "Duration....: " <<
+//		std::setfill('0') << std::setw(2) << hh << ':' <<
+//		std::setfill('0') << std::setw(2) << mm << ':' <<
+//		std::setfill('0') << std::setw(2) << ss << '.' <<
+//		std::setfill('0') << std::setw(3) << ms << std::endl;
+//
+//	stream << "Frames......: " << module.frames.count();
+//	if (module.loop.available())
+//		stream << " -> " << module.loop.frameId();
+//	stream << std::endl;
+//
+//	stream << "Frame rate..: " << module.playback.frameRate() << std::endl;
+//	return stream;
+//}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -378,22 +468,22 @@ FrameRate Module::Playback::frameRate() const
 	return m_frameRate;
 }
 
-void Module::Playback::rawDuration(int& hh, int& mm, int& ss, int& ms) const
+void Module::Playback::realDuration(int& hh, int& mm, int& ss, int& ms) const
 {
 	ComputeDuration(m_module.frames.count(), hh, mm, ss, ms);
 }
 
-void Module::Playback::rawDuration(int& hh, int& mm, int& ss) const
+void Module::Playback::realDuration(int& hh, int& mm, int& ss) const
 {
 	ComputeDuration(m_module.frames.count(), hh, mm, ss);
 }
 
-void Module::Playback::duration(int& hh, int& mm, int& ss, int& ms) const
+void Module::Playback::fakeDuration(int& hh, int& mm, int& ss, int& ms) const
 {
 	ComputeDuration(framesCount(), hh, mm, ss, ms);
 }
 
-void Module::Playback::duration(int& hh, int& mm, int& ss) const
+void Module::Playback::fakeDuration(int& hh, int& mm, int& ss) const
 {
 	ComputeDuration(framesCount(), hh, mm, ss);
 }

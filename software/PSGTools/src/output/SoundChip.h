@@ -2,7 +2,7 @@
 
 enum class ChipType
 {
-	Unknown, AY, YM, Other
+	Unknown, AY, YM, Compatible
 };
 
 enum class ChipFreq

@@ -19,6 +19,10 @@ class Module
 	};
 
 public:
+	enum class Property
+	{
+		Title, Artist, Type, Chip, Frames, Duration
+	};
 
 	///////////////////////////////////////////////////////////////////////////////
 
@@ -123,11 +127,11 @@ public:
 		void frameRate(FrameRate frameRate);
 		FrameRate frameRate() const;
 
-		void rawDuration(int& hh, int& mm, int& ss, int& ms) const;
-		void rawDuration(int& hh, int& mm, int& ss) const;
+		void realDuration(int& hh, int& mm, int& ss, int& ms) const;
+		void realDuration(int& hh, int& mm, int& ss) const;
 
-		void duration(int& hh, int& mm, int& ss, int& ms) const;
-		void duration(int& hh, int& mm, int& ss) const;
+		void fakeDuration(int& hh, int& mm, int& ss, int& ms) const;
+		void fakeDuration(int& hh, int& mm, int& ss) const;
 
 	private:
 		void ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int& ms) const;
@@ -148,5 +152,7 @@ public:
 	Loop     loop;
 	Playback playback;
 
-	friend std::ostream& operator<<(std::ostream& stream, const Module& module);
+	std::string property(Property property) const;
+
+//	friend std::ostream& operator<<(std::ostream& stream, const Module& module);
 };

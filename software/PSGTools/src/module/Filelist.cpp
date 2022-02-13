@@ -74,6 +74,16 @@ bool Filelist::empty() const
     return m_files.empty();
 }
 
+uint32_t Filelist::count() const
+{
+    return (uint32_t)m_files.size();
+}
+
+int32_t Filelist::index() const
+{
+    return m_index;
+}
+
 bool Filelist::prev(std::string& path) const
 {
     if (!empty())
@@ -166,8 +176,8 @@ void Filelist::InsertItem(const Filepath& path)
         }
     }
 
-    else
-    {
-        std::cout << path.nameExt() << std::endl;
-    }
+    //else
+    //{
+    //    std::cout << path.nameExt() << std::endl;
+    //}
 }

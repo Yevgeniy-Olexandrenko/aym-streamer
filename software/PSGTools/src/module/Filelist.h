@@ -12,6 +12,9 @@ public:
 
 public:
 	bool empty() const;
+	uint32_t count() const;
+	int32_t index() const;
+
 	bool prev(std::string& path) const;
 	bool next(std::string& path) const;
 	void shuffle();

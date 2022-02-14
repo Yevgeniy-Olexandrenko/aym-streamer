@@ -1,21 +1,23 @@
 #pragma once
 
-enum class ChipType
+enum class ChipCount
+{
+	SingleChip, TurboSound
+};
+
+enum class ChipModel
 {
 	Unknown, AY, YM, Compatible
 };
 
-enum class ChipFreq
+enum class ChipFrequency
 {
 	Unknown, F1000000, F1750000, F1773400, F2000000
 };
 
-enum class ChipStereo
+enum class ChipChannels
 {
 	Unknown, MONO, ABC, ACB
 };
 
-enum class ChipConfig
-{
-	SingleChip, TurboSound
-};
+

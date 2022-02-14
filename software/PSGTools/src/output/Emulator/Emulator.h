@@ -4,11 +4,11 @@
 #include "output/Output.h"
 #include "WaveAudio.h"
 
-class AY38910 : public Output, public WaveAudio
+class Emulator : public Output, public WaveAudio
 {
 public:
-	AY38910();
-	virtual ~AY38910();
+	Emulator();
+	virtual ~Emulator();
 
 public:
 	bool Open() override;

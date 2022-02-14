@@ -165,14 +165,14 @@ bool DecodePT3::Open(Module& module)
 
             if (chip[0].header->TonTableId == 1)
             {
-                module.chip.freq(ChipFreq::F1773400);
+                module.chip.frequency(ChipFrequency::F1773400);
             }
             else if (chip[0].header->TonTableId == 2 && version > 3)
             {
-                module.chip.freq(ChipFreq::F1750000);
+                module.chip.frequency(ChipFrequency::F1750000);
             }
 
-            if (tsMode) module.chip.config(ChipConfig::TurboSound);
+            if (tsMode) module.chip.count(ChipCount::TurboSound);
         }
         fileStream.close();
     }

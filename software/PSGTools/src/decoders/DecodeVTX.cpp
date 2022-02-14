@@ -28,17 +28,17 @@ bool DecodeVTX::Open(Module& module)
 			fileStream.seekg(0, fileStream.beg);
 			fileStream.read((char*)(&hdr), sizeof(hdr));
 
-			ChipType chipType(ChipType::Unknown);
-			if (hdr.signature == VTXv2_SIG_AY) chipType = ChipType::AY;
-			if (hdr.signature == VTXv2_SIG_YM) chipType = ChipType::YM;
+			ChipModel chipType(ChipModel::Unknown);
+			if (hdr.signature == VTXv2_SIG_AY) chipType = ChipModel::AY;
+			if (hdr.signature == VTXv2_SIG_YM) chipType = ChipModel::YM;
 
-			if (chipType != ChipType::Unknown)
+			if (chipType != ChipModel::Unknown)
 			{
-				module.chip.type(chipType);
+				module.chip.model(chipType);
 
-				if (hdr.stereo == VTXStereo::MONO) module.chip.stereo(ChipStereo::MONO);
-				if (hdr.stereo == VTXStereo::ABC) module.chip.stereo(ChipStereo::ABC);
-				if (hdr.stereo == VTXStereo::ACB) module.chip.stereo(ChipStereo::ACB);
+				if (hdr.stereo == VTXStereo::MONO) module.chip.channels(ChipChannels::MONO);
+				if (hdr.stereo == VTXStereo::ABC) module.chip.channels(ChipChannels::ABC);
+				if (hdr.stereo == VTXStereo::ACB) module.chip.channels(ChipChannels::ACB);
 
 				module.chip.freqValue(hdr.chipFreq);
 				module.playback.frameRate(hdr.frameFreq);

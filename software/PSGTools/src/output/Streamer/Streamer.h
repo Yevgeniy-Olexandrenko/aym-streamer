@@ -3,11 +3,11 @@
 #include "output/Output.h"
 #include "SerialPort.h"
 
-class AYMStreamer : public Output
+class Streamer : public Output
 {
 public:
-	AYMStreamer(int comPortIndex);
-	virtual ~AYMStreamer();
+	Streamer(int comPortIndex);
+	virtual ~Streamer();
 
 public:
 	bool Open() override;

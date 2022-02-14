@@ -1,5 +1,5 @@
 #include <thread>
-#include "AY38910.h"
+#include "Emulator.h"
 #include "module/Module.h"
 
 namespace
@@ -9,18 +9,18 @@ namespace
     const int k_sample_rate = 44100;
 }
 
-AY38910::AY38910()
+Emulator::Emulator()
     : m_ts(false)
     , m_ay{0}
 {
 }
 
-AY38910::~AY38910()
+Emulator::~Emulator()
 {
     Close();
 }
 
-bool AY38910::Open()
+bool Emulator::Open()
 {
     if (!m_isOpened)
     {
@@ -35,12 +35,12 @@ bool AY38910::Open()
     return m_isOpened;
 }
 
-bool AY38910::Init(const Module& module)
+bool Emulator::Init(const Module& module)
 {
     if (m_isOpened)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_ts = (module.chip.config() == ChipConfig::TurboSound);
+        m_ts = (module.chip.count() == ChipCount::TurboSound);
 
         m_isOpened &= InitChip(0, module);
         if (m_ts) m_isOpened &= InitChip(1, module);
@@ -48,7 +48,7 @@ bool AY38910::Init(const Module& module)
     return m_isOpened;
 }
 
-bool AY38910::OutFrame(const Frame& frame, bool force)
+bool Emulator::OutFrame(const Frame& frame, bool force)
 {
     if (m_isOpened)
     {
@@ -58,12 +58,12 @@ bool AY38910::OutFrame(const Frame& frame, bool force)
     return m_isOpened;
 }
 
-void AY38910::Close()
+void Emulator::Close()
 {
     WaveAudio::Close();
 }
 
-void AY38910::FillBuffer(unsigned char* buffer, unsigned long size)
+void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 {
     // buffer format must be 2 ch x 16 bit
     auto sampbuf = (int16_t*)buffer;
@@ -105,23 +105,23 @@ void AY38910::FillBuffer(unsigned char* buffer, unsigned long size)
     }
 }
 
-bool AY38910::InitChip(uint8_t chip, const Module& module)
+bool Emulator::InitChip(uint8_t chip, const Module& module)
 {
     uint32_t clockRate = module.chip.freqValue(k_clock_rate);
-    bool isYM = module.chip.typeKnown() ? (module.chip.type() == ChipType::YM) : bool(k_is_ym);
+    bool isYM = module.chip.modelKnown() ? (module.chip.model() == ChipModel::YM) : bool(k_is_ym);
 
     ayumi* ay = &m_ay[chip];
     if (ayumi_configure(ay, isYM, clockRate, k_sample_rate))
     {
-        switch (module.chip.stereo())
+        switch (module.chip.channels())
         {
-        case ChipStereo::MONO:
+        case ChipChannels::MONO:
             ayumi_set_pan(ay, 0, 0.5, true);
             ayumi_set_pan(ay, 1, 0.5, true);
             ayumi_set_pan(ay, 2, 0.5, true);
             break;
 
-        case ChipStereo::ACB:
+        case ChipChannels::ACB:
             ayumi_set_pan(ay, 0, 0.1, true);
             ayumi_set_pan(ay, 1, 0.9, true);
             ayumi_set_pan(ay, 2, 0.5, true);
@@ -138,7 +138,7 @@ bool AY38910::InitChip(uint8_t chip, const Module& module)
     return false;
 }
 
-void AY38910::WriteToChip(uint8_t chip, const Frame& frame, bool force)
+void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
 {
     ayumi* ay = &m_ay[chip];
 

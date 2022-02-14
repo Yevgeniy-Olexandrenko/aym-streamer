@@ -53,28 +53,28 @@ public:
 	{
 		Chip(Module& module);
 
-		void type(ChipType type);
-		ChipType type() const;
-		bool typeKnown() const;
+		void count(ChipCount count);
+		ChipCount count() const;
 
-		void freq(ChipFreq freq);
+		void model(ChipModel model);
+		ChipModel model() const;
+		bool modelKnown() const;
+
+		void frequency(ChipFrequency frequency);
 		void freqValue(uint32_t freqValue);
-		ChipFreq freq() const;
+		ChipFrequency frequency() const;
 		uint32_t freqValue(uint32_t defFreqValue) const;
-		bool freqKnown() const;
+		bool frequencyKnown() const;
 
-		void stereo(ChipStereo stereo);
-		ChipStereo stereo() const;
-		bool stereoKnown() const;
-
-		void config(ChipConfig config);
-		ChipConfig config() const;
+		void channels(ChipChannels channels);
+		ChipChannels channels() const;
+		bool channelsKnown() const;
 
 	private:
-		ChipType m_type;
-		ChipFreq m_freq;
-		ChipStereo m_stereo;
-		ChipConfig m_config;
+		ChipCount     m_count;
+		ChipModel     m_model;
+		ChipFrequency m_frequency;
+		ChipChannels  m_channels;
 	};
 
 	///////////////////////////////////////////////////////////////////////////////

@@ -33,12 +33,12 @@
     <ClInclude Include="..\src\module\Player.h" />
     <ClInclude Include="..\src\module\Filelist.h" />
     <ClInclude Include="..\src\module\Register.h" />
-    <ClInclude Include="..\src\output\AY38910\AY38910.h" />
-    <ClInclude Include="..\src\output\AY38910\WaveAudio.h" />
-    <ClInclude Include="..\src\output\AYMStreamer\AYMStreamer.h" />
-    <ClInclude Include="..\src\output\AYMStreamer\SerialPort.h" />
+    <ClInclude Include="..\src\output\Emulator\Emulator.h" />
+    <ClInclude Include="..\src\output\Emulator\WaveAudio.h" />
     <ClInclude Include="..\src\output\Output.h" />
     <ClInclude Include="..\src\output\SoundChip.h" />
+    <ClInclude Include="..\src\output\Streamer\SerialPort.h" />
+    <ClInclude Include="..\src\output\Streamer\Streamer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\decoders\DecodePSG.cpp" />
@@ -53,10 +53,10 @@
     <ClCompile Include="..\src\module\Player.cpp" />
     <ClCompile Include="..\src\module\Filelist.cpp" />
     <ClCompile Include="..\src\module\Register.cpp" />
-    <ClCompile Include="..\src\output\AY38910\AY38910.cpp" />
-    <ClCompile Include="..\src\output\AY38910\WaveAudio.cpp" />
-    <ClCompile Include="..\src\output\AYMStreamer\AYMStreamer.cpp" />
-    <ClCompile Include="..\src\output\AYMStreamer\SerialPort.cpp" />
+    <ClCompile Include="..\src\output\Emulator\Emulator.cpp" />
+    <ClCompile Include="..\src\output\Emulator\WaveAudio.cpp" />
+    <ClCompile Include="..\src\output\Streamer\SerialPort.cpp" />
+    <ClCompile Include="..\src\output\Streamer\Streamer.cpp" />
     <ClCompile Include="..\src\PSGTools.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

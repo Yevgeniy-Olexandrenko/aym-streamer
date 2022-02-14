@@ -16,8 +16,8 @@
 #include "decoders/DecodePT3.h"
 #include "decoders/DecodePSG.h"
 
-#include "output/AYMStreamer/AYMStreamer.h"
-#include "output/AY38910/AY38910.h"
+#include "output/Streamer/Streamer.h"
+#include "output/Emulator/Emulator.h"
 
 
 const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\software\\PSGTools\\playlist.m3u";
@@ -170,7 +170,7 @@ int main()
     PrintDelimiter();
     std::cout << std::endl;
 
-    m_output.reset(new AY38910());
+    m_output.reset(new Emulator());
     m_player.reset(new Player(*m_output));
     m_filelist.reset(new Filelist("pt3|psg|vtx", k_filelist));
 

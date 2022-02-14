@@ -22,13 +22,13 @@ Module::Module()
 
 std::string Module::property(Property property) const
 {
-	auto PrintChipType = [](std::ostream& stream, ChipType type)
+	auto PrintChipType = [](std::ostream& stream, ChipModel type)
 	{
 		switch (type)
 		{
-		case ChipType::AY: stream << "AY-3-8910(12)"; break;
-		case ChipType::YM: stream << "YM2149F"; break;
-		case ChipType::Compatible: stream << "AY/YM Compatible"; break;
+		case ChipModel::AY: stream << "AY-3-8910(12)"; break;
+		case ChipModel::YM: stream << "YM2149F"; break;
+		case ChipModel::Compatible: stream << "AY/YM Compatible"; break;
 		}
 	};
 
@@ -48,12 +48,12 @@ std::string Module::property(Property property) const
 		break;;
 
 	case Property::Chip:
-		if (chip.config() == ChipConfig::TurboSound)
+		if (chip.count() == ChipCount::TurboSound)
 		{
-			if (chip.typeKnown())
+			if (chip.modelKnown())
 			{
 				stream << "2 x ";
-				PrintChipType(stream, chip.type());
+				PrintChipType(stream, chip.model());
 			}
 			else
 			{
@@ -61,22 +61,22 @@ std::string Module::property(Property property) const
 			}
 			stream << ' ';
 		}
-		else if (chip.typeKnown())
+		else if (chip.modelKnown())
 		{
-			PrintChipType(stream, chip.type());
+			PrintChipType(stream, chip.model());
 			stream << ' ';
 		}
 
-		if (chip.freqKnown())
+		if (chip.frequencyKnown())
 		{
 			stream << double(chip.freqValue(0)) / 1000000 << " MHz" << ' ';
 		}
 
-		if (chip.stereoKnown())
+		if (chip.channelsKnown())
 		{
-			if (chip.stereo() == ChipStereo::MONO) stream << "MONO";
-			if (chip.stereo() == ChipStereo::ABC ) stream << "ABC";
-			if (chip.stereo() == ChipStereo::ACB ) stream << "ACB";
+			if (chip.channels() == ChipChannels::MONO) stream << "MONO";
+			if (chip.channels() == ChipChannels::ABC ) stream << "ABC";
+			if (chip.channels() == ChipChannels::ACB ) stream << "ACB";
 		}
 		break;
 
@@ -233,90 +233,90 @@ const std::string& Module::Info::type() const
 
 Module::Chip::Chip(Module& module)
 	: Delegate(module)
-	, m_type(ChipType::Unknown)
-	, m_freq(ChipFreq::Unknown)
-	, m_stereo(ChipStereo::Unknown)
-	, m_config(ChipConfig::SingleChip)
+	, m_model(ChipModel::Unknown)
+	, m_frequency(ChipFrequency::Unknown)
+	, m_channels(ChipChannels::Unknown)
+	, m_count(ChipCount::SingleChip)
 {
 }
 
-void Module::Chip::type(ChipType type)
+void Module::Chip::count(ChipCount count)
 {
-	m_type = type;
+	m_count = count;
 }
 
-ChipType Module::Chip::type() const
+ChipCount Module::Chip::count() const
 {
-	return m_type;
+	return m_count;
 }
 
-bool Module::Chip::typeKnown() const
+void Module::Chip::model(ChipModel model)
 {
-	return (type() != ChipType::Unknown);
+	m_model = model;
 }
 
-void Module::Chip::freq(ChipFreq freq)
+ChipModel Module::Chip::model() const
 {
-	m_freq = freq;
+	return m_model;
+}
+
+bool Module::Chip::modelKnown() const
+{
+	return (model() != ChipModel::Unknown);
+}
+
+void Module::Chip::frequency(ChipFrequency freq)
+{
+	m_frequency = freq;
 }
 
 void Module::Chip::freqValue(uint32_t freqValue)
 {
 	switch (freqValue)
 	{
-	case 1000000: freq(ChipFreq::F1000000); break;
-	case 1750000: freq(ChipFreq::F1750000); break;
-	case 1773400: freq(ChipFreq::F1773400); break;
-	case 2000000: freq(ChipFreq::F2000000); break;
-	default: freq(ChipFreq::Unknown); break;
+	case 1000000: frequency(ChipFrequency::F1000000); break;
+	case 1750000: frequency(ChipFrequency::F1750000); break;
+	case 1773400: frequency(ChipFrequency::F1773400); break;
+	case 2000000: frequency(ChipFrequency::F2000000); break;
+	default: frequency(ChipFrequency::Unknown); break;
 	}
 }
 
-ChipFreq Module::Chip::freq() const
+ChipFrequency Module::Chip::frequency() const
 {
-	return m_freq;
+	return m_frequency;
 }
 
 uint32_t Module::Chip::freqValue(uint32_t defFreqValue) const
 {
-	switch (freq())
+	switch (frequency())
 	{
-	case ChipFreq::F1000000: return 1000000;
-	case ChipFreq::F1750000: return 1750000;
-	case ChipFreq::F1773400: return 1773400;
-	case ChipFreq::F2000000: return 2000000;
+	case ChipFrequency::F1000000: return 1000000;
+	case ChipFrequency::F1750000: return 1750000;
+	case ChipFrequency::F1773400: return 1773400;
+	case ChipFrequency::F2000000: return 2000000;
 	}
 	return defFreqValue;
 }
 
-bool Module::Chip::freqKnown() const
+bool Module::Chip::frequencyKnown() const
 {
-	return (freq() != ChipFreq::Unknown);
+	return (frequency() != ChipFrequency::Unknown);
 }
 
-void Module::Chip::stereo(ChipStereo stereo)
+void Module::Chip::channels(ChipChannels channels)
 {
-	m_stereo = stereo;
+	m_channels = channels;
 }
 
-ChipStereo Module::Chip::stereo() const
+ChipChannels Module::Chip::channels() const
 {
-	return m_stereo;
+	return m_channels;
 }
 
-bool Module::Chip::stereoKnown() const
+bool Module::Chip::channelsKnown() const
 {
-	return (stereo() != ChipStereo::Unknown);
-}
-
-void Module::Chip::config(ChipConfig config)
-{
-	m_config = config;
-}
-
-ChipConfig Module::Chip::config() const
-{
-	return m_config;
+	return (channels() != ChipChannels::Unknown);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

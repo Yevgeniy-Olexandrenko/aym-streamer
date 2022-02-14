@@ -1,18 +1,18 @@
 #include <thread>
-#include "AYMStreamer.h"
+#include "Streamer.h"
 #include "module/Frame.h"
 
-AYMStreamer::AYMStreamer(int comPortIndex)
+Streamer::Streamer(int comPortIndex)
 	: m_portIndex(comPortIndex)
 {
 }
 
-AYMStreamer::~AYMStreamer()
+Streamer::~Streamer()
 {
 	Close();
 }
 
-bool AYMStreamer::Open()
+bool Streamer::Open()
 {
 	m_port.Open(m_portIndex);
 	if (m_isOpened = m_port.SetBaudRate(SerialPort::BaudRate::_57600))
@@ -23,13 +23,13 @@ bool AYMStreamer::Open()
 	return m_isOpened;
 }
 
-bool AYMStreamer::Init(const Module& module)
+bool Streamer::Init(const Module& module)
 {
 	// do nothing for now
 	return true;
 }
 
-bool AYMStreamer::OutFrame(const Frame& frame, bool force)
+bool Streamer::OutFrame(const Frame& frame, bool force)
 {
 	if (m_isOpened)
 	{
@@ -55,7 +55,7 @@ bool AYMStreamer::OutFrame(const Frame& frame, bool force)
 	return m_isOpened;
 }
 
-void AYMStreamer::Close()
+void Streamer::Close()
 {
 	m_port.Close();
 }

@@ -16,11 +16,11 @@
     <Filter Include="Sources\output">
       <UniqueIdentifier>{ed5e2415-9dc9-40e5-b12f-f9c14b1de61d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\output\AYMStreamer">
-      <UniqueIdentifier>{d8709f9e-51ca-46b5-9705-8a9e1ab44b87}</UniqueIdentifier>
+    <Filter Include="Sources\output\Emulator">
+      <UniqueIdentifier>{96c475f2-9d82-4526-83d4-f31a499a46ef}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\output\AY38910">
-      <UniqueIdentifier>{8d4f9387-bbb9-4ae9-a9bb-e751abd8e619}</UniqueIdentifier>
+    <Filter Include="Sources\output\Streamer">
+      <UniqueIdentifier>{d8709f9e-51ca-46b5-9705-8a9e1ab44b87}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -51,20 +51,8 @@
     <ClInclude Include="..\src\output\Output.h">
       <Filter>Sources\output</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\output\AYMStreamer\SerialPort.h">
-      <Filter>Sources\output\AYMStreamer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\AYMStreamer\AYMStreamer.h">
-      <Filter>Sources\output\AYMStreamer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\AY38910\AY38910.h">
-      <Filter>Sources\output\AY38910</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\module\Player.h">
       <Filter>Sources\module</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\AY38910\WaveAudio.h">
-      <Filter>Sources\output\AY38910</Filter>
     </ClInclude>
     <ClInclude Include="..\src\encoders\EncodeTXT.h">
       <Filter>Sources\encoders</Filter>
@@ -83,6 +71,18 @@
     </ClInclude>
     <ClInclude Include="..\src\module\Filepath.h">
       <Filter>Sources\module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\Emulator\Emulator.h">
+      <Filter>Sources\output\Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\Emulator\WaveAudio.h">
+      <Filter>Sources\output\Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\Streamer\SerialPort.h">
+      <Filter>Sources\output\Streamer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\output\Streamer\Streamer.h">
+      <Filter>Sources\output\Streamer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -107,20 +107,8 @@
     <ClCompile Include="..\src\decoders\DecodePT3.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\output\AYMStreamer\SerialPort.cpp">
-      <Filter>Sources\output\AYMStreamer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\output\AYMStreamer\AYMStreamer.cpp">
-      <Filter>Sources\output\AYMStreamer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\output\AY38910\AY38910.cpp">
-      <Filter>Sources\output\AY38910</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\module\Player.cpp">
       <Filter>Sources\module</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\output\AY38910\WaveAudio.cpp">
-      <Filter>Sources\output\AY38910</Filter>
     </ClCompile>
     <ClCompile Include="..\src\encoders\EncodeTXT.cpp">
       <Filter>Sources\encoders</Filter>
@@ -136,6 +124,18 @@
     </ClCompile>
     <ClCompile Include="..\src\module\Filepath.cpp">
       <Filter>Sources\module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\Emulator\Emulator.cpp">
+      <Filter>Sources\output\Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\Emulator\WaveAudio.cpp">
+      <Filter>Sources\output\Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\Streamer\SerialPort.cpp">
+      <Filter>Sources\output\Streamer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\Streamer\Streamer.cpp">
+      <Filter>Sources\output\Streamer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

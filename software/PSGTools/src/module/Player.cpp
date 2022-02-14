@@ -121,16 +121,16 @@ void Player::PlaybackThread()
 
 	auto frameNextTS = GetTime();
 	auto framePeriod = 1.0 / m_module->playback.frameRate();
+	bool isPlaying   = m_isPlaying;
+	bool firstFrame  = true;
 
-	bool firstFrame = true;
-	while (m_isPlaying && !m_isPaused)
+	while (isPlaying && !m_isPaused)
 	{
 		// play current frame
 		const Frame& frame = m_module->playback.getFrame(m_frameId);
 		if (!m_output.OutFrame(frame, firstFrame))
 		{
-			m_isPlaying = false;
-			continue;
+			isPlaying = false;
 		}
 		firstFrame = false;
 
@@ -138,8 +138,7 @@ void Player::PlaybackThread()
 		m_frameId += m_playbackStep;
 		if (int(m_frameId) < 0 || m_frameId > m_module->playback.lastFrameId())
 		{
-			m_isPlaying = false;
-			continue;
+			isPlaying = false;
 		}
 
 		// next frame timestamp waiting
@@ -149,5 +148,6 @@ void Player::PlaybackThread()
 
 	// silence output when job is done
 	m_output.OutFrame(Frame(), true);
+	m_isPlaying = isPlaying;
 	timeEndPeriod(1U);
 }

@@ -20,7 +20,7 @@
 #include "output/AY38910/AY38910.h"
 
 
-const std::string k_filelist = "D:\\Projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
+const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\software\\PSGTools\\playlist.m3u";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -176,7 +176,7 @@ int main()
 
     if (!m_filelist->empty())
     {
-        //m_filelist->shuffle();
+        m_filelist->shuffle();
 
         std::string path;
         while (m_filelist->next(path))
@@ -189,19 +189,34 @@ int main()
 
                 if (m_player->Init(*m_module))
                 {
-                    FrameId oldFrame = -1;
+                    m_player->Play();
+                    auto start = std::chrono::steady_clock::now();
 
-                    m_player->Play(+5);
+                    FrameId oldFrame = -1;
                     while (m_player->IsPlaying())
                     {
                         FrameId newFrame = m_player->GetFrameId();
                         if (newFrame != oldFrame)
                         {
                             oldFrame = newFrame;
-                            std::cout << '\r' << "Frame: " << newFrame << "     " << '\r';
+                            std::cout << '\r' << " Frame: " << newFrame << "     " << '\r';
                         }
                         Sleep(1);
                     }
+
+                    uint32_t duration = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+                            int ms = duration % 1000; duration /= 1000;
+                            int ss = duration % 60;   duration /= 60;
+                            int mm = duration % 60;   duration /= 60;
+                            int hh = duration;
+                    
+                            std::cout << std::endl;
+                            std::cout << " Duration: " <<
+                                std::setfill('0') << std::setw(2) << hh << ':' <<
+                                std::setfill('0') << std::setw(2) << mm << ':' <<
+                                std::setfill('0') << std::setw(2) << ss << '.' <<
+                                std::setfill('0') << std::setw(3) << ms << std::endl;
+
                 }
                 else
                 {

@@ -29,8 +29,9 @@ void WaitFor(const double period)
 
 		if (accumulator < elapsed)
 		{
-			accumulator = 0;
+			start += elapsed;
 			while (GetTime() < finish) SwitchToThread();
+			accumulator -= (GetTime() - start);
 			return;
 		}
 	}
@@ -114,6 +115,7 @@ bool Player::IsPaused() const
 
 void Player::PlaybackThread()
 {
+	timeBeginPeriod(1U);
 	auto hndl = reinterpret_cast<HANDLE>(m_playback.native_handle());
 	SetThreadPriority(hndl, THREAD_PRIORITY_TIME_CRITICAL);
 
@@ -147,4 +149,5 @@ void Player::PlaybackThread()
 
 	// silence output when job is done
 	m_output.OutFrame(Frame(), true);
+	timeEndPeriod(1U);
 }

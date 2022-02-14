@@ -87,22 +87,26 @@ std::string Module::property(Property property) const
 		break;
 
 	case Property::Duration:
-		int hh0 = 0, mm0 = 0, ss0 = 0;
-		int hh1 = 0, mm1 = 0, ss1 = 0;
-		playback.realDuration(hh0, mm0, ss0);
-		playback.fakeDuration(hh1, mm1, ss1);
+		int hh0 = 0, mm0 = 0, ss0 = 0, ms0 = 0;
+		int hh1 = 0, mm1 = 0, ss1 = 0, ms1 = 0;
+		playback.realDuration(hh0, mm0, ss0, ms0);
+		playback.fakeDuration(hh1, mm1, ss1, ms1);
 
 		stream <<
 			std::setfill('0') << std::setw(2) << hh0 << ':' <<
 			std::setfill('0') << std::setw(2) << mm0 << ':' <<
 			std::setfill('0') << std::setw(2) << ss0;
+		stream << '.' << std::setfill('0') << std::setw(3) << ms0;
 
 		if (hh0 != hh1 || mm0 != mm1 || ss0 != ss1)
 		{
-			stream << " (" <<
+			stream << " (";
+			stream <<
 				std::setfill('0') << std::setw(2) << hh1 << ':' <<
 				std::setfill('0') << std::setw(2) << mm1 << ':' <<
-				std::setfill('0') << std::setw(2) << ss1 << ')';
+				std::setfill('0') << std::setw(2) << ss1;
+			stream << '.' << std::setfill('0') << std::setw(3) << ms1;
+			stream << ')';
 		}
 		break;
 	}

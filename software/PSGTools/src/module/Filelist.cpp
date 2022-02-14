@@ -4,6 +4,7 @@
 #include <locale>
 #include <codecvt>
 #include <algorithm>
+#include <random>
 #include <dirent/dirent.h>
 #include "Filelist.h"
 
@@ -112,7 +113,9 @@ bool Filelist::next(std::string& path) const
 
 void Filelist::shuffle()
 {
-    std::random_shuffle(m_files.begin(), m_files.end());
+    std::random_device randomDevice;
+    std::mt19937 randomGenerator(randomDevice());
+    std::shuffle(m_files.begin(), m_files.end(), randomGenerator);
 }
 
 bool Filelist::IsSupportedExt(const Filepath& path)

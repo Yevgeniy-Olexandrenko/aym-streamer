@@ -63,7 +63,7 @@
     <ClInclude Include="..\src\decoders\DecodeVTX.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\output\SoundChip.h">
+    <ClInclude Include="..\src\output\Chip.h">
       <Filter>Sources\output</Filter>
     </ClInclude>
     <ClInclude Include="..\src\module\Filelist.h">
@@ -136,6 +136,9 @@
     </ClCompile>
     <ClCompile Include="..\src\output\Streamer\Streamer.cpp">
       <Filter>Sources\output\Streamer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output\Chip.cpp">
+      <Filter>Sources\output</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

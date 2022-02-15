@@ -40,7 +40,7 @@ bool Emulator::Init(const Module& module)
     if (m_isOpened)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_ts = (module.chip.count() == ChipCount::TurboSound);
+        m_ts = (module.chip.count() == Chip::Count::TurboSound);
 
         m_isOpened &= InitChip(0, module);
         if (m_ts) m_isOpened &= InitChip(1, module);
@@ -108,20 +108,20 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 bool Emulator::InitChip(uint8_t chip, const Module& module)
 {
     uint32_t clockRate = module.chip.freqValue(k_clock_rate);
-    bool isYM = module.chip.modelKnown() ? (module.chip.model() == ChipModel::YM) : bool(k_is_ym);
+    bool isYM = module.chip.modelKnown() ? (module.chip.model() == Chip::Model::YM) : bool(k_is_ym);
 
     ayumi* ay = &m_ay[chip];
     if (ayumi_configure(ay, isYM, clockRate, k_sample_rate))
     {
         switch (module.chip.channels())
         {
-        case ChipChannels::MONO:
+        case Chip::Channels::MONO:
             ayumi_set_pan(ay, 0, 0.5, true);
             ayumi_set_pan(ay, 1, 0.5, true);
             ayumi_set_pan(ay, 2, 0.5, true);
             break;
 
-        case ChipChannels::ACB:
+        case Chip::Channels::ACB:
             ayumi_set_pan(ay, 0, 0.1, true);
             ayumi_set_pan(ay, 1, 0.9, true);
             ayumi_set_pan(ay, 2, 0.5, true);

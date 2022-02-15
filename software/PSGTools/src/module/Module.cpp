@@ -13,7 +13,6 @@ namespace
 
 Module::Module()
 	: info(*this)
-	, chip(*this)
 	, frames(*this)
 	, loop(*this)
 	, playback(*this)
@@ -22,15 +21,7 @@ Module::Module()
 
 std::string Module::property(Property property) const
 {
-	auto PrintChipType = [](std::ostream& stream, ChipModel type)
-	{
-		switch (type)
-		{
-		case ChipModel::AY: stream << "AY-3-8910(12)"; break;
-		case ChipModel::YM: stream << "YM2149F"; break;
-		case ChipModel::Compatible: stream << "AY/YM Compatible"; break;
-		}
-	};
+	
 
 	std::stringstream stream;
 	switch (property)
@@ -48,37 +39,7 @@ std::string Module::property(Property property) const
 		break;;
 
 	case Property::Chip:
-		if (chip.count() == ChipCount::TurboSound)
-		{
-			if (chip.modelKnown())
-			{
-				stream << "2 x ";
-				PrintChipType(stream, chip.model());
-			}
-			else
-			{
-				stream << "Turbo Sound";
-			}
-			stream << ' ';
-		}
-		else if (chip.modelKnown())
-		{
-			PrintChipType(stream, chip.model());
-			stream << ' ';
-		}
-
-		if (chip.frequencyKnown())
-		{
-			stream << double(chip.freqValue(0)) / 1000000 << " MHz" << ' ';
-		}
-
-		if (chip.channelsKnown())
-		{
-			if (chip.channels() == ChipChannels::MONO) stream << "MONO";
-			if (chip.channels() == ChipChannels::ABC ) stream << "ABC";
-			if (chip.channels() == ChipChannels::ACB ) stream << "ACB";
-		}
-		break;
+		return chip.toString();
 
 	case Property::Frames:
 		stream << frames.count();
@@ -227,96 +188,6 @@ void Module::Info::type(const std::string& type)
 const std::string& Module::Info::type() const
 {
 	return m_type;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-Module::Chip::Chip(Module& module)
-	: Delegate(module)
-	, m_model(ChipModel::Unknown)
-	, m_frequency(ChipFrequency::Unknown)
-	, m_channels(ChipChannels::Unknown)
-	, m_count(ChipCount::SingleChip)
-{
-}
-
-void Module::Chip::count(ChipCount count)
-{
-	m_count = count;
-}
-
-ChipCount Module::Chip::count() const
-{
-	return m_count;
-}
-
-void Module::Chip::model(ChipModel model)
-{
-	m_model = model;
-}
-
-ChipModel Module::Chip::model() const
-{
-	return m_model;
-}
-
-bool Module::Chip::modelKnown() const
-{
-	return (model() != ChipModel::Unknown);
-}
-
-void Module::Chip::frequency(ChipFrequency freq)
-{
-	m_frequency = freq;
-}
-
-void Module::Chip::freqValue(uint32_t freqValue)
-{
-	switch (freqValue)
-	{
-	case 1000000: frequency(ChipFrequency::F1000000); break;
-	case 1750000: frequency(ChipFrequency::F1750000); break;
-	case 1773400: frequency(ChipFrequency::F1773400); break;
-	case 2000000: frequency(ChipFrequency::F2000000); break;
-	default: frequency(ChipFrequency::Unknown); break;
-	}
-}
-
-ChipFrequency Module::Chip::frequency() const
-{
-	return m_frequency;
-}
-
-uint32_t Module::Chip::freqValue(uint32_t defFreqValue) const
-{
-	switch (frequency())
-	{
-	case ChipFrequency::F1000000: return 1000000;
-	case ChipFrequency::F1750000: return 1750000;
-	case ChipFrequency::F1773400: return 1773400;
-	case ChipFrequency::F2000000: return 2000000;
-	}
-	return defFreqValue;
-}
-
-bool Module::Chip::frequencyKnown() const
-{
-	return (frequency() != ChipFrequency::Unknown);
-}
-
-void Module::Chip::channels(ChipChannels channels)
-{
-	m_channels = channels;
-}
-
-ChipChannels Module::Chip::channels() const
-{
-	return m_channels;
-}
-
-bool Module::Chip::channelsKnown() const
-{
-	return (channels() != ChipChannels::Unknown);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

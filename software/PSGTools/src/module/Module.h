@@ -3,7 +3,7 @@
 #include <vector>
 #include "Frame.h"
 #include "Filepath.h"
-#include "output/SoundChip.h"
+#include "output/Chip.h"
 
 using FrameId = uint32_t;
 using FrameRate = uint16_t;
@@ -45,36 +45,6 @@ public:
 		std::string m_title;
 		std::string m_artist;
 		std::string m_type;
-	};
-
-	///////////////////////////////////////////////////////////////////////////////
-
-	struct Chip : public Delegate
-	{
-		Chip(Module& module);
-
-		void count(ChipCount count);
-		ChipCount count() const;
-
-		void model(ChipModel model);
-		ChipModel model() const;
-		bool modelKnown() const;
-
-		void frequency(ChipFrequency frequency);
-		void freqValue(uint32_t freqValue);
-		ChipFrequency frequency() const;
-		uint32_t freqValue(uint32_t defFreqValue) const;
-		bool frequencyKnown() const;
-
-		void channels(ChipChannels channels);
-		ChipChannels channels() const;
-		bool channelsKnown() const;
-
-	private:
-		ChipCount     m_count;
-		ChipModel     m_model;
-		ChipFrequency m_frequency;
-		ChipChannels  m_channels;
 	};
 
 	///////////////////////////////////////////////////////////////////////////////

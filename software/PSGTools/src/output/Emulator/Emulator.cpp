@@ -4,8 +4,6 @@
 
 namespace
 {
-    const int k_is_ym = 0;
-    const int k_clock_rate = 1750000;
     const int k_sample_rate = 44100;
 }
 

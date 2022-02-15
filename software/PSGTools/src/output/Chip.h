@@ -48,8 +48,8 @@ public:
 	bool channelsKnown() const;
 
 private:
-	Count     m_count;
-	Model     m_model;
+	Count m_count;
+	Model m_model;
 	Frequency m_frequency;
 	Channels  m_channels;
 };

@@ -20,7 +20,7 @@
 #include "output/Emulator/Emulator.h"
 
 
-const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\software\\PSGTools\\playlist.m3u";
+const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\chiptunes\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -78,7 +78,7 @@ void PrintModuleInfo(const Module& module)
     auto PrintPropertyLabel = [](const std::string& label)
     {
         std::cout << ' ' << termcolor::bright_yellow << label;
-        std::cout << termcolor::white << std::string(9 - label.length(), '.');
+        std::cout << termcolor::bright_grey << std::string(9 - label.length(), '.');
         std::cout << termcolor::bright_magenta << ": ";
     };
 
@@ -106,7 +106,7 @@ void PrintModuleInfo(const Module& module)
         if (!str.empty())
         {
             PrintPropertyLabel(label);
-            std::cout << termcolor::white;
+            std::cout << termcolor::bright_cyan;
             std::cout << str << termcolor::reset << std::endl;
         }
     };

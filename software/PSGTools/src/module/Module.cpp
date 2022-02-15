@@ -21,8 +21,6 @@ Module::Module()
 
 std::string Module::property(Property property) const
 {
-	
-
 	std::stringstream stream;
 	switch (property)
 	{
@@ -57,7 +55,7 @@ std::string Module::property(Property property) const
 			std::setfill('0') << std::setw(2) << hh0 << ':' <<
 			std::setfill('0') << std::setw(2) << mm0 << ':' <<
 			std::setfill('0') << std::setw(2) << ss0;
-		stream << '.' << std::setfill('0') << std::setw(3) << ms0;
+		//	stream << '.' << std::setfill('0') << std::setw(3) << ms0;
 
 		if (hh0 != hh1 || mm0 != mm1 || ss0 != ss1)
 		{
@@ -66,82 +64,13 @@ std::string Module::property(Property property) const
 				std::setfill('0') << std::setw(2) << hh1 << ':' <<
 				std::setfill('0') << std::setw(2) << mm1 << ':' <<
 				std::setfill('0') << std::setw(2) << ss1;
-			stream << '.' << std::setfill('0') << std::setw(3) << ms1;
+		//	stream << '.' << std::setfill('0') << std::setw(3) << ms1;
 			stream << ')';
 		}
 		break;
 	}
 	return stream.str();
 }
-
-//std::ostream& operator<<(std::ostream& stream, const Module& module)
-//{
-//	int hh, mm, ss, ms;
-//	
-//	stream << "File........: " << module.file.nameExt() << std::endl;
-//	if (module.info.titleKnown())
-//		stream << "Title.......: " << module.info.title() << std::endl;
-//	if (module.info.artistKnown()) 
-//		stream << "Artist......: " << module.info.artist() << std::endl;
-//	stream << "Type........: " << module.info.type() << std::endl;
-//	
-//	if (module.chip.config() == ChipConfig::TurboSound)
-//	{
-//		stream << "Chip config.: ";
-//		if (module.chip.typeKnown())
-//		{
-//			stream << "2 x ";
-//			if (module.chip.type() == ChipType::AY) stream << "AY-3-8910(12)";
-//			if (module.chip.type() == ChipType::YM) stream << "YM2149F";
-//		}
-//		else
-//		{
-//			stream << "Turbo Sound";
-//		}
-//		stream << std::endl;
-//	}
-//	else if (module.chip.typeKnown())
-//	{
-//		stream << "Chip type...: ";
-//		if (module.chip.type() == ChipType::AY) stream << "AY-3-8910(12)";
-//		if (module.chip.type() == ChipType::YM) stream << "YM2149F";
-//		stream << std::endl;;
-//	}
-//
-//	if (module.chip.freqKnown())
-//		stream << "Chip freq...: " << module.chip.freqValue(0) << " Hz" << std::endl;
-//
-//	if (module.chip.stereoKnown())
-//	{
-//		stream << "Chip stereo.: ";
-//		if (module.chip.stereo() == ChipStereo::MONO) stream << "MONO";
-//		if (module.chip.stereo() == ChipStereo::ABC ) stream << "ABC";
-//		if (module.chip.stereo() == ChipStereo::ACB ) stream << "ACB";
-//		stream << std::endl;
-//	}
-//
-//	module.playback.rawDuration(hh, mm, ss, ms);
-//	stream << "Duration....: " << 
-//		std::setfill('0') << std::setw(2) << hh << ':' << 
-//		std::setfill('0') << std::setw(2) << mm << ':' << 
-//		std::setfill('0') << std::setw(2) << ss << '.' <<
-//		std::setfill('0') << std::setw(3) << ms << std::endl;
-//	
-//	module.playback.duration(hh, mm, ss, ms);
-//	stream << "Duration....: " <<
-//		std::setfill('0') << std::setw(2) << hh << ':' <<
-//		std::setfill('0') << std::setw(2) << mm << ':' <<
-//		std::setfill('0') << std::setw(2) << ss << '.' <<
-//		std::setfill('0') << std::setw(3) << ms << std::endl;
-//
-//	stream << "Frames......: " << module.frames.count();
-//	if (module.loop.available())
-//		stream << " -> " << module.loop.frameId();
-//	stream << std::endl;
-//
-//	stream << "Frame rate..: " << module.playback.frameRate() << std::endl;
-//	return stream;
-//}
 
 ////////////////////////////////////////////////////////////////////////////////
 

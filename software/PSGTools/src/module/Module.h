@@ -19,10 +19,6 @@ class Module
 	};
 
 public:
-	enum class Property
-	{
-		Title, Artist, Type, Chip, Frames, Duration
-	};
 
 	///////////////////////////////////////////////////////////////////////////////
 
@@ -113,7 +109,13 @@ public:
 
 	///////////////////////////////////////////////////////////////////////////////
 
+	enum class Property
+	{
+		Title, Artist, Type, Chip, Frames, Duration
+	};
+
 	Module();
+	std::string property(Property property) const;
 
 	Filepath file;
 	Info     info;
@@ -121,8 +123,4 @@ public:
 	Frames   frames;
 	Loop     loop;
 	Playback playback;
-
-	std::string property(Property property) const;
-
-//	friend std::ostream& operator<<(std::ostream& stream, const Module& module);
 };

@@ -10,14 +10,18 @@ namespace
 }
 
 Emulator::Emulator()
-    : m_ts(false)
-    , m_ay{0}
+    : m_ay{0}
 {
 }
 
 Emulator::~Emulator()
 {
     Close();
+}
+
+std::string Emulator::name() const
+{
+    return ("Emulator -> " + chip.toString());
 }
 
 bool Emulator::Open()
@@ -40,10 +44,34 @@ bool Emulator::Init(const Module& module)
     if (m_isOpened)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_ts = (module.chip.count() == Chip::Count::TurboSound);
+        chip.count(module.chip.count());
 
-        m_isOpened &= InitChip(0, module);
-        if (m_ts) m_isOpened &= InitChip(1, module);
+        chip.model(Chip::Model::AY);
+        if (module.chip.modelKnown())
+        {
+            if (module.chip.model() == Chip::Model::YM)
+            {
+                chip.model(Chip::Model::YM);
+            }
+        }
+
+        chip.frequency(Chip::Frequency::F1750000);
+        if (module.chip.frequencyKnown())
+        {
+            chip.frequency(module.chip.frequency());
+        }
+
+        chip.channels(Chip::Channels::ABC);
+        if (module.chip.channelsKnown())
+        {
+            chip.channels(module.chip.channels());
+        }
+
+        m_isOpened &= InitChip(0);
+        if (chip.count() == Chip::Count::TurboSound)
+        {
+            m_isOpened &= InitChip(1);
+        }
     }
     return m_isOpened;
 }
@@ -53,7 +81,10 @@ bool Emulator::OutFrame(const Frame& frame, bool force)
     if (m_isOpened)
     {
         WriteToChip(0, frame, force);
-        if (m_ts) WriteToChip(1, frame, force);
+        if (chip.count() == Chip::Count::TurboSound)
+        {
+            WriteToChip(1, frame, force);
+        }
     }
     return m_isOpened;
 }
@@ -69,7 +100,7 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
     auto sampbuf = (int16_t*)buffer;
     auto samples = (int)(size / sizeof(int16_t));
 
-    if (m_ts)
+    if (chip.count() == Chip::Count::TurboSound)
     {
         for (int i = 0; i < samples;)
         {
@@ -105,15 +136,12 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
     }
 }
 
-bool Emulator::InitChip(uint8_t chip, const Module& module)
+bool Emulator::InitChip(uint8_t chipIndex)
 {
-    uint32_t clockRate = module.chip.freqValue(k_clock_rate);
-    bool isYM = module.chip.modelKnown() ? (module.chip.model() == Chip::Model::YM) : bool(k_is_ym);
-
-    ayumi* ay = &m_ay[chip];
-    if (ayumi_configure(ay, isYM, clockRate, k_sample_rate))
+    ayumi* ay = &m_ay[chipIndex];
+    if (ayumi_configure(ay, (chip.model() == Chip::Model::YM), chip.freqValue(), k_sample_rate))
     {
-        switch (module.chip.channels())
+        switch (chip.channels())
         {
         case Chip::Channels::MONO:
             ayumi_set_pan(ay, 0, 0.5, true);
@@ -138,20 +166,20 @@ bool Emulator::InitChip(uint8_t chip, const Module& module)
     return false;
 }
 
-void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
+void Emulator::WriteToChip(uint8_t chipIndex, const Frame& frame, bool force)
 {
-    ayumi* ay = &m_ay[chip];
+    ayumi* ay = &m_ay[chipIndex];
 
-    uint8_t r7 = frame.data(chip, Mixer_Flags);
-    uint8_t r8 = frame.data(chip, VolA_EnvFlg);
-    uint8_t r9 = frame.data(chip, VolB_EnvFlg);
-    uint8_t rA = frame.data(chip, VolC_EnvFlg);
+    uint8_t r7 = frame.data(chipIndex, Mixer_Flags);
+    uint8_t r8 = frame.data(chipIndex, VolA_EnvFlg);
+    uint8_t r9 = frame.data(chipIndex, VolB_EnvFlg);
+    uint8_t rA = frame.data(chipIndex, VolC_EnvFlg);
 
-    ayumi_set_tone(ay, 0, frame.data(chip, TonA_PeriodL) | frame.data(chip, TonA_PeriodH) << 8);
-    ayumi_set_tone(ay, 1, frame.data(chip, TonB_PeriodL) | frame.data(chip, TonB_PeriodH) << 8);
-    ayumi_set_tone(ay, 2, frame.data(chip, TonC_PeriodL) | frame.data(chip, TonC_PeriodH) << 8);
+    ayumi_set_tone(ay, 0, frame.data(chipIndex, TonA_PeriodL) | frame.data(chipIndex, TonA_PeriodH) << 8);
+    ayumi_set_tone(ay, 1, frame.data(chipIndex, TonB_PeriodL) | frame.data(chipIndex, TonB_PeriodH) << 8);
+    ayumi_set_tone(ay, 2, frame.data(chipIndex, TonC_PeriodL) | frame.data(chipIndex, TonC_PeriodH) << 8);
 
-    ayumi_set_noise(ay, frame.data(chip, Noise_Period));
+    ayumi_set_noise(ay, frame.data(chipIndex, Noise_Period));
 
     ayumi_set_mixer(ay, 0, r7 >> 0 & 0x01, r7 >> 3 & 0x01, r8 >> 4);
     ayumi_set_mixer(ay, 1, r7 >> 1 & 0x01, r7 >> 4 & 0x01, r9 >> 4);
@@ -161,10 +189,10 @@ void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
     ayumi_set_volume(ay, 1, r9 & 0x0F);
     ayumi_set_volume(ay, 2, rA & 0x0F);
 
-    ayumi_set_envelope(ay, frame.data(chip, Env_PeriodL) | frame.data(chip, Env_PeriodH) << 8);
-    if (force || frame.changed(chip, Env_Shape))
+    ayumi_set_envelope(ay, frame.data(chipIndex, Env_PeriodL) | frame.data(chipIndex, Env_PeriodH) << 8);
+    if (force || frame.changed(chipIndex, Env_Shape))
     {
-        ayumi_set_envelope_shape(ay, frame.data(chip, Env_Shape));
+        ayumi_set_envelope_shape(ay, frame.data(chipIndex, Env_Shape));
     }
 }
 

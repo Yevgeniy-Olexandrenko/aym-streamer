@@ -8,6 +8,7 @@ class Streamer : public Output
 public:
 	Streamer(int comPortIndex);
 	virtual ~Streamer();
+	std::string name() const override;
 
 public:
 	bool Open() override;

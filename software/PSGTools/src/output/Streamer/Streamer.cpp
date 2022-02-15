@@ -12,6 +12,11 @@ Streamer::~Streamer()
 	Close();
 }
 
+std::string Streamer::name() const
+{
+	return ("Streamer -> " + chip.toString());
+}
+
 bool Streamer::Open()
 {
 	m_port.Open(m_portIndex);
@@ -25,7 +30,10 @@ bool Streamer::Open()
 
 bool Streamer::Init(const Module& module)
 {
-	// do nothing for now
+	chip.count(Chip::Count::SingleChip);
+	chip.model(Chip::Model::Compatible);
+	chip.frequency(Chip::Frequency::F1773400);
+	chip.channels(Chip::Channels::ABC);
 	return true;
 }
 
@@ -59,3 +67,4 @@ void Streamer::Close()
 {
 	m_port.Close();
 }
+

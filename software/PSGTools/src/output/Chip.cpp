@@ -43,7 +43,7 @@ std::string Chip::toString() const
 
 	if (frequencyKnown())
 	{
-		stream << double(freqValue(0)) / 1000000 << " MHz" << ' ';
+		stream << double(freqValue()) / 1000000 << " MHz" << ' ';
 	}
 
 	if (channelsKnown())
@@ -103,7 +103,7 @@ Chip::Frequency Chip::frequency() const
 	return m_frequency;
 }
 
-uint32_t Chip::freqValue(uint32_t defFreqValue) const
+uint32_t Chip::freqValue() const
 {
 	switch (frequency())
 	{
@@ -112,7 +112,7 @@ uint32_t Chip::freqValue(uint32_t defFreqValue) const
 	case Frequency::F1773400: return 1773400;
 	case Frequency::F2000000: return 2000000;
 	}
-	return defFreqValue;
+	return 0; // should not happen!
 }
 
 bool Chip::frequencyKnown() const

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string>
 
-class Chip
+struct Chip
 {
 public:
 	enum class Count
@@ -40,7 +40,7 @@ public:
 	void frequency(Frequency frequency);
 	void freqValue(uint32_t freqValue);
 	Frequency frequency() const;
-	uint32_t freqValue(uint32_t defFreqValue) const;
+	uint32_t freqValue() const;
 	bool frequencyKnown() const;
 
 	void channels(Channels channels);

@@ -69,17 +69,27 @@ void PrintModuleFile(const Module& module, int number, int total)
 
 void PrintModuleInfo(const Module& module)
 {
-    auto PrintProperty = [&module](const std::string& label, Module::Property property)
+    auto TrimString = [](std::string& str)
     {
-        std::string str = module.property(property);
         str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
         str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
+    };
+
+    auto PrintPropertyLabel = [](const std::string& label)
+    {
+        std::cout << ' ' << termcolor::bright_yellow << label;
+        std::cout << termcolor::white << std::string(9 - label.length(), '.');
+        std::cout << termcolor::bright_magenta << ": ";
+    };
+
+    auto PrintModuleProperty = [&](const std::string& label, Module::Property property)
+    {
+        std::string str = module.property(property);
+        TrimString(str);
 
         if (!str.empty())
         {
-            std::cout << ' ' << termcolor::bright_yellow << label;
-            std::cout << termcolor::white << std::string(9 - label.length(), '.');
-            std::cout << termcolor::bright_magenta << ": ";
+            PrintPropertyLabel(label);
             if (property == Module::Property::Title)
                 std::cout << termcolor::bright_green;
             else
@@ -88,12 +98,26 @@ void PrintModuleInfo(const Module& module)
         }
     };
 
-    PrintProperty("Title", Module::Property::Title);
-    PrintProperty("Artist", Module::Property::Artist);
-    PrintProperty("Type", Module::Property::Type);
-    PrintProperty("Chip", Module::Property::Chip);
-    PrintProperty("Frames", Module::Property::Frames);
-    PrintProperty("Duration", Module::Property::Duration);
+    auto PrintOutputProperty = [&](const std::string& label, const Output& output)
+    {
+        std::string str = output.name();
+        TrimString(str);
+
+        if (!str.empty())
+        {
+            PrintPropertyLabel(label);
+            std::cout << termcolor::white;
+            std::cout << str << termcolor::reset << std::endl;
+        }
+    };
+
+    PrintModuleProperty("Title", Module::Property::Title);
+    PrintModuleProperty("Artist", Module::Property::Artist);
+    PrintModuleProperty("Type", Module::Property::Type);
+    PrintModuleProperty("Chip", Module::Property::Chip);
+    PrintModuleProperty("Frames", Module::Property::Frames);
+    PrintModuleProperty("Duration", Module::Property::Duration);
+    PrintOutputProperty("Output", *m_output);
 }
 
 bool DecodeFileToModule(const std::string& filePath, Module& module)
@@ -185,10 +209,11 @@ int main()
             if (DecodeFileToModule(path, *m_module))
             {
                 PrintModuleFile(*m_module, m_filelist->index(), m_filelist->count());
-                PrintModuleInfo(*m_module);
-
+               
                 if (m_player->Init(*m_module))
                 {
+                    PrintModuleInfo(*m_module);
+
                     m_player->Play();
                     auto start = std::chrono::steady_clock::now();
 

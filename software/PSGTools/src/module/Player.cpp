@@ -134,16 +134,16 @@ void Player::PlaybackThread()
 		}
 		firstFrame = false;
 
+		// next frame timestamp waiting
+		frameNextTS += framePeriod;
+		WaitFor(frameNextTS - GetTime());
+
 		// go to next frame
 		m_frameId += m_playbackStep;
 		if (int(m_frameId) < 0 || m_frameId > m_module->playback.lastFrameId())
 		{
 			isPlaying = false;
 		}
-
-		// next frame timestamp waiting
-		frameNextTS += framePeriod;
-		WaitFor(frameNextTS - GetTime());
 	}
 
 	// silence output when job is done

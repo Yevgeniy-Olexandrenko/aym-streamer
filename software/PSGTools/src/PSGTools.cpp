@@ -17,7 +17,7 @@
 #include "output/Emulator/Emulator.h"
 
 
-const std::string k_filelist = "D:\\downloads\\MUSIC\\VtxYmEtc\\gamvtx\\";
+const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -64,7 +64,6 @@ void PrintModuleFile(const Module& module, int number, int total)
     std::cout << color::bright_cyan << " ]--";
     std::cout << color::reset << std::endl;
 }
-
 
 void PrintModuleInfo(const Module& module)
 {
@@ -119,6 +118,115 @@ void PrintModuleInfo(const Module& module)
     PrintModuleProperty("Frames", Module::Property::Frames);
     PrintModuleProperty("Duration", Module::Property::Duration);
     PrintOutputProperty("Output", *m_output);
+}
+
+void PrintHeader()
+{
+    using namespace terminal;
+    std::cout << color::bright_green << " frame [ R";
+    std::cout << color::bright_yellow << "7";
+    std::cout << color::bright_green << "|R";
+    std::cout << color::bright_yellow << "1";
+    std::cout << color::bright_green << "R";
+    std::cout << color::bright_yellow << "0";
+    std::cout << color::bright_green << " R";
+    std::cout << color::bright_yellow << "8";
+    std::cout << color::bright_green << "|R";
+    std::cout << color::bright_yellow << "3";
+    std::cout << color::bright_green << "R";
+    std::cout << color::bright_yellow << "2";
+    std::cout << color::bright_green << " R";
+    std::cout << color::bright_yellow << "9";
+    std::cout << color::bright_green << "|R";
+    std::cout << color::bright_yellow << "5";
+    std::cout << color::bright_green << "R";
+    std::cout << color::bright_yellow << "4";
+    std::cout << color::bright_green << " R";
+    std::cout << color::bright_yellow << "A";
+    std::cout << color::bright_green << "|R";
+    std::cout << color::bright_yellow << "C";
+    std::cout << color::bright_green << "R";
+    std::cout << color::bright_yellow << "B";
+    std::cout << color::bright_green << " R";
+    std::cout << color::bright_yellow << "D";
+    std::cout << color::bright_green << "|R";
+    std::cout << color::bright_yellow << "6";
+    std::cout << color::bright_green << " ]";
+    std::cout << color::reset << std::endl;
+}
+
+void PrintFrames(const Module& module, int frameId, int range)
+{
+    using namespace terminal;
+
+    Frame fakeFrame;
+    for (int i = frameId - range; i <= frameId + range; ++i)
+    {
+        bool isNotFake = (i >= 0 && i < module.playback.framesCount());
+        const Frame& frame = isNotFake ? module.playback.getFrame(i) : fakeFrame;
+
+        auto out_nibble = [&](uint8_t nibble)
+        {
+            nibble &= 0x0F;
+            std::cout << char((nibble >= 0x0A ? 'A' - 0x0A : '0') + nibble);
+        };
+
+        auto out_byte = [&](uint8_t data)
+        {
+            if (i == frameId)
+            {
+                std::cout << color::bright_white;
+                out_nibble(data >> 4);
+                out_nibble(data);
+            }
+            else
+            {
+                std::cout << color::bright_green;
+                out_nibble(data >> 4);
+                out_nibble(data);
+            }
+        };
+
+        auto out_reg = [&](uint8_t index)
+        {
+            const Register& reg = frame[index].first;
+            if (reg.changed())
+                out_byte(reg.data());
+            else
+                std::cout << color::bright_grey << "..";
+        };
+
+        std::cout << ' ';
+        if (i == frameId) std::cout << color::on_blue;
+
+        if (isNotFake)
+        {
+            std::cout << std::setfill('0') << std::setw(5) << i;
+        }
+        else
+        {
+            std::cout << std::string(5, '-');
+        }
+       
+            
+        std::cout << color::bright_cyan << " [ ";
+        out_reg(Mixer_Flags);  std::cout << color::bright_cyan << '|';
+        out_reg(TonA_PeriodH);
+        out_reg(TonA_PeriodL); std::cout << ' ';
+        out_reg(VolA_EnvFlg);  std::cout << color::bright_cyan << '|';
+        out_reg(TonB_PeriodH);
+        out_reg(TonB_PeriodL); std::cout << ' ';
+        out_reg(VolB_EnvFlg);  std::cout << color::bright_cyan << '|';
+        out_reg(TonC_PeriodH);
+        out_reg(TonC_PeriodL); std::cout << ' ';
+        out_reg(VolC_EnvFlg);  std::cout << color::bright_cyan << '|';
+        out_reg(Env_PeriodH);
+        out_reg(Env_PeriodL);  std::cout << ' ';
+        out_reg(Env_Shape);    std::cout << color::bright_cyan << '|';
+        out_reg(Noise_Period);
+        std::cout << color::bright_cyan << " ]";
+        std::cout << color::reset << std::endl;
+    }
 }
 
 bool DecodeFileToModule(const std::string& filePath, Module& module)
@@ -215,6 +323,7 @@ int main()
                 if (m_player->Init(*m_module))
                 {
                     PrintModuleInfo(*m_module);
+                    PrintHeader();
 
                     m_player->Play();
                     auto start = std::chrono::steady_clock::now();
@@ -226,10 +335,13 @@ int main()
                         if (newFrame != oldFrame)
                         {
                             oldFrame = newFrame;
-                            cursor::move_down(1);
+                           /* cursor::move_down(1);
                             cursor::erase_line();
                             std::cout << " Frame: " << newFrame;
-                            cursor::move_up(1);
+                            cursor::move_up(1);*/
+
+                            PrintFrames(*m_module, newFrame, 9);
+                            cursor::move_up(19);
                         }
                         Sleep(1);
                     }

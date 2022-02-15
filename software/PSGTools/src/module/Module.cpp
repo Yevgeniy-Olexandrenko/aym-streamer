@@ -126,7 +126,7 @@ Module::Frames::Frames(Module& module)
 
 void Module::Frames::add(const Frame& frame)
 {
-	m_frames.push_back(frame);
+	if (count() < 100000) m_frames.push_back(frame);
 }
 
 const Frame& Module::Frames::get(FrameId id) const

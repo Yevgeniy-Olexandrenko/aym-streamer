@@ -3,10 +3,7 @@
 #include <chrono>
 #include <algorithm>
 #include <functional>
-
-#include <indicators/cursor_control.hpp>
-#include <indicators/termcolor.hpp>
-#include <indicators/progress_bar.hpp>
+#include <terminal/terminal.hpp>
 
 #include "module/Filelist.h"
 #include "module/Module.h"
@@ -20,7 +17,7 @@
 #include "output/Emulator/Emulator.h"
 
 
-const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\chiptunes\\";
+const std::string k_filelist = "D:\\downloads\\MUSIC\\VtxYmEtc\\gamvtx\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -42,33 +39,37 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 
 void PrintDelimiter()
 {
-    size_t term_w = indicators::terminal_width() - 2;
-    std::cout << ' ' << termcolor::bright_cyan;
+    using namespace terminal;
+    size_t term_w = terminal_width() - 2;
+    std::cout << ' ' << color::bright_cyan;
     std::cout << std::string(term_w, '-');
-    std::cout << termcolor::reset << std::endl;
+    std::cout << color::reset << std::endl;
 }
 
 void PrintModuleFile(const Module& module, int number, int total)
 {
+    using namespace terminal;
     std::string filename = module.file.nameExt();
     std::string filenumber = std::to_string(number) + '/' + std::to_string(total);
 
     size_t strlen = filenumber.length() + filename.length();
-    size_t term_w = indicators::terminal_width() - 2;
+    size_t term_w = terminal_width() - 2;
 
-    std::cout << ' ' << termcolor::bright_cyan;
+    std::cout << ' ' << color::bright_cyan;
     std::cout << std::string(term_w - strlen - 7, '-')  << "[ ";
-    std::cout << termcolor::bright_yellow << filenumber << ' ';
-    std::cout << termcolor::bright_white << module.file.name();
-    std::cout << termcolor::bright_magenta << '.';
-    std::cout << termcolor::white << module.file.ext();
-    std::cout << termcolor::bright_cyan << " ]--";
-    std::cout << termcolor::reset << std::endl;
+    std::cout << color::bright_yellow << filenumber << ' ';
+    std::cout << color::bright_white << module.file.name();
+    std::cout << color::bright_magenta << '.';
+    std::cout << color::white << module.file.ext();
+    std::cout << color::bright_cyan << " ]--";
+    std::cout << color::reset << std::endl;
 }
 
 
 void PrintModuleInfo(const Module& module)
 {
+    using namespace terminal;
+
     auto TrimString = [](std::string& str)
     {
         str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
@@ -77,9 +78,9 @@ void PrintModuleInfo(const Module& module)
 
     auto PrintPropertyLabel = [](const std::string& label)
     {
-        std::cout << ' ' << termcolor::bright_yellow << label;
-        std::cout << termcolor::bright_grey << std::string(9 - label.length(), '.');
-        std::cout << termcolor::bright_magenta << ": ";
+        std::cout << ' ' << color::bright_yellow << label;
+        std::cout << color::bright_grey << std::string(9 - label.length(), '.');
+        std::cout << color::bright_magenta << ": ";
     };
 
     auto PrintModuleProperty = [&](const std::string& label, Module::Property property)
@@ -91,10 +92,10 @@ void PrintModuleInfo(const Module& module)
         {
             PrintPropertyLabel(label);
             if (property == Module::Property::Title)
-                std::cout << termcolor::bright_green;
+                std::cout << color::bright_green;
             else
-                std::cout << termcolor::bright_white;
-            std::cout << str << termcolor::reset << std::endl;
+                std::cout << color::bright_white;
+            std::cout << str << color::reset << std::endl;
         }
     };
 
@@ -106,8 +107,8 @@ void PrintModuleInfo(const Module& module)
         if (!str.empty())
         {
             PrintPropertyLabel(label);
-            std::cout << termcolor::bright_cyan;
-            std::cout << str << termcolor::reset << std::endl;
+            std::cout << color::bright_cyan;
+            std::cout << str << color::reset << std::endl;
         }
     };
 
@@ -184,13 +185,14 @@ void SaveModuleDebugOutput(const Module& module)
 
 int main()
 {
+    using namespace terminal;
     SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
-    indicators::show_console_cursor(false);
-    size_t w = indicators::terminal_width() - 1;
+    cursor::show(false);
+    size_t w = terminal_width() - 1;
 
     PrintDelimiter();
-    std::cout << ' ' << termcolor::bright_red << "PSG Tools v1.0" << termcolor::reset << std::endl;
-    std::cout << ' ' << termcolor::bright_red << "by Yevgeniy Olexandrenko" << termcolor::reset << std::endl;
+    std::cout << ' ' << color::bright_red << "PSG Tools v1.0" << color::reset << std::endl;
+    std::cout << ' ' << color::bright_red << "by Yevgeniy Olexandrenko" << color::reset << std::endl;
     PrintDelimiter();
     std::cout << std::endl;
 
@@ -224,7 +226,10 @@ int main()
                         if (newFrame != oldFrame)
                         {
                             oldFrame = newFrame;
-                            std::cout << '\r' << " Frame: " << newFrame << "     " << '\r';
+                            cursor::move_down(1);
+                            cursor::erase_line();
+                            std::cout << " Frame: " << newFrame;
+                            cursor::move_up(1);
                         }
                         Sleep(1);
                     }
@@ -255,6 +260,7 @@ int main()
             path.clear();
         }
     }
+    cursor::show(true);
 
 //
 //
@@ -363,6 +369,4 @@ int main()
 //            std::setfill('0') << std::setw(2) << ss << '.' <<
 //            std::setfill('0') << std::setw(3) << ms << std::endl;
 //    }
-    
-    indicators::show_console_cursor(true);
 }

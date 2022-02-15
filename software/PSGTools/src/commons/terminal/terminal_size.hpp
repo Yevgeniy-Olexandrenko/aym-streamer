@@ -1,13 +1,12 @@
 
-#ifndef INDICATORS_TERMINAL_SIZE
-#define INDICATORS_TERMINAL_SIZE
+#ifndef TERMINAL_SIZE
+#define TERMINAL_SIZE
 #include <utility>
-
 
 #if defined(_WIN32)
 #include <windows.h>
 
-namespace indicators {
+namespace terminal {
 
 static inline std::pair<size_t, size_t> terminal_size() {
   CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -20,14 +19,14 @@ static inline std::pair<size_t, size_t> terminal_size() {
 
 static inline size_t terminal_width() { return terminal_size().second; }
 
-} // namespace indicators
+} // namespace terminal
 
 #else
 
-#include <sys/ioctl.h> //ioctl() and TIOCGWINSZ
+#include <sys/ioctl.h> // ioctl() and TIOCGWINSZ
 #include <unistd.h>    // for STDOUT_FILENO
 
-namespace indicators {
+namespace terminal {
 
 static inline std::pair<size_t, size_t> terminal_size() {
   struct winsize size{};
@@ -37,7 +36,7 @@ static inline std::pair<size_t, size_t> terminal_size() {
 
 static inline size_t terminal_width() { return terminal_size().second; }
 
-} // namespace indicators
+} // namespace terminal
 
 #endif
 

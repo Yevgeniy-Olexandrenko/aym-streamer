@@ -1,8 +1,9 @@
 ﻿#include <iostream>
-#include <iomanip>
 #include <chrono>
-#include <algorithm>
-#include <functional>
+
+//#define _WIN32_WINNT 0x0500
+#include <Windows.h>
+
 #include <terminal/terminal.hpp>
 
 #include "module/Filelist.h"
@@ -15,9 +16,9 @@
 
 #include "output/Streamer/Streamer.h"
 #include "output/Emulator/Emulator.h"
+#include "Interface.h"
 
-
-const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
+const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs\\Authors\\Nik-O\\fast hny chiptune.pt3";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -44,189 +45,6 @@ void PrintDelimiter()
     std::cout << ' ' << color::bright_cyan;
     std::cout << std::string(term_w, '-');
     std::cout << color::reset << std::endl;
-}
-
-void PrintModuleFile(const Module& module, int number, int total)
-{
-    using namespace terminal;
-    std::string filename = module.file.nameExt();
-    std::string filenumber = std::to_string(number) + '/' + std::to_string(total);
-
-    size_t strlen = filenumber.length() + filename.length();
-    size_t term_w = terminal_width() - 2;
-
-    std::cout << ' ' << color::bright_cyan;
-    std::cout << std::string(term_w - strlen - 7, '-')  << "[ ";
-    std::cout << color::bright_yellow << filenumber << ' ';
-    std::cout << color::bright_white << module.file.name();
-    std::cout << color::bright_magenta << '.';
-    std::cout << color::white << module.file.ext();
-    std::cout << color::bright_cyan << " ]--";
-    std::cout << color::reset << std::endl;
-}
-
-void PrintModuleInfo(const Module& module)
-{
-    using namespace terminal;
-
-    auto TrimString = [](std::string& str)
-    {
-        str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
-    };
-
-    auto PrintPropertyLabel = [](const std::string& label)
-    {
-        std::cout << ' ' << color::bright_yellow << label;
-        std::cout << color::bright_grey << std::string(9 - label.length(), '.');
-        std::cout << color::bright_magenta << ": ";
-    };
-
-    auto PrintModuleProperty = [&](const std::string& label, Module::Property property)
-    {
-        std::string str = module.property(property);
-        TrimString(str);
-
-        if (!str.empty())
-        {
-            PrintPropertyLabel(label);
-            if (property == Module::Property::Title)
-                std::cout << color::bright_green;
-            else
-                std::cout << color::bright_white;
-            std::cout << str << color::reset << std::endl;
-        }
-    };
-
-    auto PrintOutputProperty = [&](const std::string& label, const Output& output)
-    {
-        std::string str = output.name();
-        TrimString(str);
-
-        if (!str.empty())
-        {
-            PrintPropertyLabel(label);
-            std::cout << color::bright_cyan;
-            std::cout << str << color::reset << std::endl;
-        }
-    };
-
-    PrintModuleProperty("Title", Module::Property::Title);
-    PrintModuleProperty("Artist", Module::Property::Artist);
-    PrintModuleProperty("Type", Module::Property::Type);
-    PrintModuleProperty("Chip", Module::Property::Chip);
-    PrintModuleProperty("Frames", Module::Property::Frames);
-    PrintModuleProperty("Duration", Module::Property::Duration);
-    PrintOutputProperty("Output", *m_output);
-}
-
-void PrintHeader()
-{
-    using namespace terminal;
-    std::cout << color::bright_green << " frame [ R";
-    std::cout << color::bright_yellow << "7";
-    std::cout << color::bright_green << "|R";
-    std::cout << color::bright_yellow << "1";
-    std::cout << color::bright_green << "R";
-    std::cout << color::bright_yellow << "0";
-    std::cout << color::bright_green << " R";
-    std::cout << color::bright_yellow << "8";
-    std::cout << color::bright_green << "|R";
-    std::cout << color::bright_yellow << "3";
-    std::cout << color::bright_green << "R";
-    std::cout << color::bright_yellow << "2";
-    std::cout << color::bright_green << " R";
-    std::cout << color::bright_yellow << "9";
-    std::cout << color::bright_green << "|R";
-    std::cout << color::bright_yellow << "5";
-    std::cout << color::bright_green << "R";
-    std::cout << color::bright_yellow << "4";
-    std::cout << color::bright_green << " R";
-    std::cout << color::bright_yellow << "A";
-    std::cout << color::bright_green << "|R";
-    std::cout << color::bright_yellow << "C";
-    std::cout << color::bright_green << "R";
-    std::cout << color::bright_yellow << "B";
-    std::cout << color::bright_green << " R";
-    std::cout << color::bright_yellow << "D";
-    std::cout << color::bright_green << "|R";
-    std::cout << color::bright_yellow << "6";
-    std::cout << color::bright_green << " ]";
-    std::cout << color::reset << std::endl;
-}
-
-void PrintFrames(const Module& module, int frameId, int range)
-{
-    using namespace terminal;
-
-    Frame fakeFrame;
-    for (int i = frameId - range; i <= frameId + range; ++i)
-    {
-        bool isNotFake = (i >= 0 && i < module.playback.framesCount());
-        const Frame& frame = isNotFake ? module.playback.getFrame(i) : fakeFrame;
-
-        auto out_nibble = [&](uint8_t nibble)
-        {
-            nibble &= 0x0F;
-            std::cout << char((nibble >= 0x0A ? 'A' - 0x0A : '0') + nibble);
-        };
-
-        auto out_byte = [&](uint8_t data)
-        {
-            if (i == frameId)
-            {
-                std::cout << color::bright_white;
-                out_nibble(data >> 4);
-                out_nibble(data);
-            }
-            else
-            {
-                std::cout << color::bright_green;
-                out_nibble(data >> 4);
-                out_nibble(data);
-            }
-        };
-
-        auto out_reg = [&](uint8_t index)
-        {
-            const Register& reg = frame[index].first;
-            if (reg.changed())
-                out_byte(reg.data());
-            else
-                std::cout << color::bright_grey << "..";
-        };
-
-        std::cout << ' ';
-        if (i == frameId) std::cout << color::on_blue;
-
-        if (isNotFake)
-        {
-            std::cout << std::setfill('0') << std::setw(5) << i;
-        }
-        else
-        {
-            std::cout << std::string(5, '-');
-        }
-       
-            
-        std::cout << color::bright_cyan << " [ ";
-        out_reg(Mixer_Flags);  std::cout << color::bright_cyan << '|';
-        out_reg(TonA_PeriodH);
-        out_reg(TonA_PeriodL); std::cout << ' ';
-        out_reg(VolA_EnvFlg);  std::cout << color::bright_cyan << '|';
-        out_reg(TonB_PeriodH);
-        out_reg(TonB_PeriodL); std::cout << ' ';
-        out_reg(VolB_EnvFlg);  std::cout << color::bright_cyan << '|';
-        out_reg(TonC_PeriodH);
-        out_reg(TonC_PeriodL); std::cout << ' ';
-        out_reg(VolC_EnvFlg);  std::cout << color::bright_cyan << '|';
-        out_reg(Env_PeriodH);
-        out_reg(Env_PeriodL);  std::cout << ' ';
-        out_reg(Env_Shape);    std::cout << color::bright_cyan << '|';
-        out_reg(Noise_Period);
-        std::cout << color::bright_cyan << " ]";
-        std::cout << color::reset << std::endl;
-    }
 }
 
 bool DecodeFileToModule(const std::string& filePath, Module& module)
@@ -291,11 +109,102 @@ void SaveModuleDebugOutput(const Module& module)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+bool SetConsoleWindowSize(SHORT x, SHORT y)
+{
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    if (h == INVALID_HANDLE_VALUE)
+        return false;
+
+    // If either dimension is greater than the largest console window we can have,
+    // there is no point in attempting the change.
+    {
+        COORD largestSize = GetLargestConsoleWindowSize(h);
+        if (x > largestSize.X)
+            return false;
+        if (y > largestSize.Y)
+            return false;
+    }
+
+
+    CONSOLE_SCREEN_BUFFER_INFO bufferInfo;
+    if (!GetConsoleScreenBufferInfo(h, &bufferInfo))
+        return false;
+
+    SMALL_RECT& winInfo = bufferInfo.srWindow;
+    COORD windowSize = { winInfo.Right - winInfo.Left + 1, winInfo.Bottom - winInfo.Top + 1 };
+
+    if (windowSize.X > x || windowSize.Y > y)
+    {
+        // window size needs to be adjusted before the buffer size can be reduced.
+        SMALL_RECT info =
+        {
+            0,
+            0,
+            x < windowSize.X ? x - 1 : windowSize.X - 1,
+            y < windowSize.Y ? y - 1 : windowSize.Y - 1
+        };
+
+        if (!SetConsoleWindowInfo(h, TRUE, &info))
+            return false;
+    }
+
+    COORD size = { x, y };
+    if (!SetConsoleScreenBufferSize(h, size))
+        return false;
+
+
+    SMALL_RECT info = { 0, 0, x - 1, y - 1 };
+    if (!SetConsoleWindowInfo(h, TRUE, &info))
+        return false;
+
+    return true;
+}
+
 int main()
 {
+    SetConsoleWindowSize(86, 30);
+
+
+    HWND consoleWindow = GetConsoleWindow();
+    SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
+
+   
+    //HANDLE wHnd = GetStdHandle(STD_OUTPUT_HANDLE);
+    //SMALL_RECT windowSize = { 0, 0, 86, 30 };
+    //SetConsoleWindowInfo(wHnd, 1, &windowSize);
+    //COORD bufferSize = { 86, 30 };
+    //SetConsoleScreenBufferSize(wHnd, bufferSize);
+
+    HANDLE hInput;
+    DWORD prev_mode;
+    hInput = GetStdHandle(STD_INPUT_HANDLE);
+    GetConsoleMode(hInput, &prev_mode);
+    SetConsoleMode(hInput, prev_mode & ~ENABLE_QUICK_EDIT_MODE);
+    
+    
+
+
+   /* HWND console = GetConsoleWindow();
+    RECT ConsoleRect;
+    GetWindowRect(console, &ConsoleRect);
+
+    MoveWindow(console, ConsoleRect.left, ConsoleRect.top, 600, 400, TRUE);*/
+
+  //  HANDLE stdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  //  DWORD consoleMode =
+  //      ENABLE_PROCESSED_OUTPUT |
+  ////      ENABLE_WRAP_AT_EOL_OUTPUT |
+  //      ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
+  //  SetConsoleMode(stdOut, consoleMode);
+
+
+
+
     using namespace terminal;
     SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
-    cursor::show(false);
     size_t w = terminal_width() - 1;
 
     PrintDelimiter();
@@ -318,12 +227,12 @@ int main()
             m_module.reset(new Module());
             if (DecodeFileToModule(path, *m_module))
             {
-                PrintModuleFile(*m_module, m_filelist->index(), m_filelist->count());
+                Interface::PrintInputFile(*m_module, m_filelist->index(), m_filelist->count());
                
                 if (m_player->Init(*m_module))
                 {
-                    PrintModuleInfo(*m_module);
-                    PrintHeader();
+                    Interface::PrintModuleInfo(*m_module, *m_output);
+                    std::cout << std::endl;
 
                     m_player->Play();
                     auto start = std::chrono::steady_clock::now();
@@ -331,33 +240,31 @@ int main()
                     FrameId oldFrame = -1;
                     while (m_player->IsPlaying())
                     {
+//                        SetConsoleWindowSize(86, 30);
+
                         FrameId newFrame = m_player->GetFrameId();
                         if (newFrame != oldFrame)
                         {
                             oldFrame = newFrame;
-                           /* cursor::move_down(1);
-                            cursor::erase_line();
-                            std::cout << " Frame: " << newFrame;
-                            cursor::move_up(1);*/
-
-                            PrintFrames(*m_module, newFrame, 9);
-                            cursor::move_up(19);
+                            Interface::PrintFrameStream(*m_module, newFrame, 12);
                         }
                         Sleep(1);
                     }
+                    Interface::PrintBlankArea(0, 12);
+                    cursor::move_up(1);
 
-                    uint32_t duration = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-                            int ms = duration % 1000; duration /= 1000;
-                            int ss = duration % 60;   duration /= 60;
-                            int mm = duration % 60;   duration /= 60;
-                            int hh = duration;
-                    
-                            std::cout << std::endl;
-                            std::cout << " Duration: " <<
-                                std::setfill('0') << std::setw(2) << hh << ':' <<
-                                std::setfill('0') << std::setw(2) << mm << ':' <<
-                                std::setfill('0') << std::setw(2) << ss << '.' <<
-                                std::setfill('0') << std::setw(3) << ms << std::endl;
+                    //uint32_t duration = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+                    //        int ms = duration % 1000; duration /= 1000;
+                    //        int ss = duration % 60;   duration /= 60;
+                    //        int mm = duration % 60;   duration /= 60;
+                    //        int hh = duration;
+                    //
+                    //        std::cout << std::endl;
+                    //        std::cout << " Duration: " <<
+                    //            std::setfill('0') << std::setw(2) << hh << ':' <<
+                    //            std::setfill('0') << std::setw(2) << mm << ':' <<
+                    //            std::setfill('0') << std::setw(2) << ss << '.' <<
+                    //            std::setfill('0') << std::setw(3) << ms << std::endl;
 
                 }
                 else
@@ -481,4 +388,5 @@ int main()
 //            std::setfill('0') << std::setw(2) << ss << '.' <<
 //            std::setfill('0') << std::setw(3) << ms << std::endl;
 //    }
+return 0;
 }

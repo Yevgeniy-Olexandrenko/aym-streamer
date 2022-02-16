@@ -102,7 +102,7 @@ bool Filelist::next(std::string& path) const
 {
     if (!empty())
     {
-        if (m_index < m_files.size())
+        if (m_index < int(m_files.size()))
         {
             path = m_files[m_index++].dirNameExt();
             return true;

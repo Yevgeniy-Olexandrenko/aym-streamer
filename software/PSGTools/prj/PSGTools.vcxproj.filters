@@ -84,6 +84,9 @@
     <ClInclude Include="..\src\output\Streamer\Streamer.h">
       <Filter>Sources\output\Streamer</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Interface.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -139,6 +142,9 @@
     </ClCompile>
     <ClCompile Include="..\src\output\Chip.cpp">
       <Filter>Sources\output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Interface.cpp">
+      <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

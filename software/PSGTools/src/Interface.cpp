@@ -7,6 +7,48 @@ namespace Interface
 {
 	using namespace terminal;
 
+    short m_keyOldState[256] = { 0 };
+    short m_keyNewState[256] = { 0 };
+    sKeyState m_keys[256];
+
+    sKeyState GetKey(int nKeyID)
+    {
+        return m_keys[nKeyID]; 
+    }
+
+    void HandleKeyboardInput() 
+    {
+        if (GetConsoleWindow() == GetForegroundWindow())
+        {
+            // Handle Keyboard Input
+            for (int i = 0; i < 256; i++)
+            {
+                m_keyNewState[i] = GetAsyncKeyState(i);
+
+                m_keys[i].bPressed = false;
+                m_keys[i].bReleased = false;
+
+                if (m_keyNewState[i] != m_keyOldState[i])
+                {
+                    if (m_keyNewState[i] & 0x8000)
+                    {
+                        m_keys[i].bPressed = !m_keys[i].bHeld;
+                        m_keys[i].bHeld = true;
+                    }
+                    else
+                    {
+                        m_keys[i].bReleased = true;
+                        m_keys[i].bHeld = false;
+                    }
+                }
+
+                m_keyOldState[i] = m_keyNewState[i];
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
     void trim(std::string& str)
     {
         str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
@@ -35,25 +77,41 @@ namespace Interface
 
     ////////////////////////////////////////////////////////////////////////////
 
-    void PrintInputFile(const Module& module, int number, int total)
+    void PrintInputFile(const Module& module, int index, int total)
     {
         cursor::show(false);
-        std::string numberStr = std::to_string(number);
+        std::string numberStr = std::to_string(index + 1);
         std::string totalStr = std::to_string(total);
 
         size_t strLen = numberStr.length() + 1 + totalStr.length() + module.file.nameExt().length();
         size_t delLen = std::max(int(terminal_width() - 2 - strLen - 7), 2);
 
         std::cout << ' ' << color::bright_cyan;
-        std::cout << std::string(delLen, '-') << "[ ";
-        std::cout << color::bright_yellow << numberStr;
+        std::cout << std::string(delLen, '-') << '[';
+        std::cout << ' ' << color::bright_yellow << numberStr;
         std::cout << color::bright_cyan << '/';
         std::cout << color::bright_yellow << totalStr;
         std::cout << ' ' << color::bright_white << module.file.name();
         std::cout << color::bright_magenta << '.';
         std::cout << color::bright_grey << module.file.ext();
-        std::cout << color::bright_cyan << " ]--";
+        std::cout << ' ' << color::bright_cyan << "]--";
         std::cout << color::reset << std::endl;
+    }
+
+    void PrintPlaybackFooter()
+    {
+        cursor::show(false);
+        std::string numberStr = "00:00:00";
+
+        size_t strLen = numberStr.length();
+        size_t delLen = std::max(int(terminal_width() - 2 - strLen - 7), 2);
+
+        std::cout << ' ' << color::bright_cyan;
+        std::cout << std::string(delLen, '-') << '[';
+        std::cout << ' ' << color::bright_white << numberStr;
+        std::cout << ' ' << color::bright_cyan << "]--";
+        std::cout << color::reset << std::endl;
+        cursor::move_up(1);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -216,7 +274,7 @@ namespace Interface
             // print frame number
             std::cout << ' ';
             if (highlight) 
-                std::cout << color::on_blue << color::bright_white;
+                std::cout << color::on_magenta << color::bright_white;
             else
                 std::cout << color::bright_grey;
             if (useFakeFrame)

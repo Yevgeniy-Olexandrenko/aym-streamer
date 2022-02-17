@@ -18,7 +18,7 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs\\Authors\\Nik-O\\fast hny chiptune.pt3";
+const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs++\\Magazines\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -163,7 +163,7 @@ bool SetConsoleWindowSize(SHORT x, SHORT y)
 
 int main()
 {
-    SetConsoleWindowSize(86, 30);
+    SetConsoleWindowSize(86, 32);
 
 
     HWND consoleWindow = GetConsoleWindow();
@@ -220,13 +220,18 @@ int main()
     if (!m_filelist->empty())
     {
         m_filelist->shuffle();
+        bool goToPrev = false;
 
         std::string path;
-        while (m_filelist->next(path))
+        while (true)
         {
+            bool isDone = goToPrev ? m_filelist->prev(path) : m_filelist->next(path);
+            if (!isDone) break;
+
             m_module.reset(new Module());
             if (DecodeFileToModule(path, *m_module))
             {
+                goToPrev = false; // if decoding OK, move to next by default
                 Interface::PrintInputFile(*m_module, m_filelist->index(), m_filelist->count());
                
                 if (m_player->Init(*m_module))
@@ -240,18 +245,51 @@ int main()
                     FrameId oldFrame = -1;
                     while (m_player->IsPlaying())
                     {
-//                        SetConsoleWindowSize(86, 30);
+                        SetConsoleWindowSize(86, 32);
+                        Interface::HandleKeyboardInput();
 
                         FrameId newFrame = m_player->GetFrameId();
                         if (newFrame != oldFrame)
                         {
                             oldFrame = newFrame;
                             Interface::PrintFrameStream(*m_module, newFrame, 12);
+                            cursor::move_down(12);
+                            Interface::PrintPlaybackFooter();
+                            cursor::move_up(12);
                         }
+
+                        if (Interface::GetKey(VK_UP).bPressed)
+                        {
+                            if (!m_player->IsPaused())
+                            {
+                                m_player->Stop();
+                                goToPrev = true;
+                                break;
+                            }
+                        }
+
+                        if (Interface::GetKey(VK_DOWN).bPressed)
+                        {
+                            if (!m_player->IsPaused())
+                            {
+                                m_player->Stop();
+                                goToPrev = false;
+                                break;
+                            }
+                        }
+
+                        if (Interface::GetKey(VK_RETURN).bPressed)
+                        {
+                            if (m_player->IsPaused()) 
+                                m_player->Play();
+                            else 
+                                m_player->Stop();
+                        }
+
                         Sleep(1);
                     }
-                    Interface::PrintBlankArea(0, 12);
-                    cursor::move_up(1);
+                    Interface::PrintBlankArea(0, 13);
+                    
 
                     //uint32_t duration = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
                     //        int ms = duration % 1000; duration /= 1000;
@@ -281,34 +319,6 @@ int main()
     }
     cursor::show(true);
 
-//
-//
-//    Module module;
-//    if (!DecodeFileToModule(k_folder + k_file, module))
-//    {
-//        return - 1;
-//    }
-////    SaveModuleDebugOutput(module);
-//
-//    ////////////////////////////////////////////////////////////////////////////
-//
-//    indicators::show_console_cursor(false);
-//    size_t w = indicators::terminal_width() - 1;
-//
-//#if 0
-//    AYMStreamer output(module, k_comPortIndex);
-//#else
-//    AY38910 output(module);
-//#endif
-//    Player player(output);
-//
-//    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
-//    std::cout << termcolor::bright_red << "PSG Tools v1.0" << termcolor::reset << std::endl;
-//    std::cout << termcolor::bright_red << "by Yevgeniy Olexandrenko" << termcolor::reset << std::endl;
-//    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
-//    std::cout << module;
-//    std::cout << termcolor::bright_cyan << std::string(w, '-') << termcolor::reset << std::endl;
-//
 //    indicators::ProgressBar bar{
 //        indicators::option::BarWidth{50},
 //        indicators::option::Start{"["},
@@ -320,73 +330,6 @@ int main()
 //        indicators::option::ForegroundColor{indicators::Color::yellow},
 //        indicators::option::FontStyles{std::vector<indicators::FontStyle>{indicators::FontStyle::bold}}
 //    };
-//
-//    g_player = &player;
-//    if (player.Init(module))
-//    {
-//        FrameId oldFrame = -1;
-//        auto start = std::chrono::steady_clock::now();
-//        player.Play();
-//
-//        while (player.IsPlaying())
-//        {
-////#if 0
-////            
-////            bool left  = (GetAsyncKeyState(VK_LEFT ) & 0x1) != 0;
-////            bool right = (GetAsyncKeyState(VK_RIGHT) & 0x1) != 0;
-////            bool up    = (GetAsyncKeyState(VK_UP   ) & 0x1) != 0;
-////            bool down  = (GetAsyncKeyState(VK_DOWN ) & 0x1) != 0;
-////#else
-////            bool left  = (GetKeyState(VK_LEFT  ) & 0x80) != 0;
-////            bool right = (GetKeyState(VK_RIGHT ) & 0x80) != 0;
-////            bool up    = (GetKeyState(VK_UP    ) & 0x80) != 0;
-////            bool down  = (GetKeyState(VK_DOWN  ) & 0x80) != 0;
-////            bool enter = (GetAsyncKeyState(VK_RETURN) & 0x1) != 0;
-////#endif
-////
-////            if (right)
-////            {
-////                player.Play(+10);
-////            }
-////            else if (left)
-////            {
-////                player.Play(-10);
-////            }
-////            else
-////            {
-////                player.Play(+1);
-////            }
-//
-//            //if (enter)
-//            //{
-//            //    if (player.IsPaused())
-//            //        player.Play();
-//            //    else 
-//            //        player.Stop();
-//            //}
-//
-//            FrameId newFrame = player.GetFrameId();
-//            if (newFrame != oldFrame)
-//            {
-//                oldFrame = newFrame;
-//                bar.set_progress(newFrame * 100 / module.playback.framesCount());
-//                std::cout << '\r' << "Frame: " << newFrame << "     " << '\r';
-//            }
-//            Sleep(200);
-//        }
-//
-//        uint32_t duration = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-//        int ms = duration % 1000; duration /= 1000;
-//        int ss = duration % 60;   duration /= 60;
-//        int mm = duration % 60;   duration /= 60;
-//        int hh = duration;
-//
-//        std::cout << std::endl;
-//        std::cout << "Duration: " <<
-//            std::setfill('0') << std::setw(2) << hh << ':' <<
-//            std::setfill('0') << std::setw(2) << mm << ':' <<
-//            std::setfill('0') << std::setw(2) << ss << '.' <<
-//            std::setfill('0') << std::setw(3) << ms << std::endl;
-//    }
-return 0;
+
+    return 0;
 }

@@ -37,7 +37,7 @@ std::wstring cwd()
 ////////////////////////////////////////////////////////////////////////////////
 
 Filelist::Filelist(const std::string& exts)
-    : m_index(0)
+    : m_index(-1)
 {
     std::string ext;
     std::stringstream ss(exts);
@@ -89,9 +89,9 @@ bool Filelist::prev(std::string& path) const
 {
     if (!empty())
     {
-        if (m_index >= 0)
+        if (m_index > 0)
         {
-            path = m_files[m_index--].dirNameExt();
+            path = m_files[--m_index].dirNameExt();
             return true;
         }
     }
@@ -104,7 +104,7 @@ bool Filelist::next(std::string& path) const
     {
         if (m_index < int(m_files.size()))
         {
-            path = m_files[m_index++].dirNameExt();
+            path = m_files[++m_index].dirNameExt();
             return true;
         }
     }

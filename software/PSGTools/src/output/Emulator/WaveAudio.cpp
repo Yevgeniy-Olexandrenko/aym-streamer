@@ -66,8 +66,8 @@ void WaveAudio::Close()
 		HWAVEOUT hwo = m_waveout;
 		m_waveout = NULL;
 
-		MMRESULT res = waveOutReset(hwo);
 		std::lock_guard<std::mutex> lock(m_mutex);
+		MMRESULT res = waveOutReset(hwo);
 
 		for (int i = 0; i < 4; ++i)
 		{

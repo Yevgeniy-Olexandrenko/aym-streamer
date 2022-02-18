@@ -10,8 +10,9 @@
 #include "module/Module.h"
 #include "module/Player.h"
 
-#include "decoders/DecodeVTX.h"
 #include "decoders/DecodePT3.h"
+#include "decoders/DecodePT2.h"
+#include "decoders/DecodeVTX.h"
 #include "decoders/DecodePSG.h"
 
 #include "output/Streamer/Streamer.h"
@@ -50,8 +51,9 @@ void PrintDelimiter()
 bool DecodeFileToModule(const std::string& filePath, Module& module)
 {
     std::shared_ptr<Decoder> decoders[]{
-        std::shared_ptr<Decoder>(new DecodeVTX()),
         std::shared_ptr<Decoder>(new DecodePT3()),
+        std::shared_ptr<Decoder>(new DecodePT2()),
+        std::shared_ptr<Decoder>(new DecodeVTX()),
         std::shared_ptr<Decoder>(new DecodePSG()),
     };
 
@@ -215,7 +217,7 @@ int main()
 
     m_output.reset(new Emulator());
     m_player.reset(new Player(*m_output));
-    m_filelist.reset(new Filelist("pt3|psg|vtx", k_filelist));
+    m_filelist.reset(new Filelist("pt2|pt3|psg|vtx", k_filelist));
 
     if (!m_filelist->empty())
     {

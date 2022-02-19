@@ -12,6 +12,8 @@
 #define tDH 100 // min 100 ns by datasheet
 #define tDA 500 // max 500 ns by datasheet
 #define tTS 100 // max 200 ns by datasheet
+#define tRW 500 // min 500 ns by datasheet
+#define tRB 100 // min 100 ns bt datasheet
 
 // Helpers
 #define control_bus_delay(ns) _delay_us(0.001f * (ns))
@@ -105,6 +107,10 @@ void PSG_Read(psg_data& data)
 
 void PSG_Init()
 {
+    // setup reset
+    RES_DDR  |= (1 << PIN_RES);
+    RES_PORT |= (1 << PIN_RES);
+
     // setup control and data bus
     BUS_DDR |= (1 << PIN_BDIR);
     BUS_DDR |= (1 << PIN_BC1);
@@ -129,7 +135,10 @@ void PSG_Clock(psg_clk clk)
 void PSG_Reset()
 {
 #if HARDWARE_VERSION > 211206
-    // TODO: reset on dedicated MCU pin
+    RES_PORT &= ~(1 << PIN_RES);
+    control_bus_delay(tRW);
+    RES_PORT |= (1 << PIN_RES);
+    control_bus_delay(tRB);
 #else
     for (psg_reg r = 0; r < 14; ++r) PSG_Send(r, 0x00);
 #endif

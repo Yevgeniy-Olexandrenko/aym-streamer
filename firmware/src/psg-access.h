@@ -24,6 +24,11 @@
 #define PIN_BC1  PB0   // Arduino pin D8
 #define PIN_BDIR PB1   // Arduino pin D9
 
+// reset signal
+#define RES_PORT PORTD
+#define RES_DDR  DDRD
+#define PIN_RES  PD2
+
 // -----------------------------------------------------------------------------
 // PSG Definitions
 // -----------------------------------------------------------------------------

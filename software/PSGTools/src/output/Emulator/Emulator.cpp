@@ -128,6 +128,9 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
             double L = 0.5 * chip.left;
             double R = 0.5 * chip.right;
 
+            L = L > +1.0 ? +1.0 : (L < -1.0 ? -1.0 : L);
+            R = R > +1.0 ? +1.0 : (R < -1.0 ? -1.0 : R);
+
             sampbuf[i++] = (int16_t)(INT16_MAX * L + 0.5);
             sampbuf[i++] = (int16_t)(INT16_MAX * R + 0.5);
         }

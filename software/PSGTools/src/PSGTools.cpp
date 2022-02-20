@@ -21,7 +21,7 @@
 
 const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs++\\Magazines\\";
 const std::string k_output = "output.txt";
-const int k_comPortIndex = 4;
+const int k_comPortIndex = 14;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -215,7 +215,11 @@ int main()
     PrintDelimiter();
     std::cout << std::endl;
 
+#if 0
+    m_output.reset(new Streamer(k_comPortIndex));
+#else
     m_output.reset(new Emulator());
+#endif
     m_player.reset(new Player(*m_output));
     m_filelist.reset(new Filelist("pt2|pt3|psg|vtx", k_filelist));
 

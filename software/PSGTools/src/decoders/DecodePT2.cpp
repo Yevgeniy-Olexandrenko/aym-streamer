@@ -24,7 +24,7 @@ bool DecodePT2::Open(Module& module)
             if (header->delay >= 3 
                 && header->numberOfPositions > 0 
                 && (header->samplesPointers[0] | header->samplesPointers[1] << 8) == 0
-                && (header->patternsPointerL | header->patternsPointerH << 8) < fileSize)
+                && header->patternsPointer < fileSize)
             {
                 m_data = new uint8_t[fileSize];
                 fileStream.seekg(0, fileStream.beg);
@@ -114,7 +114,7 @@ bool DecodePT2::Init()
     m_delayCounter = 1;
     m_currentPosition = 0;
 
-    uint16_t patternsPointer = header->patternsPointerL | header->patternsPointerH << 8;
+    uint16_t patternsPointer = header->patternsPointer;
     patternsPointer += header->positionList[0] * 6;
     m_chA.addressInPattern = ReadWord(&m_data[patternsPointer + 0]);
     m_chB.addressInPattern = ReadWord(&m_data[patternsPointer + 2]);
@@ -343,7 +343,7 @@ bool DecodePT2::Play()
                     isNewLoop = true;
                 }
 
-                uint16_t patternsPointer = header->patternsPointerL | header->patternsPointerH << 8;
+                uint16_t patternsPointer = header->patternsPointer;
                 patternsPointer += header->positionList[m_currentPosition] * 6;
                 m_chA.addressInPattern = ReadWord(&m_data[patternsPointer + 0]);
                 m_chB.addressInPattern = ReadWord(&m_data[patternsPointer + 2]);

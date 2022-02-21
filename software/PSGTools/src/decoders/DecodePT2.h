@@ -8,15 +8,14 @@ class DecodePT2 : public Decoder
     #pragma pack(push, 1)
     struct Header
     {
-        uint8_t delay;
-        uint8_t numberOfPositions;
-        uint8_t loopPosition;
-        uint8_t samplesPointers[64];
-        uint8_t ornamentsPointers[32];
-        uint8_t patternsPointerL;
-        uint8_t patternsPointerH;
-        char    musicName[30];
-        uint8_t positionList[256];
+        uint8_t  delay;
+        uint8_t  numberOfPositions;
+        uint8_t  loopPosition;
+        uint8_t  samplesPointers[32 * 2];
+        uint8_t  ornamentsPointers[16 * 2];
+        uint16_t patternsPointer;
+        char     musicName[30];
+        uint8_t  positionList[256];
     };
     #pragma pack(pop)
 

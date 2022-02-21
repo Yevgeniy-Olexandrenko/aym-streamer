@@ -19,9 +19,9 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_filelist = "D:\\Projects\\github\\aym-streamer\\chiptunes\\Fatal Snipe\\";
+const std::string k_filelist = "D:\\Projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
 const std::string k_output = "output.txt";
-const int k_comPortIndex = 14;
+const int k_comPortIndex = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -215,7 +215,7 @@ int main()
     PrintDelimiter();
     std::cout << std::endl;
 
-#if 0
+#if 1
     m_output.reset(new Streamer(k_comPortIndex));
 #else
     m_output.reset(new Emulator());

@@ -133,21 +133,21 @@ bool DecodePT3::Open(Module& module)
             isDetected = true;
 
             fileStream.seekg(0, fileStream.end);
-            mod_size = (uint32_t)fileStream.tellg();
+            m_size = (uint32_t)fileStream.tellg();
 
             fileStream.seekg(0, fileStream.beg);
-            body = new uint8_t[mod_size];
+            m_data = new uint8_t[m_size];
 
-            fileStream.read((char*)body, mod_size);
+            fileStream.read((char*)m_data, m_size);
 
             Init();
-            tick = 0;
-            loop = 0;
+            m_tick = 0;
+            m_loop = 0;
 
             auto GetTextProperty = [&](int offset, int size)
             {
                 char buf[33];
-                memcpy(buf, body + offset, size);
+                memcpy(buf, m_data + offset, size);
 
                 int i = size;
                 buf[i] = 0;
@@ -161,16 +161,16 @@ bool DecodePT3::Open(Module& module)
             module.info.artist(GetTextProperty(0x42, 32));
             module.playback.frameRate(50);
 
-            if (chip[0].header->TonTableId == 1)
+            if (m_chip[0].header->tonTableId == 1)
             {
                 module.chip.frequency(Chip::Frequency::F1773400);
             }
-            else if (chip[0].header->TonTableId == 2 && version > 3)
+            else if (m_chip[0].header->tonTableId == 2 && m_ver > 3)
             {
                 module.chip.frequency(Chip::Frequency::F1750000);
             }
 
-            if (tsMode) module.chip.count(Chip::Count::TurboSound);
+            if (m_ts) module.chip.count(Chip::Count::TurboSound);
         }
         fileStream.close();
     }
@@ -184,7 +184,7 @@ bool DecodePT3::Decode(Frame& frame)
 
     for (uint8_t r = 0; r < 16; ++r)
     {
-        uint8_t data = regs[0][r];
+        uint8_t data = m_regs[0][r];
         if (r == Env_Shape)
         {
             if (data != 0xFF) 
@@ -195,9 +195,9 @@ bool DecodePT3::Decode(Frame& frame)
             frame[r].first.update(data);
         }
 
-        if (tsMode)
+        if (m_ts)
         {
-            data = regs[1][r];
+            data = m_regs[1][r];
             if (r == Env_Shape)
             {
                 if (data != 0xFF) 
@@ -214,10 +214,10 @@ bool DecodePT3::Decode(Frame& frame)
 
 void DecodePT3::Close(Module& module)
 {
-    if (loop > 0) 
-        module.loop.frameId(loop);
+    if (m_loop > 0) 
+        module.loop.frameId(m_loop);
     
-    delete[] body;
+    delete[] m_data;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -226,55 +226,55 @@ bool DecodePT3::Init()
 {
     // InitForAllTypes
 
-    memset(&chip, 0, sizeof(chip));
-    memset(&regs, 0, sizeof(regs));
+    memset(&m_chip, 0, sizeof(m_chip));
+    memset(&m_regs, 0, sizeof(m_regs));
 
     // PrepareItem / CaseTrModules
 
-    chip[0].header = (PT3Header*)body;
-    chip[1].header = (PT3Header*)body;
-    chip[0].module = body;
-    chip[1].module = body;
+    m_chip[0].header = (Header*)m_data;
+    m_chip[1].header = (Header*)m_data;
+    m_chip[0].data = m_data;
+    m_chip[1].data = m_data;
 
-    uint8_t v = chip[0].header->MusicName[13];
-    version = ('0' <= v && v <= '9') ? v - '0' : 6;
-    chip[0].plconst.TS = chip[1].plconst.TS = 0x20;
-    int TS = chip[0].header->MusicName[98];
-    tsMode = (TS != 0x20);
-    if (tsMode) {
-        chip[1].plconst.TS = TS;
+    uint8_t v = m_chip[0].header->musicName[13];
+    m_ver = ('0' <= v && v <= '9') ? v - '0' : 6;
+    m_chip[0].ts = m_chip[1].ts = 0x20;
+    int TS = m_chip[0].header->musicName[98];
+    m_ts = (TS != 0x20);
+    if (m_ts) {
+        m_chip[1].ts = TS;
     }
-    else if (mod_size > 400 && !memcmp(body + mod_size - 4, "02TS", 4)) { // try load Vortex II '02TS'
-        unsigned sz1 = body[mod_size - 12] + 0x100 * body[mod_size - 11];
-        unsigned sz2 = body[mod_size - 6] + 0x100 * body[mod_size - 5];
-        if (sz1 + sz2 < mod_size && sz1 > 200 && sz2 > 200) {
-            tsMode = true;
-            chip[1].module = body + sz1;
-            chip[1].header = (PT3Header*)chip[1].module;
+    else if (m_size > 400 && !memcmp(m_data + m_size - 4, "02TS", 4)) { // try load Vortex II '02TS'
+        unsigned sz1 = m_data[m_size - 12] + 0x100 * m_data[m_size - 11];
+        unsigned sz2 = m_data[m_size - 6] + 0x100 * m_data[m_size - 5];
+        if (sz1 + sz2 < m_size && sz1 > 200 && sz2 > 200) {
+            m_ts = true;
+            m_chip[1].data = m_data + sz1;
+            m_chip[1].header = (Header*)m_chip[1].data;
         }
     }
 
     // InitTrackerModule code
 
     for (int cnum = 0; cnum < 2; cnum++) {
-        chip[cnum].mod.Delay = chip[cnum].header->Delay;
-        chip[cnum].mod.DelayCounter = 1;
-        int b = chip[cnum].plconst.TS;
-        uint8_t i = chip[cnum].header->PositionList[0];
+        m_chip[cnum].glob.delay = m_chip[cnum].header->delay;
+        m_chip[cnum].glob.delayCounter = 1;
+        int b = m_chip[cnum].ts;
+        uint8_t i = m_chip[cnum].header->positionList[0];
         if (b != 0x20) i = (uint8_t)(3 * b - 3 - i);
         for (int chan = 0; chan < 3; chan++) {
-            chip[cnum].ch[chan].Address_In_Pattern =
-                chip[cnum].module[chip[cnum].header->PatternsPointer + 2 * (i + chan)] +
-                chip[cnum].module[chip[cnum].header->PatternsPointer + 2 * (i + chan) + 1] * 0x100;
+            m_chip[cnum].chan[chan].addressInPattern =
+                m_chip[cnum].data[m_chip[cnum].header->patternsPointer + 2 * (i + chan)] +
+                m_chip[cnum].data[m_chip[cnum].header->patternsPointer + 2 * (i + chan) + 1] * 0x100;
 
-            chip[cnum].ch[chan].SamplePointer = chip[cnum].header->SamplesPointers_w[2] + chip[cnum].header->SamplesPointers_w[3] * 0x100;
-            chip[cnum].ch[chan].OrnamentPointer = chip[cnum].header->OrnamentsPointers_w[0] + chip[cnum].header->OrnamentsPointers_w[1] * 0x100;
-            chip[cnum].ch[chan].Loop_Ornament_Position = chip[cnum].module[chip[cnum].ch[chan].OrnamentPointer++];
-            chip[cnum].ch[chan].Ornament_Length = chip[cnum].module[chip[cnum].ch[chan].OrnamentPointer++];
-            chip[cnum].ch[chan].Loop_Sample_Position = chip[cnum].module[chip[cnum].ch[chan].SamplePointer++];
-            chip[cnum].ch[chan].Sample_Length = chip[cnum].module[chip[cnum].ch[chan].SamplePointer++];
-            chip[cnum].ch[chan].Volume = 15;
-            chip[cnum].ch[chan].Note_Skip_Counter = 1;
+            m_chip[cnum].chan[chan].samplePointer = m_chip[cnum].header->samplesPointers[2] + m_chip[cnum].header->samplesPointers[3] * 0x100;
+            m_chip[cnum].chan[chan].ornamentPointer = m_chip[cnum].header->ornamentsPointers[0] + m_chip[cnum].header->ornamentsPointers[1] * 0x100;
+            m_chip[cnum].chan[chan].loopOrnamentPosition = m_chip[cnum].data[m_chip[cnum].chan[chan].ornamentPointer++];
+            m_chip[cnum].chan[chan].ornamentLength = m_chip[cnum].data[m_chip[cnum].chan[chan].ornamentPointer++];
+            m_chip[cnum].chan[chan].loopSamplePosition = m_chip[cnum].data[m_chip[cnum].chan[chan].samplePointer++];
+            m_chip[cnum].chan[chan].sampleLength = m_chip[cnum].data[m_chip[cnum].chan[chan].samplePointer++];
+            m_chip[cnum].chan[chan].volume = 15;
+            m_chip[cnum].chan[chan].noteSkipCounter = 1;
         }
     }
     return true;
@@ -283,40 +283,40 @@ bool DecodePT3::Init()
 bool DecodePT3::Step()
 {
     bool isNewLoop = GetRegisters(0);
-    if (tsMode) GetRegisters(1);
+    if (m_ts) GetRegisters(1);
 
-    if (loop == 0)
+    if (m_loop == 0)
     {
-        uint8_t currPosition = chip[0].mod.CurrentPosition;
-        uint8_t loopPosition = chip[0].header->LoopPosition;
-        uint8_t lastPosition = chip[0].header->NumberOfPositions - 1;
+        uint8_t currPosition = m_chip[0].glob.currentPosition;
+        uint8_t loopPosition = m_chip[0].header->loopPosition;
+        uint8_t lastPosition = m_chip[0].header->numberOfPositions - 1;
 
         // detect true loop frame (ommit loop to first or last position)
         if (loopPosition > 0 && loopPosition < lastPosition && currPosition == loopPosition)
         {
-            loop = tick;
+            m_loop = m_tick;
         }
     }
     
-    tick++;
+    m_tick++;
     return isNewLoop;
 }
 
 int DecodePT3::GetNoteFreq(int cnum, int j)
 {
-    switch (chip[cnum].header->TonTableId) {
+    switch (m_chip[cnum].header->tonTableId) {
     case 0:
-        return (version <= 3)
+        return (m_ver <= 3)
             ? PT3NoteTable_PT_33_34r[j]
             : PT3NoteTable_PT_34_35[j];
     case 1:
         return PT3NoteTable_ST[j];
     case 2:
-        return (version <= 3)
+        return (m_ver <= 3)
             ? PT3NoteTable_ASM_34r[j]
             : PT3NoteTable_ASM_34_35[j];
     default:
-        return (version <= 3)
+        return (m_ver <= 3)
             ? PT3NoteTable_REAL_34r[j]
             : PT3NoteTable_REAL_34_35[j];
     }
@@ -325,175 +325,175 @@ int DecodePT3::GetNoteFreq(int cnum, int j)
 bool DecodePT3::GetRegisters(int cnum)
 {
     bool isNewLoop = false;
-    regs[cnum][13] = 0xFF;
+    m_regs[cnum][13] = 0xFF;
 
-    if (!--chip[cnum].mod.DelayCounter) 
+    if (!--m_chip[cnum].glob.delayCounter) 
     {
         for (int ch = 0; ch < 3; ch++) 
         {
-            if (!--chip[cnum].ch[ch].Note_Skip_Counter) 
+            if (!--m_chip[cnum].chan[ch].noteSkipCounter) 
             {
-                if (ch == 0 && chip[cnum].module[chip[cnum].ch[ch].Address_In_Pattern] == 0) 
+                if (ch == 0 && m_chip[cnum].data[m_chip[cnum].chan[ch].addressInPattern] == 0) 
                 {
-                    if (++chip[cnum].mod.CurrentPosition == chip[cnum].header->NumberOfPositions)
+                    if (++m_chip[cnum].glob.currentPosition == m_chip[cnum].header->numberOfPositions)
                     {
-                        chip[cnum].mod.CurrentPosition = chip[cnum].header->LoopPosition;
+                        m_chip[cnum].glob.currentPosition = m_chip[cnum].header->loopPosition;
                         isNewLoop = true;
                     }
 
-                    uint8_t i = chip[cnum].header->PositionList[chip[cnum].mod.CurrentPosition];
-                    int b = chip[cnum].plconst.TS;
+                    uint8_t i = m_chip[cnum].header->positionList[m_chip[cnum].glob.currentPosition];
+                    int b = m_chip[cnum].ts;
                     if (b != 0x20) i = (uint8_t)(3 * b - 3 - i);
                     for (int chan = 0; chan < 3; chan++) 
                     {
-                        chip[cnum].ch[chan].Address_In_Pattern =
-                            chip[cnum].module[chip[cnum].header->PatternsPointer + 2 * (i + chan)] +
-                            chip[cnum].module[chip[cnum].header->PatternsPointer + 2 * (i + chan) + 1] * 0x100;
+                        m_chip[cnum].chan[chan].addressInPattern =
+                            m_chip[cnum].data[m_chip[cnum].header->patternsPointer + 2 * (i + chan)] +
+                            m_chip[cnum].data[m_chip[cnum].header->patternsPointer + 2 * (i + chan) + 1] * 0x100;
                     }
-                    chip[cnum].mod.Noise_Base = 0;
+                    m_chip[cnum].glob.noiseBase = 0;
                 }
-                PatternInterpreter(cnum, chip[cnum].ch[ch]);
+                PatternInterpreter(cnum, m_chip[cnum].chan[ch]);
             }
         }
-        chip[cnum].mod.DelayCounter = chip[cnum].mod.Delay;
+        m_chip[cnum].glob.delayCounter = m_chip[cnum].glob.delay;
     }
     AddToEnv = 0;
     TempMixer = 0;
 
     for (int ch = 0; ch < 3; ch++)
     {
-        ChangeRegisters(cnum, chip[cnum].ch[ch]);
+        ChangeRegisters(cnum, m_chip[cnum].chan[ch]);
     }
 
-    regs[cnum][7] = TempMixer;
-    regs[cnum][6] = (chip[cnum].mod.Noise_Base + chip[cnum].mod.AddToNoise) & 0x1F;
+    m_regs[cnum][7] = TempMixer;
+    m_regs[cnum][6] = (m_chip[cnum].glob.noiseBase + m_chip[cnum].glob.addToNoise) & 0x1F;
 
     for (int ch = 0; ch < 3; ch++) 
     {
-        regs[cnum][2 * ch + 0] = chip[cnum].ch[ch].Ton & 0xFF;
-        regs[cnum][2 * ch + 1] = (chip[cnum].ch[ch].Ton >> 8) & 0x0F;
-        regs[cnum][ch + 8] = chip[cnum].ch[ch].Amplitude;
+        m_regs[cnum][2 * ch + 0] = m_chip[cnum].chan[ch].ton & 0xFF;
+        m_regs[cnum][2 * ch + 1] = (m_chip[cnum].chan[ch].ton >> 8) & 0x0F;
+        m_regs[cnum][ch + 8] = m_chip[cnum].chan[ch].amplitude;
     }
 
-    unsigned env = chip[cnum].mod.Env_Base_hi * 0x100 + chip[cnum].mod.Env_Base_lo + AddToEnv + chip[cnum].mod.Cur_Env_Slide;
-    regs[cnum][11] = env & 0xFF;
-    regs[cnum][12] = (env >> 8) & 0xFF;
+    unsigned env = m_chip[cnum].glob.envBaseHi * 0x100 + m_chip[cnum].glob.envBaseLo + AddToEnv + m_chip[cnum].glob.curEnvSlide;
+    m_regs[cnum][11] = env & 0xFF;
+    m_regs[cnum][12] = (env >> 8) & 0xFF;
 
-    if (chip[cnum].mod.Cur_Env_Delay > 0) 
+    if (m_chip[cnum].glob.curEnvDelay > 0) 
     {
-        if (!--chip[cnum].mod.Cur_Env_Delay) 
+        if (!--m_chip[cnum].glob.curEnvDelay) 
         {
-            chip[cnum].mod.Cur_Env_Delay = chip[cnum].mod.Env_Delay;
-            chip[cnum].mod.Cur_Env_Slide += chip[cnum].mod.Env_Slide_Add;
+            m_chip[cnum].glob.curEnvDelay = m_chip[cnum].glob.envDelay;
+            m_chip[cnum].glob.curEnvSlide += m_chip[cnum].glob.envSlideAdd;
         }
     }
 
     return isNewLoop;
 }
 
-void DecodePT3::PatternInterpreter(int cnum, PT3_Channel& chan)
+void DecodePT3::PatternInterpreter(int cnum, Channel& chan)
 {
-    int PrNote = chan.Note;
-    int PrSliding = chan.Current_Ton_Sliding;
+    int PrNote = chan.note;
+    int PrSliding = chan.currentTonSliding;
     uint8_t counter = 0;
     uint8_t f1 = 0, f2 = 0, f3 = 0, f4 = 0, f5 = 0, f8 = 0, f9 = 0;
     for (;;) {
-        uint8_t cc = chip[cnum].module[chan.Address_In_Pattern];
+        uint8_t cc = m_chip[cnum].data[chan.addressInPattern];
         if (0xF0 <= cc && cc <= 0xFF) {
             uint8_t c1 = cc - 0xF0;
-            chan.OrnamentPointer = chip[cnum].header->OrnamentsPointers_w[2 * c1] + 0x100 * chip[cnum].header->OrnamentsPointers_w[2 * c1 + 1];
-            chan.Loop_Ornament_Position = chip[cnum].module[chan.OrnamentPointer++];
-            chan.Ornament_Length = chip[cnum].module[chan.OrnamentPointer++];
-            chan.Address_In_Pattern++;
-            uint8_t c2 = chip[cnum].module[chan.Address_In_Pattern] / 2;
-            chan.SamplePointer = chip[cnum].header->SamplesPointers_w[2 * c2] + 0x100 * chip[cnum].header->SamplesPointers_w[2 * c2 + 1];
-            chan.Loop_Sample_Position = chip[cnum].module[chan.SamplePointer++];
-            chan.Sample_Length = chip[cnum].module[chan.SamplePointer++];
-            chan.Envelope_Enabled = false;
-            chan.Position_In_Ornament = 0;
+            chan.ornamentPointer = m_chip[cnum].header->ornamentsPointers[2 * c1] + 0x100 * m_chip[cnum].header->ornamentsPointers[2 * c1 + 1];
+            chan.loopOrnamentPosition = m_chip[cnum].data[chan.ornamentPointer++];
+            chan.ornamentLength = m_chip[cnum].data[chan.ornamentPointer++];
+            chan.addressInPattern++;
+            uint8_t c2 = m_chip[cnum].data[chan.addressInPattern] / 2;
+            chan.samplePointer = m_chip[cnum].header->samplesPointers[2 * c2] + 0x100 * m_chip[cnum].header->samplesPointers[2 * c2 + 1];
+            chan.loopSamplePosition = m_chip[cnum].data[chan.samplePointer++];
+            chan.sampleLength = m_chip[cnum].data[chan.samplePointer++];
+            chan.envelopeEnabled = false;
+            chan.positionInOrnament = 0;
         }
         else if (0xD1 <= cc && cc <= 0xEF) {
             uint8_t c2 = cc - 0xD0;
-            chan.SamplePointer = chip[cnum].header->SamplesPointers_w[2 * c2] + 0x100 * chip[cnum].header->SamplesPointers_w[2 * c2 + 1];
-            chan.Loop_Sample_Position = chip[cnum].module[chan.SamplePointer++];
-            chan.Sample_Length = chip[cnum].module[chan.SamplePointer++];
+            chan.samplePointer = m_chip[cnum].header->samplesPointers[2 * c2] + 0x100 * m_chip[cnum].header->samplesPointers[2 * c2 + 1];
+            chan.loopSamplePosition = m_chip[cnum].data[chan.samplePointer++];
+            chan.sampleLength = m_chip[cnum].data[chan.samplePointer++];
         }
         else if (cc == 0xD0) {
-            chan.Address_In_Pattern++;
+            chan.addressInPattern++;
             break;
         }
         else if (0xC1 <= cc && cc <= 0xCF) {
-            chan.Volume = cc - 0xC0;
+            chan.volume = cc - 0xC0;
         }
         else if (cc == 0xC0) {
-            chan.Position_In_Sample = 0;
-            chan.Current_Amplitude_Sliding = 0;
-            chan.Current_Noise_Sliding = 0;
-            chan.Current_Envelope_Sliding = 0;
-            chan.Position_In_Ornament = 0;
-            chan.Ton_Slide_Count = 0;
-            chan.Current_Ton_Sliding = 0;
-            chan.Ton_Accumulator = 0;
-            chan.Current_OnOff = 0;
-            chan.Enabled = false;
-            chan.Address_In_Pattern++;
+            chan.positionInSample = 0;
+            chan.currentAmplitudeSliding = 0;
+            chan.currentNoiseSliding = 0;
+            chan.currentEnvelopeSliding = 0;
+            chan.positionInOrnament = 0;
+            chan.tonSlideCount = 0;
+            chan.currentTonSliding = 0;
+            chan.tonAccumulator = 0;
+            chan.currentOnOff = 0;
+            chan.enabled = false;
+            chan.addressInPattern++;
             break;
         }
         else if (0xB2 <= cc && cc <= 0xBF) {
-            chan.Envelope_Enabled = true;
-            regs[cnum][13] = cc - 0xB1;
-            chip[cnum].mod.Env_Base_hi = chip[cnum].module[++chan.Address_In_Pattern];
-            chip[cnum].mod.Env_Base_lo = chip[cnum].module[++chan.Address_In_Pattern];
-            chan.Position_In_Ornament = 0;
-            chip[cnum].mod.Cur_Env_Slide = 0;
-            chip[cnum].mod.Cur_Env_Delay = 0;
+            chan.envelopeEnabled = true;
+            m_regs[cnum][13] = cc - 0xB1;
+            m_chip[cnum].glob.envBaseHi = m_chip[cnum].data[++chan.addressInPattern];
+            m_chip[cnum].glob.envBaseLo = m_chip[cnum].data[++chan.addressInPattern];
+            chan.positionInOrnament = 0;
+            m_chip[cnum].glob.curEnvSlide = 0;
+            m_chip[cnum].glob.curEnvDelay = 0;
         }
         else if (cc == 0xB1) {
-            chan.Number_Of_Notes_To_Skip = chip[cnum].module[++chan.Address_In_Pattern];
+            chan.numberOfNotesToSkip = m_chip[cnum].data[++chan.addressInPattern];
         }
         else if (cc == 0xB0) {
-            chan.Envelope_Enabled = false;
-            chan.Position_In_Ornament = 0;
+            chan.envelopeEnabled = false;
+            chan.positionInOrnament = 0;
         }
         else if (0x50 <= cc && cc <= 0xAF) {
-            chan.Note = cc - 0x50;
-            chan.Position_In_Sample = 0;
-            chan.Current_Amplitude_Sliding = 0;
-            chan.Current_Noise_Sliding = 0;
-            chan.Current_Envelope_Sliding = 0;
-            chan.Position_In_Ornament = 0;
-            chan.Ton_Slide_Count = 0;
-            chan.Current_Ton_Sliding = 0;
-            chan.Ton_Accumulator = 0;
-            chan.Current_OnOff = 0;
-            chan.Enabled = true;
-            chan.Address_In_Pattern++;
+            chan.note = cc - 0x50;
+            chan.positionInSample = 0;
+            chan.currentAmplitudeSliding = 0;
+            chan.currentNoiseSliding = 0;
+            chan.currentEnvelopeSliding = 0;
+            chan.positionInOrnament = 0;
+            chan.tonSlideCount = 0;
+            chan.currentTonSliding = 0;
+            chan.tonAccumulator = 0;
+            chan.currentOnOff = 0;
+            chan.enabled = true;
+            chan.addressInPattern++;
             break;
         }
         else if (0x40 <= cc && cc <= 0x4F) {
             uint8_t c1 = cc - 0x40;
-            chan.OrnamentPointer = chip[cnum].header->OrnamentsPointers_w[2 * c1] + 0x100 * chip[cnum].header->OrnamentsPointers_w[2 * c1 + 1];
-            chan.Loop_Ornament_Position = chip[cnum].module[chan.OrnamentPointer++];
-            chan.Ornament_Length = chip[cnum].module[chan.OrnamentPointer++];
-            chan.Position_In_Ornament = 0;
+            chan.ornamentPointer = m_chip[cnum].header->ornamentsPointers[2 * c1] + 0x100 * m_chip[cnum].header->ornamentsPointers[2 * c1 + 1];
+            chan.loopOrnamentPosition = m_chip[cnum].data[chan.ornamentPointer++];
+            chan.ornamentLength = m_chip[cnum].data[chan.ornamentPointer++];
+            chan.positionInOrnament = 0;
         }
         else if (0x20 <= cc && cc <= 0x3F) {
-            chip[cnum].mod.Noise_Base = cc - 0x20;
+            m_chip[cnum].glob.noiseBase = cc - 0x20;
         }
         else if (0x10 <= cc && cc <= 0x1F) {
-            chan.Envelope_Enabled = (cc != 0x10);
-            if (chan.Envelope_Enabled) {
-                regs[cnum][13] = cc - 0x10;
-                chip[cnum].mod.Env_Base_hi = chip[cnum].module[++chan.Address_In_Pattern];
-                chip[cnum].mod.Env_Base_lo = chip[cnum].module[++chan.Address_In_Pattern];
-                chip[cnum].mod.Cur_Env_Slide = 0;
-                chip[cnum].mod.Cur_Env_Delay = 0;
+            chan.envelopeEnabled = (cc != 0x10);
+            if (chan.envelopeEnabled) {
+                m_regs[cnum][13] = cc - 0x10;
+                m_chip[cnum].glob.envBaseHi = m_chip[cnum].data[++chan.addressInPattern];
+                m_chip[cnum].glob.envBaseLo = m_chip[cnum].data[++chan.addressInPattern];
+                m_chip[cnum].glob.curEnvSlide = 0;
+                m_chip[cnum].glob.curEnvDelay = 0;
             }
-            uint8_t c2 = chip[cnum].module[++chan.Address_In_Pattern] / 2;
-            chan.SamplePointer = chip[cnum].header->SamplesPointers_w[2 * c2] + 0x100 * chip[cnum].header->SamplesPointers_w[2 * c2 + 1];
-            chan.Loop_Sample_Position = chip[cnum].module[chan.SamplePointer++];
-            chan.Sample_Length = chip[cnum].module[chan.SamplePointer++];
-            chan.Position_In_Ornament = 0;
+            uint8_t c2 = m_chip[cnum].data[++chan.addressInPattern] / 2;
+            chan.samplePointer = m_chip[cnum].header->samplesPointers[2 * c2] + 0x100 * m_chip[cnum].header->samplesPointers[2 * c2 + 1];
+            chan.loopSamplePosition = m_chip[cnum].data[chan.samplePointer++];
+            chan.sampleLength = m_chip[cnum].data[chan.samplePointer++];
+            chan.positionInOrnament = 0;
         }
         else if (cc == 0x09) {
             f9 = ++counter;
@@ -517,142 +517,142 @@ void DecodePT3::PatternInterpreter(int cnum, PT3_Channel& chan)
             f1 = ++counter;
         }
 
-        chan.Address_In_Pattern++;
+        chan.addressInPattern++;
     }
 
     while (counter > 0) {
         if (counter == f1) {
-            chan.Ton_Slide_Delay = chip[cnum].module[chan.Address_In_Pattern++];
-            chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
-            chan.Ton_Slide_Step = (int16_t)(chip[cnum].module[chan.Address_In_Pattern] + 0x100 * chip[cnum].module[chan.Address_In_Pattern + 1]);
-            chan.Address_In_Pattern += 2;
-            chan.SimpleGliss = true;
-            chan.Current_OnOff = 0;
-            if (chan.Ton_Slide_Count == 0 && version >= 7)
-                chan.Ton_Slide_Count++;
+            chan.tonSlideDelay = m_chip[cnum].data[chan.addressInPattern++];
+            chan.tonSlideCount = chan.tonSlideDelay;
+            chan.tonSlideStep = (int16_t)(m_chip[cnum].data[chan.addressInPattern] + 0x100 * m_chip[cnum].data[chan.addressInPattern + 1]);
+            chan.addressInPattern += 2;
+            chan.simpleGliss = true;
+            chan.currentOnOff = 0;
+            if (chan.tonSlideCount == 0 && m_ver >= 7)
+                chan.tonSlideCount++;
         }
         else if (counter == f2) {
-            chan.SimpleGliss = false;
-            chan.Current_OnOff = 0;
-            chan.Ton_Slide_Delay = chip[cnum].module[chan.Address_In_Pattern];
-            chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
-            chan.Address_In_Pattern += 3;
-            uint16_t step = chip[cnum].module[chan.Address_In_Pattern] + 0x100 * chip[cnum].module[chan.Address_In_Pattern + 1];
-            chan.Address_In_Pattern += 2;
+            chan.simpleGliss = false;
+            chan.currentOnOff = 0;
+            chan.tonSlideDelay = m_chip[cnum].data[chan.addressInPattern];
+            chan.tonSlideCount = chan.tonSlideDelay;
+            chan.addressInPattern += 3;
+            uint16_t step = m_chip[cnum].data[chan.addressInPattern] + 0x100 * m_chip[cnum].data[chan.addressInPattern + 1];
+            chan.addressInPattern += 2;
             int16_t signed_step = step;
-            chan.Ton_Slide_Step = (signed_step < 0) ? -signed_step : signed_step;
-            chan.Ton_Delta = GetNoteFreq(cnum, chan.Note) - GetNoteFreq(cnum, PrNote);
-            chan.Slide_To_Note = chan.Note;
-            chan.Note = PrNote;
-            if (version >= 6) chan.Current_Ton_Sliding = PrSliding;
-            if (chan.Ton_Delta - chan.Current_Ton_Sliding < 0)
-                chan.Ton_Slide_Step = -chan.Ton_Slide_Step;
+            chan.tonSlideStep = (signed_step < 0) ? -signed_step : signed_step;
+            chan.tonDelta = GetNoteFreq(cnum, chan.note) - GetNoteFreq(cnum, PrNote);
+            chan.slideToNote = chan.note;
+            chan.note = PrNote;
+            if (m_ver >= 6) chan.currentTonSliding = PrSliding;
+            if (chan.tonDelta - chan.currentTonSliding < 0)
+                chan.tonSlideStep = -chan.tonSlideStep;
         }
         else if (counter == f3) {
-            chan.Position_In_Sample = chip[cnum].module[chan.Address_In_Pattern++];
+            chan.positionInSample = m_chip[cnum].data[chan.addressInPattern++];
         }
         else if (counter == f4) {
-            chan.Position_In_Ornament = chip[cnum].module[chan.Address_In_Pattern++];
+            chan.positionInOrnament = m_chip[cnum].data[chan.addressInPattern++];
         }
         else if (counter == f5) {
-            chan.OnOff_Delay = chip[cnum].module[chan.Address_In_Pattern++];
-            chan.OffOn_Delay = chip[cnum].module[chan.Address_In_Pattern++];
-            chan.Current_OnOff = chan.OnOff_Delay;
-            chan.Ton_Slide_Count = 0;
-            chan.Current_Ton_Sliding = 0;
+            chan.onOffDelay = m_chip[cnum].data[chan.addressInPattern++];
+            chan.offOnDelay = m_chip[cnum].data[chan.addressInPattern++];
+            chan.currentOnOff = chan.onOffDelay;
+            chan.tonSlideCount = 0;
+            chan.currentTonSliding = 0;
         }
         else if (counter == f8) {
-            chip[cnum].mod.Env_Delay = chip[cnum].module[chan.Address_In_Pattern++];
-            chip[cnum].mod.Cur_Env_Delay = chip[cnum].mod.Env_Delay;
-            chip[cnum].mod.Env_Slide_Add = chip[cnum].module[chan.Address_In_Pattern] + 0x100 * chip[cnum].module[chan.Address_In_Pattern + 1];
-            chan.Address_In_Pattern += 2;
+            m_chip[cnum].glob.envDelay = m_chip[cnum].data[chan.addressInPattern++];
+            m_chip[cnum].glob.curEnvDelay = m_chip[cnum].glob.envDelay;
+            m_chip[cnum].glob.envSlideAdd = m_chip[cnum].data[chan.addressInPattern] + 0x100 * m_chip[cnum].data[chan.addressInPattern + 1];
+            chan.addressInPattern += 2;
         }
         else if (counter == f9) {
-            uint8_t b = chip[cnum].module[chan.Address_In_Pattern++];
-            chip[cnum].mod.Delay = b;
-            if (tsMode && chip[1].plconst.TS != 0x20) {
-                chip[0].mod.Delay = b;
-                chip[0].mod.DelayCounter = b;
-                chip[1].mod.Delay = b;
+            uint8_t b = m_chip[cnum].data[chan.addressInPattern++];
+            m_chip[cnum].glob.delay = b;
+            if (m_ts && m_chip[1].ts != 0x20) {
+                m_chip[0].glob.delay = b;
+                m_chip[0].glob.delayCounter = b;
+                m_chip[1].glob.delay = b;
             }
         }
         counter--;
     }
-    chan.Note_Skip_Counter = chan.Number_Of_Notes_To_Skip;
+    chan.noteSkipCounter = chan.numberOfNotesToSkip;
 }
 
-void DecodePT3::ChangeRegisters(int cnum, PT3_Channel& chan)
+void DecodePT3::ChangeRegisters(int cnum, Channel& chan)
 {
-    if (chan.Enabled) {
-        unsigned c1 = chan.SamplePointer + chan.Position_In_Sample * 4;
-        uint8_t b0 = chip[cnum].module[c1], b1 = chip[cnum].module[c1 + 1];
-        chan.Ton = chip[cnum].module[c1 + 2] + 0x100 * chip[cnum].module[c1 + 3];
-        chan.Ton += chan.Ton_Accumulator;
-        if (b1 & 0x40) chan.Ton_Accumulator = chan.Ton;
-        uint8_t j = chan.Note + chip[cnum].module[chan.OrnamentPointer + chan.Position_In_Ornament];
+    if (chan.enabled) {
+        unsigned c1 = chan.samplePointer + chan.positionInSample * 4;
+        uint8_t b0 = m_chip[cnum].data[c1], b1 = m_chip[cnum].data[c1 + 1];
+        chan.ton = m_chip[cnum].data[c1 + 2] + 0x100 * m_chip[cnum].data[c1 + 3];
+        chan.ton += chan.tonAccumulator;
+        if (b1 & 0x40) chan.tonAccumulator = chan.ton;
+        uint8_t j = chan.note + m_chip[cnum].data[chan.ornamentPointer + chan.positionInOrnament];
         if ((int8_t)j < 0) j = 0;
         else if (j > 95) j = 95;
         int w = GetNoteFreq(cnum, j);
 
-        chan.Ton = (chan.Ton + chan.Current_Ton_Sliding + w) & 0xFFF;
-        if (chan.Ton_Slide_Count > 0) {
-            if (!--chan.Ton_Slide_Count) {
-                chan.Current_Ton_Sliding += chan.Ton_Slide_Step;
-                chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
-                if (!chan.SimpleGliss) {
-                    if ((chan.Ton_Slide_Step < 0 && chan.Current_Ton_Sliding <= chan.Ton_Delta) ||
-                        (chan.Ton_Slide_Step >= 0 && chan.Current_Ton_Sliding >= chan.Ton_Delta))
+        chan.ton = (chan.ton + chan.currentTonSliding + w) & 0xFFF;
+        if (chan.tonSlideCount > 0) {
+            if (!--chan.tonSlideCount) {
+                chan.currentTonSliding += chan.tonSlideStep;
+                chan.tonSlideCount = chan.tonSlideDelay;
+                if (!chan.simpleGliss) {
+                    if ((chan.tonSlideStep < 0 && chan.currentTonSliding <= chan.tonDelta) ||
+                        (chan.tonSlideStep >= 0 && chan.currentTonSliding >= chan.tonDelta))
                     {
-                        chan.Note = chan.Slide_To_Note;
-                        chan.Ton_Slide_Count = 0;
-                        chan.Current_Ton_Sliding = 0;
+                        chan.note = chan.slideToNote;
+                        chan.tonSlideCount = 0;
+                        chan.currentTonSliding = 0;
                     }
                 }
             }
         }
-        chan.Amplitude = b1 & 0x0F;
+        chan.amplitude = b1 & 0x0F;
         if (b0 & 0x80) {
             if (b0 & 0x40) {
-                if (chan.Current_Amplitude_Sliding < 15) {
-                    chan.Current_Amplitude_Sliding++;
+                if (chan.currentAmplitudeSliding < 15) {
+                    chan.currentAmplitudeSliding++;
                 }
             }
-            else if (chan.Current_Amplitude_Sliding > -15) {
-                chan.Current_Amplitude_Sliding--;
+            else if (chan.currentAmplitudeSliding > -15) {
+                chan.currentAmplitudeSliding--;
             }
         }
-        chan.Amplitude += chan.Current_Amplitude_Sliding;
-        if ((int8_t)chan.Amplitude < 0) chan.Amplitude = 0;
-        else if (chan.Amplitude > 15) chan.Amplitude = 15;
-        if (version <= 4) chan.Amplitude = PT3VolumeTable_33_34[chan.Volume][chan.Amplitude];
-        else chan.Amplitude = PT3VolumeTable_35[chan.Volume][chan.Amplitude];
+        chan.amplitude += chan.currentAmplitudeSliding;
+        if ((int8_t)chan.amplitude < 0) chan.amplitude = 0;
+        else if (chan.amplitude > 15) chan.amplitude = 15;
+        if (m_ver <= 4) chan.amplitude = PT3VolumeTable_33_34[chan.volume][chan.amplitude];
+        else chan.amplitude = PT3VolumeTable_35[chan.volume][chan.amplitude];
 
-        if (!(b0 & 1) && chan.Envelope_Enabled) chan.Amplitude |= 0x10;
+        if (!(b0 & 1) && chan.envelopeEnabled) chan.amplitude |= 0x10;
         if (b1 & 0x80) {
             uint8_t j = (b0 & 0x20)
-                ? ((b0 >> 1) | 0xF0) + chan.Current_Envelope_Sliding
-                : ((b0 >> 1) & 0x0F) + chan.Current_Envelope_Sliding;
-            if (b1 & 0x20) chan.Current_Envelope_Sliding = j;
+                ? ((b0 >> 1) | 0xF0) + chan.currentEnvelopeSliding
+                : ((b0 >> 1) & 0x0F) + chan.currentEnvelopeSliding;
+            if (b1 & 0x20) chan.currentEnvelopeSliding = j;
             AddToEnv += j;
         }
         else {
-            chip[cnum].mod.AddToNoise = (b0 >> 1) + chan.Current_Noise_Sliding;
-            if (b1 & 0x20) chan.Current_Noise_Sliding = chip[cnum].mod.AddToNoise;
+            m_chip[cnum].glob.addToNoise = (b0 >> 1) + chan.currentNoiseSliding;
+            if (b1 & 0x20) chan.currentNoiseSliding = m_chip[cnum].glob.addToNoise;
         }
         TempMixer |= (b1 >> 1) & 0x48;
-        if (++chan.Position_In_Sample >= chan.Sample_Length)
-            chan.Position_In_Sample = chan.Loop_Sample_Position;
-        if (++chan.Position_In_Ornament >= chan.Ornament_Length)
-            chan.Position_In_Ornament = chan.Loop_Ornament_Position;
+        if (++chan.positionInSample >= chan.sampleLength)
+            chan.positionInSample = chan.loopSamplePosition;
+        if (++chan.positionInOrnament >= chan.ornamentLength)
+            chan.positionInOrnament = chan.loopOrnamentPosition;
     }
     else {
-        chan.Amplitude = 0;
+        chan.amplitude = 0;
     }
     TempMixer >>= 1;
-    if (chan.Current_OnOff > 0) {
-        if (!--chan.Current_OnOff) {
-            chan.Enabled = !chan.Enabled;
-            chan.Current_OnOff = chan.Enabled ? chan.OnOff_Delay : chan.OffOn_Delay;
+    if (chan.currentOnOff > 0) {
+        if (!--chan.currentOnOff) {
+            chan.enabled = !chan.enabled;
+            chan.currentOnOff = chan.enabled ? chan.onOffDelay : chan.offOnDelay;
         }
     }
 }

@@ -6,45 +6,75 @@
 class DecodePT3 : public Decoder
 {
     #pragma pack(push, 1)
-    struct PT3Header
+    struct Header
     {
-        char     MusicName[0x63];
-        uint8_t  TonTableId;
-        uint8_t  Delay;
-        uint8_t  NumberOfPositions;
-        uint8_t  LoopPosition;
-        uint16_t PatternsPointer;
-        uint8_t  SamplesPointers_w[32 * 2];   // WORD array
-        uint8_t  OrnamentsPointers_w[16 * 2]; // WORD array
-        uint8_t  PositionList[1];             // open array
+        char     musicName[0x63];
+        uint8_t  tonTableId;
+        uint8_t  delay;
+        uint8_t  numberOfPositions;
+        uint8_t  loopPosition;
+        uint16_t patternsPointer;
+        uint8_t  samplesPointers[32 * 2];
+        uint8_t  ornamentsPointers[16 * 2];
+        uint8_t  positionList[1];
     };
     #pragma pack(pop)
 
-    struct PT3_Channel
+    struct Channel
     {
-        unsigned Address_In_Pattern, OrnamentPointer, SamplePointer, Ton;
-        int      Current_Amplitude_Sliding, Current_Noise_Sliding, Current_Envelope_Sliding,
-                 Ton_Slide_Count, Current_OnOff, OnOff_Delay, OffOn_Delay,
-                 Ton_Slide_Delay, Current_Ton_Sliding,
-                 Ton_Accumulator, Ton_Slide_Step, Ton_Delta;
-        int8_t   Note_Skip_Counter;
-        uint8_t  Loop_Ornament_Position, Ornament_Length, Position_In_Ornament,
-                 Loop_Sample_Position, Sample_Length, Position_In_Sample,
-                 Volume, Number_Of_Notes_To_Skip, Note, Slide_To_Note, Amplitude;
-        bool     Envelope_Enabled, Enabled, SimpleGliss;
+        uint16_t addressInPattern;
+        uint16_t ornamentPointer;
+        uint16_t samplePointer;
+        
+        int currentAmplitudeSliding;
+        int currentNoiseSliding;
+        int currentEnvelopeSliding;
+        int tonSlideCount;
+        int currentOnOff;
+        int onOffDelay;
+        int offOnDelay;
+        int tonSlideDelay;
+        int currentTonSliding;
+        int tonAccumulator;
+        int tonSlideStep;
+        int tonDelta;
+
+        int8_t noteSkipCounter;
+
+        uint8_t loopOrnamentPosition;
+        uint8_t ornamentLength;
+        uint8_t positionInOrnament;
+
+        uint8_t loopSamplePosition;
+        uint8_t sampleLength;
+        uint8_t positionInSample;
+
+        uint8_t volume;
+        uint8_t numberOfNotesToSkip;
+        uint8_t note;
+        uint8_t slideToNote;
+        
+        bool envelopeEnabled;
+        bool enabled;
+        bool simpleGliss;
+
+        uint16_t ton;
+        uint8_t amplitude;
     };
 
-    struct PT3_Module
+    struct Global
     {
-        int      Cur_Env_Slide, Env_Slide_Add;
-        uint8_t  Env_Base_lo, Env_Base_hi;
-        uint8_t  Noise_Base, Delay, AddToNoise, DelayCounter, CurrentPosition;
-        int8_t   Cur_Env_Delay, Env_Delay;
-    };
-
-    struct PlConst
-    {
-        int TS;
+        int curEnvSlide;
+        int envSlideAdd;
+        uint8_t envBaseLo;
+        uint8_t envBaseHi;
+        uint8_t noiseBase;
+        uint8_t delay;
+        uint8_t addToNoise;
+        uint8_t delayCounter;
+        uint8_t currentPosition;
+        int8_t curEnvDelay;
+        int8_t envDelay;
     };
 
 public:
@@ -58,28 +88,29 @@ private:
 
     int  GetNoteFreq(int cnum, int j);
     bool GetRegisters(int cnum);
-    void PatternInterpreter(int cnum, PT3_Channel& chan);
-    void ChangeRegisters(int cnum, PT3_Channel& chan);
+    void PatternInterpreter(int cnum, Channel& chan);
+    void ChangeRegisters(int cnum, Channel& chan);
     
 private:
-    uint8_t* body;
-    uint32_t mod_size;
+    uint8_t* m_data;
+    uint32_t m_size;
+    uint32_t m_loop;
+    uint32_t m_tick;
 
-    unsigned loop;
-    unsigned tick;
-
-    uint8_t regs[2][16];
-    uint8_t version;
-    bool tsMode;
+    uint8_t  m_ver;
+    bool     m_ts;
 
     struct {
-        PT3Header*  header;
-        uint8_t*    module;
-        PT3_Module  mod;
-        PT3_Channel ch[3];
-        PlConst     plconst;
-    } chip[2];
+        Header*  header;
+        uint8_t* data;
+        Global   glob;
+        Channel  chan[3];
+        int      ts;
+    } m_chip[2];
 
     int AddToEnv;
     uint8_t TempMixer;
+    //
+
+    uint8_t m_regs[2][16];
 };

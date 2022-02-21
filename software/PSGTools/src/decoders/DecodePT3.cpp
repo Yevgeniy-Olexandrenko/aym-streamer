@@ -139,7 +139,6 @@ bool DecodePT3::Open(Module& module)
             body = new uint8_t[mod_size];
 
             fileStream.read((char*)body, mod_size);
-            fileStream.close();
 
             Init();
             tick = 0;

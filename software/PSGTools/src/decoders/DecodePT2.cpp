@@ -4,17 +4,79 @@
 
 bool DecodePT2::Open(Module& module)
 {
-	return false;
+    bool isDetected = false;
+    std::ifstream fileStream;
+    fileStream.open(module.file.dirNameExt(), std::fstream::binary);
+
+    if (fileStream)
+    {
+        fileStream.seekg(0, fileStream.end);
+        uint32_t fileSize = (uint32_t)fileStream.tellg();
+
+        if (fileSize > 131)
+        {
+            uint8_t data[131 + 1];
+            fileStream.seekg(0, fileStream.beg);
+            fileStream.read((char*)data, 131);
+            PT2_File* header = (PT2_File*)data;
+            data[131] = 0; // end of music name
+
+            if (header->PT2_Delay >= 3 
+                && header->PT2_NumberOfPositions > 0 
+                && (header->PT2_SamplesPointers0[0] | header->PT2_SamplesPointers0[1] << 8) == 0
+                && (header->PT2_PatternsPointer0 | header->PT2_PatternsPointer1 << 8) < fileSize)
+            {
+                info.module = new uint8_t[fileSize];
+                fileStream.seekg(0, fileStream.beg);
+                fileStream.read((char*)info.module, fileSize);
+
+                if (fileStream && Init(info))
+                {
+                    tick = 0;
+                    loop = 0;
+
+                    std::string musicName(header->PT2_MusicName);
+                    module.info.title(musicName);
+                    module.info.type("ProTracker 2.x module");
+                    module.playback.frameRate(50);
+                    isDetected = true;
+                }
+            }
+        }
+        fileStream.close();
+    }
+	return isDetected;
 }
 
 bool DecodePT2::Decode(Frame& frame)
 {
-	return false;
+    // stop decoding on new loop
+    if (Step()) return false;
+
+    for (uint8_t r = 0; r < 16; ++r)
+    {
+        uint8_t data = regs[r];
+        if (r == Env_Shape)
+        {
+            if (data != 0xFF)
+                frame[r].first.override(data);
+        }
+        else
+        {
+            frame[r].first.update(data);
+        }
+    }
+    return true;
 }
 
 void DecodePT2::Close(Module& module)
 {
-    //
+    if (loop > 0)
+        module.loop.frameId(loop);
+
+    PT2_Cleanup(info);
+
+    delete[] info.module;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -150,6 +212,30 @@ bool DecodePT2::Init(AYSongInfo& info)
 
     memset(&regs, 0, sizeof(regs));
 	return true;
+}
+
+bool DecodePT2::Step()
+{
+    bool isNewLoop = PT2_Play(info);;
+
+    uint8_t* module = info.module;
+    PT2_File* header = (PT2_File*)module;
+
+    if (loop == 0)
+    {
+        uint8_t currPosition = PT2.CurrentPosition;
+        uint8_t loopPosition = PT2_LoopPosition;
+        uint8_t lastPosition = PT2_NumberOfPositions - 1;
+
+        // detect true loop frame (ommit loop to first or last position)
+        if (loopPosition > 0 && loopPosition < lastPosition && currPosition == loopPosition)
+        {
+            loop = tick;
+        }
+    }
+
+    tick++;
+    return isNewLoop;
 }
 
 void DecodePT2::PT2_PatternInterpreter(AYSongInfo& info, PT2_Channel_Parameters& chan)
@@ -312,8 +398,11 @@ void DecodePT2::PT2_GetRegisters(AYSongInfo& info, PT2_Channel_Parameters& chan,
     TempMixer = TempMixer >> 1;
 }
 
-void DecodePT2::PT2_Play(AYSongInfo& info)
+bool DecodePT2::PT2_Play(AYSongInfo& info)
 {
+    bool isNewLoop = false;
+    regs[AY_ENV_SHAPE] = 0xFF;
+
     uint8_t TempMixer;
     uint8_t* module = info.module;
     PT2_File* header = (PT2_File*)module;
@@ -327,7 +416,11 @@ void DecodePT2::PT2_Play(AYSongInfo& info)
             {
                 PT2.CurrentPosition++;
                 if (PT2.CurrentPosition == PT2_NumberOfPositions)
+                {
                     PT2.CurrentPosition = PT2_LoopPosition;
+                    isNewLoop = true;
+                }
+
                 PT2_A.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(PT2.CurrentPosition) * 6]);
                 PT2_B.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(PT2.CurrentPosition) * 6 + 2]);
                 PT2_C.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(PT2.CurrentPosition) * 6 + 4]);
@@ -359,7 +452,7 @@ void DecodePT2::PT2_Play(AYSongInfo& info)
     regs[AY_CHNL_A_VOL] = PT2_A.Amplitude;
     regs[AY_CHNL_B_VOL] = PT2_B.Amplitude;
     regs[AY_CHNL_C_VOL] = PT2_C.Amplitude;
-
+    return isNewLoop;
 }
 
 void DecodePT2::PT2_Cleanup(AYSongInfo& info)

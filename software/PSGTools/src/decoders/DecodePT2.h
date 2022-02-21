@@ -51,11 +51,16 @@ public:
 
 private:
     bool Init(AYSongInfo& info);
+    bool Step();
+
     void PT2_PatternInterpreter(AYSongInfo& info, PT2_Channel_Parameters& chan);
     void PT2_GetRegisters(AYSongInfo& info, PT2_Channel_Parameters& chan, uint8_t& TempMixer);
-    void PT2_Play(AYSongInfo& info);
+    bool PT2_Play(AYSongInfo& info);
     void PT2_Cleanup(AYSongInfo& info);
 
 private:
+    unsigned loop;
+    unsigned tick;
+    AYSongInfo info;
     uint8_t regs[16];
 };

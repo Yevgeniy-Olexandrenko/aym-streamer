@@ -19,7 +19,7 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs++\\Magazines\\";
+const std::string k_filelist = "D:\\Projects\\github\\aym-streamer\\chiptunes\\Fatal Snipe\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 14;
 

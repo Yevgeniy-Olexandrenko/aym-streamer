@@ -23,7 +23,7 @@ bool DecodePT2::Open(Module& module)
 
             if (header->delay >= 3 
                 && header->numberOfPositions > 0 
-                && (header->samplesPointers[0] | header->samplesPointers[1] << 8) == 0
+                && header->samplesPointers[0] == 0
                 && header->patternsPointer < fileSize)
             {
                 m_data = new uint8_t[fileSize];
@@ -95,11 +95,6 @@ namespace
         0x0025, 0x0023, 0x0021, 0x001f, 0x001d, 0x001c, 0x001a, 0x0019,
         0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000f,
     };
-
-    uint16_t ReadWord(uint8_t* ptr)
-    {
-        return *ptr | *(ptr + 1) << 8;
-    }
 }
 
 bool DecodePT2::Init()
@@ -116,13 +111,13 @@ bool DecodePT2::Init()
 
     uint16_t patternsPointer = header->patternsPointer;
     patternsPointer += header->positionList[0] * 6;
-    m_chA.addressInPattern = ReadWord(&m_data[patternsPointer + 0]);
-    m_chB.addressInPattern = ReadWord(&m_data[patternsPointer + 2]);
-    m_chC.addressInPattern = ReadWord(&m_data[patternsPointer + 4]);
+    m_chA.addressInPattern = m_data[patternsPointer + 0] | m_data[patternsPointer + 1] << 8;
+    m_chB.addressInPattern = m_data[patternsPointer + 2] | m_data[patternsPointer + 3] << 8;
+    m_chC.addressInPattern = m_data[patternsPointer + 4] | m_data[patternsPointer + 5] << 8;
 
     for (Channel* chan : { &m_chA, &m_chB, &m_chC })
     {
-        chan->ornamentPointer = ReadWord(&header->ornamentsPointers[0 * 2]);
+        chan->ornamentPointer = header->ornamentsPointers[0];
         chan->ornamentLength = m_data[chan->ornamentPointer++];
         chan->loopOrnamentPosition = m_data[chan->ornamentPointer++];
         chan->volume = 15;
@@ -165,7 +160,7 @@ void DecodePT2::PatternInterpreter(Channel& chan)
         uint8_t val = m_data[chan.addressInPattern];
         if (val >= 0xe1)
         {
-            chan.samplePointer = ReadWord(&header->samplesPointers[(val - 0xe0) * 2]);
+            chan.samplePointer = header->samplesPointers[val - 0xe0];
             chan.sampleLength = m_data[chan.samplePointer++];
             chan.loopSamplePosition = m_data[chan.samplePointer++];
         }
@@ -214,7 +209,7 @@ void DecodePT2::PatternInterpreter(Channel& chan)
         }
         else if (val >= 0x60 && val <= 0x6f)
         {
-            chan.ornamentPointer = ReadWord(&header->ornamentsPointers[(val - 0x60) * 2]);
+            chan.ornamentPointer = header->ornamentsPointers[val - 0x60];
             chan.ornamentLength = m_data[chan.ornamentPointer++];
             chan.loopOrnamentPosition = m_data[chan.ornamentPointer++];
             chan.positionInOrnament = 0;
@@ -345,9 +340,9 @@ bool DecodePT2::Play()
 
                 uint16_t patternsPointer = header->patternsPointer;
                 patternsPointer += header->positionList[m_currentPosition] * 6;
-                m_chA.addressInPattern = ReadWord(&m_data[patternsPointer + 0]);
-                m_chB.addressInPattern = ReadWord(&m_data[patternsPointer + 2]);
-                m_chC.addressInPattern = ReadWord(&m_data[patternsPointer + 4]);
+                m_chA.addressInPattern = m_data[patternsPointer + 0] | m_data[patternsPointer + 1] << 8;
+                m_chB.addressInPattern = m_data[patternsPointer + 2] | m_data[patternsPointer + 3] << 8;
+                m_chC.addressInPattern = m_data[patternsPointer + 4] | m_data[patternsPointer + 5] << 8;
             }
             PatternInterpreter(m_chA);
         }

@@ -5,43 +5,50 @@
 
 class DecodePT2 : public Decoder
 {
-    struct AYSongInfo
+    #pragma pack(push, 1)
+    struct Header
     {
-        uint8_t* module;
-        void* data;
+        uint8_t delay;
+        uint8_t numberOfPositions;
+        uint8_t loopPosition;
+        uint8_t samplesPointers[64];
+        uint8_t ornamentsPointers[32];
+        uint8_t patternsPointerL;
+        uint8_t patternsPointerH;
+        char    musicName[30];
+        uint8_t positionList[256];
     };
+    #pragma pack(pop)
 
-    struct PT2_File
+    struct Channel
     {
-        uint8_t PT2_Delay;
-        uint8_t PT2_NumberOfPositions;
-        uint8_t PT2_LoopPosition;
-        uint8_t PT2_SamplesPointers0[64];
-        uint8_t PT2_OrnamentsPointers0[32];
-        uint8_t PT2_PatternsPointer0, PT2_PatternsPointer1;
-        char PT2_MusicName[30];
-        uint8_t PT2_PositionList[65535 - 131];
-    };
+        uint16_t addressInPattern;
+        uint16_t ornamentPointer;
+        uint16_t samplePointer;
 
-    struct PT2_Channel_Parameters
-    {
-        uint16_t Address_In_Pattern, OrnamentPointer, SamplePointer, Ton;
-        uint8_t Loop_Ornament_Position, Ornament_Length, Position_In_Ornament, Loop_Sample_Position, Sample_Length, Position_In_Sample, Volume, Number_Of_Notes_To_Skip, Note, Slide_To_Note, Amplitude;
-        int8_t Current_Ton_Sliding, Ton_Delta;
-        int GlissType;
-        bool Envelope_Enabled, Enabled;
-        int8_t Glissade, Addition_To_Noise, Note_Skip_Counter;
-    };
+        uint8_t loopOrnamentPosition;
+        uint8_t ornamentLength;
+        uint8_t positionInOrnament;
 
-    struct PT2_Parameters
-    {
-        uint8_t DelayCounter, Delay, CurrentPosition;
-    };
+        uint8_t loopSamplePosition;
+        uint8_t sampleLength;
+        uint8_t positionInSample;
 
-    struct PT2_SongInfo
-    {
-        PT2_Parameters PT2;
-        PT2_Channel_Parameters PT2_A, PT2_B, PT2_C;
+        uint8_t volume;
+        uint8_t numberOfNotesToSkip;
+        uint8_t note;
+        uint8_t slideToNote;
+        int8_t currentTonSliding;
+        int8_t tonDelta;
+        uint8_t glisType;
+        bool envelopeEnabled;
+        bool enabled;
+        int8_t glissade;
+        int8_t additionToNoise;
+        int8_t noteSkipCounter;
+
+        uint16_t ton;
+        uint8_t amplitude;
     };
 
 public:
@@ -50,17 +57,25 @@ public:
     void Close(Module& module) override;
 
 private:
-    bool Init(AYSongInfo& info);
+    bool Init();
     bool Step();
 
-    void PT2_PatternInterpreter(AYSongInfo& info, PT2_Channel_Parameters& chan);
-    void PT2_GetRegisters(AYSongInfo& info, PT2_Channel_Parameters& chan, uint8_t& TempMixer);
-    bool PT2_Play(AYSongInfo& info);
-    void PT2_Cleanup(AYSongInfo& info);
+    void PatternInterpreter(Channel& chan);
+    void GetRegisters(Channel& chan, uint8_t& mixer);
+    bool Play();
 
 private:
-    unsigned loop;
-    unsigned tick;
-    AYSongInfo info;
-    uint8_t regs[16];
+    uint8_t* m_data;
+    uint32_t m_loop;
+    uint32_t m_tick;
+
+    uint8_t m_delay;
+    uint8_t m_delayCounter;
+    uint8_t m_currentPosition;
+
+    Channel m_chA;
+    Channel m_chB;
+    Channel m_chC;
+
+    uint8_t m_regs[16];
 };

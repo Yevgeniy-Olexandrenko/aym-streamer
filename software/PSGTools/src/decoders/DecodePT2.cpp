@@ -17,28 +17,27 @@ bool DecodePT2::Open(Module& module)
         {
             uint8_t data[131 + 1];
             fileStream.seekg(0, fileStream.beg);
-            fileStream.read((char*)data, 131);
-            PT2_File* header = (PT2_File*)data;
+            fileStream.read((char*)data, sizeof(data));
+            Header* header = (Header*)data;
             data[131] = 0; // end of music name
 
-            if (header->PT2_Delay >= 3 
-                && header->PT2_NumberOfPositions > 0 
-                && (header->PT2_SamplesPointers0[0] | header->PT2_SamplesPointers0[1] << 8) == 0
-                && (header->PT2_PatternsPointer0 | header->PT2_PatternsPointer1 << 8) < fileSize)
+            if (header->delay >= 3 
+                && header->numberOfPositions > 0 
+                && (header->samplesPointers[0] | header->samplesPointers[1] << 8) == 0
+                && (header->patternsPointerL | header->patternsPointerH << 8) < fileSize)
             {
-                info.module = new uint8_t[fileSize];
+                m_data = new uint8_t[fileSize];
                 fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)info.module, fileSize);
+                fileStream.read((char*)m_data, fileSize);
 
-                if (fileStream && Init(info))
+                if (fileStream && Init())
                 {
-                    tick = 0;
-                    loop = 0;
-
-                    std::string musicName(header->PT2_MusicName);
+                    std::string musicName(header->musicName);
                     module.info.title(musicName);
                     module.info.type("ProTracker 2.x module");
                     module.playback.frameRate(50);
+
+                    m_loop = m_tick = 0;
                     isDetected = true;
                 }
             }
@@ -55,7 +54,7 @@ bool DecodePT2::Decode(Frame& frame)
 
     for (uint8_t r = 0; r < 16; ++r)
     {
-        uint8_t data = regs[r];
+        uint8_t data = m_regs[r];
         if (r == Env_Shape)
         {
             if (data != 0xFF)
@@ -71,395 +70,306 @@ bool DecodePT2::Decode(Frame& frame)
 
 void DecodePT2::Close(Module& module)
 {
-    if (loop > 0)
-        module.loop.frameId(loop);
+    if (m_loop > 0)
+        module.loop.frameId(m_loop);
 
-    PT2_Cleanup(info);
-
-    delete[] info.module;
+    delete[] m_data;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const uint16_t PT2_Table[96] =
-{ 
-    0x0ef8, 0x0e10, 0x0d60, 0x0c80, 0x0bd8, 0x0b28, 0x0a88, 0x09f0,
-    0x0960, 0x08e0, 0x0858, 0x07e0, 0x077c, 0x0708, 0x06b0, 0x0640,
-    0x05ec, 0x0594, 0x0544, 0x04f8, 0x04b0, 0x0470, 0x042c, 0x03fd,
-    0x03be, 0x0384, 0x0358, 0x0320, 0x02f6, 0x02ca, 0x02a2, 0x027c,
-    0x0258, 0x0238, 0x0216, 0x01f8, 0x01df, 0x01c2, 0x01ac, 0x0190,
-    0x017b, 0x0165, 0x0151, 0x013e, 0x012c, 0x011c, 0x010a, 0x00fc, 
-    0x00ef, 0x00e1, 0x00d6, 0x00c8, 0x00bd, 0x00b2, 0x00a8, 0x009f,
-    0x0096, 0x008e, 0x0085, 0x007e, 0x0077, 0x0070, 0x006b, 0x0064,
-    0x005e, 0x0059, 0x0054, 0x004f, 0x004b, 0x0047, 0x0042, 0x003f,
-    0x003b, 0x0038, 0x0035, 0x0032, 0x002f, 0x002c, 0x002a, 0x0027,
-    0x0025, 0x0023, 0x0021, 0x001f, 0x001d, 0x001c, 0x001a, 0x0019,
-    0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000f,
-};
-
-
-enum
+namespace
 {
-    AY_CHNL_A_FINE = 0,
-    AY_CHNL_A_COARSE,
-    AY_CHNL_B_FINE,
-    AY_CHNL_B_COARSE,
-    AY_CHNL_C_FINE,
-    AY_CHNL_C_COARSE,
-    AY_NOISE_PERIOD,
-    AY_MIXER,
-    AY_CHNL_A_VOL,
-    AY_CHNL_B_VOL,
-    AY_CHNL_C_VOL,
-    AY_ENV_FINE,
-    AY_ENV_COARSE,
-    AY_ENV_SHAPE,
-    AY_GPIO_A,
-    AY_GPIO_B
-};
+    const uint16_t PT2NoteTable[96] =
+    {
+        0x0ef8, 0x0e10, 0x0d60, 0x0c80, 0x0bd8, 0x0b28, 0x0a88, 0x09f0,
+        0x0960, 0x08e0, 0x0858, 0x07e0, 0x077c, 0x0708, 0x06b0, 0x0640,
+        0x05ec, 0x0594, 0x0544, 0x04f8, 0x04b0, 0x0470, 0x042c, 0x03fd,
+        0x03be, 0x0384, 0x0358, 0x0320, 0x02f6, 0x02ca, 0x02a2, 0x027c,
+        0x0258, 0x0238, 0x0216, 0x01f8, 0x01df, 0x01c2, 0x01ac, 0x0190,
+        0x017b, 0x0165, 0x0151, 0x013e, 0x012c, 0x011c, 0x010a, 0x00fc,
+        0x00ef, 0x00e1, 0x00d6, 0x00c8, 0x00bd, 0x00b2, 0x00a8, 0x009f,
+        0x0096, 0x008e, 0x0085, 0x007e, 0x0077, 0x0070, 0x006b, 0x0064,
+        0x005e, 0x0059, 0x0054, 0x004f, 0x004b, 0x0047, 0x0042, 0x003f,
+        0x003b, 0x0038, 0x0035, 0x0032, 0x002f, 0x002c, 0x002a, 0x0027,
+        0x0025, 0x0023, 0x0021, 0x001f, 0x001d, 0x001c, 0x001a, 0x0019,
+        0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000f,
+    };
 
-uint16_t ay_sys_getword(uint8_t* p)
-{
-    return *p | ((*(p + 1)) << 8);
+    uint16_t ReadWord(uint8_t* ptr)
+    {
+        return *ptr | *(ptr + 1) << 8;
+    }
 }
 
-#define PT2_A ((PT2_SongInfo *)info.data)->PT2_A
-#define PT2_B ((PT2_SongInfo *)info.data)->PT2_B
-#define PT2_C ((PT2_SongInfo *)info.data)->PT2_C
-#define PT2 ((PT2_SongInfo *)info.data)->PT2
-
-#define PT2_SamplesPointers(x) (header->PT2_SamplesPointers0 [(x) * 2] | (header->PT2_SamplesPointers0 [(x) * 2 + 1] << 8))
-#define PT2_OrnamentsPointers(x) (header->PT2_OrnamentsPointers0 [(x) * 2] | (header->PT2_OrnamentsPointers0 [(x) * 2 + 1] << 8))
-#define PT2_PositionList(x) (header->PT2_PositionList [(x)])
-#define PT2_PatternsPointer (header->PT2_PatternsPointer0 | (header->PT2_PatternsPointer1 << 8))
-#define PT2_Delay (header->PT2_Delay)
-#define PT2_NumberOfPositions (header->PT2_NumberOfPositions)
-#define PT2_LoopPosition (header->PT2_LoopPosition)
-
-bool DecodePT2::Init(AYSongInfo& info)
+bool DecodePT2::Init()
 {
-    uint8_t* module = info.module;
-    PT2_File* header = (PT2_File*)module;
-    if (info.data)
+    Header* header = (Header*)m_data;
+
+    memset(&m_chA, 0, sizeof(Channel));
+    memset(&m_chB, 0, sizeof(Channel));
+    memset(&m_chC, 0, sizeof(Channel));
+
+    m_delay = header->delay;
+    m_delayCounter = 1;
+    m_currentPosition = 0;
+
+    uint16_t patternsPointer = header->patternsPointerL | header->patternsPointerH << 8;
+    patternsPointer += header->positionList[0] * 6;
+    m_chA.addressInPattern = ReadWord(&m_data[patternsPointer + 0]);
+    m_chB.addressInPattern = ReadWord(&m_data[patternsPointer + 2]);
+    m_chC.addressInPattern = ReadWord(&m_data[patternsPointer + 4]);
+
+    for (Channel* chan : { &m_chA, &m_chB, &m_chC })
     {
-        delete (PT2_SongInfo*)info.data;
-        info.data = 0;
+        chan->ornamentPointer = ReadWord(&header->ornamentsPointers[0 * 2]);
+        chan->ornamentLength = m_data[chan->ornamentPointer++];
+        chan->loopOrnamentPosition = m_data[chan->ornamentPointer++];
+        chan->volume = 15;
     }
-    info.data = (void*)new PT2_SongInfo;
-    if (!info.data)
-        return false;
 
-    memset(&PT2_A, 0, sizeof(PT2_Channel_Parameters));
-    memset(&PT2_B, 0, sizeof(PT2_Channel_Parameters));
-    memset(&PT2_C, 0, sizeof(PT2_Channel_Parameters));
-    PT2.DelayCounter = 1;
-    PT2.Delay = PT2_Delay;
-    PT2.CurrentPosition = 0;
-
-    PT2_A.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(0) * 6]);
-    PT2_B.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(0) * 6 + 2]);
-    PT2_C.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(0) * 6 + 4]);
-
-    PT2_A.OrnamentPointer = PT2_OrnamentsPointers(0);
-    PT2_A.Ornament_Length = module[PT2_A.OrnamentPointer];
-    PT2_A.OrnamentPointer++;
-    PT2_A.Loop_Ornament_Position = module[PT2_A.OrnamentPointer];
-    PT2_A.OrnamentPointer++;
-    PT2_A.Envelope_Enabled = false;
-    PT2_A.Position_In_Sample = 0;
-    PT2_A.Position_In_Ornament = 0;
-    PT2_A.Addition_To_Noise = 0;
-    PT2_A.Glissade = 0;
-    PT2_A.Current_Ton_Sliding = 0;
-    PT2_A.GlissType = 0;
-    PT2_A.Enabled = false;
-    PT2_A.Number_Of_Notes_To_Skip = 0;
-    PT2_A.Note_Skip_Counter = 0;
-    PT2_A.Volume = 15;
-    PT2_A.Ton = 0;
-
-    PT2_B.OrnamentPointer = PT2_A.OrnamentPointer;
-    PT2_B.Loop_Ornament_Position = PT2_A.Loop_Ornament_Position;
-    PT2_B.Ornament_Length = PT2_A.Ornament_Length;
-    PT2_B.Envelope_Enabled = false;
-    PT2_B.Position_In_Sample = 0;
-    PT2_B.Position_In_Ornament = 0;
-    PT2_B.Addition_To_Noise = 0;
-    PT2_B.Glissade = 0;
-    PT2_B.Current_Ton_Sliding = 0;
-    PT2_B.GlissType = 0;
-    PT2_B.Enabled = false;
-    PT2_B.Number_Of_Notes_To_Skip = 0;
-    PT2_B.Note_Skip_Counter = 0;
-    PT2_B.Volume = 15;
-    PT2_B.Ton = 0;
-
-    PT2_C.OrnamentPointer = PT2_A.OrnamentPointer;
-    PT2_C.Loop_Ornament_Position = PT2_A.Loop_Ornament_Position;
-    PT2_C.Ornament_Length = PT2_A.Ornament_Length;
-    PT2_C.Envelope_Enabled = false;
-    PT2_C.Position_In_Sample = 0;
-    PT2_C.Position_In_Ornament = 0;
-    PT2_C.Addition_To_Noise = 0;
-    PT2_C.Glissade = 0;
-    PT2_C.Current_Ton_Sliding = 0;
-    PT2_C.GlissType = 0;
-    PT2_C.Enabled = false;
-    PT2_C.Number_Of_Notes_To_Skip = 0;
-    PT2_C.Note_Skip_Counter = 0;
-    PT2_C.Volume = 15;
-    PT2_C.Ton = 0;
-
-    memset(&regs, 0, sizeof(regs));
+    memset(&m_regs, 0, sizeof(m_regs));
 	return true;
 }
 
 bool DecodePT2::Step()
 {
-    bool isNewLoop = PT2_Play(info);;
+    bool isNewLoop = Play();
+    Header* header = (Header*)m_data;
 
-    uint8_t* module = info.module;
-    PT2_File* header = (PT2_File*)module;
-
-    if (loop == 0)
+    if (m_loop == 0)
     {
-        uint8_t currPosition = PT2.CurrentPosition;
-        uint8_t loopPosition = PT2_LoopPosition;
-        uint8_t lastPosition = PT2_NumberOfPositions - 1;
+        uint8_t currPosition = m_currentPosition;
+        uint8_t loopPosition = header->loopPosition;
+        uint8_t lastPosition = header->numberOfPositions - 1;
 
         // detect true loop frame (ommit loop to first or last position)
         if (loopPosition > 0 && loopPosition < lastPosition && currPosition == loopPosition)
         {
-            loop = tick;
+            m_loop = m_tick;
         }
     }
 
-    tick++;
+    m_tick++;
     return isNewLoop;
 }
 
-void DecodePT2::PT2_PatternInterpreter(AYSongInfo& info, PT2_Channel_Parameters& chan)
+void DecodePT2::PatternInterpreter(Channel& chan)
 {
-    uint8_t* module = info.module;
-    PT2_File* header = (PT2_File*)module;
-    bool quit, gliss;
-    quit = false;
-    gliss = false;
+    Header* header = (Header*)m_data;
+    bool quit = false;
+    bool gliss = false;
+
     do
     {
-        uint8_t val = module[chan.Address_In_Pattern];
+        uint8_t val = m_data[chan.addressInPattern];
         if (val >= 0xe1)
         {
-            chan.SamplePointer = PT2_SamplesPointers(val - 0xe0);
-            chan.Sample_Length = module[chan.SamplePointer];
-            chan.SamplePointer++;
-            chan.Loop_Sample_Position = module[chan.SamplePointer];
-            chan.SamplePointer++;
+            chan.samplePointer = ReadWord(&header->samplesPointers[(val - 0xe0) * 2]);
+            chan.sampleLength = m_data[chan.samplePointer++];
+            chan.loopSamplePosition = m_data[chan.samplePointer++];
         }
         else if (val == 0xe0)
         {
-            chan.Position_In_Sample = 0;
-            chan.Position_In_Ornament = 0;
-            chan.Current_Ton_Sliding = 0;
-            chan.GlissType = 0;
-            chan.Enabled = false;
+            chan.positionInSample = 0;
+            chan.positionInOrnament = 0;
+            chan.currentTonSliding = 0;
+            chan.glisType = 0;
+            chan.enabled = false;
             quit = true;
         }
         else if (val >= 0x80 && val <= 0xdf)
         {
-            chan.Position_In_Sample = 0;
-            chan.Position_In_Ornament = 0;
-            chan.Current_Ton_Sliding = 0;
+            chan.positionInSample = 0;
+            chan.positionInOrnament = 0;
+            chan.currentTonSliding = 0;
             if (gliss)
             {
-                chan.Slide_To_Note = val - 0x80;
-                if (chan.GlissType == 1)
-                    chan.Note = chan.Slide_To_Note;
+                chan.slideToNote = val - 0x80;
+                if (chan.glisType == 1)
+                    chan.note = chan.slideToNote;
             }
             else
             {
-                chan.Note = val - 0x80;
-                chan.GlissType = 0;
+                chan.note = val - 0x80;
+                chan.glisType = 0;
             }
-            chan.Enabled = true;
+            chan.enabled = true;
             quit = true;
         }
         else if (val == 0x7f)
-            chan.Envelope_Enabled = false;
+        {
+            chan.envelopeEnabled = false;
+        }
         else if (val >= 0x71 && val <= 0x7e)
         {
-            chan.Envelope_Enabled = true;
-            regs[AY_ENV_SHAPE] = val - 0x70;
-            chan.Address_In_Pattern++;
-            regs[AY_ENV_FINE] = module[chan.Address_In_Pattern];
-            chan.Address_In_Pattern++;
-            regs[AY_ENV_COARSE] = module[chan.Address_In_Pattern];
+            chan.envelopeEnabled = true;
+            m_regs[Env_Shape] = val - 0x70;
+            m_regs[Env_PeriodL] = m_data[++chan.addressInPattern];
+            m_regs[Env_PeriodH] = m_data[++chan.addressInPattern];
         }
         else if (val == 0x70)
+        {
             quit = true;
+        }
         else if (val >= 0x60 && val <= 0x6f)
         {
-            chan.OrnamentPointer = PT2_OrnamentsPointers(val - 0x60);
-            chan.Ornament_Length = module[chan.OrnamentPointer];
-            chan.OrnamentPointer++;
-            chan.Loop_Ornament_Position = module[chan.OrnamentPointer];
-            chan.OrnamentPointer++;
-            chan.Position_In_Ornament = 0;
+            chan.ornamentPointer = ReadWord(&header->ornamentsPointers[(val - 0x60) * 2]);
+            chan.ornamentLength = m_data[chan.ornamentPointer++];
+            chan.loopOrnamentPosition = m_data[chan.ornamentPointer++];
+            chan.positionInOrnament = 0;
         }
         else if (val >= 0x20 && val <= 0x5f)
-            chan.Number_Of_Notes_To_Skip = val - 0x20;
+        {
+            chan.numberOfNotesToSkip = val - 0x20;
+        }
         else if (val >= 0x10 && val <= 0x1f)
-            chan.Volume = val - 0x10;
+        {
+            chan.volume = val - 0x10;
+        }
         else if (val == 0xf)
         {
-            chan.Address_In_Pattern++;
-            PT2.Delay = module[chan.Address_In_Pattern];
+            m_delay = m_data[++chan.addressInPattern];
         }
         else if (val == 0xe)
         {
-            chan.Address_In_Pattern++;
-            chan.Glissade = module[chan.Address_In_Pattern];
-            chan.GlissType = 1;
+            chan.glissade = m_data[++chan.addressInPattern];
+            chan.glisType = 1;
             gliss = true;
         }
         else if (val == 0xd)
         {
-            chan.Address_In_Pattern++;
-            chan.Glissade = abs((int8_t)(module[chan.Address_In_Pattern]));
-            chan.Address_In_Pattern += 2; //Not use precalculated Ton_Delta
-            //to avoide error with first note of pattern
-            chan.GlissType = 2;
+            chan.glissade = std::abs((int8_t)(m_data[++chan.addressInPattern]));
+
+            // Do not use precalculated Ton_Delta to
+            // avoide error with first note of pattern
+            chan.addressInPattern += 2; 
+            
+            chan.glisType = 2;
             gliss = true;
         }
         else if (val == 0xc)
-            chan.GlissType = 0;
+        {
+            chan.glisType = 0;
+        }
         else
         {
-            chan.Address_In_Pattern++;
-            chan.Addition_To_Noise = module[chan.Address_In_Pattern];
+            chan.additionToNoise = m_data[++chan.addressInPattern];
         }
-        chan.Address_In_Pattern++;
+        chan.addressInPattern++;
     } while (!quit);
-    if (gliss && (chan.GlissType == 2))
+
+    if (gliss && (chan.glisType == 2))
     {
-        chan.Ton_Delta = abs(PT2_Table[chan.Slide_To_Note] - PT2_Table[chan.Note]);
-        if (chan.Slide_To_Note > chan.Note)
-            chan.Glissade = -chan.Glissade;
+        chan.tonDelta = std::abs(PT2NoteTable[chan.slideToNote] - PT2NoteTable[chan.note]);
+        if (chan.slideToNote > chan.note)
+            chan.glissade = -chan.glissade;
     }
-    chan.Note_Skip_Counter = chan.Number_Of_Notes_To_Skip;
+    chan.noteSkipCounter = chan.numberOfNotesToSkip;
 }
 
-void DecodePT2::PT2_GetRegisters(AYSongInfo& info, PT2_Channel_Parameters& chan, uint8_t& TempMixer)
+void DecodePT2::GetRegisters(Channel& chan, uint8_t& mixer)
 {
-    uint8_t j, b0, b1;
-    uint8_t* module = info.module;
-    PT2_File* header = (PT2_File*)module;
-    if (chan.Enabled)
+    uint8_t note, b0, b1;
+    Header* header = (Header*)m_data;
+
+    if (chan.enabled)
     {
-        b0 = module[chan.SamplePointer + chan.Position_In_Sample * 3];
-        b1 = module[chan.SamplePointer + chan.Position_In_Sample * 3 + 1];
-        chan.Ton = module[chan.SamplePointer + chan.Position_In_Sample * 3 + 2] + (uint16_t)((b1 & 15) << 8);
+        uint16_t samplePointer = chan.samplePointer + chan.positionInSample * 3;
+        b0 = m_data[samplePointer + 0];
+        b1 = m_data[samplePointer + 1];
+        chan.ton = m_data[samplePointer + 2] + (uint16_t)((b1 & 15) << 8);
         if ((b0 & 4) == 0)
-            chan.Ton = -chan.Ton;
-        j = chan.Note + module[chan.OrnamentPointer + chan.Position_In_Ornament];
-        if (j > 95)
-            j = 95;
-        chan.Ton = (chan.Ton + chan.Current_Ton_Sliding + PT2_Table[j]) & 0xfff;
-        if (chan.GlissType == 2)
+            chan.ton = -chan.ton;
+
+        note = chan.note + m_data[chan.ornamentPointer + chan.positionInOrnament];
+        if (note > 95) note = 95;
+        chan.ton = (chan.ton + chan.currentTonSliding + PT2NoteTable[note]) & 0xfff;
+
+        if (chan.glisType == 2)
         {
-            chan.Ton_Delta = chan.Ton_Delta - abs(chan.Glissade);
-            if (chan.Ton_Delta < 0)
+            chan.tonDelta = chan.tonDelta - std::abs(chan.glissade);
+            if (chan.tonDelta < 0)
             {
-                chan.Note = chan.Slide_To_Note;
-                chan.GlissType = 0;
-                chan.Current_Ton_Sliding = 0;
+                chan.note = chan.slideToNote;
+                chan.glisType = 0;
+                chan.currentTonSliding = 0;
             }
         }
-        if (chan.GlissType != 0)
-            chan.Current_Ton_Sliding += chan.Glissade;
-        chan.Amplitude = (chan.Volume * 17 + (uint8_t)(chan.Volume > 7)) * (b1 >> 4) / 256;
-        if (chan.Envelope_Enabled)
-            chan.Amplitude = chan.Amplitude | 16;
-        if ((module[chan.SamplePointer + chan.Position_In_Sample * 3] & 1) != 0)
-            TempMixer = TempMixer | 64;
+        if (chan.glisType != 0)
+            chan.currentTonSliding += chan.glissade;
+
+        chan.amplitude = (chan.volume * 17 + (uint8_t)(chan.volume > 7)) * (b1 >> 4) / 256;
+        if (chan.envelopeEnabled) chan.amplitude |= 16;
+
+        if ((b0 & 1) != 0)
+            mixer |= 64;
         else
-            regs[AY_NOISE_PERIOD] = ((b0 >> 3) + chan.Addition_To_Noise) & 31;
+            m_regs[Noise_Period] = ((b0 >> 3) + chan.additionToNoise) & 0x1f;
+
         if ((b0 & 2) != 0)
-            TempMixer = TempMixer | 8;
-        chan.Position_In_Sample++;
-        if (chan.Position_In_Sample == chan.Sample_Length)
-            chan.Position_In_Sample = chan.Loop_Sample_Position;
-        chan.Position_In_Ornament++;
-        if (chan.Position_In_Ornament == chan.Ornament_Length)
-            chan.Position_In_Ornament = chan.Loop_Ornament_Position;
+            mixer |= 8;
+
+        if (++chan.positionInSample == chan.sampleLength)
+            chan.positionInSample = chan.loopSamplePosition;
+
+        if (++chan.positionInOrnament == chan.ornamentLength)
+            chan.positionInOrnament = chan.loopOrnamentPosition;
     }
     else
-        chan.Amplitude = 0;
-    TempMixer = TempMixer >> 1;
+    {
+        chan.amplitude = 0;
+    }
+    mixer >>= 1;
 }
 
-bool DecodePT2::PT2_Play(AYSongInfo& info)
+bool DecodePT2::Play()
 {
     bool isNewLoop = false;
-    regs[AY_ENV_SHAPE] = 0xFF;
+    m_regs[Env_Shape] = 0xFF;
 
-    uint8_t TempMixer;
-    uint8_t* module = info.module;
-    PT2_File* header = (PT2_File*)module;
-    PT2.DelayCounter--;
-    if (PT2.DelayCounter == 0)
+    uint8_t mixer = 0;
+    Header* header = (Header*)m_data;
+
+    if (--m_delayCounter == 0)
     {
-        PT2_A.Note_Skip_Counter--;
-        if (PT2_A.Note_Skip_Counter < 0)
+        if (--m_chA.noteSkipCounter < 0)
         {
-            if (module[PT2_A.Address_In_Pattern] == 0)
+            if (m_data[m_chA.addressInPattern] == 0)
             {
-                PT2.CurrentPosition++;
-                if (PT2.CurrentPosition == PT2_NumberOfPositions)
+                if (++m_currentPosition == header->numberOfPositions)
                 {
-                    PT2.CurrentPosition = PT2_LoopPosition;
+                    m_currentPosition = header->loopPosition;
                     isNewLoop = true;
                 }
 
-                PT2_A.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(PT2.CurrentPosition) * 6]);
-                PT2_B.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(PT2.CurrentPosition) * 6 + 2]);
-                PT2_C.Address_In_Pattern = ay_sys_getword(&module[PT2_PatternsPointer + PT2_PositionList(PT2.CurrentPosition) * 6 + 4]);
+                uint16_t patternsPointer = header->patternsPointerL | header->patternsPointerH << 8;
+                patternsPointer += header->positionList[m_currentPosition] * 6;
+                m_chA.addressInPattern = ReadWord(&m_data[patternsPointer + 0]);
+                m_chB.addressInPattern = ReadWord(&m_data[patternsPointer + 2]);
+                m_chC.addressInPattern = ReadWord(&m_data[patternsPointer + 4]);
             }
-            PT2_PatternInterpreter(info, PT2_A);
+            PatternInterpreter(m_chA);
         }
-        PT2_B.Note_Skip_Counter--;
-        if (PT2_B.Note_Skip_Counter < 0)
-            PT2_PatternInterpreter(info, PT2_B);
-        PT2_C.Note_Skip_Counter--;
-        if (PT2_C.Note_Skip_Counter < 0)
-            PT2_PatternInterpreter(info, PT2_C);
-        PT2.DelayCounter = PT2.Delay;
+
+        if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
+        if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
+        m_delayCounter = m_delay;
     }
 
-    TempMixer = 0;
-    PT2_GetRegisters(info, PT2_A, TempMixer);
-    PT2_GetRegisters(info, PT2_B, TempMixer);
-    PT2_GetRegisters(info, PT2_C, TempMixer);
+    GetRegisters(m_chA, mixer);
+    GetRegisters(m_chB, mixer);
+    GetRegisters(m_chC, mixer);
 
-    regs[AY_MIXER] = TempMixer;
-
-    regs[AY_CHNL_A_FINE] = PT2_A.Ton & 0xff;
-    regs[AY_CHNL_A_COARSE] = (PT2_A.Ton >> 8) & 0xf;
-    regs[AY_CHNL_B_FINE] = PT2_B.Ton & 0xff;
-    regs[AY_CHNL_B_COARSE] = (PT2_B.Ton >> 8) & 0xf;
-    regs[AY_CHNL_C_FINE] = PT2_C.Ton & 0xff;
-    regs[AY_CHNL_C_COARSE] = (PT2_C.Ton >> 8) & 0xf;
-    regs[AY_CHNL_A_VOL] = PT2_A.Amplitude;
-    regs[AY_CHNL_B_VOL] = PT2_B.Amplitude;
-    regs[AY_CHNL_C_VOL] = PT2_C.Amplitude;
+    m_regs[Mixer_Flags] = mixer;
+    m_regs[TonA_PeriodL] = m_chA.ton & 0xff;
+    m_regs[TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
+    m_regs[TonB_PeriodL] = m_chB.ton & 0xff;
+    m_regs[TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
+    m_regs[TonC_PeriodL] = m_chC.ton & 0xff;
+    m_regs[TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
+    m_regs[VolA_EnvFlg] = m_chA.amplitude;
+    m_regs[VolB_EnvFlg] = m_chB.amplitude;
+    m_regs[VolC_EnvFlg] = m_chC.amplitude;
     return isNewLoop;
-}
-
-void DecodePT2::PT2_Cleanup(AYSongInfo& info)
-{
-    if (info.data)
-    {
-        delete (PT2_SongInfo*)info.data;
-        info.data = 0;
-    }
 }

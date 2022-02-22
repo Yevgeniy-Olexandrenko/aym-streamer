@@ -19,7 +19,7 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_filelist = "D:\\Projects\\github\\aym-streamer\\chiptunes\\Mmmc\\selected\\";
+const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\chiptunes\\Power Blade\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -165,18 +165,12 @@ bool SetConsoleWindowSize(SHORT x, SHORT y)
 
 int main()
 {
-    SetConsoleWindowSize(86, 32);
+    SetConsoleWindowSize(87, 32);
 
 
     HWND consoleWindow = GetConsoleWindow();
     SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
 
-   
-    //HANDLE wHnd = GetStdHandle(STD_OUTPUT_HANDLE);
-    //SMALL_RECT windowSize = { 0, 0, 86, 30 };
-    //SetConsoleWindowInfo(wHnd, 1, &windowSize);
-    //COORD bufferSize = { 86, 30 };
-    //SetConsoleScreenBufferSize(wHnd, bufferSize);
 
     HANDLE hInput;
     DWORD prev_mode;
@@ -215,7 +209,7 @@ int main()
     PrintDelimiter();
     std::cout << std::endl;
 
-#if 1
+#if 0
     m_output.reset(new Streamer(k_comPortIndex));
 #else
     m_output.reset(new Emulator());
@@ -251,20 +245,20 @@ int main()
                     FrameId oldFrame = -1;
                     while (m_player->IsPlaying())
                     {
-                        SetConsoleWindowSize(86, 32);
+                        SetConsoleWindowSize(87, 32);
                         Interface::HandleKeyboardInput();
 
                         FrameId newFrame = m_player->GetFrameId();
                         if (newFrame != oldFrame)
                         {
                             oldFrame = newFrame;
-                            Interface::PrintFrameStream(*m_module, newFrame, 12);
+                            Interface::PrintModuleFrames2(*m_module, newFrame, 12);
                             cursor::move_down(12);
-                            Interface::PrintPlaybackFooter();
+                            Interface::PrintPlaybackProgress();
                             cursor::move_up(12);
                         }
 
-                        if (Interface::GetKey(VK_UP).bPressed)
+                        if (Interface::GetKey(VK_UP).pressed)
                         {
                             if (!m_player->IsPaused())
                             {
@@ -274,7 +268,7 @@ int main()
                             }
                         }
 
-                        if (Interface::GetKey(VK_DOWN).bPressed)
+                        if (Interface::GetKey(VK_DOWN).pressed)
                         {
                             if (!m_player->IsPaused())
                             {
@@ -284,7 +278,7 @@ int main()
                             }
                         }
 
-                        if (Interface::GetKey(VK_RETURN).bPressed)
+                        if (Interface::GetKey(VK_RETURN).pressed)
                         {
                             if (m_player->IsPaused()) 
                                 m_player->Play();

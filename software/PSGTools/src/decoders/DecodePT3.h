@@ -86,10 +86,10 @@ private:
     bool Init();
     bool Step();
 
-    int  GetNoteFreq(int cnum, int j);
-    bool GetRegisters(int cnum);
-    void PatternInterpreter(int cnum, Channel& chan);
-    void ChangeRegisters(int cnum, Channel& chan);
+    int  GetNoteFreq(int chip, int note);
+    bool GetRegisters(int chip);
+    void PatternInterpreter(int chip, Channel& chan);
+    void ChangeRegisters(int chip, Channel& chan);
     
 private:
     uint8_t* m_data;

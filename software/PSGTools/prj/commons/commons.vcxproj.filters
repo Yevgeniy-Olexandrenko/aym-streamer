@@ -10,6 +10,9 @@
     <Filter Include="Sources\lh5_decode">
       <UniqueIdentifier>{b07c8312-8bc1-4e3c-adb3-d24ca97fa5df}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\cwalk">
+      <UniqueIdentifier>{f7777c6c-6ed6-447d-a891-e75b08b2cffc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\commons\ayumi\ayumi.cpp">
@@ -18,6 +21,9 @@
     <ClCompile Include="..\..\src\commons\lh5_decode\lh5_decode.cpp">
       <Filter>Sources\lh5_decode</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\commons\cwalk\cwalk.c">
+      <Filter>Sources\cwalk</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\commons\ayumi\ayumi.h">
@@ -25,6 +31,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\commons\lh5_decode\lh5_decode.h">
       <Filter>Sources\lh5_decode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\cwalk\cwalk.h">
+      <Filter>Sources\cwalk</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

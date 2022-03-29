@@ -19,7 +19,7 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_filelist = "D:\\projects\\github\\aym-streamer\\chiptunes\\Power Blade\\";
+const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs\\Playlists\\Collections\\Cinema.ayl";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 

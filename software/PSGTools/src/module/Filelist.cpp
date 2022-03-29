@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <random>
 #include <dirent/dirent.h>
+#include <cwalk/cwalk.h>
 #include "Filelist.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,6 +47,8 @@ Filelist::Filelist(const std::string& exts)
     {
         m_exts.push_back(ext);
     }
+
+    cwk_path_set_style(CWK_STYLE_WINDOWS);
 }
 
 Filelist::Filelist(const std::string& exts, const std::string& path)
@@ -69,6 +72,8 @@ Filelist::Filelist(const std::string& exts, const std::string& path)
         InsertItem(path);
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 bool Filelist::empty() const
 {
@@ -116,7 +121,10 @@ void Filelist::shuffle()
     std::random_device randomDevice;
     std::mt19937 randomGenerator(randomDevice());
     std::shuffle(m_files.begin(), m_files.end(), randomGenerator);
+    m_index = -1;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 bool Filelist::IsSupportedExt(const Filepath& path)
 {
@@ -144,6 +152,37 @@ void Filelist::ParsePlaylistM3U(const Filepath& path)
 
 void Filelist::ParsePlaylistAYL(const Filepath& path)
 {
+    std::ifstream fileStream;
+    fileStream.open(path.dirNameExt());
+
+    if (fileStream)
+    {
+        std::string item;
+        Filepath itemPath;
+
+        bool skipLine = false;
+        while (getline(fileStream, item))
+        {
+            if (!item.empty())
+            {
+                if (item == "<") skipLine = true;
+                else if (item == ">") skipLine = false;
+                else if (!skipLine)
+                {
+                    if (cwk_path_is_relative(item.c_str()))
+                    {
+                        char buffer[FILENAME_MAX];
+                        cwk_path_get_absolute(path.dir().c_str(), item.c_str(), buffer, sizeof(buffer));
+                        item = std::string(buffer);
+                    }
+
+                    itemPath.dirNameExt(item);
+                    InsertItem(itemPath);
+                }
+            }
+        }
+        fileStream.close();
+    }
 }
 
 void Filelist::ParseFolder(const Filepath& path)
@@ -178,9 +217,4 @@ void Filelist::InsertItem(const Filepath& path)
             m_files.back().dir(ws2s(cwd()));
         }
     }
-
-    //else
-    //{
-    //    std::cout << path.nameExt() << std::endl;
-    //}
 }

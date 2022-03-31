@@ -12,6 +12,7 @@
 
 #include "decoders/DecodePT3.h"
 #include "decoders/DecodePT2.h"
+#include "decoders/DecodeSTC.h"
 #include "decoders/DecodeVTX.h"
 #include "decoders/DecodePSG.h"
 
@@ -19,7 +20,7 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs\\Playlists\\Collections\\Cinema.ayl";
+const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs++\\Magazines\\";
 const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
@@ -53,6 +54,7 @@ bool DecodeFileToModule(const std::string& filePath, Module& module)
     std::shared_ptr<Decoder> decoders[]{
         std::shared_ptr<Decoder>(new DecodePT3()),
         std::shared_ptr<Decoder>(new DecodePT2()),
+        std::shared_ptr<Decoder>(new DecodeSTC()),
         std::shared_ptr<Decoder>(new DecodeVTX()),
         std::shared_ptr<Decoder>(new DecodePSG()),
     };
@@ -215,7 +217,7 @@ int main()
     m_output.reset(new Emulator());
 #endif
     m_player.reset(new Player(*m_output));
-    m_filelist.reset(new Filelist("pt2|pt3|psg|vtx", k_filelist));
+    m_filelist.reset(new Filelist("stc|pt2|pt3|psg|vtx", k_filelist));
 
     if (!m_filelist->empty())
     {

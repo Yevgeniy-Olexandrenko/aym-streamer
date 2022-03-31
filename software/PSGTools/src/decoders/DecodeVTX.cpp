@@ -55,10 +55,11 @@ bool DecodeVTX::Open(Module& module)
 				std::string author = GetTextProperty(fileStream);
 				std::string program = GetTextProperty(fileStream); // store in extras
 				std::string tracker = GetTextProperty(fileStream); // store in extras
-				std::string comment = GetTextProperty(fileStream); // store in extras
+				std::string comment = GetTextProperty(fileStream);
 
 				module.info.title(title);
 				module.info.artist(author);
+				module.info.comment(comment);
 				module.info.type("VTX stream");
 
 				// unpack frames data

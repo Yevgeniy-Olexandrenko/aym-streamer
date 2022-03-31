@@ -2,23 +2,118 @@
 #include "DecodeSTC.h"
 #include "module/Module.h"
 
+bool DecodeSTC::Open(Module& module)
+{
+    bool isDetected = false;
+    std::ifstream fileStream;
+    fileStream.open(module.file.dirNameExt(), std::fstream::binary);
+
+    if (fileStream)
+    {
+        fileStream.seekg(0, fileStream.end);
+        uint32_t fileSize = (uint32_t)fileStream.tellg();
+
+        if (fileSize >= sizeof(Header))
+        {
+            Header header;
+            fileStream.seekg(0, fileStream.beg);
+            fileStream.read((char*)(&header), sizeof(header));
+
+            bool isHeaderOK = true;
+            isHeaderOK &= (header.positionsPointer < fileSize);
+            isHeaderOK &= (int(header.patternsPointer - header.ornamentsPointer) > 0);
+            isHeaderOK &= (int(header.positionsPointer - header.ornamentsPointer) < 0);
+            isHeaderOK &= (((header.patternsPointer - header.ornamentsPointer) % 0x21) == 0);
+
+            if (isHeaderOK)
+            {
+                m_data = new uint8_t[fileSize];
+                fileStream.seekg(0, fileStream.beg);
+                fileStream.read((char*)m_data, fileSize);
+
+                if (fileStream && Init())
+                {
+                    auto identifier = (uint8_t*)(&header.identifier);
+                    if (memcmp(identifier, "SONG BY ST COMPILE", 18) &&
+                        memcmp(identifier, "SONG BY MB COMPILE", 18) &&
+                        memcmp(identifier, "SONG BY ST-COMPILE", 18) &&
+                        memcmp(identifier, "SOUND TRACKER v1.1", 18) &&
+                        memcmp(identifier, "S.T.FULL EDITION " , 17) &&
+                        memcmp(identifier, "SOUND TRACKER v1.3", 18))
+                    {
+                        int length = 18;
+                        if (header.size != fileSize)
+                        {
+                            if (identifier[18] >= 32 && identifier[18] <= 127)
+                            {
+                                length++;
+                                if (identifier[19] >= 32 && identifier[19] <= 127)
+                                    length++;
+                            }
+                        }
+                        #pragma warning(push)
+                        #pragma warning(disable:6385)
+                        std::string comment(header.identifier, length);
+                        module.info.comment(comment);
+                        #pragma warning(pop)
+                    }
+
+                    module.info.type("Sound Tracker 1.x module");
+                    module.playback.frameRate(50);
+                    isDetected = true;
+                }
+            }
+        }
+        fileStream.close();
+    }
+    return isDetected;
+}
+
+bool DecodeSTC::Decode(Frame& frame)
+{
+    bool isNewLoop = Play();
+    if (isNewLoop) return false;
+
+    for (uint8_t r = 0; r < 16; ++r)
+    {
+        uint8_t data = m_regs[r];
+        if (r == Env_Shape)
+        {
+            if (data != 0xFF)
+                frame[r].first.override(data);
+        }
+        else
+        {
+            frame[r].first.update(data);
+        }
+    }
+    return true;
+}
+
+void DecodeSTC::Close(Module& module)
+{
+    delete[] m_data;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 namespace
 {
-	const uint16_t STCNoteTable[96] =
-	{ 
-		0x0ef8, 0x0e10, 0x0d60, 0x0c80, 0x0bd8, 0x0b28, 0x0a88, 0x09f0,
-		0x0960, 0x08e0, 0x0858, 0x07e0, 0x077c, 0x0708, 0x06b0, 0x0640,
-		0x05ec, 0x0594, 0x0544, 0x04f8, 0x04b0, 0x0470, 0x042c, 0x03f0,
-		0x03be, 0x0384, 0x0358, 0x0320, 0x02f6, 0x02ca, 0x02a2, 0x027c,
-		0x0258, 0x0238, 0x0216, 0x01f8, 0x01df, 0x01c2, 0x01ac, 0x0190,
-		0x017b, 0x0165, 0x0151, 0x013e, 0x012c, 0x011c, 0x010b, 0x00fc,
-		0x00ef, 0x00e1, 0x00d6, 0x00c8, 0x00bd, 0x00b2, 0x00a8, 0x009f,
-		0x0096, 0x008e, 0x0085, 0x007e, 0x0077, 0x0070, 0x006b, 0x0064,
-		0x005e, 0x0059, 0x0054, 0x004f, 0x004b, 0x0047, 0x0042, 0x003f,
-		0x003b, 0x0038, 0x0035, 0x0032, 0x002f, 0x002c, 0x002a, 0x0027,
-		0x0025, 0x0023, 0x0021, 0x001f, 0x001d, 0x001c, 0x001a, 0x0019,
-		0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000f
-	};
+    const uint16_t STCNoteTable[96] =
+    {
+        0x0ef8, 0x0e10, 0x0d60, 0x0c80, 0x0bd8, 0x0b28, 0x0a88, 0x09f0,
+        0x0960, 0x08e0, 0x0858, 0x07e0, 0x077c, 0x0708, 0x06b0, 0x0640,
+        0x05ec, 0x0594, 0x0544, 0x04f8, 0x04b0, 0x0470, 0x042c, 0x03f0,
+        0x03be, 0x0384, 0x0358, 0x0320, 0x02f6, 0x02ca, 0x02a2, 0x027c,
+        0x0258, 0x0238, 0x0216, 0x01f8, 0x01df, 0x01c2, 0x01ac, 0x0190,
+        0x017b, 0x0165, 0x0151, 0x013e, 0x012c, 0x011c, 0x010b, 0x00fc,
+        0x00ef, 0x00e1, 0x00d6, 0x00c8, 0x00bd, 0x00b2, 0x00a8, 0x009f,
+        0x0096, 0x008e, 0x0085, 0x007e, 0x0077, 0x0070, 0x006b, 0x0064,
+        0x005e, 0x0059, 0x0054, 0x004f, 0x004b, 0x0047, 0x0042, 0x003f,
+        0x003b, 0x0038, 0x0035, 0x0032, 0x002f, 0x002c, 0x002a, 0x0027,
+        0x0025, 0x0023, 0x0021, 0x001f, 0x001d, 0x001c, 0x001a, 0x0019,
+        0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000f
+    };
 }
 
 bool DecodeSTC::Init()
@@ -47,11 +142,6 @@ bool DecodeSTC::Init()
 
     memset(&m_regs, 0, sizeof(m_regs));
     return true;
-}
-
-bool DecodeSTC::Step()
-{
-    //
 }
 
 void DecodeSTC::PatternInterpreter(Channel& chan)

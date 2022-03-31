@@ -12,7 +12,7 @@ class DecodeSTC : public Decoder
         uint16_t positionsPointer;
         uint16_t ornamentsPointer;
         uint16_t patternsPointer;
-        char     name[18];
+        char     identifier[18];
         uint16_t size;
     };
     #pragma pack(pop)
@@ -36,9 +36,12 @@ class DecodeSTC : public Decoder
     };
 
 public:
-    bool Init();
-    bool Step();
+    bool Open(Module& module) override;
+    bool Decode(Frame& frame) override;
+    void Close(Module& module) override;
 
+private:
+    bool Init();
     void PatternInterpreter(Channel& chan);
     void GetRegisters(Channel& chan, uint8_t& TempMixer);
     bool Play();

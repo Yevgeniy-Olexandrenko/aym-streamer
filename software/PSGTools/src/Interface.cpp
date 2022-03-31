@@ -209,6 +209,7 @@ namespace Interface
         cursor::show(false);
         printModuleProperty("Title", module, Module::Property::Title);
         printModuleProperty("Artist", module, Module::Property::Artist);
+        printModuleProperty("Comment", module, Module::Property::Comment);
         printModuleProperty("Type", module, Module::Property::Type);
         printModuleProperty("Chip", module, Module::Property::Chip);
         printModuleProperty("Frames", module, Module::Property::Frames);

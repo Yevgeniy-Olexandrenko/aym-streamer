@@ -21,10 +21,15 @@ bool DecodePT2::Open(Module& module)
             Header* header = (Header*)data;
             data[131] = 0; // end of music name
 
-            if (header->delay >= 3 
-                && header->numberOfPositions > 0 
-                && header->samplesPointers[0] == 0
-                && header->patternsPointer < fileSize)
+            bool isHeaderOk = true;
+            isHeaderOk &= (header->delay >= 3);
+            isHeaderOk &= (header->numberOfPositions > 0);
+            isHeaderOk &= (header->samplesPointers[0] == 0);
+            isHeaderOk &= (header->patternsPointer < fileSize);
+            isHeaderOk &= (header->ornamentsPointers[0] - header->samplesPointers[0] - 2 <= fileSize);
+            isHeaderOk &= (header->ornamentsPointers[0] - header->samplesPointers[0] >= 0);
+
+            if (isHeaderOk)
             {
                 m_data = new uint8_t[fileSize];
                 fileStream.seekg(0, fileStream.beg);

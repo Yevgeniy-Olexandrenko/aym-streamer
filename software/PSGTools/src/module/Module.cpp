@@ -32,6 +32,10 @@ std::string Module::property(Property property) const
 		stream << info.artist();
 		break;
 
+	case Property::Comment:
+		stream << info.comment();
+		break;
+
 	case Property::Type:
 		stream << info.type();
 		break;;
@@ -105,6 +109,21 @@ const std::string& Module::Info::artist() const
 bool Module::Info::artistKnown() const
 {
 	return !m_artist.empty();
+}
+
+void Module::Info::comment(const std::string& comment)
+{
+	m_comment = comment;
+}
+
+const std::string& Module::Info::comment() const
+{
+	return m_comment;
+}
+
+bool Module::Info::commentKnown() const
+{
+	return !m_comment.empty();
 }
 
 void Module::Info::type(const std::string& type)

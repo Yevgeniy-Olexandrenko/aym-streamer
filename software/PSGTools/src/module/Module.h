@@ -34,12 +34,17 @@ public:
 		const std::string& artist() const;
 		bool artistKnown() const;
 
+		void comment(const std::string& comment);
+		const std::string& comment() const;
+		bool commentKnown() const;
+
 		void type(const std::string& type);
 		const std::string& type() const;
 
 	private:
 		std::string m_title;
 		std::string m_artist;
+		std::string m_comment;
 		std::string m_type;
 	};
 
@@ -111,7 +116,7 @@ public:
 
 	enum class Property
 	{
-		Title, Artist, Type, Chip, Frames, Duration
+		Title, Artist, Comment, Type, Chip, Frames, Duration
 	};
 
 	Module();

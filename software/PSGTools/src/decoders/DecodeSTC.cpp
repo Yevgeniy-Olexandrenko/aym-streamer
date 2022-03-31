@@ -4,51 +4,45 @@
 
 namespace
 {
-	const unsigned short ST_Table[96] =
+	const uint16_t STCNoteTable[96] =
 	{ 
-		0xef8, 0xe10, 0xd60, 0xc80, 0xbd8, 0xb28, 0xa88, 0x9f0,
-		0x960, 0x8e0, 0x858, 0x7e0, 0x77c, 0x708, 0x6b0, 0x640,
-		0x5ec, 0x594, 0x544, 0x4f8, 0x4b0, 0x470, 0x42c, 0x3f0,
-		0x3be, 0x384, 0x358, 0x320, 0x2f6, 0x2ca, 0x2a2, 0x27c,
-		0x258, 0x238, 0x216, 0x1f8, 0x1df, 0x1c2, 0x1ac, 0x190,
-		0x17b, 0x165, 0x151, 0x13e, 0x12c, 0x11c, 0x10b, 0x0fc,
-		0x0ef, 0x0e1, 0x0d6, 0x0c8, 0x0bd, 0x0b2, 0x0a8, 0x09f,
-		0x096, 0x08e, 0x085, 0x07e, 0x077, 0x070, 0x06b, 0x064,
-		0x05e, 0x059, 0x054, 0x04f, 0x04b, 0x047, 0x042, 0x03f,
-		0x03b, 0x038, 0x035, 0x032, 0x02f, 0x02c, 0x02a, 0x027,
-		0x025, 0x023, 0x021, 0x01f, 0x01d, 0x01c, 0x01a, 0x019,
-		0x017, 0x016, 0x015, 0x013, 0x012, 0x011, 0x010, 0x00f
+		0x0ef8, 0x0e10, 0x0d60, 0x0c80, 0x0bd8, 0x0b28, 0x0a88, 0x09f0,
+		0x0960, 0x08e0, 0x0858, 0x07e0, 0x077c, 0x0708, 0x06b0, 0x0640,
+		0x05ec, 0x0594, 0x0544, 0x04f8, 0x04b0, 0x0470, 0x042c, 0x03f0,
+		0x03be, 0x0384, 0x0358, 0x0320, 0x02f6, 0x02ca, 0x02a2, 0x027c,
+		0x0258, 0x0238, 0x0216, 0x01f8, 0x01df, 0x01c2, 0x01ac, 0x0190,
+		0x017b, 0x0165, 0x0151, 0x013e, 0x012c, 0x011c, 0x010b, 0x00fc,
+		0x00ef, 0x00e1, 0x00d6, 0x00c8, 0x00bd, 0x00b2, 0x00a8, 0x009f,
+		0x0096, 0x008e, 0x0085, 0x007e, 0x0077, 0x0070, 0x006b, 0x0064,
+		0x005e, 0x0059, 0x0054, 0x004f, 0x004b, 0x0047, 0x0042, 0x003f,
+		0x003b, 0x0038, 0x0035, 0x0032, 0x002f, 0x002c, 0x002a, 0x0027,
+		0x0025, 0x0023, 0x0021, 0x001f, 0x001d, 0x001c, 0x001a, 0x0019,
+		0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000f
 	};
 }
 
-bool DecodeSTC::STC_Init()
+bool DecodeSTC::Init()
 {
-    STC_File* header = (STC_File*)m_data;
+    Header* header = (Header*)m_data;
 
-    memset(&STC_A, 0, sizeof(STC_Channel_Parameters));
-    memset(&STC_B, 0, sizeof(STC_Channel_Parameters));
-    memset(&STC_C, 0, sizeof(STC_Channel_Parameters));
+    memset(&m_chA, 0, sizeof(Channel));
+    memset(&m_chB, 0, sizeof(Channel));
+    memset(&m_chC, 0, sizeof(Channel));
 
-    uint16_t ST_PositionsPointer = (header->ST_PositionsPointer0 | header->ST_PositionsPointer1 << 8);
-    uint16_t ST_OrnamentsPointer = (header->ST_OrnamentsPointer0 | header->ST_OrnamentsPointer1 << 8);
-    uint16_t ST_PatternsPointer = (header->ST_PatternsPointer0 | header->ST_PatternsPointer1 << 8);
+    m_currentPosition = 0;
+    m_transposition = m_data[header->positionsPointer + 2];
+    m_delayCounter = 1;
 
-    STC.CurrentPosition = 0;
-    STC.Transposition = m_data[ST_PositionsPointer + 2];
-    STC.DelayCounter = 1;
+    uint16_t patternsPointer = header->patternsPointer;
+    while (m_data[patternsPointer] != m_data[header->positionsPointer + 1]) patternsPointer += 7;
+    m_chA.addressInPattern = m_data[patternsPointer + 1] | m_data[patternsPointer + 2] << 8;
+    m_chB.addressInPattern = m_data[patternsPointer + 3] | m_data[patternsPointer + 4] << 8;
+    m_chC.addressInPattern = m_data[patternsPointer + 5] | m_data[patternsPointer + 6] << 8;
 
-    unsigned long i = 0;
-    while (m_data[ST_PatternsPointer + 7 * i] != m_data[ST_PositionsPointer + 1]) i++;
-    
-    ST_PatternsPointer += 7 * i;
-    STC_A.Address_In_Pattern = m_data[ST_PatternsPointer + 1] | m_data[ST_PatternsPointer + 2] << 8;
-    STC_B.Address_In_Pattern = m_data[ST_PatternsPointer + 3] | m_data[ST_PatternsPointer + 4] << 8;
-    STC_C.Address_In_Pattern = m_data[ST_PatternsPointer + 5] | m_data[ST_PatternsPointer + 6] << 8;
-
-    for (STC_Channel_Parameters* chan : { &STC_C, &STC_C, &STC_C })
+    for (Channel* chan : { &m_chA, &m_chB, &m_chC })
     {
-        chan->Sample_Tik_Counter = -1;
-        chan->OrnamentPointer = ST_OrnamentsPointer + 1;
+        chan->sampleTikCounter = -1;
+        chan->ornamentPointer = header->ornamentsPointer + 1;
     }
 
     memset(&m_regs, 0, sizeof(m_regs));
@@ -60,25 +54,20 @@ bool DecodeSTC::Step()
     //
 }
 
-void DecodeSTC::STC_PatternInterpreter(STC_Channel_Parameters& chan)
+void DecodeSTC::PatternInterpreter(Channel& chan)
 {
-    STC_File* header = (STC_File*)m_data;
+    Header* header = (Header*)m_data;
 
-    uint16_t ST_PositionsPointer = (header->ST_PositionsPointer0 | header->ST_PositionsPointer1 << 8);
-    uint16_t ST_OrnamentsPointer = (header->ST_OrnamentsPointer0 | header->ST_OrnamentsPointer1 << 8);
-    uint16_t ST_PatternsPointer = (header->ST_PatternsPointer0 | header->ST_PatternsPointer1 << 8);
-
-
-    unsigned short k;
+    uint16_t k;
     while (true)
     {
-        unsigned char val = m_data[chan.Address_In_Pattern];
+        uint8_t val = m_data[chan.addressInPattern];
         if (val <= 0x5f)
         {
-            chan.Note = val;
-            chan.Sample_Tik_Counter = 32;
-            chan.Position_In_Sample = 0;
-            chan.Address_In_Pattern++;
+            chan.note = val;
+            chan.sampleTikCounter = 32;
+            chan.positionInSample = 0;
+            chan.addressInPattern++;
             break;
         }
         else if (val >= 0x60 && val <= 0x6f)
@@ -86,172 +75,154 @@ void DecodeSTC::STC_PatternInterpreter(STC_Channel_Parameters& chan)
             k = 0;
             while (m_data[0x1b + 0x63 * k] != (val - 0x60))
                 k++;
-            chan.SamplePointer = 0x1c + 0x63 * k;
+            chan.samplePointer = 0x1c + 0x63 * k;
         }
         else if (val >= 0x70 && val <= 0x7f)
         {
             k = 0;
-            while (m_data[ST_OrnamentsPointer + 0x21 * k] != (val - 0x70))
-                k++;
-            chan.OrnamentPointer = ST_OrnamentsPointer + 0x21 * k + 1;
-            chan.Envelope_Enabled = false;
+            while (m_data[header->ornamentsPointer + 0x21 * k] != (val - 0x70)) k++;
+            chan.ornamentPointer = header->ornamentsPointer + 0x21 * k + 1;
+
+            chan.envelopeEnabled = false;
         }
         else if (val == 0x80)
         {
-            chan.Sample_Tik_Counter = -1;
-            chan.Address_In_Pattern++;
+            chan.sampleTikCounter = -1;
+            chan.addressInPattern++;
             break;
         }
         else if (val == 0x81)
         {
-            chan.Address_In_Pattern++;
+            chan.addressInPattern++;
             break;
         }
         else if (val == 0x82)
         {
             k = 0;
-            while (m_data[ST_OrnamentsPointer + 0x21 * k] != 0)
-                k++;
-            chan.OrnamentPointer = ST_OrnamentsPointer + 0x21 * k + 1;
-            chan.Envelope_Enabled = false;
+            while (m_data[header->ornamentsPointer + 0x21 * k] != 0) k++;
+            chan.ornamentPointer = header->ornamentsPointer + 0x21 * k + 1;
+
+            chan.envelopeEnabled = false;
         }
         else if (val >= 0x83 && val <= 0x8e)
         {
             m_regs[Env_Shape] = val - 0x80;
-            chan.Address_In_Pattern++;
+            chan.addressInPattern++;
 
-            m_regs[Env_PeriodL] = m_data[chan.Address_In_Pattern];
-            chan.Envelope_Enabled = true;
+            m_regs[Env_PeriodL] = m_data[chan.addressInPattern];
+            chan.envelopeEnabled = true;
 
             k = 0;
-            while (m_data[ST_OrnamentsPointer + 0x21 * k] != 0) k++;
-            chan.OrnamentPointer = ST_OrnamentsPointer + 0x21 * k + 1;
+            while (m_data[header->ornamentsPointer + 0x21 * k] != 0) k++;
+            chan.ornamentPointer = header->ornamentsPointer + 0x21 * k + 1;
         }
         else
         {
-            chan.Number_Of_Notes_To_Skip = val - 0xa1;
+            chan.numberOfNotesToSkip = val - 0xa1;
         }
-        chan.Address_In_Pattern++;
+        chan.addressInPattern++;
     }
-    chan.Note_Skip_Counter = chan.Number_Of_Notes_To_Skip;
+    chan.noteSkipCounter = chan.numberOfNotesToSkip;
 }
 
-void DecodeSTC::STC_GetRegisters(STC_Channel_Parameters& chan, unsigned char& TempMixer)
+void DecodeSTC::GetRegisters(Channel& chan, uint8_t& mixer)
 {
-    STC_File* header = (STC_File*)m_data;
+    Header* header = (Header*)m_data;
 
-    unsigned short i;
-    unsigned char j;
-
-    if (chan.Sample_Tik_Counter >= 0)
+    if (chan.sampleTikCounter >= 0)
     {
-        chan.Sample_Tik_Counter--;
-        chan.Position_In_Sample = (chan.Position_In_Sample + 1) & 0x1f;
-        if (chan.Sample_Tik_Counter == 0)
+        chan.sampleTikCounter--;
+        chan.positionInSample = (chan.positionInSample + 1) & 0x1f;
+        if (chan.sampleTikCounter == 0)
         {
-            if (m_data[chan.SamplePointer + 0x60] != 0)
+            if (m_data[chan.samplePointer + 0x60] != 0)
             {
-                chan.Position_In_Sample = m_data[chan.SamplePointer + 0x60] & 0x1f;
-                chan.Sample_Tik_Counter = m_data[chan.SamplePointer + 0x61] + 1;
+                chan.positionInSample = m_data[chan.samplePointer + 0x60] & 0x1f;
+                chan.sampleTikCounter = m_data[chan.samplePointer + 0x61] + 1;
             }
             else
-                chan.Sample_Tik_Counter = -1;
+                chan.sampleTikCounter = -1;
         }
     }
-    if (chan.Sample_Tik_Counter >= 0)
+    if (chan.sampleTikCounter >= 0)
     {
-        i = ((chan.Position_In_Sample - 1) & 0x1f) * 3 + chan.SamplePointer;
-        if ((m_data[i + 1] & 0x80) != 0)
-            TempMixer = TempMixer | 64;
+        uint16_t samplePointer = ((chan.positionInSample - 1) & 0x1f) * 3 + chan.samplePointer;
+        if ((m_data[samplePointer + 1] & 0x80) != 0)
+            mixer = mixer | 64;
         else
-            m_regs[Noise_Period] = m_data[i + 1] & 0x1f;
+            m_regs[Noise_Period] = m_data[samplePointer + 1] & 0x1f;
 
-        if ((m_data[i + 1] & 0x40) != 0)
-            TempMixer = TempMixer | 8;
-        chan.Amplitude = m_data[i] & 15;
-        j = chan.Note + m_data[chan.OrnamentPointer + ((chan.Position_In_Sample - 1) & 0x1f)] + STC.Transposition;
-        if (j > 95)
-            j = 95;
-        if ((m_data[i + 1] & 0x20) != 0)
-            chan.Ton = (ST_Table[j] + m_data[i + 2] + (((unsigned short)(m_data[i] & 0xf0)) << 4)) & 0xFFF;
+        if ((m_data[samplePointer + 1] & 0x40) != 0)
+            mixer = mixer | 8;
+        chan.amplitude = m_data[samplePointer] & 15;
+
+        uint8_t note = chan.note + m_data[chan.ornamentPointer + ((chan.positionInSample - 1) & 0x1f)] + m_transposition;
+        if (note > 95) note = 95;
+
+        if ((m_data[samplePointer + 1] & 0x20) != 0)
+            chan.ton = (STCNoteTable[note] + m_data[samplePointer + 2] + (((uint16_t)(m_data[samplePointer] & 0xf0)) << 4)) & 0xFFF;
         else
-            chan.Ton = (ST_Table[j] - m_data[i + 2] - (((unsigned short)(m_data[i] & 0xf0)) << 4)) & 0xFFF;
-        if (chan.Envelope_Enabled)
-            chan.Amplitude = chan.Amplitude | 16;
+            chan.ton = (STCNoteTable[note] - m_data[samplePointer + 2] - (((uint16_t)(m_data[samplePointer] & 0xf0)) << 4)) & 0xFFF;
+        if (chan.envelopeEnabled)
+            chan.amplitude = chan.amplitude | 16;
     }
     else
-        chan.Amplitude = 0;
+        chan.amplitude = 0;
 
-    TempMixer = TempMixer >> 1;
+    mixer = mixer >> 1;
 }
 
-bool DecodeSTC::STC_Play()
+bool DecodeSTC::Play()
 {
-    STC_File* header = (STC_File*)m_data;
-
-    uint16_t ST_PositionsPointer = (header->ST_PositionsPointer0 | header->ST_PositionsPointer1 << 8);
-    uint16_t ST_OrnamentsPointer = (header->ST_OrnamentsPointer0 | header->ST_OrnamentsPointer1 << 8);
-    uint16_t ST_PatternsPointer = (header->ST_PatternsPointer0 | header->ST_PatternsPointer1 << 8);
-
     bool isNewLoop = false;
     m_regs[Env_Shape] = 0xFF; // ???
 
-    unsigned char TempMixer;
-    unsigned short i;
-    
-    STC.DelayCounter--;
-    if (STC.DelayCounter == 0)
+    uint8_t mixer = 0;
+    Header* header = (Header*)m_data;
+
+    if (--m_delayCounter == 0)
     {
-        STC.DelayCounter = header->ST_Delay;
-        STC_A.Note_Skip_Counter--;
-        if (STC_A.Note_Skip_Counter < 0)
+        if (--m_chA.noteSkipCounter < 0)
         {
-            if (m_data[STC_A.Address_In_Pattern] == 255)
+            if (m_data[m_chA.addressInPattern] == 255)
             {
-                if (STC.CurrentPosition == m_data[ST_PositionsPointer])
+                if (m_currentPosition == m_data[header->positionsPointer])
                 {
-                    STC.CurrentPosition = 0;
+                    m_currentPosition = 0;
                     isNewLoop = true;
                 }
                 else
-                    STC.CurrentPosition++;
+                    m_currentPosition++;
 
-                STC.Transposition = m_data[ST_PositionsPointer + 2 + STC.CurrentPosition * 2];
+                m_transposition = m_data[header->positionsPointer + 2 + m_currentPosition * 2];
 
-                i = 0;
-                while (m_data[ST_PatternsPointer + 7 * i] != m_data[ST_PositionsPointer + 1 + STC.CurrentPosition * 2]) i++;
-
-                ST_PatternsPointer += 7 * i;
-                STC_A.Address_In_Pattern = m_data[ST_PatternsPointer + 1] | m_data[ST_PatternsPointer + 2] << 8;
-                STC_B.Address_In_Pattern = m_data[ST_PatternsPointer + 3] | m_data[ST_PatternsPointer + 4] << 8;
-                STC_C.Address_In_Pattern = m_data[ST_PatternsPointer + 5] | m_data[ST_PatternsPointer + 6] << 8;
+                uint16_t patternsPointer = header->patternsPointer;
+                while (m_data[patternsPointer] != m_data[header->positionsPointer + 1 + m_currentPosition * 2]) patternsPointer += 7;
+                m_chA.addressInPattern = m_data[patternsPointer + 1] | m_data[patternsPointer + 2] << 8;
+                m_chB.addressInPattern = m_data[patternsPointer + 3] | m_data[patternsPointer + 4] << 8;
+                m_chC.addressInPattern = m_data[patternsPointer + 5] | m_data[patternsPointer + 6] << 8;
             }
-            STC_PatternInterpreter(STC_A);
+            PatternInterpreter(m_chA);
         }
 
-        STC_B.Note_Skip_Counter--;
-        if (STC_B.Note_Skip_Counter < 0)
-            STC_PatternInterpreter(STC_B);
-
-        STC_C.Note_Skip_Counter--;
-        if (STC_C.Note_Skip_Counter < 0)
-            STC_PatternInterpreter(STC_C);
+        if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
+        if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
+        m_delayCounter = header->delay;
     }
 
-    TempMixer = 0;
-    STC_GetRegisters(STC_A, TempMixer);
-    STC_GetRegisters(STC_B, TempMixer);
-    STC_GetRegisters(STC_C, TempMixer);
+    GetRegisters(m_chA, mixer);
+    GetRegisters(m_chB, mixer);
+    GetRegisters(m_chC, mixer);
 
-    m_regs[Mixer_Flags] = TempMixer;
-    m_regs[TonA_PeriodL] = STC_A.Ton & 0xff;
-    m_regs[TonA_PeriodH] = (STC_A.Ton >> 8) & 0xf;
-    m_regs[TonB_PeriodL] = STC_B.Ton & 0xff;
-    m_regs[TonB_PeriodH] = (STC_B.Ton >> 8) & 0xf;
-    m_regs[TonC_PeriodL] = STC_C.Ton & 0xff;
-    m_regs[TonC_PeriodH] = (STC_C.Ton >> 8) & 0xf;
-    m_regs[VolA_EnvFlg] = STC_A.Amplitude;
-    m_regs[VolB_EnvFlg] = STC_B.Amplitude;
-    m_regs[VolC_EnvFlg] = STC_C.Amplitude;
+    m_regs[Mixer_Flags] = mixer;
+    m_regs[TonA_PeriodL] = m_chA.ton & 0xff;
+    m_regs[TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
+    m_regs[TonB_PeriodL] = m_chB.ton & 0xff;
+    m_regs[TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
+    m_regs[TonC_PeriodL] = m_chC.ton & 0xff;
+    m_regs[TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
+    m_regs[VolA_EnvFlg] = m_chA.amplitude;
+    m_regs[VolB_EnvFlg] = m_chB.amplitude;
+    m_regs[VolC_EnvFlg] = m_chC.amplitude;
     return isNewLoop;
 }

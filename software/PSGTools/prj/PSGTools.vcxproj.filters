@@ -90,6 +90,9 @@
     <ClInclude Include="..\src\decoders\DecodePT2.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\decoders\DecodeSTC.h">
+      <Filter>Sources\decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -150,6 +153,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="..\src\decoders\DecodePT2.cpp">
+      <Filter>Sources\decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\DecodeSTC.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
   </ItemGroup>

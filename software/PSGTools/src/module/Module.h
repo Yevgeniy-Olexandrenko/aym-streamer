@@ -1,8 +1,9 @@
 #pragma once
 
 #include <vector>
+#include <filesystem>
+
 #include "Frame.h"
-#include "Filepath.h"
 #include "output/Chip.h"
 
 using FrameId = uint32_t;
@@ -122,7 +123,7 @@ public:
 	Module();
 	std::string property(Property property) const;
 
-	Filepath file;
+	std::filesystem::path file;
 	Info     info;
 	Chip     chip;
 	Frames   frames;

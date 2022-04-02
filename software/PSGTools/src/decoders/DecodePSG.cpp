@@ -3,7 +3,7 @@
 
 bool DecodePSG::Open(Module& module)
 {
-    m_fileStream.open(module.file.dirNameExt(), std::fstream::binary);
+    m_fileStream.open(module.file, std::fstream::binary);
     if (m_fileStream)
     {
         PSGHeader hdr;

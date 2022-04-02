@@ -20,8 +20,8 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs++\\Magazines\\";
-const std::string k_output = "output.txt";
+//const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs++\\Magazines\\";
+//const std::string k_output = "output.txt";
 const int k_comPortIndex = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +49,7 @@ void PrintDelimiter()
     std::cout << color::reset << std::endl;
 }
 
-bool DecodeFileToModule(const std::string& filePath, Module& module)
+bool DecodeFileToModule(const std::filesystem::path& path, Module& module)
 {
     std::shared_ptr<Decoder> decoders[]{
         std::shared_ptr<Decoder>(new DecodePT3()),
@@ -59,7 +59,7 @@ bool DecodeFileToModule(const std::string& filePath, Module& module)
         std::shared_ptr<Decoder>(new DecodePSG()),
     };
 
-    module.file.dirNameExt(filePath);
+    module.file = path;
     for (std::shared_ptr<Decoder> decoder : decoders)
     {
         if (decoder->Open(module))
@@ -165,8 +165,11 @@ bool SetConsoleWindowSize(SHORT x, SHORT y)
     return true;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc != 2) return 1;
+    const std::filesystem::path path(argv[1]);
+
     SetConsoleWindowSize(87, 32);
 
 
@@ -180,27 +183,7 @@ int main()
     GetConsoleMode(hInput, &prev_mode);
     SetConsoleMode(hInput, prev_mode & ~ENABLE_QUICK_EDIT_MODE);
     
-    
-
-
-   /* HWND console = GetConsoleWindow();
-    RECT ConsoleRect;
-    GetWindowRect(console, &ConsoleRect);
-
-    MoveWindow(console, ConsoleRect.left, ConsoleRect.top, 600, 400, TRUE);*/
-
-  //  HANDLE stdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-
-  //  DWORD consoleMode =
-  //      ENABLE_PROCESSED_OUTPUT |
-  ////      ENABLE_WRAP_AT_EOL_OUTPUT |
-  //      ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
-  //  SetConsoleMode(stdOut, consoleMode);
-
-
-
-
+ 
     using namespace terminal;
     SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
     size_t w = terminal_width() - 1;
@@ -217,14 +200,14 @@ int main()
     m_output.reset(new Emulator());
 #endif
     m_player.reset(new Player(*m_output));
-    m_filelist.reset(new Filelist("stc|pt2|pt3|psg|vtx", k_filelist));
+    m_filelist.reset(new Filelist("stc|pt2|pt3|psg|vtx", path));
 
     if (!m_filelist->empty())
     {
         m_filelist->shuffle();
         bool goToPrev = false;
 
-        std::string path;
+        std::filesystem::path path;
         while (true)
         {
             bool isDone = goToPrev ? m_filelist->prev(path) : m_filelist->next(path);
@@ -320,18 +303,6 @@ int main()
         }
     }
     cursor::show(true);
-
-//    indicators::ProgressBar bar{
-//        indicators::option::BarWidth{50},
-//        indicators::option::Start{"["},
-//        indicators::option::Fill{"="},
-//        indicators::option::Lead{"|"},
-//        indicators::option::Remainder{":"},
-//        indicators::option::End{"]"},
-//    //    indicators::option::PostfixText{"Loading dependency 1/4"},
-//        indicators::option::ForegroundColor{indicators::Color::yellow},
-//        indicators::option::FontStyles{std::vector<indicators::FontStyle>{indicators::FontStyle::bold}}
-//    };
 
     return 0;
 }

@@ -118,7 +118,7 @@ bool DecodePT3::Open(Module& module)
 {
     bool isDetected = false;
     std::ifstream fileStream;
-    fileStream.open(module.file.dirNameExt(), std::fstream::binary);
+    fileStream.open(module.file, std::fstream::binary);
 
     if (fileStream)
     {

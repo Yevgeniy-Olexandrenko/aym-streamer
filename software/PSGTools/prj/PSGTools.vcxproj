@@ -30,7 +30,6 @@
     <ClInclude Include="..\src\encoders\Encoder.h" />
     <ClInclude Include="..\src\encoders\EncodeTXT.h" />
     <ClInclude Include="..\src\encoders\EncodeWAV.h" />
-    <ClInclude Include="..\src\module\Filepath.h" />
     <ClInclude Include="..\src\module\Frame.h" />
     <ClInclude Include="..\src\module\Module.h" />
     <ClInclude Include="..\src\module\Player.h" />
@@ -53,7 +52,6 @@
     <ClCompile Include="..\src\encoders\EncodePSG.cpp" />
     <ClCompile Include="..\src\encoders\EncodeTXT.cpp" />
     <ClCompile Include="..\src\encoders\EncodeWAV.cpp" />
-    <ClCompile Include="..\src\module\Filepath.cpp" />
     <ClCompile Include="..\src\module\Frame.cpp" />
     <ClCompile Include="..\src\module\Module.cpp" />
     <ClCompile Include="..\src\module\Player.cpp" />
@@ -137,6 +135,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,6 +152,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -169,6 +169,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -185,6 +186,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -1,7 +1,7 @@
 #include <iomanip>
 #include <sstream>
-#include <algorithm>
-#include <functional>
+//#include <algorithm>
+//#include <functional>
 #include "Interface.h"
 
 namespace Interface
@@ -119,8 +119,8 @@ namespace Interface
 
     void trim(std::string& str)
     {
-        str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
+        str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](int c) { return !std::isspace(c); }));
+        str.erase(std::find_if(str.rbegin(), str.rend(), [](int c) { return !std::isspace(c); }).base(), str.end());
     };
 
     void printNibble(uint8_t nibble)
@@ -151,7 +151,7 @@ namespace Interface
         std::string numberStr = std::to_string(index + 1);
         std::string totalStr = std::to_string(total);
 
-        size_t strLen = numberStr.length() + 1 + totalStr.length() + module.file.nameExt().length();
+        size_t strLen = numberStr.length() + 1 + totalStr.length() + module.file.filename().string().length();
         size_t delLen = std::max(int(terminal_width() - 2 - strLen - 7), 2);
 
         std::cout << ' ' << color::bright_cyan;
@@ -159,9 +159,9 @@ namespace Interface
         std::cout << ' ' << color::bright_yellow << numberStr;
         std::cout << color::bright_cyan << '/';
         std::cout << color::bright_yellow << totalStr;
-        std::cout << ' ' << color::bright_white << module.file.name();
+        std::cout << ' ' << color::bright_white << module.file.stem().string();
         std::cout << color::bright_magenta << '.';
-        std::cout << color::bright_grey << module.file.ext();
+        std::cout << color::bright_grey << module.file.extension().string().substr(1);
         std::cout << ' ' << color::bright_cyan << "]--";
         std::cout << color::reset << std::endl;
     }
@@ -570,7 +570,7 @@ namespace Interface
             int index = y * w;
             int count = std::min(int(s.size()), w - x);
 
-            for (size_t i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 buffer[index + x].Char.UnicodeChar = s[i];
                 buffer[index + x].Attributes = col;
@@ -587,7 +587,7 @@ namespace Interface
             int index = y * w;
             int count = std::min(int(s.size()), w - x);
 
-            for (size_t i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 buffer[index + x].Char.AsciiChar = s[i];
                 buffer[index + x].Attributes = col;

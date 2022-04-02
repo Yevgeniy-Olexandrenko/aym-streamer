@@ -69,9 +69,6 @@
     <ClInclude Include="..\src\module\Filelist.h">
       <Filter>Sources\module</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\module\Filepath.h">
-      <Filter>Sources\module</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\output\Emulator\Emulator.h">
       <Filter>Sources\output\Emulator</Filter>
     </ClInclude>
@@ -129,9 +126,6 @@
       <Filter>Sources\decoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\module\Filelist.cpp">
-      <Filter>Sources\module</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\module\Filepath.cpp">
       <Filter>Sources\module</Filter>
     </ClCompile>
     <ClCompile Include="..\src\output\Emulator\Emulator.cpp">

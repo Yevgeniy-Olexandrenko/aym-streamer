@@ -1,38 +1,18 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <locale>
-#include <codecvt>
-#include <algorithm>
 #include <random>
-#include <dirent/dirent.h>
-#include <cwalk/cwalk.h>
 #include "Filelist.h"
 
-////////////////////////////////////////////////////////////////////////////////
-
-std::wstring s2ws(const std::string& str)
+std::filesystem::path ConvertToAbsolute(const std::filesystem::path& base, const std::filesystem::path& path)
 {
-    using convert_typeX = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-    return converterX.from_bytes(str);
-}
-
-std::string ws2s(const std::wstring& wstr)
-{
-    using convert_typeX = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-    return converterX.to_bytes(wstr);
-}
-
-std::wstring cwd()
-{
-    TCHAR buffer[MAX_PATH] = { 0 };
-    GetModuleFileName(NULL, buffer, MAX_PATH);
-    std::wstring::size_type pos = std::wstring(buffer).find_last_of(L"\\/");
-    return std::wstring(buffer).substr(0, pos);
+    if (base.is_absolute() && path.is_relative())
+    {
+        std::filesystem::path absolute = base;
+        absolute.replace_filename(path);
+        return absolute.lexically_normal();
+    }
+    return path;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,31 +25,39 @@ Filelist::Filelist(const std::string& exts)
     
     while (getline(ss, ext, '|')) 
     {
-        m_exts.push_back(ext);
+        m_exts.push_back("." + ext);
     }
-
-    cwk_path_set_style(CWK_STYLE_WINDOWS);
 }
 
-Filelist::Filelist(const std::string& exts, const std::string& path)
+Filelist::Filelist(const std::string& exts, const std::filesystem::path& path)
     : Filelist(exts)
 {
-    Filepath filepath(path);
-    if (filepath.ext() == "m3u")
+    for (auto path : glob::glob(path.string()))
     {
-        ParsePlaylistM3U(filepath);
-    }
-    else if (filepath.ext() == "ayl")
-    {
-        ParsePlaylistAYL(filepath);
-    }
-    else if (filepath.hasDir() && !filepath.hasNameExt())
-    {
-        ParseFolder(filepath);
-    }
-    else
-    {
-        InsertItem(path);
+        if (path.is_relative())
+        {
+            path = std::filesystem::absolute(path);
+        }
+
+        if (path.has_filename())
+        {
+            if (path.extension() == ".m3u")
+            {
+                ParsePlaylistM3U(path);
+            }
+            else if (path.extension() == ".ayl")
+            {
+                ParsePlaylistAYL(path);
+            }
+            else
+            {
+                InsertPath(path);
+            }
+        }
+        else
+        {
+            ParseFolder(path);
+        }
     }
 }
 
@@ -90,26 +78,26 @@ int32_t Filelist::index() const
     return m_index;
 }
 
-bool Filelist::prev(std::string& path) const
+bool Filelist::prev(std::filesystem::path& path) const
 {
     if (!empty())
     {
         if (m_index > 0)
         {
-            path = m_files[--m_index].dirNameExt();
+            path = m_files[--m_index];
             return true;
         }
     }
     return false;
 }
 
-bool Filelist::next(std::string& path) const
+bool Filelist::next(std::filesystem::path& path) const
 {
     if (!empty())
     {
         if (m_index < int(m_files.size() - 1))
         {
-            path = m_files[++m_index].dirNameExt();
+            path = m_files[++m_index];
             return true;
         }
     }
@@ -124,60 +112,42 @@ void Filelist::shuffle()
     m_index = -1;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-bool Filelist::IsSupportedExt(const Filepath& path)
-{
-    return (std::find(m_exts.begin(), m_exts.end(), path.ext()) != m_exts.end());
-}
-
-void Filelist::ParsePlaylistM3U(const Filepath& path)
+void Filelist::ParsePlaylistM3U(const std::filesystem::path& path)
 {
     std::ifstream fileStream;
-    fileStream.open(path.dirNameExt());
+    fileStream.open(path);
 
     if (fileStream)
     {
-        std::string item;
-        Filepath itemPath;
-
-        while (getline(fileStream, item))
+        std::string entity;
+        while (getline(fileStream, entity))
         {
-            itemPath.dirNameExt(item);
-            InsertItem(itemPath);
+            auto entityPath = ConvertToAbsolute(path, entity);
+            InsertPath(entityPath);
         }
         fileStream.close();
     }
 }
 
-void Filelist::ParsePlaylistAYL(const Filepath& path)
+void Filelist::ParsePlaylistAYL(const std::filesystem::path& path)
 {
     std::ifstream fileStream;
-    fileStream.open(path.dirNameExt());
+    fileStream.open(path);
 
     if (fileStream)
     {
-        std::string item;
-        Filepath itemPath;
-
+        std::string entity;
         bool skipLine = false;
-        while (getline(fileStream, item))
+        while (getline(fileStream, entity))
         {
-            if (!item.empty())
+            if (!entity.empty())
             {
-                if (item == "<") skipLine = true;
-                else if (item == ">") skipLine = false;
+                if (entity == "<") skipLine = true;
+                else if (entity == ">") skipLine = false;
                 else if (!skipLine)
                 {
-                    if (cwk_path_is_relative(item.c_str()))
-                    {
-                        char buffer[FILENAME_MAX];
-                        cwk_path_get_absolute(path.dir().c_str(), item.c_str(), buffer, sizeof(buffer));
-                        item = std::string(buffer);
-                    }
-
-                    itemPath.dirNameExt(item);
-                    InsertItem(itemPath);
+                    auto entityPath = ConvertToAbsolute(path, entity);
+                    InsertPath(entityPath);
                 }
             }
         }
@@ -185,36 +155,30 @@ void Filelist::ParsePlaylistAYL(const Filepath& path)
     }
 }
 
-void Filelist::ParseFolder(const Filepath& path)
+void Filelist::ParseFolder(const std::filesystem::path& path)
 {
-    DIR* dir;
-    dirent* ent;
-    Filepath itemPath;
-
-    if (dir = opendir(path.dir().c_str()))
+    for (const auto& file : std::filesystem::directory_iterator(path))
     {
-        while (ent = readdir(dir))
+        if (std::filesystem::is_regular_file(file))
         {
-            if (ent->d_type == DT_REG)
-            {
-                itemPath.dirNameExt(path.dir() + std::string(ent->d_name));
-                InsertItem(itemPath);
-            }
+            InsertPath(file);
         }
-        closedir(dir);
     }
 }
 
-void Filelist::InsertItem(const Filepath& path)
+void Filelist::InsertPath(const std::filesystem::path& path)
 {
-    if (path.hasNameExt() && IsSupportedExt(path))
+    if (path.has_filename())
     {
-        m_files.push_back(path);
-
-        if (!m_files.back().hasDir())
+        if (std::find(m_exts.begin(), m_exts.end(), path.extension()) != m_exts.end())
         {
-            // TODO: Unicode support
-            m_files.back().dir(ws2s(cwd()));
+            if (std::filesystem::exists(path))
+            {
+                if (m_hashes.insert(std::filesystem::hash_value(path)).second)
+                {
+                    m_files.push_back(path);
+                }
+            }
         }
     }
 }

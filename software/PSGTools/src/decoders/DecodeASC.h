@@ -6,29 +6,51 @@
 class DecodeASC : public Decoder
 {
 #pragma pack(push, 1)
-    struct ASC1_File
+    struct Header
     {
-        unsigned char ASC1_Delay, ASC1_LoopingPosition;
-        unsigned short ASC1_PatternsPointers;
-        unsigned short ASC1_SamplesPointers;
-        unsigned short ASC1_OrnamentsPointers;
-        unsigned char ASC1_Number_Of_Positions;
-        unsigned char ASC1_Positions[65536 - 8];
+        uint8_t ASC1_Delay, ASC1_LoopingPosition;
+        uint16_t ASC1_PatternsPointers;
+        uint16_t ASC1_SamplesPointers;
+        uint16_t ASC1_OrnamentsPointers;
+        uint8_t ASC1_Number_Of_Positions;
+        uint8_t ASC1_Positions[65536 - 8];
     };
 #pragma pack(pop)
 
-    struct ASC_Channel_Parameters
+    struct Channel
     {
-        unsigned short Initial_Point_In_Sample, Point_In_Sample, Loop_Point_In_Sample, Initial_Point_In_Ornament, Point_In_Ornament, Loop_Point_In_Ornament, Address_In_Pattern, Ton, Ton_Deviation;
-        unsigned char Note, Addition_To_Note, Number_Of_Notes_To_Skip, Initial_Noise, Current_Noise, Volume, Ton_Sliding_Counter, Amplitude, Amplitude_Delay, Amplitude_Delay_Counter;
-        short Current_Ton_Sliding, Substruction_for_Ton_Sliding;
-        signed char Note_Skip_Counter, Addition_To_Amplitude;
-        bool Envelope_Enabled, Sound_Enabled, Sample_Finished, Break_Sample_Loop, Break_Ornament_Loop;
-    };
+        uint16_t Initial_Point_In_Sample;
+        uint16_t Point_In_Sample;
+        uint16_t Loop_Point_In_Sample;
+        uint16_t Initial_Point_In_Ornament;
+        uint16_t Point_In_Ornament;
+        uint16_t Loop_Point_In_Ornament;
+        uint16_t Address_In_Pattern;
+        uint16_t Ton;
+        uint16_t Ton_Deviation;
 
-    struct ASC_Parameters
-    {
-        unsigned char Delay, DelayCounter, CurrentPosition;
+        uint8_t Note;
+        uint8_t Addition_To_Note;
+        uint8_t Number_Of_Notes_To_Skip;
+        uint8_t Initial_Noise;
+        uint8_t Current_Noise;
+        uint8_t Volume;
+        uint8_t Ton_Sliding_Counter;
+        uint8_t Amplitude;
+        uint8_t Amplitude_Delay;
+        uint8_t Amplitude_Delay_Counter;
+
+        int16_t Current_Ton_Sliding;
+        int16_t Substruction_for_Ton_Sliding;
+
+        int8_t Note_Skip_Counter;
+        int8_t Addition_To_Amplitude;
+
+        bool Envelope_Enabled;
+        bool Sound_Enabled;
+        bool Sample_Finished;
+        bool Break_Sample_Loop;
+        bool Break_Ornament_Loop;
     };
 
 public:
@@ -38,17 +60,20 @@ public:
 
 private:
     bool Init();
-    void PatternInterpreter(ASC_Channel_Parameters& chan);
-    void GetRegisters(ASC_Channel_Parameters& chan, uint8_t& mixer);
+    void PatternInterpreter(Channel& chan);
+    void GetRegisters(Channel& chan, uint8_t& mixer);
     bool Play();
 
 private:
     uint8_t* m_data;
 
-    ASC_Parameters ASC;
-    ASC_Channel_Parameters ASC_A;
-    ASC_Channel_Parameters ASC_B;
-    ASC_Channel_Parameters ASC_C;
+    uint8_t Delay;
+    uint8_t DelayCounter;
+    uint8_t CurrentPosition;
+
+    Channel ASC_A;
+    Channel ASC_B;
+    Channel ASC_C;
 
     uint8_t m_regs[16];
 };

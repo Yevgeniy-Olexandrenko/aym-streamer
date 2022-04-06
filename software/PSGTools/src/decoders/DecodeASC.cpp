@@ -4,7 +4,7 @@
 
 namespace
 {
-	const unsigned short ASM_Table[] =
+	const uint16_t ASCNoteTable[] =
 	{ 
 		0x0edc, 0x0e07, 0x0d3e, 0x0c80, 0x0bcc, 0x0b22, 0x0a82, 0x09ec,
 		0x095c, 0x08d6, 0x0858, 0x07e0, 0x076e, 0x0704, 0x069f, 0x0640,
@@ -22,30 +22,30 @@ namespace
 
 bool DecodeASC::Init()
 {
-    ASC1_File* header = (ASC1_File*)m_data;
+    Header* header = (Header*)m_data;
     
-    memset(&ASC_A, 0, sizeof(ASC_Channel_Parameters));
-    memset(&ASC_B, 0, sizeof(ASC_Channel_Parameters));
-    memset(&ASC_C, 0, sizeof(ASC_Channel_Parameters));
+    memset(&ASC_A, 0, sizeof(Channel));
+    memset(&ASC_B, 0, sizeof(Channel));
+    memset(&ASC_C, 0, sizeof(Channel));
 
-    ASC.CurrentPosition = 0;
-    ASC.DelayCounter = 1;
-    ASC.Delay = header->ASC1_Delay;
+    CurrentPosition = 0;
+    DelayCounter = 1;
+    Delay = header->ASC1_Delay;
     
-    unsigned short ascPatPt = header->ASC1_PatternsPointers;
-    ASC_A.Address_In_Pattern = (*(unsigned short*)&m_data[ascPatPt + 6 * m_data[9] + 0]) + ascPatPt;
-    ASC_B.Address_In_Pattern = (*(unsigned short*)&m_data[ascPatPt + 6 * m_data[9] + 2]) + ascPatPt;
-    ASC_C.Address_In_Pattern = (*(unsigned short*)&m_data[ascPatPt + 6 * m_data[9] + 4]) + ascPatPt;
+    uint16_t ascPatPt = header->ASC1_PatternsPointers;
+    ASC_A.Address_In_Pattern = (*(uint16_t*)&m_data[ascPatPt + 6 * m_data[9] + 0]) + ascPatPt;
+    ASC_B.Address_In_Pattern = (*(uint16_t*)&m_data[ascPatPt + 6 * m_data[9] + 2]) + ascPatPt;
+    ASC_C.Address_In_Pattern = (*(uint16_t*)&m_data[ascPatPt + 6 * m_data[9] + 4]) + ascPatPt;
 
     memset(&m_regs, 0, sizeof(m_regs));
     return true;
 }
 
-void DecodeASC::PatternInterpreter(ASC_Channel_Parameters& chan)
+void DecodeASC::PatternInterpreter(Channel& chan)
 {
-    ASC1_File* header = (ASC1_File*)m_data;
+    Header* header = (Header*)m_data;
 
-    short delta_ton;
+    int16_t delta_ton;
     bool Initialization_Of_Ornament_Disabled = false;
     bool Initialization_Of_Sample_Disabled = false;
 
@@ -54,14 +54,15 @@ void DecodeASC::PatternInterpreter(ASC_Channel_Parameters& chan)
 
     while (true)
     {
-        unsigned char val = m_data[chan.Address_In_Pattern];
+        uint8_t val = m_data[chan.Address_In_Pattern];
         if (val <= 0x55)
         {
             chan.Note = val;
             chan.Address_In_Pattern++;
             chan.Current_Noise = chan.Initial_Noise;
-            if ((signed char)(chan.Ton_Sliding_Counter) <= 0)
+            if ((int8_t)(chan.Ton_Sliding_Counter) <= 0)
                 chan.Current_Ton_Sliding = 0;
+
             if (!Initialization_Of_Sample_Disabled)
             {
                 chan.Addition_To_Amplitude = 0;
@@ -106,11 +107,11 @@ void DecodeASC::PatternInterpreter(ASC_Channel_Parameters& chan)
         }
         else if ((val >= 0xa0) && (val <= 0xbf))
         {
-            chan.Initial_Point_In_Sample = (*(unsigned short *)&m_data[(m_data[chan.Address_In_Pattern] - 0xa0) * 2 + header->ASC1_SamplesPointers]) + header->ASC1_SamplesPointers;
+            chan.Initial_Point_In_Sample = (*(uint16_t *)&m_data[(val - 0xa0) * 2 + header->ASC1_SamplesPointers]) + header->ASC1_SamplesPointers;
         }
         else if ((val >= 0xc0) && (val <= 0xdf))
         {
-            chan.Initial_Point_In_Ornament = (*(unsigned short *)&m_data[(m_data[chan.Address_In_Pattern] - 0xc0) * 2 + header->ASC1_OrnamentsPointers]) + header->ASC1_OrnamentsPointers;
+            chan.Initial_Point_In_Ornament = (*(uint16_t *)&m_data[(val - 0xc0) * 2 + header->ASC1_OrnamentsPointers]) + header->ASC1_OrnamentsPointers;
         }
         else if (val == 0xe0)
         {
@@ -143,18 +144,18 @@ void DecodeASC::PatternInterpreter(ASC_Channel_Parameters& chan)
         else if (val == 0xf4)
         {
             chan.Address_In_Pattern++;
-            ASC.Delay = m_data[chan.Address_In_Pattern];
+            Delay = m_data[chan.Address_In_Pattern];
         }
         else if (val == 0xf5)
         {
             chan.Address_In_Pattern++;
-            chan.Substruction_for_Ton_Sliding = -(signed char)(m_data[chan.Address_In_Pattern]) * 16;
+            chan.Substruction_for_Ton_Sliding = -(int8_t)(m_data[chan.Address_In_Pattern]) * 16;
             chan.Ton_Sliding_Counter = 255;
         }
         else if (val == 0xf6)
         {
             chan.Address_In_Pattern++;
-            chan.Substruction_for_Ton_Sliding = (signed char)(m_data[chan.Address_In_Pattern]) * 16;
+            chan.Substruction_for_Ton_Sliding = (int8_t)(m_data[chan.Address_In_Pattern]) * 16;
             chan.Ton_Sliding_Counter = 255;
         }
         else if (val == 0xf7)
@@ -162,13 +163,13 @@ void DecodeASC::PatternInterpreter(ASC_Channel_Parameters& chan)
             chan.Address_In_Pattern++;
             Initialization_Of_Sample_Disabled = true;
             if (m_data[chan.Address_In_Pattern + 1] < 0x56)
-                delta_ton = ASM_Table[chan.Note] + (chan.Current_Ton_Sliding / 16) - ASM_Table[m_data[chan.Address_In_Pattern + 1]];
+                delta_ton = ASCNoteTable[chan.Note] + (chan.Current_Ton_Sliding / 16) - ASCNoteTable[m_data[chan.Address_In_Pattern + 1]];
             else
                 delta_ton = chan.Current_Ton_Sliding / 16;
             delta_ton = delta_ton << 4;
-            chan.Substruction_for_Ton_Sliding = -delta_ton / (signed char)(m_data[chan.Address_In_Pattern]);
-            chan.Current_Ton_Sliding = delta_ton - delta_ton % (signed char)(m_data[chan.Address_In_Pattern]);
-            chan.Ton_Sliding_Counter = (signed char)(m_data[chan.Address_In_Pattern]);
+            chan.Substruction_for_Ton_Sliding = -delta_ton / (int8_t)(m_data[chan.Address_In_Pattern]);
+            chan.Current_Ton_Sliding = delta_ton - delta_ton % (int8_t)(m_data[chan.Address_In_Pattern]);
+            chan.Ton_Sliding_Counter = (int8_t)(m_data[chan.Address_In_Pattern]);
         }
         else if (val == 0xf8)
         {
@@ -179,14 +180,14 @@ void DecodeASC::PatternInterpreter(ASC_Channel_Parameters& chan)
             chan.Address_In_Pattern++;
             if (m_data[chan.Address_In_Pattern + 1] < 0x56)
             {
-                delta_ton = ASM_Table[chan.Note] - ASM_Table[m_data[chan.Address_In_Pattern + 1]];
+                delta_ton = ASCNoteTable[chan.Note] - ASCNoteTable[m_data[chan.Address_In_Pattern + 1]];
             }
             else
                 delta_ton = chan.Current_Ton_Sliding / 16;
             delta_ton = delta_ton << 4;
-            chan.Substruction_for_Ton_Sliding = -delta_ton / (signed char)(m_data[chan.Address_In_Pattern]);
-            chan.Current_Ton_Sliding = delta_ton - delta_ton % (signed char)(m_data[chan.Address_In_Pattern]);
-            chan.Ton_Sliding_Counter = (signed char)(m_data[chan.Address_In_Pattern]);
+            chan.Substruction_for_Ton_Sliding = -delta_ton / (int8_t)(m_data[chan.Address_In_Pattern]);
+            chan.Current_Ton_Sliding = delta_ton - delta_ton % (int8_t)(m_data[chan.Address_In_Pattern]);
+            chan.Ton_Sliding_Counter = (int8_t)(m_data[chan.Address_In_Pattern]);
 
         }
         else if (val == 0xfa)
@@ -220,9 +221,8 @@ void DecodeASC::PatternInterpreter(ASC_Channel_Parameters& chan)
     chan.Note_Skip_Counter = chan.Number_Of_Notes_To_Skip;
 }
 
-void DecodeASC::GetRegisters(ASC_Channel_Parameters& chan, unsigned char& TempMixer)
+void DecodeASC::GetRegisters(Channel& chan, uint8_t& mixer)
 {
-    signed char j;
     bool Sample_Says_OK_for_Envelope;
     if (chan.Sample_Finished || !chan.Sound_Enabled)
         chan.Amplitude = 0;
@@ -254,8 +254,8 @@ void DecodeASC::GetRegisters(ASC_Channel_Parameters& chan, unsigned char& TempMi
             chan.Loop_Point_In_Sample = chan.Point_In_Sample;
         if ((m_data[chan.Point_In_Sample] & 96) == 32)
             chan.Sample_Finished = true;
-        chan.Ton_Deviation += (signed char)(m_data[chan.Point_In_Sample + 1]);
-        TempMixer |= (m_data[chan.Point_In_Sample + 2] & 9) << 3;
+        chan.Ton_Deviation += (int8_t)(m_data[chan.Point_In_Sample + 1]);
+        mixer |= (m_data[chan.Point_In_Sample + 2] & 9) << 3;
         if ((m_data[chan.Point_In_Sample + 2] & 6) == 2)
             Sample_Says_OK_for_Envelope = true;
         else
@@ -271,19 +271,19 @@ void DecodeASC::GetRegisters(ASC_Channel_Parameters& chan, unsigned char& TempMi
                 chan.Addition_To_Amplitude++;
         }
         chan.Amplitude = chan.Addition_To_Amplitude + (m_data[chan.Point_In_Sample + 2] >> 4);
-        if ((signed char)(chan.Amplitude) < 0)
+        if ((int8_t)(chan.Amplitude) < 0)
             chan.Amplitude = 0;
         else if (chan.Amplitude > 15)
             chan.Amplitude = 15;
         chan.Amplitude = (chan.Amplitude * (chan.Volume + 1)) >> 4;
-        if (Sample_Says_OK_for_Envelope && ((TempMixer & 64) != 0))
+        if (Sample_Says_OK_for_Envelope && ((mixer & 64) != 0))
         {
             uint8_t data = m_regs[Env_PeriodL];
-            data += ((signed char)(m_data[chan.Point_In_Sample] << 3) / 8);
+            data += ((int8_t)(m_data[chan.Point_In_Sample] << 3) / 8);
             m_regs[Env_PeriodL] = data;
         }
         else
-            chan.Current_Noise += (signed char)(m_data[chan.Point_In_Sample] << 3) / 8;
+            chan.Current_Noise += (int8_t)(m_data[chan.Point_In_Sample] << 3) / 8;
         chan.Point_In_Sample += 3;
         if ((m_data[chan.Point_In_Sample - 3] & 64) != 0)
         {
@@ -295,54 +295,52 @@ void DecodeASC::GetRegisters(ASC_Channel_Parameters& chan, unsigned char& TempMi
         if ((m_data[chan.Point_In_Ornament] & 128) != 0)
             chan.Loop_Point_In_Ornament = chan.Point_In_Ornament;
         chan.Addition_To_Note += m_data[chan.Point_In_Ornament + 1];
-        chan.Current_Noise += (-(signed char)(m_data[chan.Point_In_Ornament] & 0x10)) | m_data[chan.Point_In_Ornament];
+        chan.Current_Noise += (-(int8_t)(m_data[chan.Point_In_Ornament] & 0x10)) | m_data[chan.Point_In_Ornament];
         chan.Point_In_Ornament += 2;
         if ((m_data[chan.Point_In_Ornament - 2] & 64) != 0)
             chan.Point_In_Ornament = chan.Loop_Point_In_Ornament;
-        if ((TempMixer & 64) == 0)
+        if ((mixer & 64) == 0)
         {
-            uint8_t data = ((unsigned char)(chan.Current_Ton_Sliding >> 8) + chan.Current_Noise) & 0x1f;
+            uint8_t data = ((uint8_t)(chan.Current_Ton_Sliding >> 8) + chan.Current_Noise) & 0x1f;
             m_regs[Noise_Period] = data;
         }
 
-        j = chan.Note + chan.Addition_To_Note;
-        if (j < 0)
-            j = 0;
-        else if (j > 0x55)
-            j = 0x55;
-        chan.Ton = (ASM_Table[j] + chan.Ton_Deviation + (chan.Current_Ton_Sliding / 16)) & 0xfff;
+        int8_t note = chan.Note + chan.Addition_To_Note;
+        if (note < 0) note = 0;
+        else if (note > 0x55) note = 0x55;
+
+        chan.Ton = (ASCNoteTable[note] + chan.Ton_Deviation + (chan.Current_Ton_Sliding / 16)) & 0xfff;
         if (chan.Ton_Sliding_Counter != 0)
         {
-            if ((signed char)(chan.Ton_Sliding_Counter) > 0)
+            if ((int8_t)(chan.Ton_Sliding_Counter) > 0)
                 chan.Ton_Sliding_Counter--;
             chan.Current_Ton_Sliding += chan.Substruction_for_Ton_Sliding;
         }
         if (chan.Envelope_Enabled && Sample_Says_OK_for_Envelope)
             chan.Amplitude |= 0x10;
     }
-    TempMixer = TempMixer >> 1;
+    mixer = mixer >> 1;
 }
 
 bool DecodeASC::Play()
 {
-    ASC1_File* header = (ASC1_File*)m_data;
-    unsigned char TempMixer;
+    Header* header = (Header*)m_data;
 
-    if (--ASC.DelayCounter <= 0)
+    if (--DelayCounter <= 0)
     {
         if (--ASC_A.Note_Skip_Counter < 0)
         {
             if (m_data[ASC_A.Address_In_Pattern] == 255)
             {
-                if (++ASC.CurrentPosition >= header->ASC1_Number_Of_Positions)
+                if (++CurrentPosition >= header->ASC1_Number_Of_Positions)
                 {
-                    ASC.CurrentPosition = header->ASC1_LoopingPosition;
+                    CurrentPosition = header->ASC1_LoopingPosition;
                 }
 
-                unsigned short ascPatPt = header->ASC1_PatternsPointers;
-                ASC_A.Address_In_Pattern = (*(unsigned short *)&m_data[ascPatPt + 6 * m_data[ASC.CurrentPosition + 9] + 0]) + ascPatPt;
-                ASC_B.Address_In_Pattern = (*(unsigned short *)&m_data[ascPatPt + 6 * m_data[ASC.CurrentPosition + 9] + 2]) + ascPatPt;
-                ASC_C.Address_In_Pattern = (*(unsigned short *)&m_data[ascPatPt + 6 * m_data[ASC.CurrentPosition + 9] + 4]) + ascPatPt;
+                uint16_t ascPatPt = header->ASC1_PatternsPointers;
+                ASC_A.Address_In_Pattern = (*(uint16_t *)&m_data[ascPatPt + 6 * m_data[CurrentPosition + 9] + 0]) + ascPatPt;
+                ASC_B.Address_In_Pattern = (*(uint16_t *)&m_data[ascPatPt + 6 * m_data[CurrentPosition + 9] + 2]) + ascPatPt;
+                ASC_C.Address_In_Pattern = (*(uint16_t *)&m_data[ascPatPt + 6 * m_data[CurrentPosition + 9] + 4]) + ascPatPt;
 
                 ASC_A.Initial_Noise = 0;
                 ASC_B.Initial_Noise = 0;
@@ -358,15 +356,15 @@ bool DecodeASC::Play()
         {
             PatternInterpreter(ASC_C);
         }
-        ASC.DelayCounter = ASC.Delay;
+        DelayCounter = Delay;
     }
 
-    TempMixer = 0;
-    GetRegisters(ASC_A, TempMixer);
-    GetRegisters(ASC_B, TempMixer);
-    GetRegisters(ASC_C, TempMixer);
+    uint8_t mixer = 0;
+    GetRegisters(ASC_A, mixer);
+    GetRegisters(ASC_B, mixer);
+    GetRegisters(ASC_C, mixer);
 
-    m_regs[Mixer_Flags] = TempMixer;
+    m_regs[Mixer_Flags] = mixer;
     m_regs[TonA_PeriodL] = ASC_A.Ton & 0xff;
     m_regs[TonA_PeriodH] = (ASC_A.Ton >> 8) & 0xf;
     m_regs[TonB_PeriodL] = ASC_B.Ton & 0xff;

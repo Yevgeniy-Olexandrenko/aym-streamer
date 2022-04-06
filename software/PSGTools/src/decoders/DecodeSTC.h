@@ -43,7 +43,7 @@ public:
 private:
     bool Init();
     void PatternInterpreter(Channel& chan);
-    void GetRegisters(Channel& chan, uint8_t& TempMixer);
+    void GetRegisters(Channel& chan, uint8_t& mixer);
     bool Play();
 
 private:

@@ -8,49 +8,53 @@ class DecodeASC : public Decoder
 #pragma pack(push, 1)
     struct Header
     {
-        uint8_t ASC1_Delay, ASC1_LoopingPosition;
-        uint16_t ASC1_PatternsPointers;
-        uint16_t ASC1_SamplesPointers;
-        uint16_t ASC1_OrnamentsPointers;
-        uint8_t ASC1_Number_Of_Positions;
-        uint8_t ASC1_Positions[65536 - 8];
+        uint8_t  delay;
+        uint8_t  loopingPosition;
+        uint16_t patternsPointers;
+        uint16_t samplesPointers;
+        uint16_t ornamentsPointers;
+        uint8_t  numberOfPositions;
+        uint8_t  positions[256];
     };
 #pragma pack(pop)
 
     struct Channel
     {
-        uint16_t Initial_Point_In_Sample;
-        uint16_t Point_In_Sample;
-        uint16_t Loop_Point_In_Sample;
-        uint16_t Initial_Point_In_Ornament;
-        uint16_t Point_In_Ornament;
-        uint16_t Loop_Point_In_Ornament;
-        uint16_t Address_In_Pattern;
-        uint16_t Ton;
-        uint16_t Ton_Deviation;
+        uint16_t initialPointInSample;
+        uint16_t pointInSample;
+        uint16_t loopPointInSample;
 
-        uint8_t Note;
-        uint8_t Addition_To_Note;
-        uint8_t Number_Of_Notes_To_Skip;
-        uint8_t Initial_Noise;
-        uint8_t Current_Noise;
-        uint8_t Volume;
-        uint8_t Ton_Sliding_Counter;
-        uint8_t Amplitude;
-        uint8_t Amplitude_Delay;
-        uint8_t Amplitude_Delay_Counter;
+        uint16_t initialPointInOrnament;
+        uint16_t pointInOrnament;
+        uint16_t loopPointInOrnament;
 
-        int16_t Current_Ton_Sliding;
-        int16_t Substruction_for_Ton_Sliding;
+        uint16_t addressInPattern;
+        uint16_t ton;
+        uint16_t tonDeviation;
 
-        int8_t Note_Skip_Counter;
-        int8_t Addition_To_Amplitude;
+        uint8_t note;
+        uint8_t additionToNote;
+        uint8_t numberOfNotesToSkip;
+        uint8_t initialNoise;
+        uint8_t currentNoise;
+        uint8_t volume;
+        uint8_t tonSlidingCounter;
 
-        bool Envelope_Enabled;
-        bool Sound_Enabled;
-        bool Sample_Finished;
-        bool Break_Sample_Loop;
-        bool Break_Ornament_Loop;
+        uint8_t amplitude;
+        uint8_t amplitudeDelay;
+        uint8_t amplitudeDelayCounter;
+
+        int16_t currentTonSliding;
+        int16_t substructionForTonSliding;
+
+        int8_t noteSkipCounter;
+        int8_t additionToAmplitude;
+
+        bool envelopeEnabled;
+        bool soundEnabled;
+        bool sampleFinished;
+        bool breakSampleLoop;
+        bool breakOrnamentLoop;
     };
 
 public:
@@ -67,13 +71,13 @@ private:
 private:
     uint8_t* m_data;
 
-    uint8_t Delay;
-    uint8_t DelayCounter;
-    uint8_t CurrentPosition;
+    uint8_t m_delay;
+    uint8_t m_delayCounter;
+    uint8_t m_currentPosition;
 
-    Channel ASC_A;
-    Channel ASC_B;
-    Channel ASC_C;
+    Channel m_chA;
+    Channel m_chB;
+    Channel m_chC;
 
     uint8_t m_regs[16];
 };

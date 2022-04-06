@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\decoders\DecodeASC.h" />
     <ClInclude Include="..\src\decoders\DecodePSG.h" />
     <ClInclude Include="..\src\decoders\DecodePT2.h" />
     <ClInclude Include="..\src\decoders\DecodePT3.h" />
@@ -43,6 +44,7 @@
     <ClInclude Include="..\src\output\Streamer\Streamer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\decoders\DecodeASC.cpp" />
     <ClCompile Include="..\src\decoders\DecodePSG.cpp" />
     <ClCompile Include="..\src\decoders\DecodePT2.cpp" />
     <ClCompile Include="..\src\decoders\DecodePT3.cpp" />

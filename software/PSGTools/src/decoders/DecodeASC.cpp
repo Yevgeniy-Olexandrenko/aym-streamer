@@ -2,6 +2,105 @@
 #include "DecodeASC.h"
 #include "module/Module.h"
 
+bool DecodeASC::Open(Module& module)
+{
+    bool isDetected = false;
+    std::ifstream fileStream;
+    fileStream.open(module.file, std::fstream::binary);
+
+    if (fileStream)
+    {
+        fileStream.seekg(0, fileStream.end);
+        uint32_t fileSize = (uint32_t)fileStream.tellg();
+
+        if (fileSize >= 9)
+        {
+            Header header;
+            fileStream.seekg(0, fileStream.beg);
+            fileStream.read((char*)(&header), std::min(sizeof(header), fileSize));
+
+//            auto delta = (header.ornamentsPointers - header.numberOfPositions);
+
+            bool isHeaderOK = true;
+//            isHeaderOK &= (delta >= 9 && delta <= 72);
+            isHeaderOK &= (header.patternsPointers < fileSize);
+            isHeaderOK &= (header.samplesPointers < fileSize);
+            isHeaderOK &= (header.ornamentsPointers < fileSize);
+
+            if (isHeaderOK)
+            {
+                m_data = new uint8_t[fileSize];
+                fileStream.seekg(0, fileStream.beg);
+                fileStream.read((char*)m_data, fileSize);
+
+                if (fileStream && Init())
+                {
+                    auto titleId = (uint8_t*)(&header.positions[header.numberOfPositions]);
+                    if (!memcmp(titleId, "ASM COMPILATION OF ", 19))
+                    {
+                        auto GetTextProperty = [&](uint8_t* ptr, uint8_t size)
+                        {
+                            char buf[256];
+                            memcpy(buf, ptr, size); buf[size] = 0;
+
+                            int i = size;
+                            while (i && buf[i - 1] == ' ') buf[--i] = 0;
+                            return std::string(buf);
+                        };
+
+                        auto artistId = (titleId + 19 + 20);
+                        if (!memcmp(artistId, " BY ", 4))
+                        {
+                            module.info.title(GetTextProperty(titleId + 19, 20));
+                            module.info.artist(GetTextProperty(artistId + 4, 20));
+                        }
+                        else
+                        {
+                            module.info.title(GetTextProperty(titleId + 19, 20 + 4 + 20));
+                        }                        
+                    }
+
+                    module.info.type("ASC Sound Master 1.x module");
+                    module.playback.frameRate(50);
+
+                    m_loop = m_tick = 0;
+                    isDetected = true;
+                }
+            }
+        }
+    }
+    return isDetected;
+}
+
+bool DecodeASC::Decode(Frame& frame)
+{
+    // stop decoding on new loop
+    if (Step()) return false;
+
+    for (uint8_t r = 0; r < 16; ++r)
+    {
+        uint8_t data = m_regs[r];
+        if (r == Env_Shape)
+        {
+            if (data != 0xFF)
+                frame[r].first.override(data);
+        }
+        else
+        {
+            frame[r].first.update(data);
+        }
+    }
+    return true;
+}
+
+void DecodeASC::Close(Module& module)
+{
+    if (m_loop > 0)
+        module.loop.frameId(m_loop);
+
+    delete[] m_data;
+}
+
 namespace
 {
 	const uint16_t ASCNoteTable[] =
@@ -39,6 +138,28 @@ bool DecodeASC::Init()
 
     memset(&m_regs, 0, sizeof(m_regs));
     return true;
+}
+
+bool DecodeASC::Step()
+{
+    bool isNewLoop = Play();
+    Header* header = (Header*)m_data;
+
+    if (m_loop == 0)
+    {
+        uint8_t currPosition = m_currentPosition;
+        uint8_t loopPosition = header->loopingPosition;
+        uint8_t lastPosition = header->numberOfPositions - 1;
+
+        // detect true loop frame (ommit loop to first or last position)
+        if (loopPosition > 0 && loopPosition < lastPosition && currPosition == loopPosition)
+        {
+            m_loop = m_tick;
+        }
+    }
+
+    m_tick++;
+    return isNewLoop;
 }
 
 void DecodeASC::PatternInterpreter(Channel& chan)
@@ -333,6 +454,10 @@ void DecodeASC::GetRegisters(Channel& chan, uint8_t& mixer)
 
 bool DecodeASC::Play()
 {
+    bool isNewLoop = false;
+    m_regs[Env_Shape] = 0xFF;
+
+    uint8_t mixer = 0;
     Header* header = (Header*)m_data;
 
     if (--m_delayCounter <= 0)
@@ -344,6 +469,7 @@ bool DecodeASC::Play()
                 if (++m_currentPosition >= header->numberOfPositions)
                 {
                     m_currentPosition = header->loopingPosition;
+                    isNewLoop = true;
                 }
 
                 uint16_t ascPatPt = header->patternsPointers;
@@ -368,7 +494,6 @@ bool DecodeASC::Play()
         m_delayCounter = m_delay;
     }
 
-    uint8_t mixer = 0;
     GetRegisters(m_chA, mixer);
     GetRegisters(m_chB, mixer);
     GetRegisters(m_chC, mixer);
@@ -383,4 +508,5 @@ bool DecodeASC::Play()
     m_regs[VolA_EnvFlg] = m_chA.amplitude;
     m_regs[VolB_EnvFlg] = m_chB.amplitude;
     m_regs[VolC_EnvFlg] = m_chC.amplitude;
+    return isNewLoop;
 }

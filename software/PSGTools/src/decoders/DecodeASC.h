@@ -64,12 +64,15 @@ public:
 
 private:
     bool Init();
+    bool Step();
     void PatternInterpreter(Channel& chan);
     void GetRegisters(Channel& chan, uint8_t& mixer);
     bool Play();
 
 private:
     uint8_t* m_data;
+    uint32_t m_loop;
+    uint32_t m_tick;
 
     uint8_t m_delay;
     uint8_t m_delayCounter;

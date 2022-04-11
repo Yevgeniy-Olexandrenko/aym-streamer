@@ -13,6 +13,7 @@
 #include "decoders/DecodePT3.h"
 #include "decoders/DecodePT2.h"
 #include "decoders/DecodeSTC.h"
+#include "decoders/DecodeASC.h"
 #include "decoders/DecodeVTX.h"
 #include "decoders/DecodePSG.h"
 
@@ -54,6 +55,7 @@ bool DecodeFileToModule(const std::filesystem::path& path, Module& module)
     std::shared_ptr<Decoder> decoders[]{
         std::shared_ptr<Decoder>(new DecodePT3()),
         std::shared_ptr<Decoder>(new DecodePT2()),
+        std::shared_ptr<Decoder>(new DecodeASC()),
         std::shared_ptr<Decoder>(new DecodeSTC()),
         std::shared_ptr<Decoder>(new DecodeVTX()),
         std::shared_ptr<Decoder>(new DecodePSG()),
@@ -200,7 +202,7 @@ int main(int argc, char* argv[])
     m_output.reset(new Emulator());
 #endif
     m_player.reset(new Player(*m_output));
-    m_filelist.reset(new Filelist("stc|pt2|pt3|psg|vtx", path));
+    m_filelist.reset(new Filelist("asc|stc|pt2|pt3|psg|vtx", path));
 
     if (!m_filelist->empty())
     {

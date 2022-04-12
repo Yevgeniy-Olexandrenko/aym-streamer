@@ -31,7 +31,7 @@ bool DecodeSTC::Open(Module& module)
                 fileStream.seekg(0, fileStream.beg);
                 fileStream.read((char*)m_data, fileSize);
 
-                if (fileStream && Init())
+                if (fileStream)
                 {
                     auto identifier = (uint8_t*)(&header.identifier);
                     if (memcmp(identifier, "SONG BY ST COMPILE", 18) &&
@@ -51,15 +51,13 @@ bool DecodeSTC::Open(Module& module)
                                     length++;
                             }
                         }
-                        #pragma warning(push)
-                        #pragma warning(disable:6385)
-                        std::string comment(header.identifier, length);
-                        module.info.comment(comment);
-                        #pragma warning(pop)
+                        module.info.comment(ReadString(header.identifier, length));
                     }
 
-                    module.info.type("Sound Tracker 1.x module");
+                    module.info.type("Sound Tracker module");
                     module.playback.frameRate(50);
+
+                    Init();
                     isDetected = true;
                 }
             }
@@ -68,34 +66,6 @@ bool DecodeSTC::Open(Module& module)
     }
     return isDetected;
 }
-
-bool DecodeSTC::Decode(Frame& frame)
-{
-    bool isNewLoop = Play();
-    if (isNewLoop) return false;
-
-    for (uint8_t r = 0; r < 16; ++r)
-    {
-        uint8_t data = m_regs[r];
-        if (r == Env_Shape)
-        {
-            if (data != 0xFF)
-                frame[r].first.override(data);
-        }
-        else
-        {
-            frame[r].first.update(data);
-        }
-    }
-    return true;
-}
-
-void DecodeSTC::Close(Module& module)
-{
-    delete[] m_data;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 
 namespace
 {
@@ -116,7 +86,7 @@ namespace
     };
 }
 
-bool DecodeSTC::Init()
+void DecodeSTC::Init()
 {
     Header* header = (Header*)m_data;
 
@@ -141,7 +111,59 @@ bool DecodeSTC::Init()
     }
 
     memset(&m_regs, 0, sizeof(m_regs));
-    return true;
+}
+
+bool DecodeSTC::Play()
+{
+    bool isNewLoop = false;
+    Header* header = (Header*)m_data;
+    uint8_t mixer  = 0;
+
+    if (--m_delayCounter == 0)
+    {
+        if (--m_chA.noteSkipCounter < 0)
+        {
+            if (m_data[m_chA.addressInPattern] == 255)
+            {
+                if (m_currentPosition == m_data[header->positionsPointer])
+                {
+                    m_currentPosition = 0;
+                    isNewLoop = true;
+                }
+                else
+                    m_currentPosition++;
+
+                m_transposition = m_data[header->positionsPointer + 2 + m_currentPosition * 2];
+
+                uint16_t patternsPointer = header->patternsPointer;
+                while (m_data[patternsPointer] != m_data[header->positionsPointer + 1 + m_currentPosition * 2]) patternsPointer += 7;
+                m_chA.addressInPattern = m_data[patternsPointer + 1] | m_data[patternsPointer + 2] << 8;
+                m_chB.addressInPattern = m_data[patternsPointer + 3] | m_data[patternsPointer + 4] << 8;
+                m_chC.addressInPattern = m_data[patternsPointer + 5] | m_data[patternsPointer + 6] << 8;
+            }
+            PatternInterpreter(m_chA);
+        }
+
+        if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
+        if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
+        m_delayCounter = header->delay;
+    }
+
+    GetRegisters(m_chA, mixer);
+    GetRegisters(m_chB, mixer);
+    GetRegisters(m_chC, mixer);
+
+    m_regs[Mixer_Flags] = mixer;
+    m_regs[TonA_PeriodL] = m_chA.ton & 0xff;
+    m_regs[TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
+    m_regs[TonB_PeriodL] = m_chB.ton & 0xff;
+    m_regs[TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
+    m_regs[TonC_PeriodL] = m_chC.ton & 0xff;
+    m_regs[TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
+    m_regs[VolA_EnvFlg] = m_chA.amplitude;
+    m_regs[VolB_EnvFlg] = m_chB.amplitude;
+    m_regs[VolC_EnvFlg] = m_chC.amplitude;
+    return isNewLoop;
 }
 
 void DecodeSTC::PatternInterpreter(Channel& chan)
@@ -260,59 +282,4 @@ void DecodeSTC::GetRegisters(Channel& chan, uint8_t& mixer)
         chan.amplitude = 0;
 
     mixer = mixer >> 1;
-}
-
-bool DecodeSTC::Play()
-{
-    bool isNewLoop = false;
-    m_regs[Env_Shape] = 0xFF; // ???
-
-    uint8_t mixer = 0;
-    Header* header = (Header*)m_data;
-
-    if (--m_delayCounter == 0)
-    {
-        if (--m_chA.noteSkipCounter < 0)
-        {
-            if (m_data[m_chA.addressInPattern] == 255)
-            {
-                if (m_currentPosition == m_data[header->positionsPointer])
-                {
-                    m_currentPosition = 0;
-                    isNewLoop = true;
-                }
-                else
-                    m_currentPosition++;
-
-                m_transposition = m_data[header->positionsPointer + 2 + m_currentPosition * 2];
-
-                uint16_t patternsPointer = header->patternsPointer;
-                while (m_data[patternsPointer] != m_data[header->positionsPointer + 1 + m_currentPosition * 2]) patternsPointer += 7;
-                m_chA.addressInPattern = m_data[patternsPointer + 1] | m_data[patternsPointer + 2] << 8;
-                m_chB.addressInPattern = m_data[patternsPointer + 3] | m_data[patternsPointer + 4] << 8;
-                m_chC.addressInPattern = m_data[patternsPointer + 5] | m_data[patternsPointer + 6] << 8;
-            }
-            PatternInterpreter(m_chA);
-        }
-
-        if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
-        if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
-        m_delayCounter = header->delay;
-    }
-
-    GetRegisters(m_chA, mixer);
-    GetRegisters(m_chB, mixer);
-    GetRegisters(m_chC, mixer);
-
-    m_regs[Mixer_Flags] = mixer;
-    m_regs[TonA_PeriodL] = m_chA.ton & 0xff;
-    m_regs[TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
-    m_regs[TonB_PeriodL] = m_chB.ton & 0xff;
-    m_regs[TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
-    m_regs[TonC_PeriodL] = m_chC.ton & 0xff;
-    m_regs[TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
-    m_regs[VolA_EnvFlg] = m_chA.amplitude;
-    m_regs[VolB_EnvFlg] = m_chB.amplitude;
-    m_regs[VolC_EnvFlg] = m_chC.amplitude;
-    return isNewLoop;
 }

@@ -19,10 +19,7 @@ bool DecodeASC::Open(Module& module)
             fileStream.seekg(0, fileStream.beg);
             fileStream.read((char*)(&header), std::min(sizeof(header), fileSize));
 
-//            auto delta = (header.ornamentsPointers - header.numberOfPositions);
-
             bool isHeaderOK = true;
-//            isHeaderOK &= (delta >= 9 && delta <= 72);
             isHeaderOK &= (header.patternsPointers < fileSize);
             isHeaderOK &= (header.samplesPointers < fileSize);
             isHeaderOK &= (header.ornamentsPointers < fileSize);
@@ -33,36 +30,27 @@ bool DecodeASC::Open(Module& module)
                 fileStream.seekg(0, fileStream.beg);
                 fileStream.read((char*)m_data, fileSize);
 
-                if (fileStream && Init())
+                if (fileStream)
                 {
                     auto titleId = (uint8_t*)(&header.positions[header.numberOfPositions]);
                     if (!memcmp(titleId, "ASM COMPILATION OF ", 19))
                     {
-                        auto GetTextProperty = [&](uint8_t* ptr, uint8_t size)
-                        {
-                            char buf[256];
-                            memcpy(buf, ptr, size); buf[size] = 0;
-
-                            int i = size;
-                            while (i && buf[i - 1] == ' ') buf[--i] = 0;
-                            return std::string(buf);
-                        };
-
                         auto artistId = (titleId + 19 + 20);
                         if (!memcmp(artistId, " BY ", 4))
                         {
-                            module.info.title(GetTextProperty(titleId + 19, 20));
-                            module.info.artist(GetTextProperty(artistId + 4, 20));
+                            module.info.title(ReadString(titleId + 19, 20));
+                            module.info.artist(ReadString(artistId + 4, 20));
                         }
                         else
                         {
-                            module.info.title(GetTextProperty(titleId + 19, 20 + 4 + 20));
+                            module.info.title(ReadString(titleId + 19, 20 + 4 + 20));
                         }                        
                     }
 
-                    module.info.type("ASC Sound Master 1.x module");
+                    module.info.type("ASC Sound Master module");
                     module.playback.frameRate(50);
 
+                    Init();
                     m_loop = m_tick = 0;
                     isDetected = true;
                 }
@@ -70,35 +58,6 @@ bool DecodeASC::Open(Module& module)
         }
     }
     return isDetected;
-}
-
-bool DecodeASC::Decode(Frame& frame)
-{
-    // stop decoding on new loop
-    if (Step()) return false;
-
-    for (uint8_t r = 0; r < 16; ++r)
-    {
-        uint8_t data = m_regs[r];
-        if (r == Env_Shape)
-        {
-            if (data != 0xFF)
-                frame[r].first.override(data);
-        }
-        else
-        {
-            frame[r].first.update(data);
-        }
-    }
-    return true;
-}
-
-void DecodeASC::Close(Module& module)
-{
-    if (m_loop > 0)
-        module.loop.frameId(m_loop);
-
-    delete[] m_data;
 }
 
 namespace
@@ -119,7 +78,7 @@ namespace
 	};
 }
 
-bool DecodeASC::Init()
+void DecodeASC::Init()
 {
     Header* header = (Header*)m_data;
     
@@ -137,28 +96,65 @@ bool DecodeASC::Init()
     m_chC.addressInPattern = (*(uint16_t*)&m_data[ascPatPt + 6 * header->positions[0] + 4]) + ascPatPt;
 
     memset(&m_regs, 0, sizeof(m_regs));
-    return true;
 }
 
-bool DecodeASC::Step()
+void DecodeASC::Loop(uint8_t& currPosition, uint8_t& lastPosition, uint8_t& loopPosition)
 {
-    bool isNewLoop = Play();
     Header* header = (Header*)m_data;
+    currPosition = m_currentPosition;
+    loopPosition = header->loopingPosition;
+    lastPosition = header->numberOfPositions - 1;
+}
 
-    if (m_loop == 0)
+bool DecodeASC::Play()
+{
+    bool isNewLoop = false;
+    Header* header = (Header*)m_data;
+    uint8_t mixer  = 0;
+
+    if (--m_delayCounter <= 0)
     {
-        uint8_t currPosition = m_currentPosition;
-        uint8_t loopPosition = header->loopingPosition;
-        uint8_t lastPosition = header->numberOfPositions - 1;
-
-        // detect true loop frame (ommit loop to first or last position)
-        if (loopPosition > 0 && loopPosition < lastPosition && currPosition == loopPosition)
+        if (--m_chA.noteSkipCounter < 0)
         {
-            m_loop = m_tick;
+            if (m_data[m_chA.addressInPattern] == 255)
+            {
+                if (++m_currentPosition >= header->numberOfPositions)
+                {
+                    m_currentPosition = header->loopingPosition;
+                    isNewLoop = true;
+                }
+
+                uint16_t ascPatPt = header->patternsPointers;
+                m_chA.addressInPattern = (*(uint16_t*)&m_data[ascPatPt + 6 * header->positions[m_currentPosition] + 0]) + ascPatPt;
+                m_chB.addressInPattern = (*(uint16_t*)&m_data[ascPatPt + 6 * header->positions[m_currentPosition] + 2]) + ascPatPt;
+                m_chC.addressInPattern = (*(uint16_t*)&m_data[ascPatPt + 6 * header->positions[m_currentPosition] + 4]) + ascPatPt;
+
+                m_chA.initialNoise = 0;
+                m_chB.initialNoise = 0;
+                m_chC.initialNoise = 0;
+            }
+            PatternInterpreter(m_chA);
         }
+
+        if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
+        if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
+        m_delayCounter = m_delay;
     }
 
-    m_tick++;
+    GetRegisters(m_chA, mixer);
+    GetRegisters(m_chB, mixer);
+    GetRegisters(m_chC, mixer);
+
+    m_regs[Mixer_Flags] = mixer;
+    m_regs[TonA_PeriodL] = m_chA.ton & 0xff;
+    m_regs[TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
+    m_regs[TonB_PeriodL] = m_chB.ton & 0xff;
+    m_regs[TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
+    m_regs[TonC_PeriodL] = m_chC.ton & 0xff;
+    m_regs[TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
+    m_regs[VolA_EnvFlg] = m_chA.amplitude;
+    m_regs[VolB_EnvFlg] = m_chB.amplitude;
+    m_regs[VolC_EnvFlg] = m_chC.amplitude;
     return isNewLoop;
 }
 
@@ -450,63 +446,4 @@ void DecodeASC::GetRegisters(Channel& chan, uint8_t& mixer)
             chan.amplitude |= 0x10;
     }
     mixer = mixer >> 1;
-}
-
-bool DecodeASC::Play()
-{
-    bool isNewLoop = false;
-    m_regs[Env_Shape] = 0xFF;
-
-    uint8_t mixer = 0;
-    Header* header = (Header*)m_data;
-
-    if (--m_delayCounter <= 0)
-    {
-        if (--m_chA.noteSkipCounter < 0)
-        {
-            if (m_data[m_chA.addressInPattern] == 255)
-            {
-                if (++m_currentPosition >= header->numberOfPositions)
-                {
-                    m_currentPosition = header->loopingPosition;
-                    isNewLoop = true;
-                }
-
-                uint16_t ascPatPt = header->patternsPointers;
-                m_chA.addressInPattern = (*(uint16_t *)&m_data[ascPatPt + 6 * header->positions[m_currentPosition] + 0]) + ascPatPt;
-                m_chB.addressInPattern = (*(uint16_t *)&m_data[ascPatPt + 6 * header->positions[m_currentPosition] + 2]) + ascPatPt;
-                m_chC.addressInPattern = (*(uint16_t *)&m_data[ascPatPt + 6 * header->positions[m_currentPosition] + 4]) + ascPatPt;
-
-                m_chA.initialNoise = 0;
-                m_chB.initialNoise = 0;
-                m_chC.initialNoise = 0;
-            }
-            PatternInterpreter(m_chA);
-        }
-        if (--m_chB.noteSkipCounter < 0)
-        {
-            PatternInterpreter(m_chB);
-        }
-        if (--m_chC.noteSkipCounter < 0)
-        {
-            PatternInterpreter(m_chC);
-        }
-        m_delayCounter = m_delay;
-    }
-
-    GetRegisters(m_chA, mixer);
-    GetRegisters(m_chB, mixer);
-    GetRegisters(m_chC, mixer);
-
-    m_regs[Mixer_Flags] = mixer;
-    m_regs[TonA_PeriodL] = m_chA.ton & 0xff;
-    m_regs[TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
-    m_regs[TonB_PeriodL] = m_chB.ton & 0xff;
-    m_regs[TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
-    m_regs[TonC_PeriodL] = m_chC.ton & 0xff;
-    m_regs[TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
-    m_regs[VolA_EnvFlg] = m_chA.amplitude;
-    m_regs[VolB_EnvFlg] = m_chB.amplitude;
-    m_regs[VolC_EnvFlg] = m_chC.amplitude;
-    return isNewLoop;
 }

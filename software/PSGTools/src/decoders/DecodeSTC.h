@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "Decoder.h"
 
-class DecodeSTC : public Decoder
+class DecodeSTC : public ModuleDecoder
 {
     #pragma pack(push, 1)
     struct Header
@@ -12,7 +12,7 @@ class DecodeSTC : public Decoder
         uint16_t positionsPointer;
         uint16_t ornamentsPointer;
         uint16_t patternsPointer;
-        char     identifier[18];
+        uint8_t  identifier[18];
         uint16_t size;
     };
     #pragma pack(pop)
@@ -37,18 +37,16 @@ class DecodeSTC : public Decoder
 
 public:
     bool Open(Module& module) override;
-    bool Decode(Frame& frame) override;
-    void Close(Module& module) override;
+
+protected:
+    void Init() override;
+    bool Play() override;
 
 private:
-    bool Init();
     void PatternInterpreter(Channel& chan);
     void GetRegisters(Channel& chan, uint8_t& mixer);
-    bool Play();
 
 private:
-    uint8_t* m_data;
-
     uint8_t m_delayCounter;
     uint8_t m_transposition;
     uint8_t m_currentPosition;
@@ -56,6 +54,4 @@ private:
     Channel m_chA;
     Channel m_chB;
     Channel m_chC;
-
-    uint8_t m_regs[16];
 };

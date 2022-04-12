@@ -48,6 +48,7 @@
     <ClCompile Include="..\src\decoders\DecodePSG.cpp" />
     <ClCompile Include="..\src\decoders\DecodePT2.cpp" />
     <ClCompile Include="..\src\decoders\DecodePT3.cpp" />
+    <ClCompile Include="..\src\decoders\Decoder.cpp" />
     <ClCompile Include="..\src\decoders\DecodeSTC.cpp" />
     <ClCompile Include="..\src\decoders\DecodeVTX.cpp" />
     <ClCompile Include="..\src\Interface.cpp" />

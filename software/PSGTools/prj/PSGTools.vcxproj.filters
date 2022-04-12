@@ -158,5 +158,8 @@
     <ClCompile Include="..\src\decoders\DecodeASC.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\decoders\Decoder.cpp">
+      <Filter>Sources\decoders</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

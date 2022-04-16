@@ -1,6 +1,11 @@
 #include <sstream>
 #include "Chip.h"
 
+namespace
+{
+	const int frequencies[] = { 0, 1000000, 1750000, 1773400, 2000000 };
+}
+
 Chip::Chip()
 	: m_count(Count::SingleChip)
 	, m_model(Model::Unknown)
@@ -88,14 +93,17 @@ void Chip::frequency(Frequency freq)
 
 void Chip::freqValue(uint32_t freqValue)
 {
-	switch (freqValue)
+	auto dist = [&](int i) 
+	{ 
+		return std::abs(int(freqValue) - frequencies[i]);
+	};
+
+	size_t f = 0;
+	for (size_t i = 1; i < 5; ++i)
 	{
-	case 1000000: frequency(Frequency::F1000000); break;
-	case 1750000: frequency(Frequency::F1750000); break;
-	case 1773400: frequency(Frequency::F1773400); break;
-	case 2000000: frequency(Frequency::F2000000); break;
-	default: frequency(Frequency::Unknown); break;
+		if (dist(i) < dist(f)) f = i;
 	}
+	frequency(Frequency(f));
 }
 
 Chip::Frequency Chip::frequency() const
@@ -105,14 +113,8 @@ Chip::Frequency Chip::frequency() const
 
 uint32_t Chip::freqValue() const
 {
-	switch (frequency())
-	{
-	case Frequency::F1000000: return 1000000;
-	case Frequency::F1750000: return 1750000;
-	case Frequency::F1773400: return 1773400;
-	case Frequency::F2000000: return 2000000;
-	}
-	return 0; // should not happen!
+	size_t f = size_t(frequency());
+	return frequencies[f];
 }
 
 bool Chip::frequencyKnown() const

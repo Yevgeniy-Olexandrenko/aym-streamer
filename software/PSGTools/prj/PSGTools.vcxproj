@@ -25,6 +25,7 @@
     <ClInclude Include="..\src\decoders\DecodePT3.h" />
     <ClInclude Include="..\src\decoders\Decoder.h" />
     <ClInclude Include="..\src\decoders\DecodeSTC.h" />
+    <ClInclude Include="..\src\decoders\DecodeVGM.h" />
     <ClInclude Include="..\src\decoders\DecodeVTX.h" />
     <ClInclude Include="..\src\Interface.h" />
     <ClInclude Include="..\src\encoders\EncodePSG.h" />
@@ -50,6 +51,7 @@
     <ClCompile Include="..\src\decoders\DecodePT3.cpp" />
     <ClCompile Include="..\src\decoders\Decoder.cpp" />
     <ClCompile Include="..\src\decoders\DecodeSTC.cpp" />
+    <ClCompile Include="..\src\decoders\DecodeVGM.cpp" />
     <ClCompile Include="..\src\decoders\DecodeVTX.cpp" />
     <ClCompile Include="..\src\Interface.cpp" />
     <ClCompile Include="..\src\encoders\EncodePSG.cpp" />
@@ -137,7 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons\zlib;$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -154,7 +156,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons\zlib;$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -171,7 +173,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons\zlib;$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -188,7 +190,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\commons\zlib;$(ProjectDir)..\src\commons;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>

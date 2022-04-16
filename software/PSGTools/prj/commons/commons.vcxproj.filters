@@ -13,6 +13,12 @@
     <Filter Include="Sources\glob">
       <UniqueIdentifier>{104648e6-16af-46d2-914f-ee4d4581bdb4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\gzip">
+      <UniqueIdentifier>{4671dc15-11ae-4701-99ea-20cfa606c770}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\zlib">
+      <UniqueIdentifier>{b8c5ab34-c6ee-40c3-a2c5-e9c6caab799c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\commons\ayumi\ayumi.cpp">
@@ -24,6 +30,45 @@
     <ClCompile Include="..\..\src\commons\glob\glob.cpp">
       <Filter>Sources\glob</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\commons\gzip\gzstream.cpp">
+      <Filter>Sources\gzip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\adler32.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\compress.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\crc32.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\deflate.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\gzio.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\infback.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\inffast.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\inflate.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\inftrees.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\trees.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\uncompr.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\commons\zlib\zutil.c">
+      <Filter>Sources\zlib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\commons\ayumi\ayumi.h">
@@ -34,6 +79,42 @@
     </ClInclude>
     <ClInclude Include="..\..\src\commons\glob\glob.h">
       <Filter>Sources\glob</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\gzip\gzstream.h">
+      <Filter>Sources\gzip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\crc32.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\deflate.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\inffast.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\inffixed.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\inflate.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\inftrees.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\trees.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\zconf.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\zconf.in.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\zlib.h">
+      <Filter>Sources\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\commons\zlib\zutil.h">
+      <Filter>Sources\zlib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

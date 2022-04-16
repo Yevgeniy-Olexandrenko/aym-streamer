@@ -3,21 +3,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\downloads\MUSIC\Tr_Songs++\Authors\*.pt2"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\downloads\Altered_Beast_(ZX_Spectrum_128)\01 Rise from Your Grave.vgm"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\downloads\MUSIC\Tr_Songs++\Authors\*.pt2"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\downloads\Altered_Beast_(ZX_Spectrum_128)\01 Rise from Your Grave.vgm"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\downloads\MUSIC\Tr_Songs++\Authors\*.pt2"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\downloads\Altered_Beast_(ZX_Spectrum_128)\01 Rise from Your Grave.vgm"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\downloads\MUSIC\Tr_Songs++\Authors\*.pt2"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\downloads\Altered_Beast_(ZX_Spectrum_128)\01 Rise from Your Grave.vgm"</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

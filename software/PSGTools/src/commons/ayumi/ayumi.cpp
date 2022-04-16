@@ -2,7 +2,7 @@
 
 #include <string.h>
 #include <math.h>
-#include "ayumi.h"
+#include <ayumi.h>
 
 static const double AY_dac_table[] = {
   0.0, 0.0,

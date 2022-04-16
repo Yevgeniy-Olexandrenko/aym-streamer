@@ -43,10 +43,7 @@ bool ModuleDecoder::Decode(Frame& frame)
 
 void ModuleDecoder::Close(Module& module)
 {
-    if (m_loop > 0)
-    {
-        module.loop.frameId(m_loop);
-    }
+    if (m_loop) module.loop.frameId(m_loop);
     delete[] m_data;
 }
 

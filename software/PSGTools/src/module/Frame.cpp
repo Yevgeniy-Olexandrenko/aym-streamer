@@ -33,6 +33,16 @@ uint8_t Frame::data(uint8_t chip, uint8_t index) const
 	return (chip ? m_registers[index].second.data() : m_registers[index].first.data());
 }
 
+bool Frame::IsChanged() const
+{
+	for (const RegisterPair& reg : m_registers)
+	{
+		if (reg.first.changed()) return true;
+		if (reg.second.changed()) return true;
+	}
+	return false;
+}
+
 void Frame::SetUnchanged()
 {
 	for (RegisterPair& reg : m_registers)

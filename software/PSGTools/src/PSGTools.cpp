@@ -16,13 +16,13 @@
 #include "decoders/DecodeASC.h"
 #include "decoders/DecodeVTX.h"
 #include "decoders/DecodePSG.h"
+#include "decoders/DecodeVGM.h"
 
 #include "output/Streamer/Streamer.h"
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-//const std::string k_filelist = "D:\\downloads\\MUSIC\\Tr_Songs++\\Magazines\\";
-//const std::string k_output = "output.txt";
+const std::string k_supportedFileTypes = "vgm|asc|stc|pt2|pt3|psg|vtx";
 const int k_comPortIndex = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,6 +53,7 @@ void PrintDelimiter()
 bool DecodeFileToModule(const std::filesystem::path& path, Module& module)
 {
     std::shared_ptr<Decoder> decoders[]{
+        std::shared_ptr<Decoder>(new DecodeVGM()),
         std::shared_ptr<Decoder>(new DecodePT3()),
         std::shared_ptr<Decoder>(new DecodePT2()),
         std::shared_ptr<Decoder>(new DecodeASC()),
@@ -202,7 +203,7 @@ int main(int argc, char* argv[])
     m_output.reset(new Emulator());
 #endif
     m_player.reset(new Player(*m_output));
-    m_filelist.reset(new Filelist("asc|stc|pt2|pt3|psg|vtx", path));
+    m_filelist.reset(new Filelist(k_supportedFileTypes, path));
 
     if (!m_filelist->empty())
     {

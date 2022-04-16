@@ -41,6 +41,7 @@ public:
 	bool changed(uint8_t chip, uint8_t index) const;
 	uint8_t data(uint8_t chip, uint8_t index) const;
 
+	bool IsChanged() const;
 	void SetUnchanged();
 	void FixValues();
 

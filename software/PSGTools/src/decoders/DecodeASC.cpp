@@ -1,4 +1,3 @@
-#include <fstream>
 #include "DecodeASC.h"
 #include "module/Module.h"
 

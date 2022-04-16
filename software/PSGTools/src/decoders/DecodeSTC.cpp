@@ -1,4 +1,3 @@
-#include <fstream>
 #include "DecodeSTC.h"
 #include "module/Module.h"
 

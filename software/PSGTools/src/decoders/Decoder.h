@@ -1,7 +1,8 @@
 #pragma once
 
-#include <stdint.h>
 #include <string>
+#include <fstream>
+#include <stdint.h>
 
 class Module;
 class Frame;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdint.h>
 #include "Decoder.h"
 
 class DecodeSTC : public ModuleDecoder

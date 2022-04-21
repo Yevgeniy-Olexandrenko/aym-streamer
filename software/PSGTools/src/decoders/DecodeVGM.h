@@ -87,8 +87,7 @@ public:
 	void Close(Module& module) override;
 
 private:
-    int  DecodeBlock(Frame& frame);
-    bool NextCommand(Frame& frame, int& waitSamples);
+    int  DetectFrameRate();
 
 private:
     uint8_t* m_rawData;

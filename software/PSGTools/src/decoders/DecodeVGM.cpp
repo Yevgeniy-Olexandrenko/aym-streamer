@@ -1,63 +1,53 @@
 #include "DecodeVGM.h"
 #include "module/Module.h"
+#include "zlib.h"
 
 bool DecodeVGM::Open(Module& module)
 {
-    bool isDetected = false;
-    std::ifstream fileStream;
-    fileStream.open(module.file, std::fstream::binary);
-
-    if (fileStream)
+    Header header;
+    if (ReadFile(module.file.string().c_str(), (uint8_t*)(&header), sizeof(header)))
     {
-        fileStream.seekg(0, fileStream.end);
-        uint32_t fileSize = (uint32_t)fileStream.tellg();
-
-        if (fileSize >= sizeof(Header))
+        if (header.ident == 0x206D6756 && header.ay8910Clock)
         {
-            Header header;
-            fileStream.seekg(0, fileStream.beg);
-            fileStream.read((char*)(&header), sizeof(header));
+            int fileSize = 0x04 + header.eofOffset;
+            m_rawData = new uint8_t[fileSize];
 
-            if (header.ident == 0x206D6756 && header.eofOffset == fileSize - 4 && header.ay8910Clock)
+            if (ReadFile(module.file.string().c_str(), m_rawData, fileSize))
             {
-                m_rawData = new uint8_t[fileSize];
-                fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)m_rawData, fileSize);
-
-                if (fileStream)
+                uint32_t vgmDataOffset = 0x40;
+                if (header.version >= 0x00000150 && header.vgmDataOffset)
                 {
-                    uint32_t vgmDataOffset = 0x40;
-                    if (header.version >= 0x00000150 && header.vgmDataOffset)
-                    {
-                        vgmDataOffset = header.vgmDataOffset + 0x34;
-                    }
-                    m_dataPtr = m_rawData + vgmDataOffset;
-
-                    bool divider = (header.ay8910Flags & 0x10);
-                    bool ym_chip = (header.ay8910Type  & 0xF0);
-                    module.chip.model(ym_chip ? Chip::Model::YM : Chip::Model::AY);
-                    module.chip.freqValue(header.ay8910Clock / (divider ? 2 : 1));
-
-                    if (header.rate)
-                        module.playback.frameRate(header.rate);
-                    else
-                        module.playback.frameRate(DetectFrameRate());
-                    m_samplesPerFrame = 44100 / module.playback.frameRate();
-                    m_waitForSamples  = 0;
-
-                    if (header.loopSamples)
-                    {
-                        m_loop = (header.totalSamples - header.loopSamples) / m_samplesPerFrame;
-                    }
-                    
-                    module.info.type("VGM stream");
-                    isDetected = true;
+                    vgmDataOffset = header.vgmDataOffset + 0x34;
                 }
+                m_dataPtr = m_rawData + vgmDataOffset;
+
+                bool divider = (header.ay8910Flags & 0x10);
+                bool ym_chip = (header.ay8910Type & 0xF0);
+                module.chip.model(ym_chip ? Chip::Model::YM : Chip::Model::AY);
+                module.chip.freqValue(header.ay8910Clock / (divider ? 2 : 1));
+
+                if (header.rate)
+                    module.playback.frameRate(header.rate);
+                else
+                    module.playback.frameRate(DetectFrameRate());
+                m_samplesPerFrame = (44100 / module.playback.frameRate());
+                m_waitForSamples = 0;
+
+                if (header.loopSamples)
+                {
+                    m_loop = (header.totalSamples - header.loopSamples) / m_samplesPerFrame;
+                }
+
+                module.info.type("VGM stream");
+                return true;
+            }
+            else
+            {
+                delete[] m_rawData;
             }
         }
-        fileStream.close();
     }
-    return isDetected;
+    return false;
 }
 
 bool DecodeVGM::Decode(Frame& frame)
@@ -121,7 +111,25 @@ bool DecodeVGM::Decode(Frame& frame)
 void DecodeVGM::Close(Module& module)
 {
     if (m_loop) module.loop.frameId(m_loop);
-    delete m_rawData;
+    delete[] m_rawData;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool DecodeVGM::ReadFile(const char* path, uint8_t* dest, int size)
+{
+    if (path && dest && size)
+    {
+        int read = 0;
+        if (gzFile file = gzopen(path, "rb"))
+        {
+            read = gzread(file, dest, size);
+            gzclose(file);
+        }
+        return (read == size);
+
+    }
+    return false;
 }
 
 int DecodeVGM::DetectFrameRate()
@@ -137,7 +145,7 @@ int DecodeVGM::DetectFrameRate()
     {
         if (m_samplesPerFrame != INT32_MAX)
         {
-            frameRate = 44100 / m_samplesPerFrame;
+            frameRate = (44100 / m_samplesPerFrame);
             break;
         }
     }

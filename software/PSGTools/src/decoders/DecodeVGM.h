@@ -87,6 +87,7 @@ public:
 	void Close(Module& module) override;
 
 private:
+    bool ReadFile(const char* path, uint8_t* dest, int size);
     int  DetectFrameRate();
 
 private:

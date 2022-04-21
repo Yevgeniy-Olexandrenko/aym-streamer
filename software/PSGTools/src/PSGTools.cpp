@@ -22,7 +22,7 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_supportedFileTypes = "vgm|asc|stc|pt2|pt3|psg|vtx";
+const std::string k_supportedFileTypes = "vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
 const int k_comPortIndex = 4;
 
 ////////////////////////////////////////////////////////////////////////////////

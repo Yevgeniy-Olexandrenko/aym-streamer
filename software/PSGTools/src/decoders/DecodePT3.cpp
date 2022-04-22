@@ -1,5 +1,5 @@
 #include "DecodePT3.h"
-#include "module/Module.h"
+#include "stream/Stream.h"
 
 namespace
 {
@@ -113,11 +113,11 @@ namespace
     const std::string SignatureVT = "Vortex Tracker II";
 }
 
-bool DecodePT3::Open(Module& module)
+bool DecodePT3::Open(Stream& stream)
 {
     bool isDetected = false;
     std::ifstream fileStream;
-    fileStream.open(module.file, std::fstream::binary);
+    fileStream.open(stream.file, std::fstream::binary);
 
     if (fileStream)
     {
@@ -155,21 +155,21 @@ bool DecodePT3::Open(Module& module)
                 return std::string(buf);
             };
 
-            module.info.type(GetTextProperty(0x00, isVT ? 21 : 14) + " module");
-            module.info.title(GetTextProperty(0x1E, 32));
-            module.info.artist(GetTextProperty(0x42, 32));
-            module.playback.frameRate(50);
+            stream.info.type(GetTextProperty(0x00, isVT ? 21 : 14) + " module");
+            stream.info.title(GetTextProperty(0x1E, 32));
+            stream.info.artist(GetTextProperty(0x42, 32));
+            stream.playback.frameRate(50);
 
             if (m_chip[0].header->tonTableId == 1)
             {
-                module.chip.frequency(Chip::Frequency::F1773400);
+                stream.chip.frequency(Chip::Frequency::F1773400);
             }
             else if (m_chip[0].header->tonTableId == 2 && m_ver > 3)
             {
-                module.chip.frequency(Chip::Frequency::F1750000);
+                stream.chip.frequency(Chip::Frequency::F1750000);
             }
 
-            if (m_ts) module.chip.count(Chip::Count::TurboSound);
+            if (m_ts) stream.chip.count(Chip::Count::TurboSound);
         }
         fileStream.close();
     }
@@ -211,10 +211,10 @@ bool DecodePT3::Decode(Frame& frame)
     return true;
 }
 
-void DecodePT3::Close(Module& module)
+void DecodePT3::Close(Stream& stream)
 {
     if (m_loop > 0) 
-        module.loop.frameId(m_loop);
+        stream.loop.frameId(m_loop);
     
     delete[] m_data;
 }

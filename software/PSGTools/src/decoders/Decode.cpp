@@ -1,5 +1,5 @@
-#include "Decoder.h"
-#include "module/Module.h"
+#include "Decode.h"
+#include "stream/Stream.h"
 
 bool ModuleDecoder::Decode(Frame& frame)
 {
@@ -41,9 +41,9 @@ bool ModuleDecoder::Decode(Frame& frame)
     return false;
 }
 
-void ModuleDecoder::Close(Module& module)
+void ModuleDecoder::Close(Stream& stream)
 {
-    if (m_loop) module.loop.frameId(m_loop);
+    if (m_loop) stream.loop.frameId(m_loop);
     delete[] m_data;
 }
 

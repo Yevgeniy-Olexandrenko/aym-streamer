@@ -1,7 +1,7 @@
 #pragma once
 
 #include <terminal/terminal.hpp>
-#include "module/Module.h"
+#include "stream/Stream.h"
 #include "output/Output.h"
 
 namespace Interface
@@ -92,11 +92,11 @@ namespace Interface
 
 	// -------------------------------------------------------------------------
 
-	void PrintInputFile(const Module& module, int index, int total);
-	void PrintModuleInfo(const Module& module, const Output& output);
-	void PrintModuleFrames(const Module& module, FrameId frameId, size_t height);
+	void PrintInputFile(const Stream& stream, int index, int total);
+	void PrintModuleInfo(const Stream& stream, const Output& output);
+	void PrintModuleFrames(const Stream& stream, FrameId frameId, size_t height);
 	void PrintPlaybackProgress();
 	void PrintBlankArea(int offset, size_t height);
 
-	void PrintModuleFrames2(const Module& module, FrameId frameId, size_t height);
+	void PrintModuleFrames2(const Stream& stream, FrameId frameId, size_t height);
 }

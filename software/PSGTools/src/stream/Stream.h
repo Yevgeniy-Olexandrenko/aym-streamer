@@ -9,14 +9,14 @@
 using FrameId = uint32_t;
 using FrameRate = uint16_t;
 
-class Module
+class Stream
 {
 	struct Delegate
 	{
-		Delegate(Module& module) : m_module(module) {}
+		Delegate(Stream& stream) : m_stream(stream) {}
 
 	protected:
-		Module& m_module;
+		Stream& m_stream;
 	};
 
 public:
@@ -25,7 +25,7 @@ public:
 
 	struct Info : public Delegate
 	{
-		Info(Module& module);
+		Info(Stream& stream);
 
 		void title(const std::string& title);
 		const std::string& title() const;
@@ -53,7 +53,7 @@ public:
 
 	struct Frames : public Delegate
 	{
-		Frames(Module& module);
+		Frames(Stream& stream);
 
 		void add(const Frame& frame);
 		const Frame& get(FrameId id) const;
@@ -69,7 +69,7 @@ public:
 
 	struct Loop : public Delegate
 	{
-		Loop(Module& module);
+		Loop(Stream& stream);
 
 		void frameId(FrameId id);
 		FrameId frameId() const;
@@ -90,7 +90,7 @@ public:
 
 	struct Playback : public Delegate
 	{
-		Playback(Module& module);
+		Playback(Stream& stream);
 
 		const Frame& getFrame(FrameId id) const;
 		uint32_t framesCount() const;
@@ -120,7 +120,7 @@ public:
 		Title, Artist, Comment, Type, Chip, Frames, Duration
 	};
 
-	Module();
+	Stream();
 	std::string property(Property property) const;
 
 	std::filesystem::path file;

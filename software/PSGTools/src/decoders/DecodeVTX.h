@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Decoder.h"
-#include "module/Module.h"
+#include "Decode.h"
+#include "stream/Stream.h"
 
 class DecodeVTX : public Decoder
 {
@@ -30,9 +30,9 @@ class DecodeVTX : public Decoder
 	};
 
 public:
-	bool Open   (Module& module) override;
+	bool Open   (Stream& stream) override;
 	bool Decode (Frame&  frame ) override;
-	void Close  (Module& module) override;
+	void Close  (Stream& stream) override;
 
 private:
 	//

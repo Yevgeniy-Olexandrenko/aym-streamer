@@ -1,18 +1,18 @@
 #include "DecodeVGM.h"
-#include "module/Module.h"
+#include "stream/Stream.h"
 #include "zlib/zlib.h"
 
-bool DecodeVGM::Open(Module& module)
+bool DecodeVGM::Open(Stream& stream)
 {
     Header header;
-    if (ReadFile(module.file.string().c_str(), (uint8_t*)(&header), sizeof(header)))
+    if (ReadFile(stream.file.string().c_str(), (uint8_t*)(&header), sizeof(header)))
     {
         if (header.ident == 0x206D6756 && header.ay8910Clock)
         {
             int fileSize = 0x04 + header.eofOffset;
             m_rawData = new uint8_t[fileSize];
 
-            if (ReadFile(module.file.string().c_str(), m_rawData, fileSize))
+            if (ReadFile(stream.file.string().c_str(), m_rawData, fileSize))
             {
                 uint32_t vgmDataOffset = 0x40;
                 if (header.version >= 0x00000150 && header.vgmDataOffset)
@@ -23,14 +23,14 @@ bool DecodeVGM::Open(Module& module)
 
                 bool divider = (header.ay8910Flags & 0x10);
                 bool ym_chip = (header.ay8910Type & 0xF0);
-                module.chip.model(ym_chip ? Chip::Model::YM : Chip::Model::AY);
-                module.chip.freqValue(header.ay8910Clock / (divider ? 2 : 1));
-
+                stream.chip.model(ym_chip ? Chip::Model::YM : Chip::Model::AY);
+                stream.chip.freqValue(header.ay8910Clock / (divider ? 2 : 1));
+                
                 if (header.rate)
-                    module.playback.frameRate(header.rate);
+                    stream.playback.frameRate(header.rate);
                 else
-                    module.playback.frameRate(DetectFrameRate());
-                m_samplesPerFrame = (44100 / module.playback.frameRate());
+                    stream.playback.frameRate(DetectFrameRate());
+                m_samplesPerFrame = (44100 / stream.playback.frameRate());
                 m_waitForSamples = 0;
 
                 if (header.loopSamples)
@@ -38,7 +38,7 @@ bool DecodeVGM::Open(Module& module)
                     m_loop = (header.totalSamples - header.loopSamples) / m_samplesPerFrame;
                 }
 
-                module.info.type("VGM stream");
+                stream.info.type("VGM stream");
                 return true;
             }
             else
@@ -108,9 +108,9 @@ bool DecodeVGM::Decode(Frame& frame)
     return true;
 }
 
-void DecodeVGM::Close(Module& module)
+void DecodeVGM::Close(Stream& stream)
 {
-    if (m_loop) module.loop.frameId(m_loop);
+    if (m_loop) stream.loop.frameId(m_loop);
     delete[] m_rawData;
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Decoder.h"
+#include "Decode.h"
 
 class DecodeASC : public ModuleDecoder
 {
@@ -54,7 +54,7 @@ class DecodeASC : public ModuleDecoder
     };
 
 public:
-    bool Open(Module& module) override;
+    bool Open(Stream& stream) override;
   
 protected:
     void Init() override;

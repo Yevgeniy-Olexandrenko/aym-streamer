@@ -1,5 +1,5 @@
-#include <lh5_decode/lh5_decode.h>
 #include "DecodeVTX.h"
+#include "lh5_decode/lh5_decode.h"
 
 namespace
 {
@@ -9,11 +9,11 @@ namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool DecodeVTX::Open(Module& module)
+bool DecodeVTX::Open(Stream& stream)
 {
 	bool isDetected = false;
 	std::ifstream fileStream;
-	fileStream.open(module.file, std::fstream::binary);
+	fileStream.open(stream.file, std::fstream::binary);
 
 	if (fileStream)
 	{
@@ -32,14 +32,14 @@ bool DecodeVTX::Open(Module& module)
 
 			if (chipType != Chip::Model::Unknown)
 			{
-				module.chip.model(chipType);
+				stream.chip.model(chipType);
 
-				if (hdr.stereo == VTXStereo::MONO) module.chip.channels(Chip::Channels::MONO);
-				if (hdr.stereo == VTXStereo::ABC ) module.chip.channels(Chip::Channels::ABC);
-				if (hdr.stereo == VTXStereo::ACB ) module.chip.channels(Chip::Channels::ACB);
+				if (hdr.stereo == VTXStereo::MONO) stream.chip.channels(Chip::Channels::MONO);
+				if (hdr.stereo == VTXStereo::ABC ) stream.chip.channels(Chip::Channels::ABC);
+				if (hdr.stereo == VTXStereo::ACB ) stream.chip.channels(Chip::Channels::ACB);
 
-				module.chip.freqValue(hdr.chipFreq);
-				module.playback.frameRate(hdr.frameFreq);
+				stream.chip.freqValue(hdr.chipFreq);
+				stream.playback.frameRate(hdr.frameFreq);
 
 				auto GetTextProperty = [](std::ifstream& stream)
 				{
@@ -55,10 +55,10 @@ bool DecodeVTX::Open(Module& module)
 				std::string tracker = GetTextProperty(fileStream); // store in extras
 				std::string comment = GetTextProperty(fileStream);
 
-				module.info.title(title);
-				module.info.artist(author);
-				module.info.comment(comment);
-				module.info.type("VTX stream");
+				stream.info.title(title);
+				stream.info.artist(author);
+				stream.info.comment(comment);
+				stream.info.type("VTX stream");
 
 				// unpack frames data
 				uint32_t packedSize = fileSize - (uint32_t)fileStream.tellg();
@@ -110,10 +110,10 @@ bool DecodeVTX::Decode(Frame& frame)
 	return (m_nextFrame < m_frameCount);
 }
 
-void DecodeVTX::Close(Module& module)
+void DecodeVTX::Close(Stream& stream)
 {
 	if (m_loopFrame > 0)
-		module.loop.frameId(m_loopFrame);
+		stream.loop.frameId(m_loopFrame);
 
 	delete[] m_data;
 }

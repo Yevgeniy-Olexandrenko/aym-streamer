@@ -4,22 +4,22 @@
 #include <fstream>
 #include <stdint.h>
 
-class Module;
+class Stream;
 class Frame;
 
 class Decoder
 {
 public:
-	virtual bool Open  (Module& module) = 0;
+	virtual bool Open  (Stream& stream) = 0;
 	virtual bool Decode(Frame&  frame ) = 0;
-	virtual void Close (Module& module) = 0;
+	virtual void Close (Stream& stream) = 0;
 };
 
 class ModuleDecoder : public Decoder
 {
 public:
 	bool Decode(Frame&  frame ) override;
-	void Close (Module& module) override;
+	void Close (Stream& stream) override;
 
 protected:
 	virtual void Init() = 0;

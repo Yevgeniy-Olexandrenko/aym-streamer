@@ -1,6 +1,6 @@
 #include <thread>
 #include "Streamer.h"
-#include "module/Frame.h"
+#include "stream/Frame.h"
 
 Streamer::Streamer(int comPortIndex)
 	: m_portIndex(comPortIndex)
@@ -28,7 +28,7 @@ bool Streamer::Open()
 	return m_isOpened;
 }
 
-bool Streamer::Init(const Module& module)
+bool Streamer::Init(const Stream& stream)
 {
 	chip.count(Chip::Count::SingleChip);
 	chip.model(Chip::Model::Compatible);

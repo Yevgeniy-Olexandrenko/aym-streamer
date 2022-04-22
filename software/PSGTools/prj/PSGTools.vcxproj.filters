@@ -10,9 +10,6 @@
     <Filter Include="Sources\decoders">
       <UniqueIdentifier>{038e6189-8da3-46ef-b548-0bdafde6015c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\module">
-      <UniqueIdentifier>{a61c2248-7658-45e0-be9d-23f4187b8bb0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources\output">
       <UniqueIdentifier>{ed5e2415-9dc9-40e5-b12f-f9c14b1de61d}</UniqueIdentifier>
     </Filter>
@@ -22,6 +19,12 @@
     <Filter Include="Sources\output\Streamer">
       <UniqueIdentifier>{d8709f9e-51ca-46b5-9705-8a9e1ab44b87}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\stream">
+      <UniqueIdentifier>{a61c2248-7658-45e0-be9d-23f4187b8bb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\filelist">
+      <UniqueIdentifier>{2d3b7775-8be4-402d-ba43-2b9c877c6101}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\encoders\EncodePSG.h">
@@ -30,29 +33,17 @@
     <ClInclude Include="..\src\decoders\DecodePSG.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\decoders\Decoder.h">
+    <ClInclude Include="..\src\decoders\Decode.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\encoders\Encoder.h">
       <Filter>Sources\encoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\module\Frame.h">
-      <Filter>Sources\module</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\module\Module.h">
-      <Filter>Sources\module</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\module\Register.h">
-      <Filter>Sources\module</Filter>
     </ClInclude>
     <ClInclude Include="..\src\decoders\DecodePT3.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\output\Output.h">
       <Filter>Sources\output</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\module\Player.h">
-      <Filter>Sources\module</Filter>
     </ClInclude>
     <ClInclude Include="..\src\encoders\EncodeTXT.h">
       <Filter>Sources\encoders</Filter>
@@ -65,9 +56,6 @@
     </ClInclude>
     <ClInclude Include="..\src\output\Chip.h">
       <Filter>Sources\output</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\module\Filelist.h">
-      <Filter>Sources\module</Filter>
     </ClInclude>
     <ClInclude Include="..\src\output\Emulator\Emulator.h">
       <Filter>Sources\output\Emulator</Filter>
@@ -96,6 +84,21 @@
     <ClInclude Include="..\src\decoders\DecodeVGM.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\stream\Frame.h">
+      <Filter>Sources\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\stream\Player.h">
+      <Filter>Sources\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\stream\Register.h">
+      <Filter>Sources\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\stream\Stream.h">
+      <Filter>Sources\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\filelist\Filelist.h">
+      <Filter>Sources\filelist</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -107,20 +110,8 @@
     <ClCompile Include="..\src\decoders\DecodePSG.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\module\Frame.cpp">
-      <Filter>Sources\module</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\module\Module.cpp">
-      <Filter>Sources\module</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\module\Register.cpp">
-      <Filter>Sources\module</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\decoders\DecodePT3.cpp">
       <Filter>Sources\decoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\module\Player.cpp">
-      <Filter>Sources\module</Filter>
     </ClCompile>
     <ClCompile Include="..\src\encoders\EncodeTXT.cpp">
       <Filter>Sources\encoders</Filter>
@@ -130,9 +121,6 @@
     </ClCompile>
     <ClCompile Include="..\src\decoders\DecodeVTX.cpp">
       <Filter>Sources\decoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\module\Filelist.cpp">
-      <Filter>Sources\module</Filter>
     </ClCompile>
     <ClCompile Include="..\src\output\Emulator\Emulator.cpp">
       <Filter>Sources\output\Emulator</Filter>
@@ -161,11 +149,26 @@
     <ClCompile Include="..\src\decoders\DecodeASC.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\decoders\Decoder.cpp">
+    <ClCompile Include="..\src\decoders\Decode.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\decoders\DecodeVGM.cpp">
       <Filter>Sources\decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stream\Frame.cpp">
+      <Filter>Sources\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stream\Player.cpp">
+      <Filter>Sources\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stream\Register.cpp">
+      <Filter>Sources\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stream\Stream.cpp">
+      <Filter>Sources\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\filelist\Filelist.cpp">
+      <Filter>Sources\filelist</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

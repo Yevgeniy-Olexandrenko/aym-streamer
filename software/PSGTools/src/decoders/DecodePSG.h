@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Decoder.h"
+#include "Decode.h"
 
 class DecodePSG : public Decoder
 {
@@ -16,9 +16,9 @@ class DecodePSG : public Decoder
 	#pragma pack(pop)
 
 public:
-	bool Open   (Module& module) override;
+	bool Open   (Stream& stream) override;
 	bool Decode (Frame&  frame ) override;
-	void Close  (Module& module) override;
+	void Close  (Stream& stream) override;
 
 private:
 	std::ifstream m_fileStream;

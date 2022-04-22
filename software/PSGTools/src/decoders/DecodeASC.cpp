@@ -1,11 +1,11 @@
 #include "DecodeASC.h"
-#include "module/Module.h"
+#include "stream/Stream.h"
 
-bool DecodeASC::Open(Module& module)
+bool DecodeASC::Open(Stream& stream)
 {
     bool isDetected = false;
     std::ifstream fileStream;
-    fileStream.open(module.file, std::fstream::binary);
+    fileStream.open(stream.file, std::fstream::binary);
 
     if (fileStream)
     {
@@ -37,17 +37,17 @@ bool DecodeASC::Open(Module& module)
                         auto artistId = (titleId + 19 + 20);
                         if (!memcmp(artistId, " BY ", 4))
                         {
-                            module.info.title(ReadString(titleId + 19, 20));
-                            module.info.artist(ReadString(artistId + 4, 20));
+                            stream.info.title(ReadString(titleId + 19, 20));
+                            stream.info.artist(ReadString(artistId + 4, 20));
                         }
                         else
                         {
-                            module.info.title(ReadString(titleId + 19, 20 + 4 + 20));
+                            stream.info.title(ReadString(titleId + 19, 20 + 4 + 20));
                         }                        
                     }
 
-                    module.info.type("ASC Sound Master module");
-                    module.playback.frameRate(50);
+                    stream.info.type("ASC Sound Master module");
+                    stream.playback.frameRate(50);
 
                     Init();
                     m_loop = m_tick = 0;

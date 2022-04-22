@@ -2,7 +2,7 @@
 
 #include <thread>
 #include <atomic>
-#include "Module.h"
+#include "Stream.h"
 
 class Output;
 
@@ -16,7 +16,7 @@ public:
 	~Player();
 
 public:
-	bool Init(const Module& module);
+	bool Init(const Stream& stream);
 	void Play(int playbackStep = 1);
 	void Stop();
 
@@ -29,7 +29,7 @@ private:
 
 private:
 	Output& m_output;
-	const Module* m_module;
+	const Stream* m_stream;
 
 	std::thread m_playback;
 	int m_playbackStep;

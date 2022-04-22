@@ -6,9 +6,9 @@
 
 #include <terminal/terminal.hpp>
 
-#include "module/Filelist.h"
-#include "module/Module.h"
-#include "module/Player.h"
+#include "filelist/Filelist.h"
+#include "stream/Stream.h"
+#include "stream/Player.h"
 
 #include "decoders/DecodePT3.h"
 #include "decoders/DecodePT2.h"
@@ -28,7 +28,7 @@ const int k_comPortIndex = 4;
 ////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Filelist> m_filelist;
-std::shared_ptr<Module>   m_module;
+std::shared_ptr<Stream>   m_stream;
 std::shared_ptr<Output>   m_output;
 std::shared_ptr<Player>   m_player;
 
@@ -50,7 +50,7 @@ void PrintDelimiter()
     std::cout << color::reset << std::endl;
 }
 
-bool DecodeFileToModule(const std::filesystem::path& path, Module& module)
+bool DecodeFileToModule(const std::filesystem::path& path, Stream& stream)
 {
     std::shared_ptr<Decoder> decoders[]{
         std::shared_ptr<Decoder>(new DecodeVGM()),
@@ -62,27 +62,27 @@ bool DecodeFileToModule(const std::filesystem::path& path, Module& module)
         std::shared_ptr<Decoder>(new DecodePSG()),
     };
 
-    module.file = path;
+    stream.file = path;
     for (std::shared_ptr<Decoder> decoder : decoders)
     {
-        if (decoder->Open(module))
+        if (decoder->Open(stream))
         {
             Frame frame;
             while (decoder->Decode(frame))
             {
                 frame.FixValues();
-                module.frames.add(frame);
+                stream.frames.add(frame);
                 frame.SetUnchanged();
             }
 
-            decoder->Close(module);
+            decoder->Close(stream);
             return true;
         }
     }
     return false;
 }
 
-void SaveModuleDebugOutput(const Module& module)
+void SaveModuleDebugOutput(const Stream& stream)
 {
     //std::ofstream file;
     //file.open(k_output);
@@ -216,15 +216,15 @@ int main(int argc, char* argv[])
             bool isDone = goToPrev ? m_filelist->prev(path) : m_filelist->next(path);
             if (!isDone) break;
 
-            m_module.reset(new Module());
-            if (DecodeFileToModule(path, *m_module))
+            m_stream.reset(new Stream());
+            if (DecodeFileToModule(path, *m_stream))
             {
                 goToPrev = false; // if decoding OK, move to next by default
-                Interface::PrintInputFile(*m_module, m_filelist->index(), m_filelist->count());
+                Interface::PrintInputFile(*m_stream, m_filelist->index(), m_filelist->count());
                
-                if (m_player->Init(*m_module))
+                if (m_player->Init(*m_stream))
                 {
-                    Interface::PrintModuleInfo(*m_module, *m_output);
+                    Interface::PrintModuleInfo(*m_stream, *m_output);
                     std::cout << std::endl;
 
                     m_player->Play();
@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
                         if (newFrame != oldFrame)
                         {
                             oldFrame = newFrame;
-                            Interface::PrintModuleFrames2(*m_module, newFrame, 12);
+                            Interface::PrintModuleFrames2(*m_stream, newFrame, 12);
                             cursor::move_down(12);
                             Interface::PrintPlaybackProgress();
                             cursor::move_up(12);

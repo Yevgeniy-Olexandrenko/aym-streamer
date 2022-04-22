@@ -41,7 +41,7 @@ void WaitFor(const double period)
 
 Player::Player(Output& output)
 	: m_output(output)
-	, m_module(nullptr)
+	, m_stream(nullptr)
 	, m_playbackStep(1)
 	, m_isPlaying(false)
 	, m_isPaused(false)
@@ -58,14 +58,14 @@ Player::~Player()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Player::Init(const Module& module)
+bool Player::Init(const Stream& stream)
 {
 	Stop();
 	m_isPlaying = false;
 
-	if (module.frames.available() && m_output.Init(module))
+	if (stream.frames.available() && m_output.Init(stream))
 	{
-		m_module = &module;
+		m_stream = &stream;
 		m_isPlaying = true;
 		m_frameId = 0;
 	}
@@ -120,14 +120,14 @@ void Player::PlaybackThread()
 	SetThreadPriority(hndl, THREAD_PRIORITY_TIME_CRITICAL);
 
 	auto frameNextTS = GetTime();
-	auto framePeriod = 1.0 / m_module->playback.frameRate();
+	auto framePeriod = 1.0 / m_stream->playback.frameRate();
 	bool isPlaying   = m_isPlaying;
 	bool firstFrame  = true;
 
 	while (isPlaying && !m_isPaused)
 	{
 		// play current frame
-		const Frame& frame = m_module->playback.getFrame(m_frameId);
+		const Frame& frame = m_stream->playback.getFrame(m_frameId);
 		if (!m_output.OutFrame(frame, firstFrame))
 		{
 			isPlaying = false;
@@ -140,7 +140,7 @@ void Player::PlaybackThread()
 
 		// go to next frame
 		m_frameId += m_playbackStep;
-		if (int(m_frameId) < 0 || m_frameId > m_module->playback.lastFrameId())
+		if (int(m_frameId) < 0 || m_frameId > m_stream->playback.lastFrameId())
 		{
 			isPlaying = false;
 		}

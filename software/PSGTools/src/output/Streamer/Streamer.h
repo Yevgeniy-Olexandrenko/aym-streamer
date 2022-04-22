@@ -12,7 +12,7 @@ public:
 
 public:
 	bool Open() override;
-	bool Init(const Module& module) override;
+	bool Init(const Stream& stream) override;
 	bool OutFrame(const Frame& frame, bool force) override;
 	void Close() override;
 

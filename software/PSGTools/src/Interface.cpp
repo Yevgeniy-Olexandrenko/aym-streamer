@@ -1,7 +1,5 @@
 #include <iomanip>
 #include <sstream>
-//#include <algorithm>
-//#include <functional>
 #include "Interface.h"
 
 namespace Interface
@@ -145,13 +143,13 @@ namespace Interface
 
     ////////////////////////////////////////////////////////////////////////////
 
-    void PrintInputFile(const Module& module, int index, int total)
+    void PrintInputFile(const Stream& stream, int index, int total)
     {
         cursor::show(false);
         std::string numberStr = std::to_string(index + 1);
         std::string totalStr = std::to_string(total);
 
-        size_t strLen = numberStr.length() + 1 + totalStr.length() + module.file.filename().string().length();
+        size_t strLen = numberStr.length() + 1 + totalStr.length() + stream.file.filename().string().length();
         size_t delLen = std::max(int(terminal_width() - 2 - strLen - 7), 2);
 
         std::cout << ' ' << color::bright_cyan;
@@ -159,9 +157,9 @@ namespace Interface
         std::cout << ' ' << color::bright_yellow << numberStr;
         std::cout << color::bright_cyan << '/';
         std::cout << color::bright_yellow << totalStr;
-        std::cout << ' ' << color::bright_white << module.file.stem().string();
+        std::cout << ' ' << color::bright_white << stream.file.stem().string();
         std::cout << color::bright_magenta << '.';
-        std::cout << color::bright_grey << module.file.extension().string().substr(1);
+        std::cout << color::bright_grey << stream.file.extension().string().substr(1);
         std::cout << ' ' << color::bright_cyan << "]--";
         std::cout << color::reset << std::endl;
     }
@@ -175,15 +173,15 @@ namespace Interface
         std::cout << color::bright_magenta << ": ";
     };
 
-    void printModuleProperty(const std::string& label, const Module& module, Module::Property property)
+    void printModuleProperty(const std::string& label, const Stream& stream, Stream::Property property)
     {
-        std::string str = module.property(property);
+        std::string str = stream.property(property);
         trim(str);
 
         if (!str.empty())
         {
             printPropertyLabel(label);
-            if (property == Module::Property::Title)
+            if (property == Stream::Property::Title)
                 std::cout << color::bright_green;
             else
                 std::cout << color::bright_white;
@@ -204,16 +202,16 @@ namespace Interface
         }
     };
 
-    void PrintModuleInfo(const Module& module, const Output& output)
+    void PrintModuleInfo(const Stream& stream, const Output& output)
     {
         cursor::show(false);
-        printModuleProperty("Title", module, Module::Property::Title);
-        printModuleProperty("Artist", module, Module::Property::Artist);
-        printModuleProperty("Comment", module, Module::Property::Comment);
-        printModuleProperty("Type", module, Module::Property::Type);
-        printModuleProperty("Chip", module, Module::Property::Chip);
-        printModuleProperty("Frames", module, Module::Property::Frames);
-        printModuleProperty("Duration", module, Module::Property::Duration);
+        printModuleProperty("Title", stream, Stream::Property::Title);
+        printModuleProperty("Artist", stream, Stream::Property::Artist);
+        printModuleProperty("Comment", stream, Stream::Property::Comment);
+        printModuleProperty("Type", stream, Stream::Property::Type);
+        printModuleProperty("Chip", stream, Stream::Property::Chip);
+        printModuleProperty("Frames", stream, Stream::Property::Frames);
+        printModuleProperty("Duration", stream, Stream::Property::Duration);
         printOutputProperty("Output", output);
     }
 
@@ -303,11 +301,11 @@ namespace Interface
         std::cout << color::bright_cyan << ']';
     }
 
-    void PrintModuleFrames(const Module& module, FrameId frameId, size_t height)
+    void PrintModuleFrames(const Stream& stream, FrameId frameId, size_t height)
     {
         size_t range1 = (height - 2) / 2;
         size_t range2 = (height - 2) - range1;
-        bool isTS = (module.chip.count() == Chip::Count::TurboSound);
+        bool isTS = (stream.chip.count() == Chip::Count::TurboSound);
         cursor::show(false);
 
         // print header
@@ -321,8 +319,8 @@ namespace Interface
         for (int i = int(frameId - range1); i <= int(frameId + range2); ++i)
         {
             bool highlight = (i == frameId);
-            bool useFakeFrame = (i < 0 || i >= int(module.playback.framesCount()));
-            const Frame& frame = useFakeFrame ? fakeFrame : module.playback.getFrame(i);
+            bool useFakeFrame = (i < 0 || i >= int(stream.playback.framesCount()));
+            const Frame& frame = useFakeFrame ? fakeFrame : stream.playback.getFrame(i);
 
             // print frame number
             std::cout << ' ';
@@ -447,11 +445,11 @@ namespace Interface
         }
     }
 
-    void PrintModuleFrames2(const Module& module, FrameId frameId, size_t height)
+    void PrintModuleFrames2(const Stream& stream, FrameId frameId, size_t height)
     {
         size_t range1 = (height - 2) / 2;
         size_t range2 = (height - 2) - range1;
-        bool isTS = (module.chip.count() == Chip::Count::TurboSound);
+        bool isTS = (stream.chip.count() == Chip::Count::TurboSound);
 
         // prepare console for drawing
         streamPb.clear();
@@ -474,8 +472,8 @@ namespace Interface
         for (int i = int(frameId - range1); i <= int(frameId + range2); ++i, ++y)
         {
             bool highlight = (i == frameId);
-            bool useFakeFrame = (i < 0 || i >= int(module.playback.framesCount()));
-            const Frame& frame = useFakeFrame ? fakeFrame : module.playback.getFrame(i);
+            bool useFakeFrame = (i < 0 || i >= int(stream.playback.framesCount()));
+            const Frame& frame = useFakeFrame ? fakeFrame : stream.playback.getFrame(i);
 
             // print frame number
             streamPb.position(offset, y);

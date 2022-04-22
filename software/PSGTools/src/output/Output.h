@@ -2,7 +2,7 @@
 
 #include "Chip.h"
 
-class Module;
+class Stream;
 class Frame;
 
 class Output
@@ -13,7 +13,7 @@ public:
 
 public:
 	virtual bool Open() = 0;
-	virtual bool Init(const Module& module) = 0;
+	virtual bool Init(const Stream& stream) = 0;
 	virtual bool OutFrame(const Frame& frame, bool force) = 0;
 	virtual void Close() = 0;
 

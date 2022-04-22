@@ -1,6 +1,6 @@
 #include <thread>
 #include "Emulator.h"
-#include "module/Module.h"
+#include "stream/Stream.h"
 
 namespace
 {
@@ -37,32 +37,32 @@ bool Emulator::Open()
     return m_isOpened;
 }
 
-bool Emulator::Init(const Module& module)
+bool Emulator::Init(const Stream& stream)
 {
     if (m_isOpened)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        chip.count(module.chip.count());
+        chip.count(stream.chip.count());
 
         chip.model(Chip::Model::AY);
-        if (module.chip.modelKnown())
+        if (stream.chip.modelKnown())
         {
-            if (module.chip.model() == Chip::Model::YM)
+            if (stream.chip.model() == Chip::Model::YM)
             {
                 chip.model(Chip::Model::YM);
             }
         }
 
         chip.frequency(Chip::Frequency::F1750000);
-        if (module.chip.frequencyKnown())
+        if (stream.chip.frequencyKnown())
         {
-            chip.frequency(module.chip.frequency());
+            chip.frequency(stream.chip.frequency());
         }
 
         chip.channels(Chip::Channels::ABC);
-        if (module.chip.channelsKnown())
+        if (stream.chip.channelsKnown())
         {
-            chip.channels(module.chip.channels());
+            chip.channels(stream.chip.channels());
         }
 
         m_isOpened &= InitChip(0);

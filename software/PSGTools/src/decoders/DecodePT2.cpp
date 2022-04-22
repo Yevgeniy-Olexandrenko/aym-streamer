@@ -1,11 +1,11 @@
 #include "DecodePT2.h"
-#include "module/Module.h"
+#include "stream/Stream.h"
 
-bool DecodePT2::Open(Module& module)
+bool DecodePT2::Open(Stream& stream)
 {
     bool isDetected = false;
     std::ifstream fileStream;
-    fileStream.open(module.file, std::fstream::binary);
+    fileStream.open(stream.file, std::fstream::binary);
 
     if (fileStream)
     {
@@ -35,9 +35,9 @@ bool DecodePT2::Open(Module& module)
 
                 if (fileStream)
                 {
-                    module.info.title(ReadString(header->musicName, 30));
-                    module.info.type("ProTracker 2.x module");
-                    module.playback.frameRate(50);
+                    stream.info.title(ReadString(header->musicName, 30));
+                    stream.info.type("ProTracker 2.x module");
+                    stream.playback.frameRate(50);
 
                     Init();
                     m_loop = m_tick = 0;

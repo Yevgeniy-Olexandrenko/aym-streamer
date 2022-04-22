@@ -3,21 +3,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\downloads\Penguin_Adventure_(MSX)\*.vgz"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\downloads\Contra_(NES)\02 Introduction.vgz"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\downloads\Penguin_Adventure_(MSX)\*.vgz"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\downloads\Contra_(NES)\02 Introduction.vgz"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\downloads\Penguin_Adventure_(MSX)\*.vgz"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\downloads\Contra_(NES)\02 Introduction.vgz"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\downloads\Penguin_Adventure_(MSX)\*.vgz"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\downloads\Contra_(NES)\02 Introduction.vgz"</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

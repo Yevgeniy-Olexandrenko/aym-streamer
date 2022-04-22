@@ -1,11 +1,11 @@
 #include "DecodeSTC.h"
-#include "module/Module.h"
+#include "stream/Stream.h"
 
-bool DecodeSTC::Open(Module& module)
+bool DecodeSTC::Open(Stream& stream)
 {
     bool isDetected = false;
     std::ifstream fileStream;
-    fileStream.open(module.file, std::fstream::binary);
+    fileStream.open(stream.file, std::fstream::binary);
 
     if (fileStream)
     {
@@ -50,11 +50,11 @@ bool DecodeSTC::Open(Module& module)
                                     length++;
                             }
                         }
-                        module.info.comment(ReadString(header.identifier, length));
+                        stream.info.comment(ReadString(header.identifier, length));
                     }
 
-                    module.info.type("Sound Tracker module");
-                    module.playback.frameRate(50);
+                    stream.info.type("Sound Tracker module");
+                    stream.playback.frameRate(50);
 
                     Init();
                     isDetected = true;

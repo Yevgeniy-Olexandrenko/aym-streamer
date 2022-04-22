@@ -1,6 +1,6 @@
 #include <iomanip>
 #include <sstream>
-#include "Module.h"
+#include "Stream.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +11,7 @@ namespace
 	const int k_maxExtraLoops  = 3;
 }
 
-Module::Module()
+Stream::Stream()
 	: info(*this)
 	, frames(*this)
 	, loop(*this)
@@ -19,7 +19,7 @@ Module::Module()
 {
 }
 
-std::string Module::property(Property property) const
+std::string Stream::property(Property property) const
 {
 	std::stringstream stream;
 	switch (property)
@@ -76,108 +76,108 @@ std::string Module::property(Property property) const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Module::Info::Info(Module& module)
-	: Delegate(module)
+Stream::Info::Info(Stream& stream)
+	: Delegate(stream)
 {
 }
 
-void Module::Info::title(const std::string& title)
+void Stream::Info::title(const std::string& title)
 {
 	m_title = title;
 }
 
-const std::string& Module::Info::title() const
+const std::string& Stream::Info::title() const
 {
 	return m_title;
 }
 
-bool Module::Info::titleKnown() const
+bool Stream::Info::titleKnown() const
 {
 	return !m_title.empty();
 }
 
-void Module::Info::artist(const std::string& artist)
+void Stream::Info::artist(const std::string& artist)
 {
 	m_artist = artist;
 }
 
-const std::string& Module::Info::artist() const
+const std::string& Stream::Info::artist() const
 {
 	return m_artist;
 }
 
-bool Module::Info::artistKnown() const
+bool Stream::Info::artistKnown() const
 {
 	return !m_artist.empty();
 }
 
-void Module::Info::comment(const std::string& comment)
+void Stream::Info::comment(const std::string& comment)
 {
 	m_comment = comment;
 }
 
-const std::string& Module::Info::comment() const
+const std::string& Stream::Info::comment() const
 {
 	return m_comment;
 }
 
-bool Module::Info::commentKnown() const
+bool Stream::Info::commentKnown() const
 {
 	return !m_comment.empty();
 }
 
-void Module::Info::type(const std::string& type)
+void Stream::Info::type(const std::string& type)
 {
 	m_type = type;
 }
 
-const std::string& Module::Info::type() const
+const std::string& Stream::Info::type() const
 {
 	return m_type;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Module::Frames::Frames(Module& module)
-	: Delegate(module)
+Stream::Frames::Frames(Stream& stream)
+	: Delegate(stream)
 {
 }
 
-void Module::Frames::add(const Frame& frame)
+void Stream::Frames::add(const Frame& frame)
 {
 	if (count() < 100000) m_frames.push_back(frame);
 }
 
-const Frame& Module::Frames::get(FrameId id) const
+const Frame& Stream::Frames::get(FrameId id) const
 {
 	return m_frames[id];
 }
 
-uint32_t Module::Frames::count() const
+uint32_t Stream::Frames::count() const
 {
 	return (uint32_t)m_frames.size();
 }
 
-FrameId Module::Frames::lastFrameId() const
+FrameId Stream::Frames::lastFrameId() const
 {
 	return count() - 1;
 }
 
-bool Module::Frames::available() const
+bool Stream::Frames::available() const
 {
 	return (count() > 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Module::Loop::Loop(Module& module)
-	: Delegate(module)
+Stream::Loop::Loop(Stream& stream)
+	: Delegate(stream)
 	, m_frameId(0)
 	, m_extraLoops(0)
 {
 }
 
-void Module::Loop::frameId(FrameId id)
+void Stream::Loop::frameId(FrameId id)
 {
 	m_frameId = id;
 
@@ -185,33 +185,33 @@ void Module::Loop::frameId(FrameId id)
 	ComputeExtraLoops();
 }
 
-FrameId Module::Loop::frameId() const
+FrameId Stream::Loop::frameId() const
 {
-	return (m_frameId > 2 ? m_frameId : m_module.frames.count());
+	return (m_frameId > 2 ? m_frameId : m_stream.frames.count());
 }
 
-uint32_t Module::Loop::framesCount() const
+uint32_t Stream::Loop::framesCount() const
 {
-	return m_module.frames.count() - frameId();
+	return m_stream.frames.count() - frameId();
 }
 
-int Module::Loop::extraLoops() const
+int Stream::Loop::extraLoops() const
 {
 	return m_extraLoops;
 }
 
-bool Module::Loop::available() const
+bool Stream::Loop::available() const
 {
-	return (framesCount() > (m_module.frames.count() / 2));
+	return (framesCount() > (m_stream.frames.count() / 2));
 }
 
-void Module::Loop::ComputeExtraLoops()
+void Stream::Loop::ComputeExtraLoops()
 {
 	m_extraLoops = 0;
 	if (available())
 	{
-		uint32_t frameCount = m_module.frames.count();
-		uint32_t maxPlaybackFrames = (k_prefDurationMM * 60 + k_prefDurationSS) * m_module.playback.frameRate();
+		uint32_t frameCount = m_stream.frames.count();
+		uint32_t maxPlaybackFrames = (k_prefDurationMM * 60 + k_prefDurationSS) * m_stream.playback.frameRate();
 		if (maxPlaybackFrames > frameCount)
 		{
 			m_extraLoops = (maxPlaybackFrames - frameCount) / framesCount();
@@ -220,13 +220,13 @@ void Module::Loop::ComputeExtraLoops()
 	}
 }
 
-void Module::Loop::UpdateLoopFrameChanges()
+void Stream::Loop::UpdateLoopFrameChanges()
 {
 	if (available())
 	{
 		uint8_t loopFrameData, lastFrameData;
-		const Frame& lastFrame = m_module.frames.get(m_module.frames.lastFrameId());
-		Frame& loopFrame = const_cast<Frame&>(m_module.frames.get(frameId()));
+		const Frame& lastFrame = m_stream.frames.get(m_stream.frames.lastFrameId());
+		Frame& loopFrame = const_cast<Frame&>(m_stream.frames.get(frameId()));
 
 		for (uint8_t i = 0; i < 16; ++i)
 		{
@@ -253,63 +253,63 @@ void Module::Loop::UpdateLoopFrameChanges()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Module::Playback::Playback(Module& module)
-	: Delegate(module)
+Stream::Playback::Playback(Stream& stream)
+	: Delegate(stream)
 	, m_frameRate(0)
 {
 }
 
-const Frame& Module::Playback::getFrame(FrameId id) const
+const Frame& Stream::Playback::getFrame(FrameId id) const
 {
-	uint32_t frameCount = m_module.frames.count();
+	uint32_t frameCount = m_stream.frames.count();
 	if (id >= frameCount)
 	{
-		id = m_module.loop.frameId() + ((id - frameCount) % m_module.loop.framesCount());
+		id = m_stream.loop.frameId() + ((id - frameCount) % m_stream.loop.framesCount());
 	}
-	return m_module.frames.get(id);
+	return m_stream.frames.get(id);
 }
 
-uint32_t Module::Playback::framesCount() const
+uint32_t Stream::Playback::framesCount() const
 {
-	return m_module.frames.count() + m_module.loop.extraLoops() * m_module.loop.framesCount();
+	return m_stream.frames.count() + m_stream.loop.extraLoops() * m_stream.loop.framesCount();
 }
 
-FrameId Module::Playback::lastFrameId() const
+FrameId Stream::Playback::lastFrameId() const
 {
 	return framesCount() - 1;
 }
 
-void Module::Playback::frameRate(FrameRate frameRate)
+void Stream::Playback::frameRate(FrameRate frameRate)
 {
 	m_frameRate = frameRate;
 }
 
-FrameRate Module::Playback::frameRate() const
+FrameRate Stream::Playback::frameRate() const
 {
 	return m_frameRate;
 }
 
-void Module::Playback::realDuration(int& hh, int& mm, int& ss, int& ms) const
+void Stream::Playback::realDuration(int& hh, int& mm, int& ss, int& ms) const
 {
-	ComputeDuration(m_module.frames.count(), hh, mm, ss, ms);
+	ComputeDuration(m_stream.frames.count(), hh, mm, ss, ms);
 }
 
-void Module::Playback::realDuration(int& hh, int& mm, int& ss) const
+void Stream::Playback::realDuration(int& hh, int& mm, int& ss) const
 {
-	ComputeDuration(m_module.frames.count(), hh, mm, ss);
+	ComputeDuration(m_stream.frames.count(), hh, mm, ss);
 }
 
-void Module::Playback::fakeDuration(int& hh, int& mm, int& ss, int& ms) const
+void Stream::Playback::fakeDuration(int& hh, int& mm, int& ss, int& ms) const
 {
 	ComputeDuration(framesCount(), hh, mm, ss, ms);
 }
 
-void Module::Playback::fakeDuration(int& hh, int& mm, int& ss) const
+void Stream::Playback::fakeDuration(int& hh, int& mm, int& ss) const
 {
 	ComputeDuration(framesCount(), hh, mm, ss);
 }
 
-void Module::Playback::ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int& ms) const
+void Stream::Playback::ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int& ms) const
 {
 	uint32_t duration = (frameCount * 1000) / frameRate();
 	ms = duration % 1000; duration /= 1000;
@@ -318,7 +318,7 @@ void Module::Playback::ComputeDuration(uint32_t frameCount, int& hh, int& mm, in
 	hh = duration;
 }
 
-void Module::Playback::ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss) const
+void Stream::Playback::ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss) const
 {
 	uint32_t duration = (((frameCount * 1000) / frameRate()) + 500) / 1000;
 	ss = duration % 60; duration /= 60;

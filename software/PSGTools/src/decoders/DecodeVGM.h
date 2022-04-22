@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Decoder.h"
+#include "Decode.h"
 
 class DecodeVGM : public Decoder
 {
@@ -82,9 +82,9 @@ class DecodeVGM : public Decoder
     #pragma pack(pop)
 
 public:
-	bool Open(Module& module) override;
+	bool Open(Stream& stream) override;
 	bool Decode(Frame& frame) override;
-	void Close(Module& module) override;
+	void Close(Stream& stream) override;
 
 private:
     bool ReadFile(const char* path, uint8_t* dest, int size);

@@ -1,9 +1,9 @@
 #include "DecodePSG.h"
-#include "module/Module.h"
+#include "stream/Stream.h"
 
-bool DecodePSG::Open(Module& module)
+bool DecodePSG::Open(Stream& stream)
 {
-    m_fileStream.open(module.file, std::fstream::binary);
+    m_fileStream.open(stream.file, std::fstream::binary);
     if (m_fileStream)
     {
         PSGHeader hdr;
@@ -14,8 +14,8 @@ bool DecodePSG::Open(Module& module)
             && hdr.m_psg[1] == 'S'
             && hdr.m_psg[2] == 'G')
         {
-            module.info.type("PSG stream");
-            module.playback.frameRate(hdr.m_fps ? hdr.m_fps : 50);
+            stream.info.type("PSG stream");
+            stream.playback.frameRate(hdr.m_fps ? hdr.m_fps : 50);
 
             m_skipFrames = 0;
             return true;
@@ -59,7 +59,7 @@ bool DecodePSG::Decode(Frame& frame)
     return false;
 }
 
-void DecodePSG::Close(Module& module)
+void DecodePSG::Close(Stream& stream)
 {
     m_fileStream.close();
 }

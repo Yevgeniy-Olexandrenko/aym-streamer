@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\commons\ayumi\ayumi.cpp" />
     <ClCompile Include="..\..\src\commons\glob\glob.cpp" />
-    <ClCompile Include="..\..\src\commons\gzip\gzstream.cpp" />
     <ClCompile Include="..\..\src\commons\lh5_decode\lh5_decode.cpp" />
     <ClCompile Include="..\..\src\commons\zlib\adler32.c" />
     <ClCompile Include="..\..\src\commons\zlib\compress.c" />
@@ -39,7 +38,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\commons\ayumi\ayumi.h" />
     <ClInclude Include="..\..\src\commons\glob\glob.h" />
-    <ClInclude Include="..\..\src\commons\gzip\gzstream.h" />
     <ClInclude Include="..\..\src\commons\lh5_decode\lh5_decode.h" />
     <ClInclude Include="..\..\src\commons\zlib\crc32.h" />
     <ClInclude Include="..\..\src\commons\zlib\deflate.h" />
@@ -128,7 +126,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\commons;$(ProjectDir)..\..\src\commons\gzip;$(ProjectDir)..\..\src\commons\glob;$(ProjectDir)..\..\src\commons\zlib;$(ProjectDir)..\..\src\commons\ayumi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\commons;$(ProjectDir)..\..\src\commons\ayumi;$(ProjectDir)..\..\src\commons\glob;$(ProjectDir)..\..\src\commons\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -149,7 +147,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\commons;$(ProjectDir)..\..\src\commons\gzip;$(ProjectDir)..\..\src\commons\glob;$(ProjectDir)..\..\src\commons\zlib;$(ProjectDir)..\..\src\commons\ayumi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\commons;$(ProjectDir)..\..\src\commons\ayumi;$(ProjectDir)..\..\src\commons\glob;$(ProjectDir)..\..\src\commons\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -170,7 +168,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\commons;$(ProjectDir)..\..\src\commons\gzip;$(ProjectDir)..\..\src\commons\glob;$(ProjectDir)..\..\src\commons\zlib;$(ProjectDir)..\..\src\commons\ayumi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\commons;$(ProjectDir)..\..\src\commons\ayumi;$(ProjectDir)..\..\src\commons\glob;$(ProjectDir)..\..\src\commons\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -191,7 +189,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\commons;$(ProjectDir)..\..\src\commons\gzip;$(ProjectDir)..\..\src\commons\glob;$(ProjectDir)..\..\src\commons\zlib;$(ProjectDir)..\..\src\commons\ayumi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\commons;$(ProjectDir)..\..\src\commons\ayumi;$(ProjectDir)..\..\src\commons\glob;$(ProjectDir)..\..\src\commons\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>

@@ -1,6 +1,6 @@
 #include "DecodeVGM.h"
 #include "module/Module.h"
-#include "zlib.h"
+#include "zlib/zlib.h"
 
 bool DecodeVGM::Open(Module& module)
 {

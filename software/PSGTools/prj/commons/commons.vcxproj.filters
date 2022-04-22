@@ -13,9 +13,6 @@
     <Filter Include="Sources\glob">
       <UniqueIdentifier>{104648e6-16af-46d2-914f-ee4d4581bdb4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\gzip">
-      <UniqueIdentifier>{4671dc15-11ae-4701-99ea-20cfa606c770}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources\zlib">
       <UniqueIdentifier>{b8c5ab34-c6ee-40c3-a2c5-e9c6caab799c}</UniqueIdentifier>
     </Filter>
@@ -29,9 +26,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\commons\glob\glob.cpp">
       <Filter>Sources\glob</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\commons\gzip\gzstream.cpp">
-      <Filter>Sources\gzip</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\commons\zlib\adler32.c">
       <Filter>Sources\zlib</Filter>
@@ -79,9 +73,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\commons\glob\glob.h">
       <Filter>Sources\glob</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\commons\gzip\gzstream.h">
-      <Filter>Sources\gzip</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\commons\zlib\crc32.h">
       <Filter>Sources\zlib</Filter>

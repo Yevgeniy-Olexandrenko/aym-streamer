@@ -1,5 +1,4 @@
 #include "DecodeSTC.h"
-#include "stream/Stream.h"
 
 bool DecodeSTC::Open(Stream& stream)
 {
@@ -152,16 +151,16 @@ bool DecodeSTC::Play()
     GetRegisters(m_chB, mixer);
     GetRegisters(m_chC, mixer);
 
-    m_regs[Mixer_Flags] = mixer;
-    m_regs[TonA_PeriodL] = m_chA.ton & 0xff;
-    m_regs[TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
-    m_regs[TonB_PeriodL] = m_chB.ton & 0xff;
-    m_regs[TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
-    m_regs[TonC_PeriodL] = m_chC.ton & 0xff;
-    m_regs[TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
-    m_regs[VolA_EnvFlg] = m_chA.amplitude;
-    m_regs[VolB_EnvFlg] = m_chB.amplitude;
-    m_regs[VolC_EnvFlg] = m_chC.amplitude;
+    m_regs[0][Mixer_Flags] = mixer;
+    m_regs[0][TonA_PeriodL] = m_chA.ton & 0xff;
+    m_regs[0][TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
+    m_regs[0][TonB_PeriodL] = m_chB.ton & 0xff;
+    m_regs[0][TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
+    m_regs[0][TonC_PeriodL] = m_chC.ton & 0xff;
+    m_regs[0][TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
+    m_regs[0][VolA_EnvFlg] = m_chA.amplitude;
+    m_regs[0][VolB_EnvFlg] = m_chB.amplitude;
+    m_regs[0][VolC_EnvFlg] = m_chC.amplitude;
     return isNewLoop;
 }
 
@@ -217,10 +216,8 @@ void DecodeSTC::PatternInterpreter(Channel& chan)
         }
         else if (val >= 0x83 && val <= 0x8e)
         {
-            m_regs[Env_Shape] = val - 0x80;
-            chan.addressInPattern++;
-
-            m_regs[Env_PeriodL] = m_data[chan.addressInPattern];
+            m_regs[0][Env_Shape] = val - 0x80;
+            m_regs[0][Env_PeriodL] = m_data[++chan.addressInPattern];
             chan.envelopeEnabled = true;
 
             k = 0;
@@ -261,7 +258,7 @@ void DecodeSTC::GetRegisters(Channel& chan, uint8_t& mixer)
         if ((m_data[samplePointer + 1] & 0x80) != 0)
             mixer = mixer | 64;
         else
-            m_regs[Noise_Period] = m_data[samplePointer + 1] & 0x1f;
+            m_regs[0][Noise_Period] = m_data[samplePointer + 1] & 0x1f;
 
         if ((m_data[samplePointer + 1] & 0x40) != 0)
             mixer = mixer | 8;

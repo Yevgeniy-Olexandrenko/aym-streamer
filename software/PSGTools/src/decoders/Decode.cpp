@@ -1,9 +1,9 @@
 #include "Decode.h"
-#include "stream/Stream.h"
 
 bool ModuleDecoder::Decode(Frame& frame)
 {
-    m_regs[Env_Shape] = 0xFF;
+    m_regs[0][Env_Shape] = 0xFF;
+    m_regs[1][Env_Shape] = 0xFF;
     bool isNewLoop = Play();
 
     if (m_loop == 0)
@@ -14,16 +14,16 @@ bool ModuleDecoder::Decode(Frame& frame)
         // detect true loop frame (ommit loop to first or last position)
         if (loopPosition > 0 && loopPosition < lastPosition && currPosition == loopPosition)
         {
-            m_loop = m_tick;
+            m_loop = m_frame;
         }
     }
-    m_tick++;
+    m_frame++;
 
     if (!isNewLoop)
     {
         for (uint8_t r = 0; r < 16; ++r)
         {
-            uint8_t data = m_regs[r];
+            uint8_t data = m_regs[0][r];
             if (r == Env_Shape)
             {
                 if (data != 0xFF)
@@ -32,6 +32,23 @@ bool ModuleDecoder::Decode(Frame& frame)
             else
             {
                 frame[r].first.update(data);
+            }
+        }
+
+        if (m_isTS)
+        {
+            for (uint8_t r = 0; r < 16; ++r)
+            {
+                uint8_t data = m_regs[1][r];
+                if (r == Env_Shape)
+                {
+                    if (data != 0xFF)
+                        frame[r].second.override(data);
+                }
+                else
+                {
+                    frame[r].second.update(data);
+                }
             }
         }
         return true;

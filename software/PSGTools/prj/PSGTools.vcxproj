@@ -27,6 +27,7 @@
     <ClInclude Include="..\src\decoders\DecodeSTC.h" />
     <ClInclude Include="..\src\decoders\DecodeVGM.h" />
     <ClInclude Include="..\src\decoders\DecodeVTX.h" />
+    <ClInclude Include="..\src\decoders\RP2A03.h" />
     <ClInclude Include="..\src\filelist\Filelist.h" />
     <ClInclude Include="..\src\Interface.h" />
     <ClInclude Include="..\src\encoders\EncodePSG.h" />
@@ -53,6 +54,7 @@
     <ClCompile Include="..\src\decoders\DecodeSTC.cpp" />
     <ClCompile Include="..\src\decoders\DecodeVGM.cpp" />
     <ClCompile Include="..\src\decoders\DecodeVTX.cpp" />
+    <ClCompile Include="..\src\decoders\RP2A03.cpp" />
     <ClCompile Include="..\src\filelist\Filelist.cpp" />
     <ClCompile Include="..\src\Interface.cpp" />
     <ClCompile Include="..\src\encoders\EncodePSG.cpp" />

@@ -3,9 +3,7 @@
 #include <string>
 #include <fstream>
 #include <stdint.h>
-
-class Stream;
-class Frame;
+#include "stream/Stream.h"
 
 class Decoder
 {
@@ -30,8 +28,11 @@ protected:
 	std::string ReadString(uint8_t* ptr, uint8_t size) const;
 
 protected:
+	bool m_isTS = false;
+
+	FrameId m_loop  = 0;
+	FrameId m_frame = 0;
+
 	uint8_t* m_data = nullptr;
-	uint32_t m_loop = 0;
-	uint32_t m_tick = 0;
-	uint8_t  m_regs[16];
+	uint8_t  m_regs[2][16];
 };

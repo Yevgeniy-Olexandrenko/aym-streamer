@@ -5,7 +5,7 @@
 class DecodePSG : public Decoder
 {
 	#pragma pack(push, 1)
-	struct PSGHeader
+	struct Header
 	{
 		uint8_t m_psg[3];
 		uint8_t m_1Ah;

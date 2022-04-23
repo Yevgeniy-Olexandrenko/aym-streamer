@@ -99,6 +99,9 @@
     <ClInclude Include="..\src\filelist\Filelist.h">
       <Filter>Sources\filelist</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\decoders\RP2A03.h">
+      <Filter>Sources\decoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -169,6 +172,9 @@
     </ClCompile>
     <ClCompile Include="..\src\filelist\Filelist.cpp">
       <Filter>Sources\filelist</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\RP2A03.cpp">
+      <Filter>Sources\decoders</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

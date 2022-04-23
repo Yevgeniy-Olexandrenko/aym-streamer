@@ -1,5 +1,4 @@
 #include "DecodeASC.h"
-#include "stream/Stream.h"
 
 bool DecodeASC::Open(Stream& stream)
 {
@@ -50,7 +49,7 @@ bool DecodeASC::Open(Stream& stream)
                     stream.playback.frameRate(50);
 
                     Init();
-                    m_loop = m_tick = 0;
+                    m_loop = m_frame = 0;
                     isDetected = true;
                 }
             }
@@ -144,16 +143,16 @@ bool DecodeASC::Play()
     GetRegisters(m_chB, mixer);
     GetRegisters(m_chC, mixer);
 
-    m_regs[Mixer_Flags] = mixer;
-    m_regs[TonA_PeriodL] = m_chA.ton & 0xff;
-    m_regs[TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
-    m_regs[TonB_PeriodL] = m_chB.ton & 0xff;
-    m_regs[TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
-    m_regs[TonC_PeriodL] = m_chC.ton & 0xff;
-    m_regs[TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
-    m_regs[VolA_EnvFlg] = m_chA.amplitude;
-    m_regs[VolB_EnvFlg] = m_chB.amplitude;
-    m_regs[VolC_EnvFlg] = m_chC.amplitude;
+    m_regs[0][Mixer_Flags] = mixer;
+    m_regs[0][TonA_PeriodL] = m_chA.ton & 0xff;
+    m_regs[0][TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
+    m_regs[0][TonB_PeriodL] = m_chB.ton & 0xff;
+    m_regs[0][TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
+    m_regs[0][TonC_PeriodL] = m_chC.ton & 0xff;
+    m_regs[0][TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
+    m_regs[0][VolA_EnvFlg] = m_chA.amplitude;
+    m_regs[0][VolB_EnvFlg] = m_chB.amplitude;
+    m_regs[0][VolC_EnvFlg] = m_chC.amplitude;
     return isNewLoop;
 }
 
@@ -195,7 +194,7 @@ void DecodeASC::PatternInterpreter(Channel& chan)
             }
             if (chan.envelopeEnabled)
             {
-                m_regs[Env_PeriodL] = m_data[chan.addressInPattern++];
+                m_regs[0][Env_PeriodL] = m_data[chan.addressInPattern++];
             }
             break;
         }
@@ -284,7 +283,7 @@ void DecodeASC::PatternInterpreter(Channel& chan)
         }
         else if (val == 0xf8)
         {
-            m_regs[Env_Shape] = 8;
+            m_regs[0][Env_Shape] = 8;
         }
         else if (val == 0xf9)
         {
@@ -303,7 +302,7 @@ void DecodeASC::PatternInterpreter(Channel& chan)
         }
         else if (val == 0xfa)
         {
-            m_regs[Env_Shape] = 10;
+            m_regs[0][Env_Shape] = 10;
         }
         else if (val == 0xfb)
         {
@@ -321,11 +320,11 @@ void DecodeASC::PatternInterpreter(Channel& chan)
         }
         else if (val == 0xfc)
         {
-            m_regs[Env_Shape] = 12;
+            m_regs[0][Env_Shape] = 12;
         }
         else if (val == 0xfe)
         {
-            m_regs[Env_Shape] = 14;
+            m_regs[0][Env_Shape] = 14;
         }
         chan.addressInPattern++;
     }
@@ -398,9 +397,9 @@ void DecodeASC::GetRegisters(Channel& chan, uint8_t& mixer)
 
         if (sampleSaysOKforEnvelope && ((mixer & 64) != 0))
         {
-            uint8_t data = m_regs[Env_PeriodL];
+            uint8_t data = m_regs[0][Env_PeriodL];
             data += ((int8_t)(m_data[chan.pointInSample] << 3) / 8);
-            m_regs[Env_PeriodL] = data;
+            m_regs[0][Env_PeriodL] = data;
         }
         else
             chan.currentNoise += (int8_t)(m_data[chan.pointInSample] << 3) / 8;
@@ -427,7 +426,7 @@ void DecodeASC::GetRegisters(Channel& chan, uint8_t& mixer)
         if ((mixer & 64) == 0)
         {
             uint8_t data = ((uint8_t)(chan.currentTonSliding >> 8) + chan.currentNoise) & 0x1f;
-            m_regs[Noise_Period] = data;
+            m_regs[0][Noise_Period] = data;
         }
 
         int8_t note = chan.note + chan.additionToNote;

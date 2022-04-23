@@ -1,5 +1,4 @@
 #include "DecodeVGM.h"
-#include "stream/Stream.h"
 #include "zlib/zlib.h"
 
 bool DecodeVGM::Open(Stream& stream)

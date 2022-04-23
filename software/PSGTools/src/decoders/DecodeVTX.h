@@ -1,12 +1,11 @@
 #pragma once
 
 #include "Decode.h"
-#include "stream/Stream.h"
 
 class DecodeVTX : public Decoder
 {
 	#pragma pack(push, 1)
-	struct VTXHeader
+	struct Header
 	{
 		uint16_t signature; //
 		uint8_t  stereo;    //
@@ -18,7 +17,7 @@ class DecodeVTX : public Decoder
 	};
 	#pragma pack(pop)
 
-	enum VTXStereo
+	enum Stereo
 	{
 		MONO = 0x00,
 		ABC  = 0x01,
@@ -33,9 +32,6 @@ public:
 	bool Open   (Stream& stream) override;
 	bool Decode (Frame&  frame ) override;
 	void Close  (Stream& stream) override;
-
-private:
-	//
 
 private:
 	uint8_t* m_data;

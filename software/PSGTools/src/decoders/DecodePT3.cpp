@@ -140,7 +140,7 @@ bool DecodePT3::Open(Stream& stream)
             fileStream.read((char*)m_data, m_size);
 
             Init();
-            m_tick = 0;
+            m_frame = 0;
             m_loop = 0;
 
             auto GetTextProperty = [&](int offset, int size)
@@ -169,59 +169,16 @@ bool DecodePT3::Open(Stream& stream)
                 stream.chip.frequency(Chip::Frequency::F1750000);
             }
 
-            if (m_ts) stream.chip.count(Chip::Count::TurboSound);
+            if (m_isTS) stream.chip.count(Chip::Count::TurboSound);
         }
         fileStream.close();
     }
 	return isDetected;
 }
 
-bool DecodePT3::Decode(Frame& frame)
-{
-    // stop decoding on new loop
-    if (Step()) return false;
-
-    for (uint8_t r = 0; r < 16; ++r)
-    {
-        uint8_t data = m_regs[0][r];
-        if (r == Env_Shape)
-        {
-            if (data != 0xFF) 
-                frame[r].first.override(data);
-        }
-        else
-        {
-            frame[r].first.update(data);
-        }
-
-        if (m_ts)
-        {
-            data = m_regs[1][r];
-            if (r == Env_Shape)
-            {
-                if (data != 0xFF) 
-                    frame[r].second.override(data);
-            }
-            else
-            {
-                frame[r].second.update(data);
-            }
-        }
-    }
-    return true;
-}
-
-void DecodePT3::Close(Stream& stream)
-{
-    if (m_loop > 0) 
-        stream.loop.frameId(m_loop);
-    
-    delete[] m_data;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
-bool DecodePT3::Init()
+void DecodePT3::Init()
 {
     // InitForAllTypes
 
@@ -239,15 +196,15 @@ bool DecodePT3::Init()
     m_ver = ('0' <= v && v <= '9') ? v - '0' : 6;
     m_chip[0].ts = m_chip[1].ts = 0x20;
     int TS = m_chip[0].header->musicName[98];
-    m_ts = (TS != 0x20);
-    if (m_ts) {
+    m_isTS = (TS != 0x20);
+    if (m_isTS) {
         m_chip[1].ts = TS;
     }
     else if (m_size > 400 && !memcmp(m_data + m_size - 4, "02TS", 4)) { // try load Vortex II '02TS'
         uint16_t sz1 = m_data[m_size - 12] + 0x100 * m_data[m_size - 11];
         uint16_t sz2 = m_data[m_size - 6] + 0x100 * m_data[m_size - 5];
-        if (sz1 + sz2 < m_size && sz1 > 200 && sz2 > 200) {
-            m_ts = true;
+        if (uint32_t(sz1 + sz2) < m_size && sz1 > 200 && sz2 > 200) {
+            m_isTS = true;
             m_chip[1].data = m_data + sz1;
             m_chip[1].header = (Header*)m_chip[1].data;
         }
@@ -276,46 +233,27 @@ bool DecodePT3::Init()
             m_chip[cnum].chan[chan].noteSkipCounter = 1;
         }
     }
-    return true;
 }
 
-bool DecodePT3::Step()
+void DecodePT3::Loop(uint8_t& currPosition, uint8_t& lastPosition, uint8_t& loopPosition)
 {
-    bool isNewLoop = GetRegisters(0);
-    if (m_ts) GetRegisters(1);
+    currPosition = m_chip[0].glob.currentPosition;
+    loopPosition = m_chip[0].header->loopPosition;
+    lastPosition = m_chip[0].header->numberOfPositions - 1;
+}
 
-    if (m_loop == 0)
-    {
-        uint8_t currPosition = m_chip[0].glob.currentPosition;
-        uint8_t loopPosition = m_chip[0].header->loopPosition;
-        uint8_t lastPosition = m_chip[0].header->numberOfPositions - 1;
-
-        // detect true loop frame (ommit loop to first or last position)
-        if (loopPosition > 0 && loopPosition < lastPosition && currPosition == loopPosition)
-        {
-            m_loop = m_tick;
-        }
-    }
-    
-    m_tick++;
+bool DecodePT3::Play()
+{
+    bool isNewLoop = Play(0);
+    if (m_isTS) Play(1);
     return isNewLoop;
 }
 
-int DecodePT3::GetNoteFreq(int chip, int note)
-{
-    switch (m_chip[chip].header->tonTableId) 
-    {
-    case  0: return (m_ver <= 3) ? PT3NoteTable_PT_33_34r[note] : PT3NoteTable_PT_34_35[note];
-    case  1: return PT3NoteTable_ST[note];
-    case  2: return (m_ver <= 3) ? PT3NoteTable_ASM_34r[note] : PT3NoteTable_ASM_34_35[note];
-    default: return (m_ver <= 3) ? PT3NoteTable_REAL_34r[note] : PT3NoteTable_REAL_34_35[note];
-    }
-}
-
-bool DecodePT3::GetRegisters(int chip)
+bool DecodePT3::Play(int chip)
 {
     bool isNewLoop = false;
-    m_regs[chip][13] = 0xFF;
+    uint8_t mixer = 0;
+    int envAdd = 0;
 
     if (!--m_chip[chip].glob.delayCounter) 
     {
@@ -348,15 +286,13 @@ bool DecodePT3::GetRegisters(int chip)
         }
         m_chip[chip].glob.delayCounter = m_chip[chip].glob.delay;
     }
-    AddToEnv = 0;
-    TempMixer = 0;
-
+    
     for (int ch = 0; ch < 3; ch++)
     {
-        ChangeRegisters(chip, m_chip[chip].chan[ch]);
+        GetRegisters(chip, m_chip[chip].chan[ch], mixer, envAdd);
     }
 
-    m_regs[chip][7] = TempMixer;
+    m_regs[chip][7] = mixer;
     m_regs[chip][6] = (m_chip[chip].glob.noiseBase + m_chip[chip].glob.addToNoise) & 0x1F;
 
     for (int ch = 0; ch < 3; ch++) 
@@ -366,7 +302,7 @@ bool DecodePT3::GetRegisters(int chip)
         m_regs[chip][ch + 8] = m_chip[chip].chan[ch].amplitude;
     }
 
-    uint16_t env = m_chip[chip].glob.envBaseHi * 0x100 + m_chip[chip].glob.envBaseLo + AddToEnv + m_chip[chip].glob.curEnvSlide;
+    uint16_t env = m_chip[chip].glob.envBaseHi * 0x100 + m_chip[chip].glob.envBaseLo + envAdd + m_chip[chip].glob.curEnvSlide;
     m_regs[chip][11] = env & 0xFF;
     m_regs[chip][12] = (env >> 8) & 0xFF;
 
@@ -561,7 +497,7 @@ void DecodePT3::PatternInterpreter(int cnum, Channel& chan)
         else if (counter == f9) {
             uint8_t b = m_chip[cnum].data[chan.addressInPattern++];
             m_chip[cnum].glob.delay = b;
-            if (m_ts && m_chip[1].ts != 0x20) {
+            if (m_isTS && m_chip[1].ts != 0x20) {
                 m_chip[0].glob.delay = b;
                 m_chip[0].glob.delayCounter = b;
                 m_chip[1].glob.delay = b;
@@ -572,7 +508,7 @@ void DecodePT3::PatternInterpreter(int cnum, Channel& chan)
     chan.noteSkipCounter = chan.numberOfNotesToSkip;
 }
 
-void DecodePT3::ChangeRegisters(int cnum, Channel& chan)
+void DecodePT3::GetRegisters(int cnum, Channel& chan, uint8_t& mixer, int& envAdd)
 {
     if (chan.enabled) {
         uint16_t c1 = chan.samplePointer + chan.positionInSample * 4;
@@ -624,13 +560,13 @@ void DecodePT3::ChangeRegisters(int cnum, Channel& chan)
                 ? ((b0 >> 1) | 0xF0) + chan.currentEnvelopeSliding
                 : ((b0 >> 1) & 0x0F) + chan.currentEnvelopeSliding;
             if (b1 & 0x20) chan.currentEnvelopeSliding = j;
-            AddToEnv += j;
+            envAdd += j;
         }
         else {
             m_chip[cnum].glob.addToNoise = (b0 >> 1) + chan.currentNoiseSliding;
             if (b1 & 0x20) chan.currentNoiseSliding = m_chip[cnum].glob.addToNoise;
         }
-        TempMixer |= (b1 >> 1) & 0x48;
+        mixer |= (b1 >> 1) & 0x48;
         if (++chan.positionInSample >= chan.sampleLength)
             chan.positionInSample = chan.loopSamplePosition;
         if (++chan.positionInOrnament >= chan.ornamentLength)
@@ -639,11 +575,22 @@ void DecodePT3::ChangeRegisters(int cnum, Channel& chan)
     else {
         chan.amplitude = 0;
     }
-    TempMixer >>= 1;
+    mixer >>= 1;
     if (chan.currentOnOff > 0) {
         if (!--chan.currentOnOff) {
             chan.enabled = !chan.enabled;
             chan.currentOnOff = chan.enabled ? chan.onOffDelay : chan.offOnDelay;
         }
+    }
+}
+
+int DecodePT3::GetNoteFreq(int chip, int note)
+{
+    switch (m_chip[chip].header->tonTableId)
+    {
+    case  0: return (m_ver <= 3) ? PT3NoteTable_PT_33_34r[note] : PT3NoteTable_PT_34_35[note];
+    case  1: return PT3NoteTable_ST[note];
+    case  2: return (m_ver <= 3) ? PT3NoteTable_ASM_34r[note] : PT3NoteTable_ASM_34_35[note];
+    default: return (m_ver <= 3) ? PT3NoteTable_REAL_34r[note] : PT3NoteTable_REAL_34_35[note];
     }
 }

@@ -2,7 +2,7 @@
 
 #include "Decode.h"
 
-class DecodePT3 : public Decoder
+class DecodePT3 : public ModuleDecoder
 {
     #pragma pack(push, 1)
     struct Header
@@ -77,27 +77,22 @@ class DecodePT3 : public Decoder
     };
 
 public:
-	bool Open   (Stream& stream) override;
-	bool Decode (Frame&  frame ) override;
-	void Close  (Stream& stream) override;
+	bool Open(Stream& stream) override;
+
+protected:
+    void Init() override;
+    void Loop(uint8_t& currPosition, uint8_t& lastPosition, uint8_t& loopPosition) override;
+    bool Play() override;
 
 private:
-    bool Init();
-    bool Step();
-
-    int  GetNoteFreq(int chip, int note);
-    bool GetRegisters(int chip);
+    bool Play(int chip);
     void PatternInterpreter(int chip, Channel& chan);
-    void ChangeRegisters(int chip, Channel& chan);
+    void GetRegisters(int chip, Channel& chan, uint8_t& mixer, int& envAdd);
+    int  GetNoteFreq(int chip, int note);
     
 private:
-    uint8_t* m_data;
     uint32_t m_size;
-    uint32_t m_loop;
-    uint32_t m_tick;
-
     uint8_t  m_ver;
-    bool     m_ts;
 
     struct {
         Header*  header;
@@ -106,10 +101,4 @@ private:
         Channel  chan[3];
         int      ts;
     } m_chip[2];
-
-    int AddToEnv;
-    uint8_t TempMixer;
-    //
-
-    uint8_t m_regs[2][16];
 };

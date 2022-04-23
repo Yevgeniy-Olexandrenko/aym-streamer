@@ -22,7 +22,7 @@ bool DecodeVTX::Open(Stream& stream)
 
 		if (fileSize > 20)
 		{
-			VTXHeader hdr; // data size here
+			Header hdr; // data size here
 			fileStream.seekg(0, fileStream.beg);
 			fileStream.read((char*)(&hdr), sizeof(hdr));
 
@@ -34,9 +34,9 @@ bool DecodeVTX::Open(Stream& stream)
 			{
 				stream.chip.model(chipType);
 
-				if (hdr.stereo == VTXStereo::MONO) stream.chip.channels(Chip::Channels::MONO);
-				if (hdr.stereo == VTXStereo::ABC ) stream.chip.channels(Chip::Channels::ABC);
-				if (hdr.stereo == VTXStereo::ACB ) stream.chip.channels(Chip::Channels::ACB);
+				if (hdr.stereo == Stereo::MONO) stream.chip.channels(Chip::Channels::MONO);
+				if (hdr.stereo == Stereo::ABC ) stream.chip.channels(Chip::Channels::ABC);
+				if (hdr.stereo == Stereo::ACB ) stream.chip.channels(Chip::Channels::ACB);
 
 				stream.chip.freqValue(hdr.chipFreq);
 				stream.playback.frameRate(hdr.frameFreq);

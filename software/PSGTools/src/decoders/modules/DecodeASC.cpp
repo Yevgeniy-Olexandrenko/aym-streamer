@@ -46,30 +46,26 @@ bool DecodeASC::Open(Stream& stream)
                 fileStream.seekg(0, fileStream.beg);
                 fileStream.read((char*)m_data, fileSize);
 
-                if (fileStream)
+                Init();
+                isDetected = true;
+
+                auto titleId = (uint8_t*)(&header.positions[header.numberOfPositions]);
+                if (!memcmp(titleId, "ASM COMPILATION OF ", 19))
                 {
-                    auto titleId = (uint8_t*)(&header.positions[header.numberOfPositions]);
-                    if (!memcmp(titleId, "ASM COMPILATION OF ", 19))
+                    auto artistId = (titleId + 19 + 20);
+                    if (!memcmp(artistId, " BY ", 4))
                     {
-                        auto artistId = (titleId + 19 + 20);
-                        if (!memcmp(artistId, " BY ", 4))
-                        {
-                            stream.info.title(ReadString(titleId + 19, 20));
-                            stream.info.artist(ReadString(artistId + 4, 20));
-                        }
-                        else
-                        {
-                            stream.info.title(ReadString(titleId + 19, 20 + 4 + 20));
-                        }                        
+                        stream.info.title(ReadString(titleId + 19, 20));
+                        stream.info.artist(ReadString(artistId + 4, 20));
                     }
-
-                    stream.info.type("ASC Sound Master module");
-                    stream.playback.frameRate(50);
-
-                    Init();
-                    m_loop = m_frame = 0;
-                    isDetected = true;
+                    else
+                    {
+                        stream.info.title(ReadString(titleId + 19, 20 + 4 + 20));
+                    }                        
                 }
+
+                stream.info.type("ASC Sound Master module");
+                stream.playback.frameRate(50);
             }
         }
     }
@@ -114,6 +110,8 @@ bool DecodeASC::Play()
 
     if (--m_delayCounter <= 0)
     {
+        m_delayCounter = m_delay;
+
         if (--m_chA.noteSkipCounter < 0)
         {
             if (m_data[m_chA.addressInPattern] == 255)
@@ -138,7 +136,6 @@ bool DecodeASC::Play()
 
         if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
         if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
-        m_delayCounter = m_delay;
     }
 
     GetRegisters(m_chA, mixer);

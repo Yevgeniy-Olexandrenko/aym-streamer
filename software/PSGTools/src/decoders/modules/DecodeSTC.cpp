@@ -48,35 +48,32 @@ bool DecodeSTC::Open(Stream& stream)
                 fileStream.seekg(0, fileStream.beg);
                 fileStream.read((char*)m_data, fileSize);
 
-                if (fileStream)
+                Init();
+                isDetected = true;
+
+                auto identifier = (uint8_t*)(&header.identifier);
+                if (memcmp(identifier, "SONG BY ST COMPILE", 18) &&
+                    memcmp(identifier, "SONG BY MB COMPILE", 18) &&
+                    memcmp(identifier, "SONG BY ST-COMPILE", 18) &&
+                    memcmp(identifier, "SOUND TRACKER v1.1", 18) &&
+                    memcmp(identifier, "S.T.FULL EDITION " , 17) &&
+                    memcmp(identifier, "SOUND TRACKER v1.3", 18))
                 {
-                    auto identifier = (uint8_t*)(&header.identifier);
-                    if (memcmp(identifier, "SONG BY ST COMPILE", 18) &&
-                        memcmp(identifier, "SONG BY MB COMPILE", 18) &&
-                        memcmp(identifier, "SONG BY ST-COMPILE", 18) &&
-                        memcmp(identifier, "SOUND TRACKER v1.1", 18) &&
-                        memcmp(identifier, "S.T.FULL EDITION " , 17) &&
-                        memcmp(identifier, "SOUND TRACKER v1.3", 18))
+                    int length = 18;
+                    if (header.size != fileSize)
                     {
-                        int length = 18;
-                        if (header.size != fileSize)
+                        if (identifier[18] >= 32 && identifier[18] <= 127)
                         {
-                            if (identifier[18] >= 32 && identifier[18] <= 127)
-                            {
+                            length++;
+                            if (identifier[19] >= 32 && identifier[19] <= 127)
                                 length++;
-                                if (identifier[19] >= 32 && identifier[19] <= 127)
-                                    length++;
-                            }
                         }
-                        stream.info.comment(ReadString(header.identifier, length));
                     }
-
-                    stream.info.type("Sound Tracker module");
-                    stream.playback.frameRate(50);
-
-                    Init();
-                    isDetected = true;
+                    stream.info.comment(ReadString(header.identifier, length));
                 }
+
+                stream.info.type("Sound Tracker module");
+                stream.playback.frameRate(50);
             }
         }
         fileStream.close();

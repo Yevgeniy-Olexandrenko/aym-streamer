@@ -51,16 +51,12 @@ bool DecodePT2::Open(Stream& stream)
                 fileStream.seekg(0, fileStream.beg);
                 fileStream.read((char*)m_data, fileSize);
 
-                if (fileStream)
-                {
-                    stream.info.title(ReadString(header->musicName, 30));
-                    stream.info.type("ProTracker 2.x module");
-                    stream.playback.frameRate(50);
+                Init();
+                isDetected = true;
 
-                    Init();
-                    m_loop = m_frame = 0;
-                    isDetected = true;
-                }
+                stream.info.title(ReadString(header->musicName, 30));
+                stream.info.type("ProTracker 2.x module");
+                stream.playback.frameRate(50);
             }
         }
         fileStream.close();
@@ -274,19 +270,18 @@ void DecodePT2::PatternInterpreter(Channel& chan)
 
 void DecodePT2::GetRegisters(Channel& chan, uint8_t& mixer)
 {
-    uint8_t note, b0, b1;
     Header* header = (Header*)m_data;
 
     if (chan.enabled)
     {
         uint16_t samplePointer = chan.samplePointer + chan.positionInSample * 3;
-        b0 = m_data[samplePointer + 0];
-        b1 = m_data[samplePointer + 1];
+        uint8_t b0 = m_data[samplePointer + 0];
+        uint8_t b1 = m_data[samplePointer + 1];
         chan.ton = m_data[samplePointer + 2] + (uint16_t)((b1 & 15) << 8);
         if ((b0 & 4) == 0)
             chan.ton = -chan.ton;
 
-        note = chan.note + m_data[chan.ornamentPointer + chan.positionInOrnament];
+        uint8_t note = chan.note + m_data[chan.ornamentPointer + chan.positionInOrnament];
         if (note > 95) note = 95;
         chan.ton = (chan.ton + chan.currentTonSliding + PT2NoteTable[note]) & 0xfff;
 

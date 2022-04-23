@@ -129,35 +129,19 @@ bool DecodePT3::Open(Stream& stream)
 
         if (isPT || isVT)
         {
-            isDetected = true;
-
             fileStream.seekg(0, fileStream.end);
             m_size = (uint32_t)fileStream.tellg();
 
-            fileStream.seekg(0, fileStream.beg);
             m_data = new uint8_t[m_size];
-
+            fileStream.seekg(0, fileStream.beg);
             fileStream.read((char*)m_data, m_size);
 
             Init();
-            m_frame = 0;
-            m_loop = 0;
+            isDetected = true;
 
-            auto GetTextProperty = [&](int offset, int size)
-            {
-                char buf[33];
-                memcpy(buf, m_data + offset, size);
-
-                int i = size;
-                buf[i] = 0;
-                while (i && buf[i - 1] == ' ') buf[--i] = 0;
-
-                return std::string(buf);
-            };
-
-            stream.info.type(GetTextProperty(0x00, isVT ? 21 : 14) + " module");
-            stream.info.title(GetTextProperty(0x1E, 32));
-            stream.info.artist(GetTextProperty(0x42, 32));
+            stream.info.title(ReadString(&m_data[0x1E], 32));
+            stream.info.artist(ReadString(&m_data[0x42], 32));
+            stream.info.type(ReadString(&m_data[0x00], isVT ? 21 : 14) + " module");
             stream.playback.frameRate(50);
 
             if (m_chip[0].header->tonTableId == 1)

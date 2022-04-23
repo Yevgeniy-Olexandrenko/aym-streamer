@@ -14,6 +14,8 @@
 #include "decoders/modules/DecodePT2.h"
 #include "decoders/modules/DecodeSTC.h"
 #include "decoders/modules/DecodeASC.h"
+#include "decoders/modules/DecodeSTP.h"
+
 #include "decoders/streams/DecodeVTX.h"
 #include "decoders/streams/DecodePSG.h"
 #include "decoders/streams/DecodeVGM.h"
@@ -22,7 +24,7 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_supportedFileTypes = "vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
+const std::string k_supportedFileTypes = "stp|vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
 const int k_comPortIndex = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,12 +55,14 @@ void PrintDelimiter()
 bool DecodeFileToModule(const std::filesystem::path& path, Stream& stream)
 {
     std::shared_ptr<Decoder> decoders[]{
-        std::shared_ptr<Decoder>(new DecodeVGM()),
         std::shared_ptr<Decoder>(new DecodePT3()),
-        std::shared_ptr<Decoder>(new DecodePT2()),
-        std::shared_ptr<Decoder>(new DecodeASC()),
-        std::shared_ptr<Decoder>(new DecodeSTC()),
-        std::shared_ptr<Decoder>(new DecodeVTX()),
+        //std::shared_ptr<Decoder>(new DecodePT2()),
+        //std::shared_ptr<Decoder>(new DecodeSTC()),
+        //std::shared_ptr<Decoder>(new DecodeASC()),
+        std::shared_ptr<Decoder>(new DecodeSTP()),
+
+        //std::shared_ptr<Decoder>(new DecodeVGM()),
+        //std::shared_ptr<Decoder>(new DecodeVTX()),
         std::shared_ptr<Decoder>(new DecodePSG()),
     };
 

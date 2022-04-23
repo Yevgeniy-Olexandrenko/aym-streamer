@@ -170,7 +170,10 @@ void Filelist::InsertPath(const std::filesystem::path& path)
 {
     if (path.has_filename())
     {
-        if (std::find(m_exts.begin(), m_exts.end(), path.extension()) != m_exts.end())
+        auto extension = path.extension().string();
+        std::for_each(extension.begin(), extension.end(), [](char& c) { c = ::tolower(c); });
+
+        if (std::find(m_exts.begin(), m_exts.end(), extension) != m_exts.end())
         {
             if (std::filesystem::exists(path))
             {

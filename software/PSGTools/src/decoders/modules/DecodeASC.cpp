@@ -21,51 +21,54 @@ namespace
 bool DecodeASC::Open(Stream& stream)
 {
     bool isDetected = false;
-    std::ifstream fileStream;
-    fileStream.open(stream.file, std::fstream::binary);
-
-    if (fileStream)
+    if (CheckFileExt(stream, "asc"))
     {
-        fileStream.seekg(0, fileStream.end);
-        uint32_t fileSize = (uint32_t)fileStream.tellg();
+        std::ifstream fileStream;
+        fileStream.open(stream.file, std::fstream::binary);
 
-        if (fileSize >= 9)
+        if (fileStream)
         {
-            Header header;
-            fileStream.seekg(0, fileStream.beg);
-            fileStream.read((char*)(&header), std::min(sizeof(header), fileSize));
+            fileStream.seekg(0, fileStream.end);
+            uint32_t fileSize = (uint32_t)fileStream.tellg();
 
-            bool isHeaderOK = true;
-            isHeaderOK &= (header.patternsPointers < fileSize);
-            isHeaderOK &= (header.samplesPointers < fileSize);
-            isHeaderOK &= (header.ornamentsPointers < fileSize);
-
-            if (isHeaderOK)
+            if (fileSize >= 9)
             {
-                m_data = new uint8_t[fileSize];
+                Header header;
                 fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)m_data, fileSize);
+                fileStream.read((char*)(&header), std::min(sizeof(header), fileSize));
 
-                Init();
-                isDetected = true;
+                bool isHeaderOK = true;
+                isHeaderOK &= (header.patternsPointers < fileSize);
+                isHeaderOK &= (header.samplesPointers < fileSize);
+                isHeaderOK &= (header.ornamentsPointers < fileSize);
 
-                auto titleId = (uint8_t*)(&header.positions[header.numberOfPositions]);
-                if (!memcmp(titleId, "ASM COMPILATION OF ", 19))
+                if (isHeaderOK)
                 {
-                    auto artistId = (titleId + 19 + 20);
-                    if (!memcmp(artistId, " BY ", 4))
-                    {
-                        stream.info.title(ReadString(titleId + 19, 20));
-                        stream.info.artist(ReadString(artistId + 4, 20));
-                    }
-                    else
-                    {
-                        stream.info.title(ReadString(titleId + 19, 20 + 4 + 20));
-                    }                        
-                }
+                    m_data = new uint8_t[fileSize];
+                    fileStream.seekg(0, fileStream.beg);
+                    fileStream.read((char*)m_data, fileSize);
 
-                stream.info.type("ASC Sound Master module");
-                stream.playback.frameRate(50);
+                    Init();
+                    isDetected = true;
+
+                    auto titleId = (uint8_t*)(&header.positions[header.numberOfPositions]);
+                    if (!memcmp(titleId, "ASM COMPILATION OF ", 19))
+                    {
+                        auto artistId = (titleId + 19 + 20);
+                        if (!memcmp(artistId, " BY ", 4))
+                        {
+                            stream.info.title(ReadString(titleId + 19, 20));
+                            stream.info.artist(ReadString(artistId + 4, 20));
+                        }
+                        else
+                        {
+                            stream.info.title(ReadString(titleId + 19, 20 + 4 + 20));
+                        }
+                    }
+
+                    stream.info.type("ASC Sound Master module");
+                    stream.playback.frameRate(50);
+                }
             }
         }
     }

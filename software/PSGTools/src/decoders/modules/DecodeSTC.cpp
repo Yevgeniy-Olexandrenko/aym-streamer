@@ -22,61 +22,64 @@ namespace
 bool DecodeSTC::Open(Stream& stream)
 {
     bool isDetected = false;
-    std::ifstream fileStream;
-    fileStream.open(stream.file, std::fstream::binary);
-
-    if (fileStream)
+    if (CheckFileExt(stream, "stc"))
     {
-        fileStream.seekg(0, fileStream.end);
-        uint32_t fileSize = (uint32_t)fileStream.tellg();
+        std::ifstream fileStream;
+        fileStream.open(stream.file, std::fstream::binary);
 
-        if (fileSize >= sizeof(Header))
+        if (fileStream)
         {
-            Header header;
-            fileStream.seekg(0, fileStream.beg);
-            fileStream.read((char*)(&header), sizeof(header));
+            fileStream.seekg(0, fileStream.end);
+            uint32_t fileSize = (uint32_t)fileStream.tellg();
 
-            bool isHeaderOK = true;
-            isHeaderOK &= (header.positionsPointer < fileSize);
-            isHeaderOK &= (int(header.patternsPointer - header.ornamentsPointer) > 0);
-            isHeaderOK &= (int(header.positionsPointer - header.ornamentsPointer) < 0);
-            isHeaderOK &= (((header.patternsPointer - header.ornamentsPointer) % 0x21) == 0);
-
-            if (isHeaderOK)
+            if (fileSize >= sizeof(Header))
             {
-                m_data = new uint8_t[fileSize];
+                Header header;
                 fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)m_data, fileSize);
+                fileStream.read((char*)(&header), sizeof(header));
 
-                Init();
-                isDetected = true;
+                bool isHeaderOK = true;
+                isHeaderOK &= (header.positionsPointer < fileSize);
+                isHeaderOK &= (int(header.patternsPointer - header.ornamentsPointer) > 0);
+                isHeaderOK &= (int(header.positionsPointer - header.ornamentsPointer) < 0);
+                isHeaderOK &= (((header.patternsPointer - header.ornamentsPointer) % 0x21) == 0);
 
-                auto identifier = (uint8_t*)(&header.identifier);
-                if (memcmp(identifier, "SONG BY ST COMPILE", 18) &&
-                    memcmp(identifier, "SONG BY MB COMPILE", 18) &&
-                    memcmp(identifier, "SONG BY ST-COMPILE", 18) &&
-                    memcmp(identifier, "SOUND TRACKER v1.1", 18) &&
-                    memcmp(identifier, "S.T.FULL EDITION " , 17) &&
-                    memcmp(identifier, "SOUND TRACKER v1.3", 18))
+                if (isHeaderOK)
                 {
-                    int length = 18;
-                    if (header.size != fileSize)
-                    {
-                        if (identifier[18] >= 32 && identifier[18] <= 127)
-                        {
-                            length++;
-                            if (identifier[19] >= 32 && identifier[19] <= 127)
-                                length++;
-                        }
-                    }
-                    stream.info.comment(ReadString(header.identifier, length));
-                }
+                    m_data = new uint8_t[fileSize];
+                    fileStream.seekg(0, fileStream.beg);
+                    fileStream.read((char*)m_data, fileSize);
 
-                stream.info.type("Sound Tracker module");
-                stream.playback.frameRate(50);
+                    Init();
+                    isDetected = true;
+
+                    auto identifier = (uint8_t*)(&header.identifier);
+                    if (memcmp(identifier, "SONG BY ST COMPILE", 18) &&
+                        memcmp(identifier, "SONG BY MB COMPILE", 18) &&
+                        memcmp(identifier, "SONG BY ST-COMPILE", 18) &&
+                        memcmp(identifier, "SOUND TRACKER v1.1", 18) &&
+                        memcmp(identifier, "S.T.FULL EDITION ", 17) &&
+                        memcmp(identifier, "SOUND TRACKER v1.3", 18))
+                    {
+                        int length = 18;
+                        if (header.size != fileSize)
+                        {
+                            if (identifier[18] >= 32 && identifier[18] <= 127)
+                            {
+                                length++;
+                                if (identifier[19] >= 32 && identifier[19] <= 127)
+                                    length++;
+                            }
+                        }
+                        stream.info.comment(ReadString(header.identifier, length));
+                    }
+
+                    stream.info.type("Sound Tracker module");
+                    stream.playback.frameRate(50);
+                }
             }
+            fileStream.close();
         }
-        fileStream.close();
     }
     return isDetected;
 }

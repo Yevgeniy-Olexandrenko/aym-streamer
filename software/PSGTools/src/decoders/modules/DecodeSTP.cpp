@@ -24,46 +24,49 @@ namespace
 bool DecodeSTP::Open(Stream& stream)
 {
     bool isDetected = false;
-    std::ifstream fileStream;
-    fileStream.open(stream.file, std::fstream::binary);
-
-    if (fileStream)
+    if (CheckFileExt(stream, "stp"))
     {
-        fileStream.seekg(0, fileStream.end);
-        uint32_t fileSize = (uint32_t)fileStream.tellg();
+        std::ifstream fileStream;
+        fileStream.open(stream.file, std::fstream::binary);
 
-        if (fileSize >= sizeof(Header))
+        if (fileStream)
         {
-            Header header;
-            fileStream.seekg(0, fileStream.beg);
-            fileStream.read((char*)(&header), sizeof(header));
+            fileStream.seekg(0, fileStream.end);
+            uint32_t fileSize = (uint32_t)fileStream.tellg();
 
-            bool isHeaderOK = true;
-            isHeaderOK &= (header.positionsPointer < fileSize && header.patternsPointer < fileSize);
-            isHeaderOK &= (header.ornamentsPointer < fileSize && header.samplesPointer < fileSize);
-            isHeaderOK &= (int(header.samplesPointer - header.ornamentsPointer) == 0x20);
-            isHeaderOK &= (int(header.ornamentsPointer - header.patternsPointer) > 0);
-            isHeaderOK &= (int(header.ornamentsPointer - header.patternsPointer) % 6 == 0);
-           
-            if (isHeaderOK)
+            if (fileSize >= sizeof(Header))
             {
-                m_data = new uint8_t[fileSize];
+                Header header;
                 fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)m_data, fileSize);
+                fileStream.read((char*)(&header), sizeof(header));
 
-                Init();
-                isDetected = true;
+                bool isHeaderOK = true;
+                isHeaderOK &= (header.positionsPointer < fileSize&& header.patternsPointer < fileSize);
+                isHeaderOK &= (header.ornamentsPointer < fileSize&& header.samplesPointer < fileSize);
+                isHeaderOK &= (int(header.samplesPointer - header.ornamentsPointer) == 0x20);
+                isHeaderOK &= (int(header.ornamentsPointer - header.patternsPointer) > 0);
+                isHeaderOK &= (int(header.ornamentsPointer - header.patternsPointer) % 6 == 0);
 
-                if (!memcmp(&m_data[10], KSASignature.data(), KSASignature.size()))
+                if (isHeaderOK)
                 {
-                    stream.info.title(ReadString(&m_data[38], 25));
+                    m_data = new uint8_t[fileSize];
+                    fileStream.seekg(0, fileStream.beg);
+                    fileStream.read((char*)m_data, fileSize);
+
+                    Init();
+                    isDetected = true;
+
+                    if (!memcmp(&m_data[10], KSASignature.data(), KSASignature.size()))
+                    {
+                        stream.info.title(ReadString(&m_data[38], 25));
+                    }
+
+                    stream.info.type("Sound Tracker Pro module");
+                    stream.playback.frameRate(50);
                 }
-                
-                stream.info.type("Sound Tracker Pro module");
-                stream.playback.frameRate(50);
             }
+            fileStream.close();
         }
-        fileStream.close();
     }
     return isDetected;
 }

@@ -55,15 +55,17 @@ void PrintDelimiter()
 bool DecodeFileToModule(const std::filesystem::path& path, Stream& stream)
 {
     std::shared_ptr<Decoder> decoders[]{
+        // modules
         std::shared_ptr<Decoder>(new DecodePT3()),
-        //std::shared_ptr<Decoder>(new DecodePT2()),
-        //std::shared_ptr<Decoder>(new DecodeSTC()),
-        //std::shared_ptr<Decoder>(new DecodeASC()),
+        std::shared_ptr<Decoder>(new DecodePT2()),
+        std::shared_ptr<Decoder>(new DecodeSTC()),
+        std::shared_ptr<Decoder>(new DecodeASC()),
         std::shared_ptr<Decoder>(new DecodeSTP()),
 
-        //std::shared_ptr<Decoder>(new DecodeVGM()),
-        //std::shared_ptr<Decoder>(new DecodeVTX()),
+        // streams
         std::shared_ptr<Decoder>(new DecodePSG()),
+        std::shared_ptr<Decoder>(new DecodeVTX()),
+        std::shared_ptr<Decoder>(new DecodeVGM()),
     };
 
     stream.file = path;

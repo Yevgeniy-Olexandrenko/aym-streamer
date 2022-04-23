@@ -109,8 +109,8 @@ namespace
         {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E},
         {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F} };
 
-    const std::string SignaturePT = "ProTracker 3.";
-    const std::string SignatureVT = "Vortex Tracker II";
+    const std::string PTSignature = "ProTracker 3.";
+    const std::string VTSignature = "Vortex Tracker II";
 }
 
 bool DecodePT3::Open(Stream& stream)
@@ -124,8 +124,8 @@ bool DecodePT3::Open(Stream& stream)
         uint8_t signature[30];
         fileStream.read((char*)signature, 30);
 
-        bool isPT = !memcmp(signature, SignaturePT.data(), SignaturePT.size());
-        bool isVT = !memcmp(signature, SignatureVT.data(), SignatureVT.size());
+        bool isPT = !memcmp(signature, PTSignature.data(), PTSignature.size());
+        bool isVT = !memcmp(signature, VTSignature.data(), VTSignature.size());
 
         if (isPT || isVT)
         {

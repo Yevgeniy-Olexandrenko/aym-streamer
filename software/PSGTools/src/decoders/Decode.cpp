@@ -1,5 +1,26 @@
 #include "Decode.h"
 
+bool Decoder::CheckFileExt(const Stream& stream, const std::string& ext) const
+{
+    auto check_ext = "." + ext;
+    auto extension = stream.file.extension().string();
+    std::for_each(extension.begin(), extension.end(), [](char& c) { c = ::tolower(c); });
+    return (extension == check_ext);
+}
+
+std::string Decoder::ReadString(uint8_t* ptr, uint8_t size) const
+{
+    char buf[256];
+    memcpy(buf, ptr, size);
+    buf[size] = 0;
+
+    int i = size;
+    while (i && buf[i - 1] == ' ') buf[--i] = 0;
+    return std::string(buf);
+}
+
+/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+
 bool ModuleDecoder::Decode(Frame& frame)
 {
     m_regs[0][Env_Shape] = 0xFF;
@@ -67,15 +88,4 @@ void ModuleDecoder::Close(Stream& stream)
 void ModuleDecoder::Loop(uint8_t& currPosition, uint8_t& lastPosition, uint8_t& loopPosition)
 {
     currPosition = lastPosition = loopPosition = 0;
-}
-
-std::string ModuleDecoder::ReadString(uint8_t* ptr, uint8_t size) const
-{
-    char buf[256];
-    memcpy(buf, ptr, size);
-    buf[size] = 0;
-
-    int i = size;
-    while (i && buf[i - 1] == ' ') buf[--i] = 0;
-    return std::string(buf);
 }

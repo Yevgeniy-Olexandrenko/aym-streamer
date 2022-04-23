@@ -22,44 +22,47 @@ namespace
 bool DecodePT2::Open(Stream& stream)
 {
     bool isDetected = false;
-    std::ifstream fileStream;
-    fileStream.open(stream.file, std::fstream::binary);
-
-    if (fileStream)
+    if (CheckFileExt(stream, "pt2"))
     {
-        fileStream.seekg(0, fileStream.end);
-        uint32_t fileSize = (uint32_t)fileStream.tellg();
+        std::ifstream fileStream;
+        fileStream.open(stream.file, std::fstream::binary);
 
-        if (fileSize > 131)
+        if (fileStream)
         {
-            uint8_t data[131 + 1];
-            fileStream.seekg(0, fileStream.beg);
-            fileStream.read((char*)data, sizeof(data));
-            Header* header = (Header*)data;
+            fileStream.seekg(0, fileStream.end);
+            uint32_t fileSize = (uint32_t)fileStream.tellg();
 
-            bool isHeaderOk = true;
-            isHeaderOk &= (header->delay >= 3);
-            isHeaderOk &= (header->numberOfPositions > 0);
-            isHeaderOk &= (header->samplesPointers[0] == 0);
-            isHeaderOk &= (header->patternsPointer < fileSize);
-            isHeaderOk &= (header->ornamentsPointers[0] - header->samplesPointers[0] - 2 <= int(fileSize));
-            isHeaderOk &= (header->ornamentsPointers[0] - header->samplesPointers[0] >= 0);
-
-            if (isHeaderOk)
+            if (fileSize > 131)
             {
-                m_data = new uint8_t[fileSize];
+                uint8_t data[131 + 1];
                 fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)m_data, fileSize);
+                fileStream.read((char*)data, sizeof(data));
+                Header* header = (Header*)data;
 
-                Init();
-                isDetected = true;
+                bool isHeaderOk = true;
+                isHeaderOk &= (header->delay >= 3);
+                isHeaderOk &= (header->numberOfPositions > 0);
+                isHeaderOk &= (header->samplesPointers[0] == 0);
+                isHeaderOk &= (header->patternsPointer < fileSize);
+                isHeaderOk &= (header->ornamentsPointers[0] - header->samplesPointers[0] - 2 <= int(fileSize));
+                isHeaderOk &= (header->ornamentsPointers[0] - header->samplesPointers[0] >= 0);
 
-                stream.info.title(ReadString(header->musicName, 30));
-                stream.info.type("ProTracker 2.x module");
-                stream.playback.frameRate(50);
+                if (isHeaderOk)
+                {
+                    m_data = new uint8_t[fileSize];
+                    fileStream.seekg(0, fileStream.beg);
+                    fileStream.read((char*)m_data, fileSize);
+
+                    Init();
+                    isDetected = true;
+
+                    stream.info.title(ReadString(header->musicName, 30));
+                    stream.info.type("ProTracker 2.x module");
+                    stream.playback.frameRate(50);
+                }
             }
+            fileStream.close();
         }
-        fileStream.close();
     }
 	return isDetected;
 }

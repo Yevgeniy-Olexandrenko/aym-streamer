@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Decode.h"
+#include "decoders/Decode.h"
 
 class DecodeVGM : public Decoder
 {

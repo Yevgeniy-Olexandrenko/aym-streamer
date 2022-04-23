@@ -19,15 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\decoders\DecodeASC.h" />
-    <ClInclude Include="..\src\decoders\DecodePSG.h" />
-    <ClInclude Include="..\src\decoders\DecodePT2.h" />
-    <ClInclude Include="..\src\decoders\DecodePT3.h" />
+    <ClInclude Include="..\src\decoders\chips\RP2A03.h" />
     <ClInclude Include="..\src\decoders\Decode.h" />
-    <ClInclude Include="..\src\decoders\DecodeSTC.h" />
-    <ClInclude Include="..\src\decoders\DecodeVGM.h" />
-    <ClInclude Include="..\src\decoders\DecodeVTX.h" />
-    <ClInclude Include="..\src\decoders\RP2A03.h" />
+    <ClInclude Include="..\src\decoders\modules\DecodeASC.h" />
+    <ClInclude Include="..\src\decoders\modules\DecodePT2.h" />
+    <ClInclude Include="..\src\decoders\modules\DecodePT3.h" />
+    <ClInclude Include="..\src\decoders\modules\DecodeSTC.h" />
+    <ClInclude Include="..\src\decoders\modules\DecodeSTP.h" />
+    <ClInclude Include="..\src\decoders\streams\DecodePSG.h" />
+    <ClInclude Include="..\src\decoders\streams\DecodeVGM.h" />
+    <ClInclude Include="..\src\decoders\streams\DecodeVTX.h" />
     <ClInclude Include="..\src\filelist\Filelist.h" />
     <ClInclude Include="..\src\Interface.h" />
     <ClInclude Include="..\src\encoders\EncodePSG.h" />
@@ -46,15 +47,16 @@
     <ClInclude Include="..\src\stream\Stream.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\decoders\DecodeASC.cpp" />
-    <ClCompile Include="..\src\decoders\DecodePSG.cpp" />
-    <ClCompile Include="..\src\decoders\DecodePT2.cpp" />
-    <ClCompile Include="..\src\decoders\DecodePT3.cpp" />
+    <ClCompile Include="..\src\decoders\chips\RP2A03.cpp" />
     <ClCompile Include="..\src\decoders\Decode.cpp" />
-    <ClCompile Include="..\src\decoders\DecodeSTC.cpp" />
-    <ClCompile Include="..\src\decoders\DecodeVGM.cpp" />
-    <ClCompile Include="..\src\decoders\DecodeVTX.cpp" />
-    <ClCompile Include="..\src\decoders\RP2A03.cpp" />
+    <ClCompile Include="..\src\decoders\modules\DecodeASC.cpp" />
+    <ClCompile Include="..\src\decoders\modules\DecodePT2.cpp" />
+    <ClCompile Include="..\src\decoders\modules\DecodePT3.cpp" />
+    <ClCompile Include="..\src\decoders\modules\DecodeSTC.cpp" />
+    <ClCompile Include="..\src\decoders\modules\DecodeSTP.cpp" />
+    <ClCompile Include="..\src\decoders\streams\DecodePSG.cpp" />
+    <ClCompile Include="..\src\decoders\streams\DecodeVGM.cpp" />
+    <ClCompile Include="..\src\decoders\streams\DecodeVTX.cpp" />
     <ClCompile Include="..\src\filelist\Filelist.cpp" />
     <ClCompile Include="..\src\Interface.cpp" />
     <ClCompile Include="..\src\encoders\EncodePSG.cpp" />

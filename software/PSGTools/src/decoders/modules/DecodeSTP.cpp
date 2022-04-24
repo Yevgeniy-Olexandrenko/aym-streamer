@@ -85,6 +85,7 @@ void DecodeSTP::Init()
     m_transposition = m_data[header->positionsPointer + 3];
     m_currentPosition = 0;
 
+    uint16_t patternPointer = header->patternsPointer + m_data[header->positionsPointer + 2];
     m_chA.addressInPattern = *(uint16_t*)(&m_data[header->patternsPointer + m_data[header->positionsPointer + 2] + 0]);
     m_chB.addressInPattern = *(uint16_t*)(&m_data[header->patternsPointer + m_data[header->positionsPointer + 2] + 2]);
     m_chC.addressInPattern = *(uint16_t*)(&m_data[header->patternsPointer + m_data[header->positionsPointer + 2] + 4]);
@@ -119,7 +120,6 @@ bool DecodeSTP::Play()
 
     if (--m_delayCounter == 0)
     {
-        m_delayCounter = header->delay;
         if (--m_chA.noteSkipCounter < 0)
         {
             if (m_data[m_chA.addressInPattern] == 0)
@@ -130,9 +130,10 @@ bool DecodeSTP::Play()
                     isNewLoop = true;
                 }
 
-                m_chA.addressInPattern = *(uint16_t*)(&m_data[header->patternsPointer + m_data[header->positionsPointer + 2 + m_currentPosition * 2] + 0]);
-                m_chB.addressInPattern = *(uint16_t*)(&m_data[header->patternsPointer + m_data[header->positionsPointer + 2 + m_currentPosition * 2] + 2]);
-                m_chC.addressInPattern = *(uint16_t*)(&m_data[header->patternsPointer + m_data[header->positionsPointer + 2 + m_currentPosition * 2] + 4]);
+                uint16_t patternPointer = header->patternsPointer + m_data[header->positionsPointer + 2 + m_currentPosition * 2];
+                m_chA.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 0]);
+                m_chB.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 2]);
+                m_chC.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 4]);
 
                 m_transposition = m_data[header->positionsPointer + 3 + m_currentPosition * 2];
             }
@@ -141,6 +142,8 @@ bool DecodeSTP::Play()
 
         if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
         if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
+
+        m_delayCounter = header->delay;
     }
 
     GetRegisters(m_chA, TempMixer);
@@ -275,8 +278,8 @@ void DecodeSTP::GetRegisters(Channel& chan, uint8_t& mixer)
     }
     else
     {
-        mixer = mixer | 0x48;
+        mixer |= 0x48;
         chan.amplitude = 0;
     }
-    mixer = mixer >> 1;
+    mixer >>= 1;
 }

@@ -113,8 +113,6 @@ bool DecodeASC::Play()
 
     if (--m_delayCounter <= 0)
     {
-        m_delayCounter = m_delay;
-
         if (--m_chA.noteSkipCounter < 0)
         {
             if (m_data[m_chA.addressInPattern] == 255)
@@ -139,6 +137,8 @@ bool DecodeASC::Play()
 
         if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
         if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
+
+        m_delayCounter = m_delay;
     }
 
     GetRegisters(m_chA, mixer);
@@ -287,7 +287,7 @@ void DecodeASC::PatternInterpreter(Channel& chan)
         }
         else if (val == 0xf8)
         {
-            m_regs[0][Env_Shape] = 8;
+            m_regs[0][Env_Shape] = 0x08;
         }
         else if (val == 0xf9)
         {
@@ -306,7 +306,7 @@ void DecodeASC::PatternInterpreter(Channel& chan)
         }
         else if (val == 0xfa)
         {
-            m_regs[0][Env_Shape] = 10;
+            m_regs[0][Env_Shape] = 0x0A;
         }
         else if (val == 0xfb)
         {
@@ -324,11 +324,11 @@ void DecodeASC::PatternInterpreter(Channel& chan)
         }
         else if (val == 0xfc)
         {
-            m_regs[0][Env_Shape] = 12;
+            m_regs[0][Env_Shape] = 0x0C;
         }
         else if (val == 0xfe)
         {
-            m_regs[0][Env_Shape] = 14;
+            m_regs[0][Env_Shape] = 0x0E;
         }
         chan.addressInPattern++;
     }
@@ -447,5 +447,5 @@ void DecodeASC::GetRegisters(Channel& chan, uint8_t& mixer)
         if (chan.envelopeEnabled && sampleSaysOKforEnvelope)
             chan.amplitude |= 0x10;
     }
-    mixer = mixer >> 1;
+    mixer >>= 1;
 }

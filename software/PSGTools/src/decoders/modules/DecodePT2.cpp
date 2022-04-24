@@ -32,20 +32,19 @@ bool DecodePT2::Open(Stream& stream)
             fileStream.seekg(0, fileStream.end);
             uint32_t fileSize = (uint32_t)fileStream.tellg();
 
-            if (fileSize > 131)
+            if (fileSize >= 132)
             {
-                uint8_t data[131 + 1];
+                Header header;
                 fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)data, sizeof(data));
-                Header* header = (Header*)data;
+                fileStream.read((char*)(&header), std::min(sizeof(header), fileSize));
 
                 bool isHeaderOk = true;
-                isHeaderOk &= (header->delay >= 3);
-                isHeaderOk &= (header->numberOfPositions > 0);
-                isHeaderOk &= (header->samplesPointers[0] == 0);
-                isHeaderOk &= (header->patternsPointer < fileSize);
-                isHeaderOk &= (header->ornamentsPointers[0] - header->samplesPointers[0] - 2 <= int(fileSize));
-                isHeaderOk &= (header->ornamentsPointers[0] - header->samplesPointers[0] >= 0);
+                isHeaderOk &= (header.delay >= 3);
+                isHeaderOk &= (header.numberOfPositions > 0);
+                isHeaderOk &= (header.samplesPointers[0] == 0);
+                isHeaderOk &= (header.patternsPointer < fileSize);
+                isHeaderOk &= (header.ornamentsPointers[0] - header.samplesPointers[0] - 2 <= int(fileSize));
+                isHeaderOk &= (header.ornamentsPointers[0] - header.samplesPointers[0] >= 0);
 
                 if (isHeaderOk)
                 {
@@ -56,7 +55,7 @@ bool DecodePT2::Open(Stream& stream)
                     Init();
                     isDetected = true;
 
-                    stream.info.title(ReadString(header->musicName, 30));
+                    stream.info.title(ReadString(header.musicName, 30));
                     stream.info.type("ProTracker 2.x module");
                     stream.playback.frameRate(50);
                 }
@@ -81,11 +80,10 @@ void DecodePT2::Init()
     m_delayCounter = 1;
     m_currentPosition = 0;
 
-    uint16_t patternsPointer = header->patternsPointer;
-    patternsPointer += header->positionList[0] * 6;
-    m_chA.addressInPattern = m_data[patternsPointer + 0] | m_data[patternsPointer + 1] << 8;
-    m_chB.addressInPattern = m_data[patternsPointer + 2] | m_data[patternsPointer + 3] << 8;
-    m_chC.addressInPattern = m_data[patternsPointer + 4] | m_data[patternsPointer + 5] << 8;
+    uint16_t patternPointer = header->patternsPointer + header->positionList[0] * 6;
+    m_chA.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 0]);
+    m_chB.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 2]);
+    m_chC.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 4]);
 
     for (Channel* chan : { &m_chA, &m_chB, &m_chC })
     {
@@ -124,17 +122,17 @@ bool DecodePT2::Play()
                     isNewLoop = true;
                 }
 
-                uint16_t patternsPointer = header->patternsPointer;
-                patternsPointer += header->positionList[m_currentPosition] * 6;
-                m_chA.addressInPattern = m_data[patternsPointer + 0] | m_data[patternsPointer + 1] << 8;
-                m_chB.addressInPattern = m_data[patternsPointer + 2] | m_data[patternsPointer + 3] << 8;
-                m_chC.addressInPattern = m_data[patternsPointer + 4] | m_data[patternsPointer + 5] << 8;
+                uint16_t patternPointer = header->patternsPointer + header->positionList[m_currentPosition] * 6;
+                m_chA.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 0]);
+                m_chB.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 2]);
+                m_chC.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 4]);
             }
             PatternInterpreter(m_chA);
         }
 
         if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
         if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
+
         m_delayCounter = m_delay;
     }
 

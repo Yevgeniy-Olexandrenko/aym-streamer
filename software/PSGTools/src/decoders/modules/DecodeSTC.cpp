@@ -94,15 +94,15 @@ void DecodeSTC::Init()
     memset(&m_chB, 0, sizeof(Channel));
     memset(&m_chC, 0, sizeof(Channel));
 
-    m_currentPosition = 0;
-    m_transposition = m_data[header->positionsPointer + 2];
     m_delayCounter = 1;
-
-    uint16_t patternsPointer = header->patternsPointer;
-    while (m_data[patternsPointer] != m_data[header->positionsPointer + 1]) patternsPointer += 7;
-    m_chA.addressInPattern = m_data[patternsPointer + 1] | m_data[patternsPointer + 2] << 8;
-    m_chB.addressInPattern = m_data[patternsPointer + 3] | m_data[patternsPointer + 4] << 8;
-    m_chC.addressInPattern = m_data[patternsPointer + 5] | m_data[patternsPointer + 6] << 8;
+    m_transposition = m_data[header->positionsPointer + 2];
+    m_currentPosition = 0;
+    
+    uint16_t patternPointer = header->patternsPointer;
+    while (m_data[patternPointer] != m_data[header->positionsPointer + 1]) patternPointer += 7;
+    m_chA.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 1]);
+    m_chB.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 3]);
+    m_chC.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 5]);
 
     for (Channel* chan : { &m_chA, &m_chB, &m_chC })
     {
@@ -135,17 +135,18 @@ bool DecodeSTC::Play()
 
                 m_transposition = m_data[header->positionsPointer + 2 + m_currentPosition * 2];
 
-                uint16_t patternsPointer = header->patternsPointer;
-                while (m_data[patternsPointer] != m_data[header->positionsPointer + 1 + m_currentPosition * 2]) patternsPointer += 7;
-                m_chA.addressInPattern = m_data[patternsPointer + 1] | m_data[patternsPointer + 2] << 8;
-                m_chB.addressInPattern = m_data[patternsPointer + 3] | m_data[patternsPointer + 4] << 8;
-                m_chC.addressInPattern = m_data[patternsPointer + 5] | m_data[patternsPointer + 6] << 8;
+                uint16_t patternPointer = header->patternsPointer;
+                while (m_data[patternPointer] != m_data[header->positionsPointer + 1 + m_currentPosition * 2]) patternPointer += 7;
+                m_chA.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 1]);
+                m_chB.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 3]);
+                m_chC.addressInPattern = *(uint16_t*)(&m_data[patternPointer + 5]);
             }
             PatternInterpreter(m_chA);
         }
 
         if (--m_chB.noteSkipCounter < 0) PatternInterpreter(m_chB);
         if (--m_chC.noteSkipCounter < 0) PatternInterpreter(m_chC);
+
         m_delayCounter = header->delay;
     }
 
@@ -260,12 +261,12 @@ void DecodeSTC::GetRegisters(Channel& chan, uint8_t& mixer)
     {
         uint16_t samplePointer = ((chan.positionInSample - 1) & 0x1f) * 3 + chan.samplePointer;
         if ((m_data[samplePointer + 1] & 0x80) != 0)
-            mixer = mixer | 64;
+            mixer |= 64;
         else
             m_regs[0][Noise_Period] = m_data[samplePointer + 1] & 0x1f;
 
         if ((m_data[samplePointer + 1] & 0x40) != 0)
-            mixer = mixer | 8;
+            mixer |= 8;
         chan.amplitude = m_data[samplePointer] & 15;
 
         uint8_t note = chan.note + m_data[chan.ornamentPointer + ((chan.positionInSample - 1) & 0x1f)] + m_transposition;
@@ -281,5 +282,5 @@ void DecodeSTC::GetRegisters(Channel& chan, uint8_t& mixer)
     else
         chan.amplitude = 0;
 
-    mixer = mixer >> 1;
+    mixer >>= 1;
 }

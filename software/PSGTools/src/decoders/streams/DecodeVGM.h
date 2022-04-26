@@ -1,6 +1,7 @@
 #pragma once
 
 #include "decoders/Decode.h"
+#include "decoders/chips/RP2A03.h"
 
 class DecodeVGM : public Decoder
 {
@@ -87,14 +88,30 @@ public:
 	void Close(Stream& stream) override;
 
 private:
+    bool VgmDecode(Frame& frame);
     bool ReadFile(const char* path, uint8_t* dest, int size);
     int  DetectFrameRate();
+
+    void RP2A03Write(uint8_t reg, uint8_t data);
+    void RP2A03Update(Frame& frame);
+    void RP2A03FixVolume(Stream& stream);
 
 private:
     uint8_t* m_rawData;
     uint8_t* m_dataPtr;
 
     int m_loop;
+
+    bool m_firstFrame;
     int m_samplesPerFrame;
-    int m_waitForSamples;
+    int m_minSamplesPerFrame;
+    int m_maxSamplesPerFrame;
+
+    int m_processedSamples;
+
+    bool m_isAY38910;
+    bool m_isRP2A03;
+
+    RP2A03 m_rp2A03;
+    int m_maxVol[3]{};
 };

@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
 
     if (!m_filelist->empty())
     {
-        m_filelist->shuffle();
+//        m_filelist->shuffle();
         bool goToPrev = false;
 
         std::filesystem::path path;

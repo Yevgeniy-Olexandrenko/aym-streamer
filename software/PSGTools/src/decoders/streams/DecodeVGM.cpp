@@ -1,5 +1,6 @@
 #include "DecodeVGM.h"
 #include "zlib/zlib.h"
+#include <iostream>
 
 bool DecodeVGM::Open(Stream& stream)
 {
@@ -113,7 +114,7 @@ bool DecodeVGM::VgmDecode(Frame& frame)
             {
                 uint8_t aa = m_dataPtr[1];
                 uint8_t dd = m_dataPtr[2];
-                frame[aa].first.override(dd);
+                frame.Update(aa, dd);
             }
             m_dataPtr += 2;
         }
@@ -307,14 +308,14 @@ void DecodeVGM::RP2A03Update(Frame& frame)
         uint8_t  a1_volume_m = (a1_volume ? a1_volume - 1 : a1_volume);
 
         // chip 0 ch A
-        frame[TonA_PeriodL].first.update(a1_period & 0xFF);
-        frame[TonA_PeriodH].first.update(a1_period >> 8 & 0x0F);
-        frame[VolA_EnvFlg].first.update(a1_volume);
+        frame.Update(0, TonA_PeriodL, a1_period & 0xFF);
+        frame.Update(0, TonA_PeriodH, a1_period >> 8 & 0x0F);
+        frame.Update(0, VolA_EnvFlg,  a1_volume);
 
         // chip 1 ch A
-        frame[TonA_PeriodL].second.update(a1_period_m & 0xFF);
-        frame[TonA_PeriodH].second.update(a1_period_m >> 8 & 0x0F);
-        frame[VolA_EnvFlg].second.update(a1_volume_m);
+        frame.Update(1, TonA_PeriodL, a1_period_m & 0xFF);
+        frame.Update(1, TonA_PeriodH, a1_period_m >> 8 & 0x0F);
+        frame.Update(1, VolA_EnvFlg,  a1_volume_m);
 
         if (a1_volume > m_maxVol[0]) m_maxVol[0] = a1_volume;
     }
@@ -327,14 +328,14 @@ void DecodeVGM::RP2A03Update(Frame& frame)
         uint8_t  c2_volume_m = (c2_volume ? c2_volume - 1 : c2_volume);
 
         // chip 0 ch C
-        frame[TonC_PeriodL].first.update(c2_period & 0xFF);
-        frame[TonC_PeriodH].first.update((c2_period >> 8) & 0x0F);
-        frame[VolC_EnvFlg].first.update(c2_volume);
+        frame.Update(0, TonC_PeriodL, c2_period & 0xFF);
+        frame.Update(0, TonC_PeriodH, c2_period >> 8 & 0x0F);
+        frame.Update(0, VolC_EnvFlg,  c2_volume);
         
         // chip 1 ch C
-        frame[TonC_PeriodL].second.update(c2_period_m & 0xFF);
-        frame[TonC_PeriodH].second.update(c2_period_m >> 8 & 0x0F);
-        frame[VolC_EnvFlg].second.update(c2_volume_m);
+        frame.Update(1, TonC_PeriodL, c2_period_m & 0xFF);
+        frame.Update(1, TonC_PeriodH, c2_period_m >> 8 & 0x0F);
+        frame.Update(1, VolC_EnvFlg,  c2_volume_m);
 
         if (c2_volume > m_maxVol[1]) m_maxVol[1] = c2_volume;
     }
@@ -342,31 +343,24 @@ void DecodeVGM::RP2A03Update(Frame& frame)
     mixer2 &= ~(c2_enable << 2);
 
     // chip 0 ch B
-    frame[Env_PeriodL].first.update(bt_period & 0xFF);
-    frame[Env_PeriodH].first.update((bt_period >> 8) & 0xFF);
-    frame[VolB_EnvFlg].first.update(0x10);
-    frame[Env_Shape].first.update(0x0E);
+    frame.Update(0, Env_PeriodL, bt_period & 0xFF);
+    frame.Update(0, Env_PeriodH, bt_period >> 8 & 0xFF);
+    frame.Update(0, VolB_EnvFlg, 0x10);
+    frame.Update(0, Env_Shape,   0x0E);
 
     if (bn_enable)
     {
         // chip 1 ch B
-        frame[Noise_Period].second.update(bn_period & 0x1F);
-        frame[VolB_EnvFlg].second.update(bn_volume);
+        frame.Update(1, Noise_Period, bn_period & 0x1F);
+        frame.Update(1, VolB_EnvFlg,  bn_volume);
 
         if (bn_volume > m_maxVol[2]) m_maxVol[2] = bn_volume;
     }
-    //else
-    //{
-    //    frame[Env_PeriodL].second.update(bt_period & 0xFF);
-    //    frame[Env_PeriodH].second.update((bt_period >> 8) & 0xFF);
-    //    frame[VolB_EnvFlg].second.update(0x10);
-    //    frame[Env_Shape].second.update(0x0C);
-    //}
     mixer2 &= ~(bn_enable << 4);
     
     // mixers
-    frame[Mixer_Flags].first.update(mixer1);
-    frame[Mixer_Flags].second.update(mixer2);
+    frame.Update(0, Mixer_Flags, mixer1);
+    frame.Update(1, Mixer_Flags, mixer2);
 
     // update
     int samples = 44100 / 60;// m_samplesPerFrame;
@@ -382,29 +376,29 @@ void DecodeVGM::RP2A03FixVolume(Stream& stream)
     {
         Frame& frame = const_cast<Frame&>(stream.frames.get(i));
 
-        if (frame[VolA_EnvFlg].first.changed() && frame[VolA_EnvFlg].first.data() < 0x0F)
-            frame[VolA_EnvFlg].first.override(frame[VolA_EnvFlg].first.data() + pulseVolDelta);
-        else
-            frame[VolA_EnvFlg].first = Register(frame[VolA_EnvFlg].first.data() + pulseVolDelta);
-        
-        if (frame[VolA_EnvFlg].second.changed() && frame[VolA_EnvFlg].second.data() < 0x0F)
-            frame[VolA_EnvFlg].second.override(frame[VolA_EnvFlg].second.data() + pulseVolDelta);
-        else
-            frame[VolA_EnvFlg].second = Register(frame[VolA_EnvFlg].second.data() + pulseVolDelta);
+        //if (frame[VolA_EnvFlg].first.changed() && frame[VolA_EnvFlg].first.data() < 0x0F)
+        //    frame[VolA_EnvFlg].first.override(frame[VolA_EnvFlg].first.data() + pulseVolDelta);
+        //else
+        //    frame[VolA_EnvFlg].first = Register(frame[VolA_EnvFlg].first.data() + pulseVolDelta);
+        //
+        //if (frame[VolA_EnvFlg].second.changed() && frame[VolA_EnvFlg].second.data() < 0x0F)
+        //    frame[VolA_EnvFlg].second.override(frame[VolA_EnvFlg].second.data() + pulseVolDelta);
+        //else
+        //    frame[VolA_EnvFlg].second = Register(frame[VolA_EnvFlg].second.data() + pulseVolDelta);
 
-        if (frame[VolC_EnvFlg].first.changed() && frame[VolC_EnvFlg].first.data() < 0x0F)
-            frame[VolC_EnvFlg].first.override(frame[VolC_EnvFlg].first.data() + pulseVolDelta);
-        else
-            frame[VolC_EnvFlg].first = Register(frame[VolC_EnvFlg].first.data() + pulseVolDelta);
+        //if (frame[VolC_EnvFlg].first.changed() && frame[VolC_EnvFlg].first.data() < 0x0F)
+        //    frame[VolC_EnvFlg].first.override(frame[VolC_EnvFlg].first.data() + pulseVolDelta);
+        //else
+        //    frame[VolC_EnvFlg].first = Register(frame[VolC_EnvFlg].first.data() + pulseVolDelta);
 
-        if (frame[VolC_EnvFlg].second.changed() && frame[VolC_EnvFlg].second.data() < 0x0F)
-            frame[VolC_EnvFlg].second.override(frame[VolC_EnvFlg].second.data() + pulseVolDelta);
-        else
-            frame[VolC_EnvFlg].second = Register(frame[VolC_EnvFlg].second.data() + pulseVolDelta);
+        //if (frame[VolC_EnvFlg].second.changed() && frame[VolC_EnvFlg].second.data() < 0x0F)
+        //    frame[VolC_EnvFlg].second.override(frame[VolC_EnvFlg].second.data() + pulseVolDelta);
+        //else
+        //    frame[VolC_EnvFlg].second = Register(frame[VolC_EnvFlg].second.data() + pulseVolDelta);
 
-        if (frame[VolB_EnvFlg].second.changed() && frame[VolB_EnvFlg].second.data() < 0x0F)
-            frame[VolB_EnvFlg].second.override(frame[VolB_EnvFlg].second.data() + noiseVolDelta);
-        else
-            frame[VolB_EnvFlg].second = Register(frame[VolB_EnvFlg].second.data() + noiseVolDelta);
+        //if (frame[VolB_EnvFlg].second.changed() && frame[VolB_EnvFlg].second.data() < 0x0F)
+        //    frame[VolB_EnvFlg].second.override(frame[VolB_EnvFlg].second.data() + noiseVolDelta);
+        //else
+        //    frame[VolB_EnvFlg].second = Register(frame[VolB_EnvFlg].second.data() + noiseVolDelta);
     }
 }

@@ -44,14 +44,13 @@ bool Streamer::OutFrame(const Frame& frame, bool force)
 		char buffer[16 * 2 + 1];
 		int  bufPtr = 0;
 
-		for (uint8_t i = 0; i < 16; ++i)
+		for (uint8_t reg = 0; reg < 16; ++reg)
 		{
-			const Register& reg = frame[i].first;
-			if (force || reg.changed())
+			if (force || frame.IsChanged(reg))
 			{
 				// register number and value
-				buffer[bufPtr++] = char(i);
-				buffer[bufPtr++] = char(reg.data());
+				buffer[bufPtr++] = char(reg);
+				buffer[bufPtr++] = char(frame.Read(reg));
 			}
 		}
 

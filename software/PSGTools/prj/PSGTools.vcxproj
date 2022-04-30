@@ -44,7 +44,6 @@
     <ClInclude Include="..\src\output\Streamer\Streamer.h" />
     <ClInclude Include="..\src\stream\Frame.h" />
     <ClInclude Include="..\src\stream\Player.h" />
-    <ClInclude Include="..\src\stream\Register.h" />
     <ClInclude Include="..\src\stream\Stream.h" />
   </ItemGroup>
   <ItemGroup>
@@ -72,7 +71,6 @@
     <ClCompile Include="..\src\PSGTools.cpp" />
     <ClCompile Include="..\src\stream\Frame.cpp" />
     <ClCompile Include="..\src\stream\Player.cpp" />
-    <ClCompile Include="..\src\stream\Register.cpp" />
     <ClCompile Include="..\src\stream\Stream.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

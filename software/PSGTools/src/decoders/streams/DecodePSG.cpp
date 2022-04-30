@@ -52,7 +52,7 @@ bool DecodePSG::Decode(Frame& frame)
 
         if (m_fileStream.get((char&)byte2))
         {
-            frame[byte1].first.override(byte2);
+            frame.Update(byte1, byte2);
         }
     }
     return false;

@@ -228,24 +228,24 @@ void Stream::Loop::UpdateLoopFrameChanges()
 		const Frame& lastFrame = m_stream.frames.get(m_stream.frames.lastFrameId());
 		Frame& loopFrame = const_cast<Frame&>(m_stream.frames.get(frameId()));
 
-		for (uint8_t i = 0; i < 16; ++i)
+		for (uint8_t reg = 0; reg < 16; ++reg)
 		{
-			if (!loopFrame.changed(0, i))
+			if (!loopFrame.IsChanged(0, reg))
 			{
-				loopFrameData = loopFrame.data(0, i);
-				lastFrameData = lastFrame.data(0, i);
+				loopFrameData = loopFrame.Read(0, reg);
+				lastFrameData = lastFrame.Read(0, reg);
 
 				if (loopFrameData != lastFrameData)
-					loopFrame[i].first.override(loopFrameData);
+					loopFrame.Write(0, reg, loopFrameData);
 			}
 
-			if (!loopFrame.changed(1, i))
+			if (!loopFrame.IsChanged(1, reg))
 			{
-				loopFrameData = loopFrame.data(1, i);
-				lastFrameData = lastFrame.data(1, i);
+				loopFrameData = loopFrame.Read(1, reg);
+				lastFrameData = lastFrame.Read(1, reg);
 
 				if (loopFrameData != lastFrameData)
-					loopFrame[i].second.override(loopFrameData);
+					loopFrame.Write(1, reg, loopFrameData);
 			}
 		}
 	}

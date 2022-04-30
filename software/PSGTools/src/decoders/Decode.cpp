@@ -43,34 +43,12 @@ bool ModuleDecoder::Decode(Frame& frame)
     if (!isNewLoop)
     {
         for (uint8_t r = 0; r < 16; ++r)
-        {
-            uint8_t data = m_regs[0][r];
-            if (r == Env_Shape)
-            {
-                if (data != 0xFF)
-                    frame[r].first.override(data);
-            }
-            else
-            {
-                frame[r].first.update(data);
-            }
-        }
+            frame.Update(0, r, m_regs[0][r]);
 
         if (m_isTS)
         {
             for (uint8_t r = 0; r < 16; ++r)
-            {
-                uint8_t data = m_regs[1][r];
-                if (r == Env_Shape)
-                {
-                    if (data != 0xFF)
-                        frame[r].second.override(data);
-                }
-                else
-                {
-                    frame[r].second.update(data);
-                }
-            }
+                frame.Update(1, r, m_regs[1][r]);
         }
         return true;
     }

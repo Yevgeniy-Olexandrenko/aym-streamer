@@ -167,20 +167,20 @@ bool Emulator::InitChip(uint8_t chipIndex)
     return false;
 }
 
-void Emulator::WriteToChip(uint8_t chipIndex, const Frame& frame, bool force)
+void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
 {
-    ayumi* ay = &m_ay[chipIndex];
+    ayumi* ay = &m_ay[chip];
 
-    uint8_t r7 = frame.data(chipIndex, Mixer_Flags);
-    uint8_t r8 = frame.data(chipIndex, VolA_EnvFlg);
-    uint8_t r9 = frame.data(chipIndex, VolB_EnvFlg);
-    uint8_t rA = frame.data(chipIndex, VolC_EnvFlg);
+    uint8_t r7 = frame.Read(chip, Mixer_Flags);
+    uint8_t r8 = frame.Read(chip, VolA_EnvFlg);
+    uint8_t r9 = frame.Read(chip, VolB_EnvFlg);
+    uint8_t rA = frame.Read(chip, VolC_EnvFlg);
 
-    ayumi_set_tone(ay, 0, frame.data(chipIndex, TonA_PeriodL) | frame.data(chipIndex, TonA_PeriodH) << 8);
-    ayumi_set_tone(ay, 1, frame.data(chipIndex, TonB_PeriodL) | frame.data(chipIndex, TonB_PeriodH) << 8);
-    ayumi_set_tone(ay, 2, frame.data(chipIndex, TonC_PeriodL) | frame.data(chipIndex, TonC_PeriodH) << 8);
+    ayumi_set_tone(ay, 0, frame.Read(chip, TonA_PeriodL) | frame.Read(chip, TonA_PeriodH) << 8);
+    ayumi_set_tone(ay, 1, frame.Read(chip, TonB_PeriodL) | frame.Read(chip, TonB_PeriodH) << 8);
+    ayumi_set_tone(ay, 2, frame.Read(chip, TonC_PeriodL) | frame.Read(chip, TonC_PeriodH) << 8);
 
-    ayumi_set_noise(ay, frame.data(chipIndex, Noise_Period));
+    ayumi_set_noise(ay, frame.Read(chip, Noise_Period));
 
     ayumi_set_mixer(ay, 0, r7 >> 0 & 0x01, r7 >> 3 & 0x01, r8 >> 4);
     ayumi_set_mixer(ay, 1, r7 >> 1 & 0x01, r7 >> 4 & 0x01, r9 >> 4);
@@ -190,10 +190,10 @@ void Emulator::WriteToChip(uint8_t chipIndex, const Frame& frame, bool force)
     ayumi_set_volume(ay, 1, r9 & 0x0F);
     ayumi_set_volume(ay, 2, rA & 0x0F);
 
-    ayumi_set_envelope(ay, frame.data(chipIndex, Env_PeriodL) | frame.data(chipIndex, Env_PeriodH) << 8);
-    if (force || frame.changed(chipIndex, Env_Shape))
+    ayumi_set_envelope(ay, frame.Read(chip, Env_PeriodL) | frame.Read(chip, Env_PeriodH) << 8);
+    if (force || frame.IsChanged(chip, Env_Shape))
     {
-        ayumi_set_envelope_shape(ay, frame.data(chipIndex, Env_Shape));
+        ayumi_set_envelope_shape(ay, frame.Read(chip, Env_Shape));
     }
 }
 

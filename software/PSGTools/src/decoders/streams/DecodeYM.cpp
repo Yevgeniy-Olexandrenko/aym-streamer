@@ -108,24 +108,9 @@ bool DecodeYM::Decode(Frame& frame)
     uint8_t* dataPtr = (m_data + m_offset) + (m_frame * frameSize);
     m_frame++;
 
-    uint8_t mask[]
-    {
-        0xFF, 0x0F, 0xFF, 0x0F, 0xFF, 0x0F, 0x1F,
-        0x3F, 0x1F, 0x1F, 0x1F, 0xFF, 0xFF, 0x0F
-    };
-
     for (uint8_t r = 0; r < 14; r++)
     {
-        uint8_t data = *dataPtr;
-        if (r == Env_Shape)
-        {
-            if (data != 0xFF)
-                frame[r].first.override(data & mask[r]);
-        }
-        else
-        {
-            frame[r].first.update(data & mask[r]);
-        }
+        frame.Update(r, *dataPtr);
         dataPtr += valueSize;
     }
 

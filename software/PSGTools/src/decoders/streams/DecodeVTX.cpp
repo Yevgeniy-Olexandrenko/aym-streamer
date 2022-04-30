@@ -77,9 +77,9 @@ bool DecodeVTX::Open(Stream& stream)
 				delete[] packedData;
 
 				// prepare information on frames
-				m_frameCount = (hdr.dataSize / 14);
-				m_loopFrame  = hdr.loop;
-				m_nextFrame  = 0;
+				m_frames = (hdr.dataSize / 14);
+				m_loop   = hdr.loop;
+				m_frame  = 0;
 			}
 		}
 		fileStream.close();
@@ -89,31 +89,22 @@ bool DecodeVTX::Open(Stream& stream)
 
 bool DecodeVTX::Decode(Frame& frame)
 {
-	uint8_t* dataPtr = m_data + m_nextFrame;
-	m_nextFrame++;
+	uint8_t* dataPtr = m_data + m_frame;
+	m_frame++;
 
 	for (uint8_t r = 0; r < 14; r++)
 	{
-		uint8_t data = *dataPtr;
-		if (r == Env_Shape)
-		{
-			if (data != 0xFF) 
-				frame[r].first.override(data);
-		}
-		else
-		{
-			frame[r].first.update(data);
-		}
-		dataPtr += m_frameCount;
+		frame.Update(r, *dataPtr);
+		dataPtr += m_frames;
 	}
 
-	return (m_nextFrame < m_frameCount);
+	return (m_frame < m_frames);
 }
 
 void DecodeVTX::Close(Stream& stream)
 {
-	if (m_loopFrame > 0)
-		stream.loop.frameId(m_loopFrame);
+	if (m_loop > 0)
+		stream.loop.frameId(m_loop);
 
 	delete[] m_data;
 }

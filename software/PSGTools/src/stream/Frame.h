@@ -1,8 +1,6 @@
 #pragma once
 
-#include <array>
-#include <iostream>
-#include "Register.h"
+#include <stdint.h>
 
 enum
 {
@@ -24,27 +22,39 @@ enum
 	PortB_Data   = 0x0F
 };
 
-using RegisterPair = std::pair<Register, Register>;
-
 class Frame
 {
-	friend std::ostream& operator<<(std::ostream& stream, const Frame& frame);
-
 public:
-	Frame();
+	Frame() = default;
 	Frame(const Frame& other);
 
 public:
-	RegisterPair& operator[](uint8_t index);
-	const RegisterPair& operator[](uint8_t index) const;
+	uint8_t Read(uint8_t chip, uint8_t reg) const;
+	bool    IsChanged(uint8_t chip, uint8_t reg) const;
 
-	bool changed(uint8_t chip, uint8_t index) const;
-	uint8_t data(uint8_t chip, uint8_t index) const;
+	uint8_t Read(uint8_t reg) const;
+	bool    IsChanged(uint8_t reg) const;
 
-	bool IsChanged() const;
-	void SetUnchanged();
-	void FixValues();
+	void    Write(uint8_t chip, uint8_t reg, uint8_t data);
+	void    Update(uint8_t chip, uint8_t reg, uint8_t data);
+
+	void    Write(uint8_t reg, uint8_t data);
+	void    Update(uint8_t reg, uint8_t data);
+
+	void    ResetChanges();
+	
+
+	//RegisterPair& operator[](uint8_t index);
+	//const RegisterPair& operator[](uint8_t index) const;
+
+	//bool changed(uint8_t chip, uint8_t index) const;
+	//uint8_t data(uint8_t chip, uint8_t index) const;
+
+	//bool IsChanged() const;
+	//void SetUnchanged();
+	//void FixValues();
 
 private:
-	RegisterPair m_registers[16];
+	uint8_t m_regs[2][16]{};
+	bool m_changes[2][16]{};
 };

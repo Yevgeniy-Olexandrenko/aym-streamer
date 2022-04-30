@@ -78,9 +78,6 @@
     <ClInclude Include="..\src\stream\Player.h">
       <Filter>Sources\stream</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\stream\Register.h">
-      <Filter>Sources\stream</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\stream\Stream.h">
       <Filter>Sources\stream</Filter>
     </ClInclude>
@@ -156,9 +153,6 @@
       <Filter>Sources\stream</Filter>
     </ClCompile>
     <ClCompile Include="..\src\stream\Player.cpp">
-      <Filter>Sources\stream</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\stream\Register.cpp">
       <Filter>Sources\stream</Filter>
     </ClCompile>
     <ClCompile Include="..\src\stream\Stream.cpp">

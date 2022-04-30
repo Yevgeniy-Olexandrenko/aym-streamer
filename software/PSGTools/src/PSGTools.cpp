@@ -78,9 +78,8 @@ bool DecodeFileToModule(const std::filesystem::path& path, Stream& stream)
             Frame frame;
             while (decoder->Decode(frame))
             {
-                frame.FixValues();
                 stream.frames.add(frame);
-                frame.SetUnchanged();
+                frame.ResetChanges();
             }
 
             decoder->Close(stream);

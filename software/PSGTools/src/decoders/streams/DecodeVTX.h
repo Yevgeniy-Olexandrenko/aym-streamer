@@ -35,7 +35,7 @@ public:
 
 private:
 	uint8_t* m_data;
-	FrameId  m_loopFrame;
-	FrameId  m_nextFrame;
-	uint32_t m_frameCount;
+	uint32_t m_frames;
+	FrameId  m_loop;
+	FrameId  m_frame;
 };

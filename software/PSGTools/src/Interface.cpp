@@ -256,15 +256,15 @@ namespace Interface
         std::cout << color::bright_cyan   << ']';
     }
 
-    void printRegisterValue(int chipIndex, const Frame& frame, int reg, bool highlight)
+    void printRegisterValue(int chip, const Frame& frame, int reg, bool highlight)
     {
-        if (frame.changed(chipIndex, reg))
+        if (frame.IsChanged(chip, reg))
         {
             if (highlight)
                 std::cout << color::bright_white;
             else
                 std::cout << color::bright_green;
-            printByteHex(frame.data(chipIndex, reg));
+            printByteHex(frame.Read(chip, reg));
         }
         else
         {
@@ -386,13 +386,13 @@ namespace Interface
         streamPb.draw(char((nibble >= 0x0A ? 'A' - 0x0A : '0') + nibble));
     };
 
-    void printRegisterValue2(int chipIndex, const Frame& frame, int reg, bool highlight)
+    void printRegisterValue2(int chip, const Frame& frame, int reg, bool highlight)
     {
-        if (frame.changed(chipIndex, reg))
+        if (frame.IsChanged(chip, reg))
         {
             streamPb.color(highlight ? BG_DARK_MAGENTA | FG_WHITE : FG_GREEN);
 
-            uint8_t data = frame.data(chipIndex, reg);
+            uint8_t data = frame.Read(chip, reg);
             printNibble2(data >> 4);
             printNibble2(data);
         }

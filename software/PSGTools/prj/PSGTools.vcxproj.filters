@@ -114,6 +114,9 @@
     <ClInclude Include="..\src\decoders\streams\DecodeVTX.h">
       <Filter>Sources\decoders\streams</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\decoders\streams\DecodeYM.h">
+      <Filter>Sources\decoders\streams</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -189,6 +192,9 @@
       <Filter>Sources\decoders\streams</Filter>
     </ClCompile>
     <ClCompile Include="..\src\decoders\streams\DecodeVTX.cpp">
+      <Filter>Sources\decoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\streams\DecodeYM.cpp">
       <Filter>Sources\decoders\streams</Filter>
     </ClCompile>
   </ItemGroup>

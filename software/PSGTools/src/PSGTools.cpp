@@ -19,12 +19,13 @@
 #include "decoders/streams/DecodeVTX.h"
 #include "decoders/streams/DecodePSG.h"
 #include "decoders/streams/DecodeVGM.h"
+#include "decoders/streams/DecodeYM.h"
 
 #include "output/Streamer/Streamer.h"
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_supportedFileTypes = "stp|vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
+const std::string k_supportedFileTypes = "ym|stp|vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
 const int k_comPortIndex = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -63,6 +64,7 @@ bool DecodeFileToModule(const std::filesystem::path& path, Stream& stream)
         std::shared_ptr<Decoder>(new DecodeSTP()),
 
         // streams
+        std::shared_ptr<Decoder>(new DecodeYM ()),
         std::shared_ptr<Decoder>(new DecodePSG()),
         std::shared_ptr<Decoder>(new DecodeVTX()),
         std::shared_ptr<Decoder>(new DecodeVGM()),

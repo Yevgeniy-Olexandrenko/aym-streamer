@@ -29,6 +29,7 @@
     <ClInclude Include="..\src\decoders\streams\DecodePSG.h" />
     <ClInclude Include="..\src\decoders\streams\DecodeVGM.h" />
     <ClInclude Include="..\src\decoders\streams\DecodeVTX.h" />
+    <ClInclude Include="..\src\decoders\streams\DecodeYM.h" />
     <ClInclude Include="..\src\filelist\Filelist.h" />
     <ClInclude Include="..\src\Interface.h" />
     <ClInclude Include="..\src\encoders\EncodePSG.h" />
@@ -57,6 +58,7 @@
     <ClCompile Include="..\src\decoders\streams\DecodePSG.cpp" />
     <ClCompile Include="..\src\decoders\streams\DecodeVGM.cpp" />
     <ClCompile Include="..\src\decoders\streams\DecodeVTX.cpp" />
+    <ClCompile Include="..\src\decoders\streams\DecodeYM.cpp" />
     <ClCompile Include="..\src\filelist\Filelist.cpp" />
     <ClCompile Include="..\src\Interface.cpp" />
     <ClCompile Include="..\src\encoders\EncodePSG.cpp" />

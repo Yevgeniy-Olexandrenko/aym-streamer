@@ -42,13 +42,13 @@ bool ModuleDecoder::Decode(Frame& frame)
 
     if (!isNewLoop)
     {
-        for (uint8_t r = 0; r < 16; ++r)
-            frame.Update(0, r, m_regs[0][r]);
+        for (uint8_t reg = 0; reg < 16; ++reg)
+            frame.Update(0, reg, m_regs[0][reg]);
 
         if (m_isTS)
         {
-            for (uint8_t r = 0; r < 16; ++r)
-                frame.Update(1, r, m_regs[1][r]);
+            for (uint8_t reg = 0; reg < 16; ++reg)
+                frame.Update(1, reg, m_regs[1][reg]);
         }
         return true;
     }

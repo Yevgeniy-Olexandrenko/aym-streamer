@@ -18,6 +18,8 @@ namespace
     };
 }
 
+/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+
 bool DecodeASC::Open(Stream& stream)
 {
     bool isDetected = false;

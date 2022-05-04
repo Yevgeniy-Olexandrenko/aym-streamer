@@ -19,6 +19,8 @@ namespace
     };
 }
 
+/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+
 bool DecodePT2::Open(Stream& stream)
 {
     bool isDetected = false;

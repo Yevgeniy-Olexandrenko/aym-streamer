@@ -46,7 +46,7 @@ bool DecodeYM::Open(Stream& stream)
                             
                             for (int i = 0, c = GetU16(ym5->numOfDig); i < c; i++)
                             {
-                                uint32_t count = *(uint32_t*)(&m_data[offset]);
+                                uint32_t count = GetU32(&m_data[offset]);
                                 offset += (4 + count);
                             }
 
@@ -84,7 +84,7 @@ bool DecodeYM::Open(Stream& stream)
                             if (id[3] == 'b')
                             {
                                 // last four bytes (DWORD data) are frame number for looping
-                                m_loop = GetU32(&m_data[depackedSize - 4]);
+                                m_loop = *(uint32_t*)(&m_data[depackedSize - 4]);
                             }
 
                             m_interleaved = true;
@@ -108,9 +108,9 @@ bool DecodeYM::Decode(Frame& frame)
     uint8_t* dataPtr = (m_data + m_offset) + (m_frame * frameSize);
     m_frame++;
 
-    for (uint8_t r = 0; r < 14; r++)
+    for (uint8_t reg = 0; reg < 14; reg++)
     {
-        frame.Update(r, *dataPtr);
+        frame.Update(reg, *dataPtr);
         dataPtr += valueSize;
     }
 

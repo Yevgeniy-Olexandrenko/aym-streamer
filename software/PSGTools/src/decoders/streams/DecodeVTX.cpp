@@ -7,8 +7,6 @@ namespace
 	const uint16_t VTXv2_SIG_YM = 0x6D79; // "ym"
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
 bool DecodeVTX::Open(Stream& stream)
 {
 	bool isDetected = false;
@@ -92,9 +90,9 @@ bool DecodeVTX::Decode(Frame& frame)
 	uint8_t* dataPtr = m_data + m_frame;
 	m_frame++;
 
-	for (uint8_t r = 0; r < 14; r++)
+	for (uint8_t reg = 0; reg < 14; reg++)
 	{
-		frame.Update(r, *dataPtr);
+		frame.Update(reg, *dataPtr);
 		dataPtr += m_frames;
 	}
 

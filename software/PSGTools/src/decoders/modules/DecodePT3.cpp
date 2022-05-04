@@ -113,6 +113,8 @@ namespace
     const std::string VTSignature = "Vortex Tracker II";
 }
 
+/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+
 bool DecodePT3::Open(Stream& stream)
 {
     bool isDetected = false;

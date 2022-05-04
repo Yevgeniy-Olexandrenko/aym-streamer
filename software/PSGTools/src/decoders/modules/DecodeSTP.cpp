@@ -21,6 +21,8 @@ namespace
     const std::string KSASignature = "KSA SOFTWARE COMPILATION OF ";
 }
 
+/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+
 bool DecodeSTP::Open(Stream& stream)
 {
     bool isDetected = false;

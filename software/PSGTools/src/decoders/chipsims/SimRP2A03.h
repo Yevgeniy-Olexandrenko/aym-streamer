@@ -1,12 +1,12 @@
 #pragma once
 
-#include <stdint.h>
+#include "ChipSim.h"
 
 #define NES_CPU_FREQUENCY (1789773)
 #define SAMPLING_RATE     (44100)
 #define CONST_SHIFT_BITS  (4)
 
-class RP2A03
+class SimRP2A03 : public ChipSim
 {
     typedef struct
     {
@@ -38,8 +38,13 @@ class RP2A03
     } ChannelInfo;
 
 public:
-	void Write(uint16_t reg, uint8_t val);
-    void Update(int samples);
+    SimRP2A03();
+
+    void Reset();
+    void Write(uint8_t reg, uint8_t data);
+    void Simulate(int samples);
+    void ConvertToPSG(Frame& frame);
+    void PostProcess(Stream& stream);
 
 
 private:
@@ -65,4 +70,6 @@ public:
     bool m_quaterSignal = false;
     bool m_halfSignal = false;
     bool m_fullSignal = false;
+
+    int m_maxVol[3]{};
 };

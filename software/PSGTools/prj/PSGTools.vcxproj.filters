@@ -31,7 +31,7 @@
     <Filter Include="Sources\decoders\streams">
       <UniqueIdentifier>{17cc3324-b1af-40c0-9dad-fc3c48153798}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\decoders\chips">
+    <Filter Include="Sources\decoders\chipsims">
       <UniqueIdentifier>{4eb3d85e-0ba9-4004-beaa-cde186a404b8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -99,9 +99,6 @@
     <ClInclude Include="..\src\decoders\modules\DecodeSTP.h">
       <Filter>Sources\decoders\modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\decoders\chips\RP2A03.h">
-      <Filter>Sources\decoders\chips</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\decoders\streams\DecodePSG.h">
       <Filter>Sources\decoders\streams</Filter>
     </ClInclude>
@@ -113,6 +110,18 @@
     </ClInclude>
     <ClInclude Include="..\src\decoders\streams\DecodeYM.h">
       <Filter>Sources\decoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\decoders\chipsims\SimAY8910.h">
+      <Filter>Sources\decoders\chipsims</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\decoders\chipsims\SimRP2A03.h">
+      <Filter>Sources\decoders\chipsims</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\decoders\chipsims\SimSN76489.h">
+      <Filter>Sources\decoders\chipsims</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\decoders\chipsims\ChipSim.h">
+      <Filter>Sources\decoders\chipsims</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -176,9 +185,6 @@
     <ClCompile Include="..\src\decoders\modules\DecodeSTP.cpp">
       <Filter>Sources\decoders\modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\decoders\chips\RP2A03.cpp">
-      <Filter>Sources\decoders\chips</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\decoders\streams\DecodePSG.cpp">
       <Filter>Sources\decoders\streams</Filter>
     </ClCompile>
@@ -190,6 +196,15 @@
     </ClCompile>
     <ClCompile Include="..\src\decoders\streams\DecodeYM.cpp">
       <Filter>Sources\decoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\chipsims\SimAY8910.cpp">
+      <Filter>Sources\decoders\chipsims</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\chipsims\SimRP2A03.cpp">
+      <Filter>Sources\decoders\chipsims</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\chipsims\SimSN76489.cpp">
+      <Filter>Sources\decoders\chipsims</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

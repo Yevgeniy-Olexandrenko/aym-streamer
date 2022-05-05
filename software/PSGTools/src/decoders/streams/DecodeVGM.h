@@ -1,7 +1,9 @@
 #pragma once
 
+#include <memory>
 #include "decoders/Decode.h"
-#include "decoders/chips/RP2A03.h"
+
+class ChipSim;
 
 class DecodeVGM : public Decoder
 {
@@ -88,13 +90,8 @@ public:
 	void Close(Stream& stream) override;
 
 private:
-    int  VgmDecodeBlock(Frame& frame);
-    void VgmUpdateChips(Frame& frame, int samples);
-
-    bool ReadFile(const char* path, uint8_t* dest, int size);
-
-    void RP2A03_Convert(Frame& frame);
-    void RP2A03_FixVolume(Stream& stream);
+    int  DecodeBlock();
+   
 
 private:
     uint8_t* m_rawData;
@@ -104,9 +101,5 @@ private:
     int m_samplesPerFrame;
     int m_processedSamples;
 
-    bool m_isAY38910;
-    bool m_isRP2A03;
-
-    RP2A03 m_rp2A03;
-    int m_maxVol[3]{};
+    std::shared_ptr<ChipSim> m_chip;
 };

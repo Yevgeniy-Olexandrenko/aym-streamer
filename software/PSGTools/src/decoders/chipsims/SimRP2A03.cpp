@@ -1,4 +1,6 @@
-#include "RP2A03.h"
+#include "SimRP2A03.h"
+#include "stream/Frame.h"
+#include "stream/Stream.h"
 
 namespace
 {
@@ -86,153 +88,7 @@ namespace
 #define DMC_LOOP_MASK       (0x40)
 #define DMC_IRQ_ENABLE_MASK (0x80)
 
-void RP2A03::Write(uint16_t reg, uint8_t val)
-{
-    uint16_t originReg = reg;
-    uint8_t oldVal = val;
-
-    //LOGI("Write 0x%02X to [%04X] reg\n", val, getRegAddress(reg));
-
-    reg &= 0x00FF;
-
-    if (reg < 0x20)
-    {
-        oldVal = m_regs[reg];
-        m_regs[reg] = val;
-    }
-    int chanIndex = (reg - APU_RECT_VOL1) / 4;
-
-    switch (reg)
-    {
-    case APU_RECT_VOL1:
-    case APU_RECT_VOL2:
-    case APU_NOISE_VOL:
-        //            m_chan[chanIndex].divider = val & VALUE_VOL_MASK;
-        break;
-
-    case APU_TRIANGLE:
-        break;
-
-    case APU_SWEEP1:
-    case APU_SWEEP2:
-        break;
-
-    case APU_RECT_FREQ1:
-    case APU_RECT_FREQ2:
-    case APU_TRI_FREQ:
-        m_chan[chanIndex].period = (m_chan[chanIndex].period & (0xFF00 << (CONST_SHIFT_BITS + 4))) | (val << (CONST_SHIFT_BITS + 4));
-       /* if (m_chan[chanIndex].counter > m_chan[chanIndex].period)
-            m_chan[chanIndex].counter = m_chan[chanIndex].period;*/
-        break;
-
-    case APU_NOISE_FREQ:
-    {
-        // reset noise generator when switching modes
-        if ((oldVal & NOISE_MODE_MASK) != (val & NOISE_MODE_MASK))
-        {
-            m_shiftNoise = 0x0001;
-        }
-        m_chan[chanIndex].period = (noiseLut[val & NOISE_FREQ_MASK]) << (CONST_SHIFT_BITS + 4);
-       /* if (m_chan[chanIndex].counter > m_chan[chanIndex].period)
-            m_chan[chanIndex].counter = m_chan[chanIndex].period;*/
-        break;
-    }
-
-    case APU_RECT_LEN1:
-    case APU_RECT_LEN2:
-        // We must reset duty cycle sequencer only for channels 1, 2 according to datasheet
-        /*m_chan[chanIndex].sequencer = 0;*/
-        // Reset counter also to prevent unexpected clicks
-       /* m_chan[chanIndex].counter = 0;*/
-        m_chan[chanIndex].updateEnvelope = true;
-        // Unused on noise channel
-        m_chan[chanIndex].period = (m_chan[chanIndex].period & (0x000000FF << (CONST_SHIFT_BITS + 4))) | (static_cast<uint32_t>(val & 0x07) << (8 + CONST_SHIFT_BITS + 4));
-        m_chan[chanIndex].lenCounter = lengthLut[val >> 3];
-        /*m_chan[chanIndex].counter = 0;*/
-        break;
-
-    case APU_TRI_LEN:
-        // Do not reset triangle sequencer to prevent clicks. This is required per datasheet
-        // Unused on noise channel
-        m_chan[2].period = (m_chan[2].period & (0x000000FF << (CONST_SHIFT_BITS + 4))) | (static_cast<uint32_t>(val & 0x07) << (8 + CONST_SHIFT_BITS + 4));
-        m_chan[2].lenCounter = lengthLut[val >> 3];
-        m_chan[2].linearReloadFlag = true;
-        /*m_chan[2].counter = 0;*/
-        break;
-
-    case APU_NOISE_LEN:
-        m_chan[3].updateEnvelope = true;
-        m_chan[3].lenCounter = lengthLut[val >> 3];
-        /*m_chan[3].counter = 0;*/
-        break;
-
-    case APU_DMC_DMA_FREQ:
-        //m_chan[4].period = dmcLut[val & DMC_RATE_MASK] << CONST_SHIFT_BITS;
-        //if (m_chan[4].counter >= m_chan[4].period)
-        //    m_chan[4].counter = m_chan[4].period;
-        break;
-
-    case APU_DMC_DELTA_COUNTER:
-        //m_chan[4].volume = val & 0x7F;
-        break;
-
-    case APU_DMC_ADDR:
-        break;
-
-    case APU_DMC_LEN:
-        break;
-
-    case APU_STATUS:
-        for (int i = 0; i < 4; i++)
-        {
-            if (!(val & (1 << i)))
-            {
-                m_chan[i].counter = 0;
-                m_chan[i].lenCounter = 0;
-            }
-        }
-        /*if ((m_regs[APU_STATUS] & 0x10) && !m_chan[4].dmcActive)
-        {
-            m_chan[4].dmcActive = true;
-            m_chan[4].dmcAddr = m_regs[APU_DMC_ADDR] * 0x40 + 0xC000;
-            m_chan[4].dmcLen = m_regs[APU_DMC_LEN] * 16 + 1;
-            m_chan[4].dmcIrqFlag = false;
-        }
-        else if (!(m_regs[APU_STATUS] & 0x10))
-        {
-            m_chan[4].dmcActive = false;
-        }*/
-        break;
-
-    case APU_LOW_TIMER:
-        m_lastFrameCounter = 0;
-        m_apuFrames = 0;
-        break;
-
-    default:
-        // Check for sweep support on channels TRI and NOISE
-        if (reg != 0x09 && reg != 0x0D)
-        {
-            //LOGE("Unknown reg 0x%02X [0x%04X]\n", reg, originReg);
-        }
-        break;
-    }
-}
-
-void RP2A03::Update(int samples)
-{
-    while (samples--)
-    {
-        updateFrameCounter();
-        updateRectChannel(0);
-        updateRectChannel(1);
-        updateTriangleChannel(m_chan[2]);
-        updateNoiseChannel(m_chan[3]);
-        updateDmcChannel(m_chan[4]);
-    }
-}
-
-void RP2A03::updateFrameCounter()
+void SimRP2A03::updateFrameCounter()
 {
     const uint8_t upperThreshold = (m_regs[APU_LOW_TIMER] & PAL_MODE_MASK) ? 5 : 4;
 
@@ -258,7 +114,7 @@ void RP2A03::updateFrameCounter()
     }
 }
 
-void RP2A03::updateRectChannel(int i)
+void SimRP2A03::updateRectChannel(int i)
 {
     ChannelInfo& chan = m_chan[i];
     //static constexpr uint8_t sequencerTable[] =
@@ -378,7 +234,7 @@ void RP2A03::updateRectChannel(int i)
     chan.duty = (volumeReg & DUTY_CYCLE_MASK) >> 6;
 }
 
-void RP2A03::updateTriangleChannel(ChannelInfo& chan)
+void SimRP2A03::updateTriangleChannel(ChannelInfo& chan)
 {
     /*static constexpr uint8_t triangleTable[] =
     {
@@ -428,7 +284,7 @@ void RP2A03::updateTriangleChannel(ChannelInfo& chan)
     chan.output = 1;
 }
 
-void RP2A03::updateNoiseChannel(ChannelInfo& chan)
+void SimRP2A03::updateNoiseChannel(ChannelInfo& chan)
 {
     if (!(m_regs[APU_STATUS] & (1 << 3)))
     {
@@ -517,7 +373,7 @@ void RP2A03::updateNoiseChannel(ChannelInfo& chan)
     chan.output = chan.volume;
 }
 
-void RP2A03::updateDmcChannel(ChannelInfo& info)
+void SimRP2A03::updateDmcChannel(ChannelInfo& info)
 {
     //if (info.dmcActive && !info.sequencer)
     //{
@@ -562,4 +418,315 @@ void RP2A03::updateDmcChannel(ChannelInfo& info)
     //    }
     //}
     //info.output = (static_cast<uint32_t>(m_dmcVolTable[15]) * info.volume) >> 7;
+}
+
+SimRP2A03::SimRP2A03()
+    : ChipSim(Type::RP2A03)
+{
+    Reset();
+}
+
+void SimRP2A03::Reset()
+{
+    // TODO
+}
+
+void SimRP2A03::Write(uint8_t reg, uint8_t data)
+{
+    uint16_t originReg = reg;
+    uint8_t oldVal = data;
+
+    //LOGI("Write 0x%02X to [%04X] reg\n", val, getRegAddress(reg));
+
+    reg &= 0x00FF;
+
+    if (reg < 0x20)
+    {
+        oldVal = m_regs[reg];
+        m_regs[reg] = data;
+    }
+    int chanIndex = (reg - APU_RECT_VOL1) / 4;
+
+    switch (reg)
+    {
+    case APU_RECT_VOL1:
+    case APU_RECT_VOL2:
+    case APU_NOISE_VOL:
+        //            m_chan[chanIndex].divider = val & VALUE_VOL_MASK;
+        break;
+
+    case APU_TRIANGLE:
+        break;
+
+    case APU_SWEEP1:
+    case APU_SWEEP2:
+        break;
+
+    case APU_RECT_FREQ1:
+    case APU_RECT_FREQ2:
+    case APU_TRI_FREQ:
+        m_chan[chanIndex].period = (m_chan[chanIndex].period & (0xFF00 << (CONST_SHIFT_BITS + 4))) | (data << (CONST_SHIFT_BITS + 4));
+        /* if (m_chan[chanIndex].counter > m_chan[chanIndex].period)
+             m_chan[chanIndex].counter = m_chan[chanIndex].period;*/
+        break;
+
+    case APU_NOISE_FREQ:
+    {
+        // reset noise generator when switching modes
+        if ((oldVal & NOISE_MODE_MASK) != (data & NOISE_MODE_MASK))
+        {
+            m_shiftNoise = 0x0001;
+        }
+        m_chan[chanIndex].period = (noiseLut[data & NOISE_FREQ_MASK]) << (CONST_SHIFT_BITS + 4);
+        /* if (m_chan[chanIndex].counter > m_chan[chanIndex].period)
+             m_chan[chanIndex].counter = m_chan[chanIndex].period;*/
+        break;
+    }
+
+    case APU_RECT_LEN1:
+    case APU_RECT_LEN2:
+        // We must reset duty cycle sequencer only for channels 1, 2 according to datasheet
+        /*m_chan[chanIndex].sequencer = 0;*/
+        // Reset counter also to prevent unexpected clicks
+       /* m_chan[chanIndex].counter = 0;*/
+        m_chan[chanIndex].updateEnvelope = true;
+        // Unused on noise channel
+        m_chan[chanIndex].period = (m_chan[chanIndex].period & (0x000000FF << (CONST_SHIFT_BITS + 4))) | (static_cast<uint32_t>(data & 0x07) << (8 + CONST_SHIFT_BITS + 4));
+        m_chan[chanIndex].lenCounter = lengthLut[data >> 3];
+        /*m_chan[chanIndex].counter = 0;*/
+        break;
+
+    case APU_TRI_LEN:
+        // Do not reset triangle sequencer to prevent clicks. This is required per datasheet
+        // Unused on noise channel
+        m_chan[2].period = (m_chan[2].period & (0x000000FF << (CONST_SHIFT_BITS + 4))) | (static_cast<uint32_t>(data & 0x07) << (8 + CONST_SHIFT_BITS + 4));
+        m_chan[2].lenCounter = lengthLut[data >> 3];
+        m_chan[2].linearReloadFlag = true;
+        /*m_chan[2].counter = 0;*/
+        break;
+
+    case APU_NOISE_LEN:
+        m_chan[3].updateEnvelope = true;
+        m_chan[3].lenCounter = lengthLut[data >> 3];
+        /*m_chan[3].counter = 0;*/
+        break;
+
+    case APU_DMC_DMA_FREQ:
+        //m_chan[4].period = dmcLut[val & DMC_RATE_MASK] << CONST_SHIFT_BITS;
+        //if (m_chan[4].counter >= m_chan[4].period)
+        //    m_chan[4].counter = m_chan[4].period;
+        break;
+
+    case APU_DMC_DELTA_COUNTER:
+        //m_chan[4].volume = val & 0x7F;
+        break;
+
+    case APU_DMC_ADDR:
+        break;
+
+    case APU_DMC_LEN:
+        break;
+
+    case APU_STATUS:
+        for (int i = 0; i < 4; i++)
+        {
+            if (!(data & (1 << i)))
+            {
+                m_chan[i].counter = 0;
+                m_chan[i].lenCounter = 0;
+            }
+        }
+        /*if ((m_regs[APU_STATUS] & 0x10) && !m_chan[4].dmcActive)
+        {
+            m_chan[4].dmcActive = true;
+            m_chan[4].dmcAddr = m_regs[APU_DMC_ADDR] * 0x40 + 0xC000;
+            m_chan[4].dmcLen = m_regs[APU_DMC_LEN] * 16 + 1;
+            m_chan[4].dmcIrqFlag = false;
+        }
+        else if (!(m_regs[APU_STATUS] & 0x10))
+        {
+            m_chan[4].dmcActive = false;
+        }*/
+        break;
+
+    case APU_LOW_TIMER:
+        m_lastFrameCounter = 0;
+        m_apuFrames = 0;
+        break;
+
+    default:
+        // Check for sweep support on channels TRI and NOISE
+        if (reg != 0x09 && reg != 0x0D)
+        {
+            //LOGE("Unknown reg 0x%02X [0x%04X]\n", reg, originReg);
+        }
+        break;
+    }
+}
+
+void SimRP2A03::Simulate(int samples)
+{
+    while (samples--)
+    {
+        updateFrameCounter();
+        updateRectChannel(0);
+        updateRectChannel(1);
+        updateTriangleChannel(m_chan[2]);
+        updateNoiseChannel(m_chan[3]);
+        updateDmcChannel(m_chan[4]);
+    }
+}
+
+void SimRP2A03::ConvertToPSG(Frame& frame)
+{
+    auto ProcessVolume = [](uint8_t& volume)
+    {
+        if (volume > 0)
+        {
+            float factor = float(volume - 1) / 14.f;
+            volume = uint8_t(10 * factor + 5);
+        }
+    };
+
+    // process
+    uint8_t  a1_volume = m_chan[0].output;
+    uint16_t a1_period = m_chan[0].period >> 8;
+    uint8_t  a1_enable = bool(m_chan[0].output > 0);
+    uint8_t  a1_mode = m_chan[0].duty;
+
+    uint8_t  c2_volume = m_chan[1].output;
+    uint16_t c2_period = m_chan[1].period >> 8;
+    uint8_t  c2_enable = bool(m_chan[1].output > 0);
+    uint8_t  c2_mode = m_chan[1].duty;
+
+    uint16_t bt_period = m_chan[2].period >> (8 + 2);
+    uint8_t  bt_enable = bool(m_chan[2].output > 0);
+    if (!bt_enable || !bt_period) bt_period = 0xFFFF;
+
+    uint8_t  bn_volume = m_chan[3].output << 0;
+    uint16_t bn_period = m_chan[3].period >> (8 + 6);
+    uint8_t  bn_enable = bool(m_chan[3].output > 0);
+    if (bn_volume > 0x0F) bn_volume = 0x0F;
+
+    ProcessVolume(a1_volume);
+    ProcessVolume(c2_volume);
+    ProcessVolume(bn_volume);
+
+    // output
+    uint8_t mixer1 = 0x3F;
+    uint8_t mixer2 = 0x3F;
+
+    if (a1_enable)
+    {
+        uint16_t a1_period_m = a1_period;
+        if (a1_mode == 0) a1_period_m ^= 1;
+        if (a1_mode == 1 || a1_mode == 3) a1_period_m >>= 1;
+        uint8_t  a1_volume_m = (a1_volume ? a1_volume - 1 : a1_volume);
+
+        // chip 0 ch A
+        frame.Update(0, TonA_PeriodL, a1_period & 0xFF);
+        frame.Update(0, TonA_PeriodH, a1_period >> 8 & 0x0F);
+        frame.Update(0, VolA_EnvFlg, a1_volume);
+
+        // chip 1 ch A
+        frame.Update(1, TonA_PeriodL, a1_period_m & 0xFF);
+        frame.Update(1, TonA_PeriodH, a1_period_m >> 8 & 0x0F);
+        frame.Update(1, VolA_EnvFlg, a1_volume_m);
+
+        if (a1_volume > m_maxVol[0]) m_maxVol[0] = a1_volume;
+    }
+    mixer1 &= ~(a1_enable << 0);
+    mixer2 &= ~(a1_enable << 0);
+
+    if (c2_enable)
+    {
+        uint16_t c2_period_m = c2_period;
+        if (c2_mode == 0) c2_period_m ^= 1;
+        if (c2_mode == 1 || c2_mode == 3) c2_period_m >>= 1;
+        uint8_t  c2_volume_m = (c2_volume ? c2_volume - 1 : c2_volume);
+
+        // chip 0 ch C
+        frame.Update(0, TonC_PeriodL, c2_period & 0xFF);
+        frame.Update(0, TonC_PeriodH, c2_period >> 8 & 0x0F);
+        frame.Update(0, VolC_EnvFlg, c2_volume);
+
+        // chip 1 ch C
+        frame.Update(1, TonC_PeriodL, c2_period_m & 0xFF);
+        frame.Update(1, TonC_PeriodH, c2_period_m >> 8 & 0x0F);
+        frame.Update(1, VolC_EnvFlg, c2_volume_m);
+
+        if (c2_volume > m_maxVol[1]) m_maxVol[1] = c2_volume;
+    }
+    mixer1 &= ~(c2_enable << 2);
+    mixer2 &= ~(c2_enable << 2);
+
+    // chip 0 ch B
+    frame.Update(0, Env_PeriodL, bt_period & 0xFF);
+    frame.Update(0, Env_PeriodH, bt_period >> 8 & 0xFF);
+    frame.Update(0, VolB_EnvFlg, 0x10);
+    if (frame.Read(0, Env_Shape) != 0x0E)
+    {
+        frame.Write(0, Env_Shape, 0x0E);
+    }
+
+    if (bn_enable)
+    {
+        // chip 1 ch B
+        frame.Update(1, Noise_Period, bn_period & 0x1F);
+        frame.Update(1, VolB_EnvFlg, bn_volume);
+
+        if (bn_volume > m_maxVol[2]) m_maxVol[2] = bn_volume;
+    }
+    mixer2 &= ~(bn_enable << 4);
+
+    // mixers
+    frame.Update(0, Mixer_Flags, mixer1);
+    frame.Update(1, Mixer_Flags, mixer2);
+}
+
+void SimRP2A03::PostProcess(Stream& stream)
+{
+#if 1
+    float pulseVolFactor = 15.0f / std::max(m_maxVol[0], m_maxVol[1]);
+    float noiseVolFactor = 15.0f / m_maxVol[2];
+
+    for (int i = 0, c = stream.frames.count(); i < c; ++i)
+    {
+        Frame& frame = const_cast<Frame&>(stream.frames.get(i));
+
+        // chip 0
+        frame.data(0, VolA_EnvFlg) = uint8_t(float(frame.data(0, VolA_EnvFlg)) * pulseVolFactor);
+        frame.data(0, VolC_EnvFlg) = uint8_t(float(frame.data(0, VolC_EnvFlg)) * pulseVolFactor);
+
+        // chip 1
+        frame.data(1, VolA_EnvFlg) = uint8_t(float(frame.data(1, VolA_EnvFlg)) * pulseVolFactor);
+        frame.data(1, VolB_EnvFlg) = uint8_t(float(frame.data(1, VolB_EnvFlg)) * noiseVolFactor);
+        frame.data(1, VolC_EnvFlg) = uint8_t(float(frame.data(1, VolC_EnvFlg)) * pulseVolFactor);
+    }
+#else
+    int pulseVolDelta = (0x0F - std::max(m_maxVol[0], m_maxVol[1]));
+    int noiseVolDelta = (0x0F - m_maxVol[2]);
+
+    for (int i = 0, c = stream.frames.count(); i < c; ++i)
+    {
+        Frame& frame = const_cast<Frame&>(stream.frames.get(i));
+
+        // chip 0
+        if (frame.data(0, VolA_EnvFlg) < 0x0F)
+            frame.data(0, VolA_EnvFlg) += pulseVolDelta;
+
+        if (frame.data(0, VolC_EnvFlg) < 0x0F)
+            frame.data(0, VolC_EnvFlg) += pulseVolDelta;
+
+        // chip 1
+        if (frame.data(1, VolA_EnvFlg) < 0x0F)
+            frame.data(1, VolA_EnvFlg) += pulseVolDelta;
+
+        if (frame.data(1, VolB_EnvFlg) < 0x0F)
+            frame.data(1, VolB_EnvFlg) += noiseVolDelta;
+
+        if (frame.data(1, VolC_EnvFlg) < 0x0F)
+            frame.data(1, VolC_EnvFlg) += pulseVolDelta;
+    }
+#endif
 }

@@ -72,6 +72,17 @@ void Frame::Update(uint8_t reg, uint8_t data)
 	Update(0, reg, data);
 }
 
+void Frame::Reset()
+{
+	ResetData();
+	ResetChanges();
+}
+
+void Frame::ResetData()
+{
+	memset(m_data, 0, sizeof(m_data));
+}
+
 void Frame::ResetChanges()
 {
 	memset(m_changes, false, sizeof(m_changes));

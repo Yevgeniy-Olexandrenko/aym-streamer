@@ -41,6 +41,8 @@ public:
 	void    Write(uint8_t reg, uint8_t data);
 	void    Update(uint8_t reg, uint8_t data);
 
+	void    Reset();
+	void    ResetData();
 	void    ResetChanges();
 	
 public:

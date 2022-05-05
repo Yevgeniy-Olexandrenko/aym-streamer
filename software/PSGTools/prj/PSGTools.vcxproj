@@ -19,7 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\decoders\chips\RP2A03.h" />
+    <ClInclude Include="..\src\decoders\chipsims\SimAY8910.h" />
+    <ClInclude Include="..\src\decoders\chipsims\SimRP2A03.h" />
+    <ClInclude Include="..\src\decoders\chipsims\SimSN76489.h" />
+    <ClInclude Include="..\src\decoders\chipsims\ChipSim.h" />
     <ClInclude Include="..\src\decoders\Decode.h" />
     <ClInclude Include="..\src\decoders\modules\DecodeASC.h" />
     <ClInclude Include="..\src\decoders\modules\DecodePT2.h" />
@@ -47,7 +50,9 @@
     <ClInclude Include="..\src\stream\Stream.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\decoders\chips\RP2A03.cpp" />
+    <ClCompile Include="..\src\decoders\chipsims\SimAY8910.cpp" />
+    <ClCompile Include="..\src\decoders\chipsims\SimRP2A03.cpp" />
+    <ClCompile Include="..\src\decoders\chipsims\SimSN76489.cpp" />
     <ClCompile Include="..\src\decoders\Decode.cpp" />
     <ClCompile Include="..\src\decoders\modules\DecodeASC.cpp" />
     <ClCompile Include="..\src\decoders\modules\DecodePT2.cpp" />

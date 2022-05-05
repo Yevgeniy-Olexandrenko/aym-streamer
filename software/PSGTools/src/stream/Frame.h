@@ -43,18 +43,11 @@ public:
 
 	void    ResetChanges();
 	
-
-	//RegisterPair& operator[](uint8_t index);
-	//const RegisterPair& operator[](uint8_t index) const;
-
-	//bool changed(uint8_t chip, uint8_t index) const;
-	//uint8_t data(uint8_t chip, uint8_t index) const;
-
-	//bool IsChanged() const;
-	//void SetUnchanged();
-	//void FixValues();
+public:
+	uint8_t& data(uint8_t chip, uint8_t reg);
+	bool& changed(uint8_t chip, uint8_t reg);
 
 private:
-	uint8_t m_regs[2][16]{};
+	uint8_t m_data[2][16]{};
 	bool m_changes[2][16]{};
 };

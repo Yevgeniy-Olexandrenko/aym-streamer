@@ -26,6 +26,7 @@ class RP2A03
 
         uint8_t volume;
         uint32_t output;
+        uint8_t duty;
 
         uint8_t sweepCounter;
 

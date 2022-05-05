@@ -375,6 +375,7 @@ void RP2A03::updateRectChannel(int i)
     //    chan.volume = 0;
     //}
     chan.output = chan.volume;
+    chan.duty = (volumeReg & DUTY_CYCLE_MASK) >> 6;
 }
 
 void RP2A03::updateTriangleChannel(ChannelInfo& chan)

@@ -41,7 +41,7 @@ bool DecodeVGM::Open(Stream& stream)
                 {
                     stream.chip.model(Chip::Model::YM);
                     stream.chip.freqValue(header.nesApuClock);
-                    //stream.chip.count(Chip::Count::TurboSound);
+                    stream.chip.count(Chip::Count::TurboSound);
                 }
 
                 m_samplesPerFrame = (44100 / frameRate);
@@ -92,7 +92,7 @@ void DecodeVGM::Close(Stream& stream)
 {
     if (m_isRP2A03)
     {
-        //RP2A03FixVolume(stream);
+        RP2A03FixVolume(stream);
     }
 
     if (m_loop) stream.loop.frameId(m_loop);
@@ -284,10 +284,12 @@ void DecodeVGM::RP2A03Update(Frame& frame)
     uint8_t  a1_volume = m_rp2A03.m_chan[0].output;
     uint16_t a1_period = m_rp2A03.m_chan[0].period >> 8;
     uint8_t  a1_enable = bool(m_rp2A03.m_chan[0].output > 0);
+    uint8_t  a1_mode = m_rp2A03.m_chan[0].duty;
 
     uint8_t  c2_volume = m_rp2A03.m_chan[1].output;
     uint16_t c2_period = m_rp2A03.m_chan[1].period >> 8;
     uint8_t  c2_enable = bool(m_rp2A03.m_chan[1].output > 0);
+    uint8_t  c2_mode   = m_rp2A03.m_chan[1].duty;
 
     uint16_t bt_period = m_rp2A03.m_chan[2].period >> (8 + 2);
     uint8_t  bt_enable = bool(m_rp2A03.m_chan[2].output > 0);
@@ -304,7 +306,15 @@ void DecodeVGM::RP2A03Update(Frame& frame)
 
     if (a1_enable)
     {
-        uint16_t a1_period_m = (a1_period + 1);
+        //uint16_t a1_period_m = (a1_period + 1);
+        //uint8_t  a1_volume_m = (a1_volume ? a1_volume - 1 : a1_volume);
+
+        uint16_t a1_period_m = a1_period;
+        //if (a1_period_m)
+        {
+            if (a1_mode == 0) a1_period_m++;
+            if (a1_mode == 1 || a1_mode == 3) a1_period_m >>= 1;
+        }
         uint8_t  a1_volume_m = (a1_volume ? a1_volume - 1 : a1_volume);
 
         // chip 0 ch A
@@ -324,7 +334,15 @@ void DecodeVGM::RP2A03Update(Frame& frame)
 
     if (c2_enable)
     {
-        uint16_t c2_period_m = (c2_period ? c2_period - 1 : c2_period);
+        //uint16_t c2_period_m = (c2_period ? c2_period - 1 : c2_period);
+        //uint8_t  c2_volume_m = (c2_volume ? c2_volume - 1 : c2_volume);
+
+        uint16_t c2_period_m = c2_period;
+        //if (c2_period_m)
+        {
+            if (c2_mode == 0) c2_period_m++;
+            if (c2_mode == 1 || c2_mode == 3) c2_period_m >>= 1;
+        }
         uint8_t  c2_volume_m = (c2_volume ? c2_volume - 1 : c2_volume);
 
         // chip 0 ch C
@@ -346,7 +364,10 @@ void DecodeVGM::RP2A03Update(Frame& frame)
     frame.Update(0, Env_PeriodL, bt_period & 0xFF);
     frame.Update(0, Env_PeriodH, bt_period >> 8 & 0xFF);
     frame.Update(0, VolB_EnvFlg, 0x10);
-    frame.Update(0, Env_Shape,   0x0E);
+    if (frame.Read(0, Env_Shape) != 0x0E)
+    {
+        frame.Write(0, Env_Shape, 0x0E);
+    }
 
     if (bn_enable)
     {
@@ -369,36 +390,47 @@ void DecodeVGM::RP2A03Update(Frame& frame)
 
 void DecodeVGM::RP2A03FixVolume(Stream& stream)
 {
-    int pulseVolDelta = 0x0F - std::max(m_maxVol[0], m_maxVol[1]);
-    int noiseVolDelta = 0x0F - m_maxVol[2];
+#if 1
+    float pulseVolFactor = 15.0f / std::max(m_maxVol[0], m_maxVol[1]);
+    float noiseVolFactor = 15.0f / m_maxVol[2];
 
     for (int i = 0, c = stream.frames.count(); i < c; ++i)
     {
         Frame& frame = const_cast<Frame&>(stream.frames.get(i));
 
-        //if (frame[VolA_EnvFlg].first.changed() && frame[VolA_EnvFlg].first.data() < 0x0F)
-        //    frame[VolA_EnvFlg].first.override(frame[VolA_EnvFlg].first.data() + pulseVolDelta);
-        //else
-        //    frame[VolA_EnvFlg].first = Register(frame[VolA_EnvFlg].first.data() + pulseVolDelta);
-        //
-        //if (frame[VolA_EnvFlg].second.changed() && frame[VolA_EnvFlg].second.data() < 0x0F)
-        //    frame[VolA_EnvFlg].second.override(frame[VolA_EnvFlg].second.data() + pulseVolDelta);
-        //else
-        //    frame[VolA_EnvFlg].second = Register(frame[VolA_EnvFlg].second.data() + pulseVolDelta);
+        // chip 0
+        frame.data(0, VolA_EnvFlg) *= pulseVolFactor;
+        frame.data(0, VolC_EnvFlg) *= pulseVolFactor;
 
-        //if (frame[VolC_EnvFlg].first.changed() && frame[VolC_EnvFlg].first.data() < 0x0F)
-        //    frame[VolC_EnvFlg].first.override(frame[VolC_EnvFlg].first.data() + pulseVolDelta);
-        //else
-        //    frame[VolC_EnvFlg].first = Register(frame[VolC_EnvFlg].first.data() + pulseVolDelta);
-
-        //if (frame[VolC_EnvFlg].second.changed() && frame[VolC_EnvFlg].second.data() < 0x0F)
-        //    frame[VolC_EnvFlg].second.override(frame[VolC_EnvFlg].second.data() + pulseVolDelta);
-        //else
-        //    frame[VolC_EnvFlg].second = Register(frame[VolC_EnvFlg].second.data() + pulseVolDelta);
-
-        //if (frame[VolB_EnvFlg].second.changed() && frame[VolB_EnvFlg].second.data() < 0x0F)
-        //    frame[VolB_EnvFlg].second.override(frame[VolB_EnvFlg].second.data() + noiseVolDelta);
-        //else
-        //    frame[VolB_EnvFlg].second = Register(frame[VolB_EnvFlg].second.data() + noiseVolDelta);
+        // chip 1
+        frame.data(1, VolA_EnvFlg) *= pulseVolFactor;
+        frame.data(1, VolB_EnvFlg) *= noiseVolFactor;
+        frame.data(1, VolC_EnvFlg) *= pulseVolFactor;
     }
+#else
+    int pulseVolDelta = (0x0F - std::max(m_maxVol[0], m_maxVol[1]));
+    int noiseVolDelta = (0x0F - m_maxVol[2]);
+
+    for (int i = 0, c = stream.frames.count(); i < c; ++i)
+    {
+        Frame& frame = const_cast<Frame&>(stream.frames.get(i));
+
+        // chip 0
+        if (frame.data(0, VolA_EnvFlg) < 0x0F)
+            frame.data(0, VolA_EnvFlg) += pulseVolDelta;
+
+        if (frame.data(0, VolC_EnvFlg) < 0x0F)
+            frame.data(0, VolC_EnvFlg) += pulseVolDelta;
+
+        // chip 1
+        if (frame.data(1, VolA_EnvFlg) < 0x0F)
+            frame.data(1, VolA_EnvFlg) += pulseVolDelta;
+
+        if (frame.data(1, VolB_EnvFlg) < 0x0F)
+            frame.data(1, VolB_EnvFlg) += noiseVolDelta;
+
+        if (frame.data(1, VolC_EnvFlg) < 0x0F)
+            frame.data(1, VolC_EnvFlg) += pulseVolDelta;
+    }
+#endif
 }

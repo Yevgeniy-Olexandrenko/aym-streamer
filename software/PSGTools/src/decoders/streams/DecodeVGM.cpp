@@ -24,7 +24,7 @@ bool DecodeVGM::Open(Stream& stream)
                 }
                 m_dataPtr = m_rawData + vgmDataOffset;
 
-                int frameRate = DetectFrameRate();
+                int frameRate = 60;// DetectFrameRate();
                 stream.playback.frameRate(frameRate);
                 stream.info.type("VGM stream");
 
@@ -34,21 +34,18 @@ bool DecodeVGM::Open(Stream& stream)
                     bool ym_chip = (header.ay8910Type & 0xF0);
                     stream.chip.model(ym_chip ? Chip::Model::YM : Chip::Model::AY);
                     stream.chip.freqValue(header.ay8910Clock / (divider ? 2 : 1));
-
                 }
 
                 else if (m_isRP2A03)
                 {
                     stream.chip.model(Chip::Model::YM);
                     stream.chip.freqValue(header.nesApuClock);
-                    stream.chip.count(Chip::Count::TurboSound);
+                    //stream.chip.count(Chip::Count::TurboSound);
                 }
 
                 m_samplesPerFrame = (44100 / frameRate);
-                m_minSamplesPerFrame = (44100 / (frameRate + 1));
-                m_maxSamplesPerFrame = (44100 / (frameRate - 1));
                 m_processedSamples = 0;
-                m_firstFrame = true;
+
 
                 if (header.loopSamples)
                 {
@@ -67,33 +64,35 @@ bool DecodeVGM::Open(Stream& stream)
 
 bool DecodeVGM::Decode(Frame& frame)
 {
-    bool result = false;
-    if (m_isAY38910)
+    if (m_processedSamples >= m_samplesPerFrame)
     {
-        result = VgmDecode(frame);
-    }
-    else if (m_isRP2A03)
-    {
-        result = VgmDecode(frame);
-        RP2A03Update(frame);
+        VgmUpdateChips(frame, m_samplesPerFrame);
     }
 
-    //if (!result)
-    //{
-    //    std::cout << "tone1 - 0x" << std::hex << m_maxVol[0] << std::endl;
-    //    std::cout << "tone2 - 0x" << std::hex << m_maxVol[1] << std::endl;
-    //    std::cout << "noise - 0x" << std::hex << m_maxVol[2] << std::endl;
-    //}
+    else while (m_processedSamples < m_samplesPerFrame)
+    {
+        int samples = VgmDecodeBlock(frame);
+        if (samples)
+        {
+            VgmUpdateChips(frame, samples);
+            m_processedSamples += samples;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-    return result;
+    m_processedSamples -= m_samplesPerFrame;
+    return true;
 }
 
 void DecodeVGM::Close(Stream& stream)
 {
-    if (m_isRP2A03)
-    {
-        RP2A03FixVolume(stream);
-    }
+    //if (m_isRP2A03)
+    //{
+    //    RP2A03_FixVolume(stream);
+    //}
 
     if (m_loop) stream.loop.frameId(m_loop);
     delete[] m_rawData;
@@ -101,12 +100,11 @@ void DecodeVGM::Close(Stream& stream)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool DecodeVGM::VgmDecode(Frame& frame)
+int DecodeVGM::VgmDecodeBlock(Frame& frame)
 {
-    while (m_processedSamples < m_samplesPerFrame)
+    int samples = 0;
+    while (!samples)
     {
-        uint16_t waitSamples = 0;
-
         // AY8910, write value dd to register aa
         if (m_dataPtr[0] == 0xA0)
         {
@@ -126,10 +124,7 @@ bool DecodeVGM::VgmDecode(Frame& frame)
             {
                 uint8_t aa = m_dataPtr[1];
                 uint8_t dd = m_dataPtr[2];
-                if (aa < 0x20)
-                {
-                    RP2A03Write(aa, dd);
-                }
+                m_rp2A03.Write(aa, dd);
             }
             m_dataPtr += 2;
         }
@@ -145,72 +140,51 @@ bool DecodeVGM::VgmDecode(Frame& frame)
         // Longer pauses than this are represented by multiple wait commands.
         else if (m_dataPtr[0] == 0x61)
         {
-            waitSamples = *(uint16_t*)(&m_dataPtr[1]);
-            m_processedSamples += waitSamples;
-
-            if (m_firstFrame || (m_processedSamples >= m_minSamplesPerFrame && m_processedSamples <= m_maxSamplesPerFrame))
-            {
-                m_samplesPerFrame = m_processedSamples;
-                m_firstFrame = false;
-            }
-
-            //std::cout << m_processedSamples << ' ';
+            samples = *(uint16_t*)(&m_dataPtr[1]);
             m_dataPtr += 2;
         }
 
         // Wait 735 samples (60th of a second), a shortcut for 0x61 0xdf 0x02
         else if (m_dataPtr[0] == 0x62)
         {
-            waitSamples = m_samplesPerFrame = 735;
-            m_processedSamples += waitSamples;
-            //std::cout << m_processedSamples << ' ';
+            samples = 735;
         }
 
         // Wait 882 samples (50th of a second), a shortcut for 0x61 0x72 0x03
         else if (m_dataPtr[0] == 0x63)
         {
-            waitSamples = m_samplesPerFrame = 882;
-            m_processedSamples += waitSamples;
-            //std::cout << m_processedSamples << ' ';
+            samples = 882;
         }
 
         // End of sound data
         else if (m_dataPtr[0] == 0x66)
         {
-            return false;
+            break;
         }
 
         // Wait n+1 samples, n can range from 0 to 15.
         else if ((m_dataPtr[0] & 0xF0) == 0x70)
         {
-            waitSamples = (1 + (m_dataPtr[0] & 0x0F));
-            m_processedSamples += waitSamples;
-            //std::cout << m_processedSamples << ' ';
+            samples = (1 + (m_dataPtr[0] & 0x0F));
         }
 
         // Unknown command, stop decoding
         else
         {
-            return false;
+            break;
         }
         m_dataPtr++;
-
-        //if (waitSamples)
-        //{
-        //    if (m_isRP2A03)
-        //    {
-        //        m_rp2A03.Update(waitSamples);
-        //    }
-        //    waitSamples = 0;
-        //}
     }
+    return samples;
+}
 
-   
-    
-  
-
-    m_processedSamples -= m_samplesPerFrame;
-    return true;
+void DecodeVGM::VgmUpdateChips(Frame& frame, int samples)
+{
+    if (m_isRP2A03)
+    {
+        m_rp2A03.Update(samples);
+        RP2A03_Convert(frame);
+    }
 }
 
 bool DecodeVGM::ReadFile(const char* path, uint8_t* dest, int size)
@@ -229,56 +203,7 @@ bool DecodeVGM::ReadFile(const char* path, uint8_t* dest, int size)
     return false;
 }
 
-int DecodeVGM::DetectFrameRate()
-{
-    uint8_t* dataPtrSaved = m_dataPtr;
-    int frameRate = 0;
-
-    m_samplesPerFrame = INT32_MAX;
-    m_minSamplesPerFrame = int(44100 / 60 * 0.95f);
-    m_maxSamplesPerFrame = int(44100 / 50 * 1.05f);
-    m_processedSamples = 0;
-    m_firstFrame = false;
-
-    Frame frame;
-    float accumulator = 0;
-    float counter = 0;
-
-    for (int i = 0; i < 100 && VgmDecode(frame); ++i)
-    {
-        if (m_samplesPerFrame != INT32_MAX)
-        {
-            accumulator += m_samplesPerFrame;
-            counter++;
-
-            std::cout << int(44100 * counter / accumulator + 0.5f) << ' ';
-        }
-    }
-    std::cout << std::endl;
-
-    if (counter)
-    {
-        frameRate = int(44100 * counter / accumulator + 0.5f);
-        if (frameRate >= 59 && frameRate <= 61) frameRate = 60;
-        if (frameRate >= 49 && frameRate <= 51) frameRate = 50;
-    }
-    else
-    {
-        // TODO: detect in some another way,
-        // set some default value for now
-        frameRate = 50;
-    }
-
-    m_dataPtr = dataPtrSaved;
-    return frameRate;
-}
-
-void DecodeVGM::RP2A03Write(uint8_t reg, uint8_t data)
-{
-    m_rp2A03.Write(reg, data);
-}
-
-void DecodeVGM::RP2A03Update(Frame& frame)
+void DecodeVGM::RP2A03_Convert(Frame& frame)
 {
     // process
     uint8_t  a1_volume = m_rp2A03.m_chan[0].output;
@@ -306,15 +231,9 @@ void DecodeVGM::RP2A03Update(Frame& frame)
 
     if (a1_enable)
     {
-        //uint16_t a1_period_m = (a1_period + 1);
-        //uint8_t  a1_volume_m = (a1_volume ? a1_volume - 1 : a1_volume);
-
         uint16_t a1_period_m = a1_period;
-        //if (a1_period_m)
-        {
-            if (a1_mode == 0) a1_period_m++;
-            if (a1_mode == 1 || a1_mode == 3) a1_period_m >>= 1;
-        }
+        if (a1_mode == 0) a1_period_m ^= 1;
+        if (a1_mode == 1 || a1_mode == 3) a1_period_m >>= 1;
         uint8_t  a1_volume_m = (a1_volume ? a1_volume - 1 : a1_volume);
 
         // chip 0 ch A
@@ -334,15 +253,9 @@ void DecodeVGM::RP2A03Update(Frame& frame)
 
     if (c2_enable)
     {
-        //uint16_t c2_period_m = (c2_period ? c2_period - 1 : c2_period);
-        //uint8_t  c2_volume_m = (c2_volume ? c2_volume - 1 : c2_volume);
-
         uint16_t c2_period_m = c2_period;
-        //if (c2_period_m)
-        {
-            if (c2_mode == 0) c2_period_m++;
-            if (c2_mode == 1 || c2_mode == 3) c2_period_m >>= 1;
-        }
+        if (c2_mode == 0) c2_period_m ^= 1;
+        if (c2_mode == 1 || c2_mode == 3) c2_period_m >>= 1;
         uint8_t  c2_volume_m = (c2_volume ? c2_volume - 1 : c2_volume);
 
         // chip 0 ch C
@@ -382,13 +295,9 @@ void DecodeVGM::RP2A03Update(Frame& frame)
     // mixers
     frame.Update(0, Mixer_Flags, mixer1);
     frame.Update(1, Mixer_Flags, mixer2);
-
-    // update
-    int samples = 44100 / 60;// m_samplesPerFrame;
-    m_rp2A03.Update(samples);
 }
 
-void DecodeVGM::RP2A03FixVolume(Stream& stream)
+void DecodeVGM::RP2A03_FixVolume(Stream& stream)
 {
 #if 1
     float pulseVolFactor = 15.0f / std::max(m_maxVol[0], m_maxVol[1]);

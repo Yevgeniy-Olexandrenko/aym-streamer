@@ -94,7 +94,7 @@ private:
    
 
 private:
-    uint8_t* m_rawData;
+    uint8_t* m_data;
     uint8_t* m_dataPtr;
 
     int m_loop;
@@ -102,4 +102,5 @@ private:
     int m_processedSamples;
 
     std::shared_ptr<ChipSim> m_chip;
+    bool m_isTS;
 };

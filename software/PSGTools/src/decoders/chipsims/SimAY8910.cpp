@@ -13,9 +13,9 @@ void SimAY8910::Reset()
 	m_frame.Reset();
 }
 
-void SimAY8910::Write(uint8_t reg, uint8_t data)
+void SimAY8910::Write(uint8_t chip, uint8_t reg, uint8_t data)
 {
-	m_frame.Update(reg, data);
+	m_frame.Update(chip, reg, data);
 }
 
 void SimAY8910::Simulate(int samples)

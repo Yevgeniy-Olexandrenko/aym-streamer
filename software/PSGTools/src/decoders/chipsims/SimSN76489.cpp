@@ -11,7 +11,7 @@ void SimSN76489::Reset()
 	// TODO
 }
 
-void SimSN76489::Write(uint8_t reg, uint8_t data)
+void SimSN76489::Write(uint8_t chip, uint8_t reg, uint8_t data)
 {
 	// TODO
 }

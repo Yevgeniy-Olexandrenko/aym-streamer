@@ -431,7 +431,7 @@ void SimRP2A03::Reset()
     // TODO
 }
 
-void SimRP2A03::Write(uint8_t reg, uint8_t data)
+void SimRP2A03::Write(uint8_t chip, uint8_t reg, uint8_t data)
 {
     uint16_t originReg = reg;
     uint8_t oldVal = data;

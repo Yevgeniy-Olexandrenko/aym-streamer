@@ -15,7 +15,7 @@ public:
 
 public:
 	virtual void Reset() = 0;
-	virtual void Write(uint8_t reg, uint8_t data) = 0;
+	virtual void Write(uint8_t chip, uint8_t reg, uint8_t data) = 0;
 	virtual void Simulate(int samples) = 0;
 	virtual void ConvertToPSG(Frame& frame) = 0;
 	virtual void PostProcess(Stream& stream) = 0;

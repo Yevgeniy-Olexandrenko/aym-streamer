@@ -202,7 +202,7 @@ int Stream::Loop::extraLoops() const
 
 bool Stream::Loop::available() const
 {
-	return (framesCount() > (m_stream.frames.count() / 2));
+	return (framesCount() >= (m_stream.frames.count() / 2));
 }
 
 void Stream::Loop::ComputeExtraLoops()

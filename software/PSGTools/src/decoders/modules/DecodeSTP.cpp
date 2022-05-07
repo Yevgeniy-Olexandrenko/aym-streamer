@@ -118,7 +118,7 @@ bool DecodeSTP::Play()
 {
     bool isNewLoop = false;
     Header* header = (Header*)m_data;
-    uint8_t TempMixer = 0;
+    uint8_t mixer = 0;
 
     if (--m_delayCounter == 0)
     {
@@ -148,11 +148,11 @@ bool DecodeSTP::Play()
         m_delayCounter = header->delay;
     }
 
-    GetRegisters(m_chA, TempMixer);
-    GetRegisters(m_chB, TempMixer);
-    GetRegisters(m_chC, TempMixer);
+    GetRegisters(m_chA, mixer);
+    GetRegisters(m_chB, mixer);
+    GetRegisters(m_chC, mixer);
 
-    m_regs[0][Mixer_Flags] = TempMixer;
+    m_regs[0][Mixer_Flags] = mixer;
     m_regs[0][TonA_PeriodL] = m_chA.ton & 0xff;
     m_regs[0][TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
     m_regs[0][TonB_PeriodL] = m_chB.ton & 0xff;

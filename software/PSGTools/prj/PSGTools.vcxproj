@@ -27,6 +27,7 @@
     <ClInclude Include="..\src\decoders\modules\DecodeASC.h" />
     <ClInclude Include="..\src\decoders\modules\DecodePT2.h" />
     <ClInclude Include="..\src\decoders\modules\DecodePT3.h" />
+    <ClInclude Include="..\src\decoders\modules\DecodeSQT.h" />
     <ClInclude Include="..\src\decoders\modules\DecodeSTC.h" />
     <ClInclude Include="..\src\decoders\modules\DecodeSTP.h" />
     <ClInclude Include="..\src\decoders\streams\DecodePSG.h" />
@@ -57,6 +58,7 @@
     <ClCompile Include="..\src\decoders\modules\DecodeASC.cpp" />
     <ClCompile Include="..\src\decoders\modules\DecodePT2.cpp" />
     <ClCompile Include="..\src\decoders\modules\DecodePT3.cpp" />
+    <ClCompile Include="..\src\decoders\modules\DecodeSQT.cpp" />
     <ClCompile Include="..\src\decoders\modules\DecodeSTC.cpp" />
     <ClCompile Include="..\src\decoders\modules\DecodeSTP.cpp" />
     <ClCompile Include="..\src\decoders\streams\DecodePSG.cpp" />

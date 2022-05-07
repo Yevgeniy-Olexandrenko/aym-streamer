@@ -1,7 +1,6 @@
 ﻿#include <iostream>
 #include <chrono>
 
-//#define _WIN32_WINNT 0x0500
 #include <Windows.h>
 
 #include <terminal/terminal.hpp>
@@ -15,6 +14,7 @@
 #include "decoders/modules/DecodeSTC.h"
 #include "decoders/modules/DecodeASC.h"
 #include "decoders/modules/DecodeSTP.h"
+#include "decoders/modules/DecodeSQT.h"
 
 #include "decoders/streams/DecodeVTX.h"
 #include "decoders/streams/DecodePSG.h"
@@ -25,7 +25,7 @@
 #include "output/Emulator/Emulator.h"
 #include "Interface.h"
 
-const std::string k_supportedFileTypes = "ym|stp|vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
+const std::string k_supportedFileTypes = "sqt|ym|stp|vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
 const int k_comPortIndex = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +62,7 @@ bool DecodeFileToModule(const std::filesystem::path& path, Stream& stream)
         std::shared_ptr<Decoder>(new DecodeSTC()),
         std::shared_ptr<Decoder>(new DecodeASC()),
         std::shared_ptr<Decoder>(new DecodeSTP()),
+        std::shared_ptr<Decoder>(new DecodeSQT()),
 
         // streams
         std::shared_ptr<Decoder>(new DecodeYM ()),
@@ -180,8 +181,8 @@ int main(int argc, char* argv[])
     if (argc != 2) return 1;
     const std::filesystem::path path(argv[1]);
 
+#if 0
     SetConsoleWindowSize(87, 32);
-
 
     HWND consoleWindow = GetConsoleWindow();
     SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
@@ -192,7 +193,7 @@ int main(int argc, char* argv[])
     hInput = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(hInput, &prev_mode);
     SetConsoleMode(hInput, prev_mode & ~ENABLE_QUICK_EDIT_MODE);
-    
+#endif    
  
     using namespace terminal;
     SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
@@ -214,7 +215,7 @@ int main(int argc, char* argv[])
 
     if (!m_filelist->empty())
     {
-//        m_filelist->shuffle();
+        m_filelist->shuffle();
         bool goToPrev = false;
 
         std::filesystem::path path;

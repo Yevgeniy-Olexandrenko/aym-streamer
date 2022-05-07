@@ -3,21 +3,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\projects\github\test\vgm\Ferrari_Grand_Prix_Challenge_(NES)\*.*"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\projects\github\test\sqt\*.*"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\projects\github\test\vgm\Ferrari_Grand_Prix_Challenge_(NES)\*.*"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\projects\github\test\sqt\*.*"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\projects\github\test\vgm\Ferrari_Grand_Prix_Challenge_(NES)\*.*"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\projects\github\test\sqt\*.*"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"D:\projects\github\test\vgm\Ferrari_Grand_Prix_Challenge_(NES)\*.*"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\projects\github\test\sqt\*.*"</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

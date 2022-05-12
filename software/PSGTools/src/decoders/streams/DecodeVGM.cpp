@@ -3,6 +3,7 @@
 #include "decoders/chipsims/SimAY8910.h"
 #include "decoders/chipsims/SimRP2A03.h"
 #include "decoders/chipsims/SimSN76489.h"
+#include <sstream>
 
 namespace
 {
@@ -40,12 +41,12 @@ bool DecodeVGM::Open(Stream& stream)
 
             if (ReadFile(stream.file.string().c_str(), m_data, fileSize))
             {
-                uint32_t vgmDataOffset = 0x40;
+                uint32_t dataOffset = 0x40;
                 if (header.version >= 0x150 && header.vgmDataOffset)
                 {
-                    vgmDataOffset = header.vgmDataOffset + 0x34;
+                    dataOffset = header.vgmDataOffset + 0x34;
                 }
-                m_dataPtr = m_data + vgmDataOffset;
+                m_dataPtr = m_data + dataOffset;
 
                 int frameRate = 60;// DetectFrameRate();
                 stream.playback.frameRate(frameRate);
@@ -75,6 +76,49 @@ bool DecodeVGM::Open(Stream& stream)
                 if (header.loopSamples)
                 {
                     m_loop = (header.totalSamples - header.loopSamples) / m_samplesPerFrame;
+                }
+
+                // GD3 tags reading
+                if (uint8_t* gd3Offset = m_data + header.gd3Offset)
+                {
+                    uint32_t gd3 = *(uint32_t*)(gd3Offset + 0x14);
+                    uint32_t ver = *(uint32_t*)(gd3Offset + 0x18);
+
+                    if (gd3 == 0x20336447 && ver == 0x00000100)
+                    {
+                        gd3Offset += 0x20;
+
+                        auto ReadString = [&]() -> std::string
+                        {
+                            std::stringstream ss;
+                            while (true)
+                            {
+                                wchar_t ch = *(wchar_t*)gd3Offset;
+                                gd3Offset += sizeof(wchar_t);
+
+                                if (!ch) break;
+                                ss << (ch < 0x20 || ch > 0x7F ? '?' : char(ch));
+                            }
+                            return ss.str();
+                        };
+
+                        std::string GD3[]{
+                            ReadString(), ReadString(), // Track name
+                            ReadString(), ReadString(), // Game name
+                            ReadString(), ReadString(), // System name
+                            ReadString(), ReadString(), // Name of Original Track Author
+                            ReadString(),               // Date of game's release written in the form yyyy/mm/dd, or just yyyy/mm or yyyy
+                            ReadString(),               // Name of person who converted it to a VGM file
+                            ReadString()                // Notes
+                        };
+
+                        stream.info.title(GD3[0]);
+                        stream.info.artist(GD3[6]);
+                        stream.info.comment(GD3[2]);
+
+                        if (!GD3[4].empty())
+                            stream.info.type(stream.info.type() + " (" + GD3[4] + ")");
+                    }
                 }
                 return true;
             }

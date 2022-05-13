@@ -1,6 +1,6 @@
 #pragma once
 
-#include "decoders/Decode.h"
+#include "decoders/Decoder.h"
 
 class DecodeSTC : public ModuleDecoder
 {

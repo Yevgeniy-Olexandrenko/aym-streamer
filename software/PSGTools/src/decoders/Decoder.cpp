@@ -1,4 +1,4 @@
-#include "Decode.h"
+#include "Decoder.h"
 
 bool Decoder::CheckFileExt(const Stream& stream, const std::string& ext) const
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Encoder.h"
+#include "encoders/Encoder.h"
 
 class EncodePSG : public Encoder
 {

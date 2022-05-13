@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Encoder.h"
+#include "encoders/Encoder.h"
 
 class EncodeWAV : public Encoder
 {

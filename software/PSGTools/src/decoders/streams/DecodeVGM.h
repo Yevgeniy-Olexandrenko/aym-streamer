@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "decoders/Decode.h"
+#include "decoders/Decoder.h"
 
 class ChipSim;
 

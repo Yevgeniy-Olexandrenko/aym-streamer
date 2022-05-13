@@ -34,12 +34,15 @@
     <Filter Include="Sources\decoders\chipsims">
       <UniqueIdentifier>{4eb3d85e-0ba9-4004-beaa-cde186a404b8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\encoders\specific">
+      <UniqueIdentifier>{d2bdb999-e87e-471b-b032-60eab5650e17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\encoders\streams">
+      <UniqueIdentifier>{33f2c317-f14e-4ae1-a91a-ed2dd2d31d76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\encoders\EncodePSG.h">
-      <Filter>Sources\encoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\Decode.h">
+    <ClInclude Include="..\src\decoders\Decoder.h">
       <Filter>Sources\decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\encoders\Encoder.h">
@@ -47,12 +50,6 @@
     </ClInclude>
     <ClInclude Include="..\src\output\Output.h">
       <Filter>Sources\output</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\EncodeTXT.h">
-      <Filter>Sources\encoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\EncodeWAV.h">
-      <Filter>Sources\encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\output\Chip.h">
       <Filter>Sources\output</Filter>
@@ -126,19 +123,31 @@
     <ClInclude Include="..\src\decoders\modules\DecodeSQT.h">
       <Filter>Sources\decoders\modules</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Functions.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\streams\EncodePSG.h">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\streams\EncodeVGM.h">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\streams\EncodeVTX.h">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\streams\EncodeYM.h">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\specific\EncodeTXT.h">
+      <Filter>Sources\encoders\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\specific\EncodeWAV.h">
+      <Filter>Sources\encoders\specific</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
       <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\EncodePSG.cpp">
-      <Filter>Sources\encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\EncodeTXT.cpp">
-      <Filter>Sources\encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\EncodeWAV.cpp">
-      <Filter>Sources\encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\output\Emulator\Emulator.cpp">
       <Filter>Sources\output\Emulator</Filter>
@@ -158,7 +167,7 @@
     <ClCompile Include="..\src\Interface.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\decoders\Decode.cpp">
+    <ClCompile Include="..\src\decoders\Decoder.cpp">
       <Filter>Sources\decoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\stream\Frame.cpp">
@@ -211,6 +220,30 @@
     </ClCompile>
     <ClCompile Include="..\src\decoders\modules\DecodeSQT.cpp">
       <Filter>Sources\decoders\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Functions.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\Encoder.cpp">
+      <Filter>Sources\encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\streams\EncodePSG.cpp">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\streams\EncodeVGM.cpp">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\streams\EncodeVTX.cpp">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\streams\EncodeYM.cpp">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\specific\EncodeTXT.cpp">
+      <Filter>Sources\encoders\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\specific\EncodeWAV.cpp">
+      <Filter>Sources\encoders\specific</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -9,21 +9,13 @@
 #include "stream/Stream.h"
 #include "stream/Player.h"
 
-#include "decoders/modules/DecodePT3.h"
-#include "decoders/modules/DecodePT2.h"
-#include "decoders/modules/DecodeSTC.h"
-#include "decoders/modules/DecodeASC.h"
-#include "decoders/modules/DecodeSTP.h"
-#include "decoders/modules/DecodeSQT.h"
 
-#include "decoders/streams/DecodeVTX.h"
-#include "decoders/streams/DecodePSG.h"
-#include "decoders/streams/DecodeVGM.h"
-#include "decoders/streams/DecodeYM.h"
 
 #include "output/Streamer/Streamer.h"
 #include "output/Emulator/Emulator.h"
+
 #include "Interface.h"
+#include "Functions.h"
 
 const std::string k_supportedFileTypes = "sqt|ym|stp|vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
 const int k_comPortIndex = 4;
@@ -53,42 +45,7 @@ void PrintDelimiter()
     std::cout << color::reset << std::endl;
 }
 
-bool DecodeFileToModule(const std::filesystem::path& path, Stream& stream)
-{
-    std::shared_ptr<Decoder> decoders[]{
-        // modules
-        std::shared_ptr<Decoder>(new DecodePT3()),
-        std::shared_ptr<Decoder>(new DecodePT2()),
-        std::shared_ptr<Decoder>(new DecodeSTC()),
-        std::shared_ptr<Decoder>(new DecodeASC()),
-        std::shared_ptr<Decoder>(new DecodeSTP()),
-        std::shared_ptr<Decoder>(new DecodeSQT()),
 
-        // streams
-        std::shared_ptr<Decoder>(new DecodeYM ()),
-        std::shared_ptr<Decoder>(new DecodePSG()),
-        std::shared_ptr<Decoder>(new DecodeVTX()),
-        std::shared_ptr<Decoder>(new DecodeVGM()),
-    };
-
-    stream.file = path;
-    for (std::shared_ptr<Decoder> decoder : decoders)
-    {
-        if (decoder->Open(stream))
-        {
-            Frame frame;
-            while (decoder->Decode(frame))
-            {
-                stream.frames.add(frame);
-                frame.ResetChanges();
-            }
-
-            decoder->Close(stream);
-            return true;
-        }
-    }
-    return false;
-}
 
 void SaveModuleDebugOutput(const Stream& stream)
 {
@@ -225,7 +182,7 @@ int main(int argc, char* argv[])
             if (!isDone) break;
 
             m_stream.reset(new Stream());
-            if (DecodeFileToModule(path, *m_stream))
+            if (Functions::DecodeFile(path, *m_stream))
             {
                 goToPrev = false; // if decoding OK, move to next by default
                 Interface::PrintInputFile(*m_stream, m_filelist->index(), m_filelist->count());

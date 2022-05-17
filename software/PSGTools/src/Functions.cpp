@@ -67,9 +67,9 @@ namespace Functions
         {
             if (encoder->Open(stream))
             {
-                for (FrameId frame = 0; frame < stream.frames.count(); ++frame)
+                for (FrameId id = 0; id < stream.frames.count(); ++id)
                 {
-                    encoder->Encode(stream.frames.get(frame));
+                    encoder->Encode(id, stream.frames.get(id));
                 }
 
                 encoder->Close(stream);

@@ -171,16 +171,16 @@ void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
 {
     ayumi* ay = &m_ay[chip];
 
-    uint8_t r7 = frame.Read(chip, Mixer_Flags);
-    uint8_t r8 = frame.Read(chip, VolA_EnvFlg);
-    uint8_t r9 = frame.Read(chip, VolB_EnvFlg);
-    uint8_t rA = frame.Read(chip, VolC_EnvFlg);
+    uint8_t r7 = frame.Read(chip, Mixer);
+    uint8_t r8 = frame.Read(chip, A_Volume);
+    uint8_t r9 = frame.Read(chip, B_Volume);
+    uint8_t rA = frame.Read(chip, C_Volume);
 
-    ayumi_set_tone(ay, 0, frame.Read(chip, TonA_PeriodL) | frame.Read(chip, TonA_PeriodH) << 8);
-    ayumi_set_tone(ay, 1, frame.Read(chip, TonB_PeriodL) | frame.Read(chip, TonB_PeriodH) << 8);
-    ayumi_set_tone(ay, 2, frame.Read(chip, TonC_PeriodL) | frame.Read(chip, TonC_PeriodH) << 8);
+    ayumi_set_tone(ay, 0, frame.ReadPeriod(chip, A_Period));
+    ayumi_set_tone(ay, 1, frame.ReadPeriod(chip, B_Period));
+    ayumi_set_tone(ay, 2, frame.ReadPeriod(chip, C_Period));
 
-    ayumi_set_noise(ay, frame.Read(chip, Noise_Period));
+    ayumi_set_noise(ay, frame.Read(chip, N_Period));
 
     ayumi_set_mixer(ay, 0, r7 >> 0 & 0x01, r7 >> 3 & 0x01, r8 >> 4);
     ayumi_set_mixer(ay, 1, r7 >> 1 & 0x01, r7 >> 4 & 0x01, r9 >> 4);
@@ -190,10 +190,10 @@ void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
     ayumi_set_volume(ay, 1, r9 & 0x0F);
     ayumi_set_volume(ay, 2, rA & 0x0F);
 
-    ayumi_set_envelope(ay, frame.Read(chip, Env_PeriodL) | frame.Read(chip, Env_PeriodH) << 8);
-    if (force || frame.IsChanged(chip, Env_Shape))
+    ayumi_set_envelope(ay, frame.ReadPeriod(chip, E_Period));
+    if (force || frame.IsChanged(chip, E_Shape))
     {
-        ayumi_set_envelope_shape(ay, frame.Read(chip, Env_Shape));
+        ayumi_set_envelope_shape(ay, frame.Read(chip, E_Shape));
     }
 }
 

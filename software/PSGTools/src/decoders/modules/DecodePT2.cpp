@@ -142,16 +142,16 @@ bool DecodePT2::Play()
     GetRegisters(m_chB, mixer);
     GetRegisters(m_chC, mixer);
 
-    m_regs[0][Mixer_Flags] = mixer;
-    m_regs[0][TonA_PeriodL] = m_chA.ton & 0xff;
-    m_regs[0][TonA_PeriodH] = (m_chA.ton >> 8) & 0xf;
-    m_regs[0][TonB_PeriodL] = m_chB.ton & 0xff;
-    m_regs[0][TonB_PeriodH] = (m_chB.ton >> 8) & 0xf;
-    m_regs[0][TonC_PeriodL] = m_chC.ton & 0xff;
-    m_regs[0][TonC_PeriodH] = (m_chC.ton >> 8) & 0xf;
-    m_regs[0][VolA_EnvFlg] = m_chA.amplitude;
-    m_regs[0][VolB_EnvFlg] = m_chB.amplitude;
-    m_regs[0][VolC_EnvFlg] = m_chC.amplitude;
+    m_regs[0][Mixer] = mixer;
+    m_regs[0][A_Fine] = m_chA.ton & 0xff;
+    m_regs[0][A_Coarse] = (m_chA.ton >> 8) & 0xf;
+    m_regs[0][B_Fine] = m_chB.ton & 0xff;
+    m_regs[0][B_Coarse] = (m_chB.ton >> 8) & 0xf;
+    m_regs[0][C_Fine] = m_chC.ton & 0xff;
+    m_regs[0][C_Coarse] = (m_chC.ton >> 8) & 0xf;
+    m_regs[0][A_Volume] = m_chA.amplitude;
+    m_regs[0][B_Volume] = m_chB.amplitude;
+    m_regs[0][C_Volume] = m_chC.amplitude;
     return isNewLoop;
 }
 
@@ -207,9 +207,9 @@ void DecodePT2::PatternInterpreter(Channel& chan)
         else if (val >= 0x71 && val <= 0x7e)
         {
             chan.envelopeEnabled = true;
-            m_regs[0][Env_Shape] = val - 0x70;
-            m_regs[0][Env_PeriodL] = m_data[++chan.addressInPattern];
-            m_regs[0][Env_PeriodH] = m_data[++chan.addressInPattern];
+            m_regs[0][E_Shape] = val - 0x70;
+            m_regs[0][E_Fine] = m_data[++chan.addressInPattern];
+            m_regs[0][E_Coarse] = m_data[++chan.addressInPattern];
         }
         else if (val == 0x70)
         {
@@ -307,7 +307,7 @@ void DecodePT2::GetRegisters(Channel& chan, uint8_t& mixer)
         if ((b0 & 1) != 0)
             mixer |= 64;
         else
-            m_regs[0][Noise_Period] = ((b0 >> 3) + chan.additionToNoise) & 0x1f;
+            m_regs[0][N_Period] = ((b0 >> 3) + chan.additionToNoise) & 0x1f;
 
         if ((b0 & 2) != 0)
             mixer |= 8;

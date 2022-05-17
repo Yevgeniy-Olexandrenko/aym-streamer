@@ -275,29 +275,29 @@ namespace Interface
     void printRegistersValues(int chipIndex, const Frame& frame, bool highlight)
     {
         std::cout << color::bright_cyan << '[';
-        printRegisterValue(chipIndex, frame, Mixer_Flags, highlight);
+        printRegisterValue(chipIndex, frame, Mixer, highlight);
         std::cout << color::bright_cyan << '|';
-        printRegisterValue(chipIndex, frame, TonA_PeriodH, highlight);
-        printRegisterValue(chipIndex, frame, TonA_PeriodL, highlight);
+        printRegisterValue(chipIndex, frame, A_Coarse, highlight);
+        printRegisterValue(chipIndex, frame, A_Fine, highlight);
         std::cout << ' ';
-        printRegisterValue(chipIndex, frame, VolA_EnvFlg, highlight);
+        printRegisterValue(chipIndex, frame, A_Volume, highlight);
         std::cout << color::bright_cyan << '|';
-        printRegisterValue(chipIndex, frame, TonB_PeriodH, highlight);
-        printRegisterValue(chipIndex, frame, TonB_PeriodL, highlight);
+        printRegisterValue(chipIndex, frame, B_Coarse, highlight);
+        printRegisterValue(chipIndex, frame, B_Fine, highlight);
         std::cout << ' ';
-        printRegisterValue(chipIndex, frame, VolB_EnvFlg, highlight);
+        printRegisterValue(chipIndex, frame, B_Volume, highlight);
         std::cout << color::bright_cyan << '|';
-        printRegisterValue(chipIndex, frame, TonC_PeriodH, highlight);
-        printRegisterValue(chipIndex, frame, TonC_PeriodL, highlight);
+        printRegisterValue(chipIndex, frame, C_Coarse, highlight);
+        printRegisterValue(chipIndex, frame, C_Fine, highlight);
         std::cout << ' ';
-        printRegisterValue(chipIndex, frame, VolC_EnvFlg, highlight);
+        printRegisterValue(chipIndex, frame, C_Volume, highlight);
         std::cout << color::bright_cyan << '|';
-        printRegisterValue(chipIndex, frame, Env_PeriodH, highlight);
-        printRegisterValue(chipIndex, frame, Env_PeriodL, highlight);
+        printRegisterValue(chipIndex, frame, E_Coarse, highlight);
+        printRegisterValue(chipIndex, frame, E_Fine, highlight);
         std::cout << ' ';
-        printRegisterValue(chipIndex, frame, Env_Shape, highlight);
+        printRegisterValue(chipIndex, frame, E_Shape, highlight);
         std::cout << color::bright_cyan << '|';
-        printRegisterValue(chipIndex, frame, Noise_Period, highlight);
+        printRegisterValue(chipIndex, frame, N_Period, highlight);
         std::cout << color::bright_cyan << ']';
     }
 
@@ -407,29 +407,29 @@ namespace Interface
     {
         uint16_t color = highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN;
         streamPb.color(color).draw('|');
-        printRegisterValue2(chipIndex, frame, Mixer_Flags, highlight);
+        printRegisterValue2(chipIndex, frame, Mixer, highlight);
         streamPb.color(color).draw('|');
-        printRegisterValue2(chipIndex, frame, TonA_PeriodH, highlight);
-        printRegisterValue2(chipIndex, frame, TonA_PeriodL, highlight);
+        printRegisterValue2(chipIndex, frame, A_Coarse, highlight);
+        printRegisterValue2(chipIndex, frame, A_Fine, highlight);
         streamPb.draw(' ');
-        printRegisterValue2(chipIndex, frame, VolA_EnvFlg, highlight);
+        printRegisterValue2(chipIndex, frame, A_Volume, highlight);
         streamPb.color(color).draw('|');
-        printRegisterValue2(chipIndex, frame, TonB_PeriodH, highlight);
-        printRegisterValue2(chipIndex, frame, TonB_PeriodL, highlight);
+        printRegisterValue2(chipIndex, frame, B_Coarse, highlight);
+        printRegisterValue2(chipIndex, frame, B_Fine, highlight);
         streamPb.draw(' ');
-        printRegisterValue2(chipIndex, frame, VolB_EnvFlg, highlight);
+        printRegisterValue2(chipIndex, frame, B_Volume, highlight);
         streamPb.color(color).draw('|');
-        printRegisterValue2(chipIndex, frame, TonC_PeriodH, highlight);
-        printRegisterValue2(chipIndex, frame, TonC_PeriodL, highlight);
+        printRegisterValue2(chipIndex, frame, C_Coarse, highlight);
+        printRegisterValue2(chipIndex, frame, C_Fine, highlight);
         streamPb.draw(' ');
-        printRegisterValue2(chipIndex, frame, VolC_EnvFlg, highlight);
+        printRegisterValue2(chipIndex, frame, C_Volume, highlight);
         streamPb.color(color).draw('|');
-        printRegisterValue2(chipIndex, frame, Env_PeriodH, highlight);
-        printRegisterValue2(chipIndex, frame, Env_PeriodL, highlight);
+        printRegisterValue2(chipIndex, frame, E_Coarse, highlight);
+        printRegisterValue2(chipIndex, frame, E_Fine, highlight);
         streamPb.draw(' ');
-        printRegisterValue2(chipIndex, frame, Env_Shape, highlight);
+        printRegisterValue2(chipIndex, frame, E_Shape, highlight);
         streamPb.color(color).draw('|');
-        printRegisterValue2(chipIndex, frame, Noise_Period, highlight);
+        printRegisterValue2(chipIndex, frame, N_Period, highlight);
         streamPb.color(color).draw('|');
     }
 

@@ -26,6 +26,32 @@ bool Frame::IsChanged(uint8_t chip, uint8_t reg) const
 	return m_changes[chip][reg];
 }
 
+uint16_t Frame::ReadPeriod(uint8_t chip, uint8_t period) const
+{
+	if (period == A_Period || period == B_Period || period == C_Period || period == E_Period)
+	{
+		return (Read(chip, period + 0) | Read(chip, period + 1) << 8);
+	}
+	else if (period == N_Period)
+	{
+		return Read(chip, period);
+	}
+	return 0;
+}
+
+bool Frame::IsChangedPeriod(uint8_t chip, uint8_t period) const
+{
+	if (period == A_Period || period == B_Period || period == C_Period || period == E_Period)
+	{
+		return (IsChanged(chip, period + 0) || IsChanged(chip, period + 1));
+	}
+	else if (period == N_Period)
+	{
+		return IsChanged(chip, period);
+	}
+	return false;
+}
+
 uint8_t Frame::Read(uint8_t reg) const
 {
 	return Read(0, reg);
@@ -36,9 +62,19 @@ bool Frame::IsChanged(uint8_t reg) const
 	return IsChanged(0, reg);
 }
 
+uint16_t Frame::ReadPeriod(uint8_t period) const
+{
+	return ReadPeriod(0, period);
+}
+
+bool Frame::IsChangedPeriod(uint8_t period) const
+{
+	return IsChangedPeriod(0, period);
+}
+
 void Frame::Write(uint8_t chip, uint8_t reg, uint8_t data)
 {
-	if (reg == Env_Shape && data == 0xFF) return;
+	if (reg == E_Shape && data == 0xFF) return;
 
 	data &= mask[reg];
 	m_data[chip][reg] = data;
@@ -47,7 +83,7 @@ void Frame::Write(uint8_t chip, uint8_t reg, uint8_t data)
 
 void Frame::Update(uint8_t chip, uint8_t reg, uint8_t data)
 {
-	if (reg == Env_Shape)
+	if (reg == E_Shape)
 	{
 		Write(chip, reg, data);
 	}
@@ -62,6 +98,32 @@ void Frame::Update(uint8_t chip, uint8_t reg, uint8_t data)
 	}
 }
 
+void Frame::WritePeriod(uint8_t chip, uint8_t period, uint16_t data)
+{
+	if (period == A_Period || period == B_Period || period == C_Period || period == E_Period)
+	{
+		Write(chip, period + 0, uint8_t(data));
+		Write(chip, period + 1, data >> 8);
+	}
+	else if (period == N_Period)
+	{
+		Write(chip, period, uint8_t(data));
+	}
+}
+
+void Frame::UpdatePeriod(uint8_t chip, uint8_t period, uint16_t data)
+{
+	if (period == A_Period || period == B_Period || period == C_Period || period == E_Period)
+	{
+		Update(chip, period + 0, uint8_t(data));
+		Update(chip, period + 1, data >> 8);
+	}
+	else if (period == N_Period)
+	{
+		Update(chip, period, uint8_t(data));
+	}
+}
+
 void Frame::Write(uint8_t reg, uint8_t data)
 {
 	Write(0, reg, data);
@@ -70,6 +132,16 @@ void Frame::Write(uint8_t reg, uint8_t data)
 void Frame::Update(uint8_t reg, uint8_t data)
 {
 	Update(0, reg, data);
+}
+
+void Frame::WritePeriod(uint8_t period, uint16_t data)
+{
+	WritePeriod(0, period, data);
+}
+
+void Frame::UpdatePeriod(uint8_t period, uint16_t data)
+{
+	UpdatePeriod(0, period, data);
 }
 
 void Frame::Reset()

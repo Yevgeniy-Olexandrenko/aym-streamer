@@ -10,7 +10,7 @@ bool EncodeTXT::Open(const Stream& stream)
             m_isTS = (stream.chip.count() == Chip::Count::TurboSound);
             m_loop = stream.loop.frameId();
             m_frameRate = stream.playback.frameRate();
-            m_displayType = DisplayType::Readable;
+            m_displayType = DisplayType::Grouped;
 
             PrintFrameHeader();
             return true;
@@ -111,63 +111,63 @@ void EncodeTXT::PrintChipRegisters(const Frame& frame, int chip)
 
     case DisplayType::Grouped:
         m_fileStream << '|';
-        PrintChipRegister(frame, chip, Mixer_Flags);
+        PrintChipRegister(frame, chip, Mixer);
         m_fileStream << '|';
-        PrintChipRegister(frame, chip, TonA_PeriodH);
-        PrintChipRegister(frame, chip, TonA_PeriodL);
+        PrintChipRegister(frame, chip, A_Coarse);
+        PrintChipRegister(frame, chip, A_Fine);
         m_fileStream << ' ';
-        PrintChipRegister(frame, chip, VolA_EnvFlg);
+        PrintChipRegister(frame, chip, A_Volume);
         m_fileStream << '|';
-        PrintChipRegister(frame, chip, TonB_PeriodH);
-        PrintChipRegister(frame, chip, TonB_PeriodL);
+        PrintChipRegister(frame, chip, B_Coarse);
+        PrintChipRegister(frame, chip, B_Fine);
         m_fileStream << ' ';
-        PrintChipRegister(frame, chip, VolB_EnvFlg);
+        PrintChipRegister(frame, chip, B_Volume);
         m_fileStream << '|';
-        PrintChipRegister(frame, chip, TonC_PeriodH);
-        PrintChipRegister(frame, chip, TonC_PeriodL);
+        PrintChipRegister(frame, chip, C_Coarse);
+        PrintChipRegister(frame, chip, C_Fine);
         m_fileStream << ' ';
-        PrintChipRegister(frame, chip, VolC_EnvFlg);
+        PrintChipRegister(frame, chip, C_Volume);
         m_fileStream << '|';
-        PrintChipRegister(frame, chip, Env_PeriodH);
-        PrintChipRegister(frame, chip, Env_PeriodL);
+        PrintChipRegister(frame, chip, E_Coarse);
+        PrintChipRegister(frame, chip, E_Fine);
         m_fileStream << ' ';
-        PrintChipRegister(frame, chip, Env_Shape);
+        PrintChipRegister(frame, chip, E_Shape);
         m_fileStream << '|';
-        PrintChipRegister(frame, chip, Noise_Period);
+        PrintChipRegister(frame, chip, N_Period);
         m_fileStream << "|";
         break;
 
     case DisplayType::Readable:
         m_fileStream << '|';
-        PrintChipRegisterDelta(frame, chip, Noise_Period, 5);
+        PrintChipRegisterDelta(frame, chip, N_Period, 5);
         m_fileStream << '|';
-        PrintChipRegisterDelta(frame, chip, Env_PeriodL, 16);
+        PrintChipRegisterDelta(frame, chip, E_Fine, 16);
         m_fileStream << ' ';
-        if (frame.IsChanged(chip, Env_Shape))
-            PrintNibble(frame.Read(chip, Env_Shape));
+        if (frame.IsChanged(chip, E_Shape))
+            PrintNibble(frame.Read(chip, E_Shape));
         else
             m_fileStream << '.';
 
         m_fileStream << '|';
         PrintChannelMixer(frame, chip, 0);
         m_fileStream << ' ';
-        PrintChipRegisterDelta(frame, chip, TonA_PeriodL, 12);
+        PrintChipRegisterDelta(frame, chip, A_Fine, 12);
         m_fileStream << ' ';
-        PrintChipRegisterDelta(frame, chip, VolA_EnvFlg, 4);
+        PrintChipRegisterDelta(frame, chip, A_Volume, 4);
 
         m_fileStream << '|';
         PrintChannelMixer(frame, chip, 1);
         m_fileStream << ' ';
-        PrintChipRegisterDelta(frame, chip, TonB_PeriodL, 12);
+        PrintChipRegisterDelta(frame, chip, B_Fine, 12);
         m_fileStream << ' ';
-        PrintChipRegisterDelta(frame, chip, VolB_EnvFlg, 4);
+        PrintChipRegisterDelta(frame, chip, B_Volume, 4);
 
         m_fileStream << '|';
         PrintChannelMixer(frame, chip, 2);
         m_fileStream << ' ';
-        PrintChipRegisterDelta(frame, chip, TonC_PeriodL, 12);
+        PrintChipRegisterDelta(frame, chip, C_Fine, 12);
         m_fileStream << ' ';
-        PrintChipRegisterDelta(frame, chip, VolC_EnvFlg, 4);
+        PrintChipRegisterDelta(frame, chip, C_Volume, 4);
 
         m_fileStream << '|';
         break;
@@ -241,10 +241,10 @@ void EncodeTXT::PrintChipRegisterDelta(const Frame& frame, int chip, int reg, in
 
 void EncodeTXT::PrintChannelMixer(const Frame& frame, int chip, int chan)
 {
-    uint8_t old_mixer = m_prevFrame.Read(chip, Mixer_Flags) >> chan;
-    uint8_t old_vol_e = m_prevFrame.Read(chip, VolA_EnvFlg + chan);
-    uint8_t new_mixer = frame.Read(chip, Mixer_Flags) >> chan;
-    uint8_t new_vol_e = frame.Read(chip, VolA_EnvFlg + chan);
+    uint8_t old_mixer = m_prevFrame.Read(chip, Mixer) >> chan;
+    uint8_t old_vol_e = m_prevFrame.Read(chip, A_Volume + chan);
+    uint8_t new_mixer = frame.Read(chip, Mixer) >> chan;
+    uint8_t new_vol_e = frame.Read(chip, A_Volume + chan);
 
     bool changeT = ((new_mixer ^ old_mixer) & 0x01);
     bool changeN = ((new_mixer ^ old_mixer) & 0x08);

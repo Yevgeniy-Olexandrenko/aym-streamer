@@ -59,7 +59,7 @@ bool ModuleDecoder::Decode(Frame& frame)
 
 void ModuleDecoder::Close(Stream& stream)
 {
-    if (m_loop) stream.loop.frameId(m_loop);
+    stream.loop.frameId(m_loop);
     delete[] m_data;
 }
 

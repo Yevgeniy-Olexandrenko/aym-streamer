@@ -3,8 +3,8 @@
 
 namespace
 {
-	const uint16_t VTXv2_SIG_AY = 0x7961; // "ay"
-	const uint16_t VTXv2_SIG_YM = 0x6D79; // "ym"
+	const uint16_t AYSignature = 0x7961; // "ay"
+	const uint16_t YMSignature = 0x6D79; // "ym"
 }
 
 bool DecodeVTX::Open(Stream& stream)
@@ -25,8 +25,8 @@ bool DecodeVTX::Open(Stream& stream)
 			fileStream.read((char*)(&hdr), sizeof(hdr));
 
 			Chip::Model chipType(Chip::Model::Unknown);
-			if (hdr.signature == VTXv2_SIG_AY) chipType = Chip::Model::AY;
-			if (hdr.signature == VTXv2_SIG_YM) chipType = Chip::Model::YM;
+			if (hdr.signature == AYSignature) chipType = Chip::Model::AY;
+			if (hdr.signature == YMSignature) chipType = Chip::Model::YM;
 
 			if (chipType != Chip::Model::Unknown)
 			{
@@ -101,8 +101,6 @@ bool DecodeVTX::Decode(Frame& frame)
 
 void DecodeVTX::Close(Stream& stream)
 {
-	if (m_loop > 0)
-		stream.loop.frameId(m_loop);
-
+	stream.loop.frameId(m_loop);
 	delete[] m_data;
 }

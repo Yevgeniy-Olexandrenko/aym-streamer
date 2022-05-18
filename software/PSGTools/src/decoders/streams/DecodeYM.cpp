@@ -1,8 +1,11 @@
 #include "DecodeYM.h"
 #include "lh5_decode/lh5_decode.h"
 
-uint16_t GetU16(uint8_t* p) { return (p[0] << 8  | p[1]); }
-uint32_t GetU32(uint8_t* p) { return (p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3]); }
+namespace
+{
+    uint16_t GetU16(uint8_t* p) { return (p[0] << 8 | p[1]); }
+    uint32_t GetU32(uint8_t* p) { return (p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3]); }
+}
 
 bool DecodeYM::Open(Stream& stream)
 {
@@ -119,8 +122,6 @@ bool DecodeYM::Decode(Frame& frame)
 
 void DecodeYM::Close(Stream& stream)
 {
-    if (m_loop > 0)
-        stream.loop.frameId(m_loop);
-
+    stream.loop.frameId(m_loop);
     delete[] m_data;
 }

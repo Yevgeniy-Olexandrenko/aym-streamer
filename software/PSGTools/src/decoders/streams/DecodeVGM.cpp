@@ -7,6 +7,9 @@
 
 namespace
 {
+    const uint32_t VGMSignature = 0x206D6756;
+    const uint32_t GD3Signature = 0x20336447;
+
     bool ReadFile(const char* path, uint8_t* dest, int size)
     {
         if (path && dest && size)
@@ -34,7 +37,7 @@ bool DecodeVGM::Open(Stream& stream)
         if (header.version >= 0x151 && header.ay8910Clock) m_chip.reset(new SimAY8910());
         if (header.version >= 0x161 && header.nesApuClock) m_chip.reset(new SimRP2A03());
 
-        if (header.ident == 0x206D6756 && m_chip)
+        if (header.ident == VGMSignature && m_chip)
         {
             int fileSize = 0x04 + header.eofOffset;
             m_data = new uint8_t[fileSize];
@@ -84,7 +87,7 @@ bool DecodeVGM::Open(Stream& stream)
                     uint32_t gd3 = *(uint32_t*)(gd3Offset + 0x14);
                     uint32_t ver = *(uint32_t*)(gd3Offset + 0x18);
 
-                    if (gd3 == 0x20336447 && ver == 0x00000100)
+                    if (gd3 == GD3Signature && ver == 0x00000100)
                     {
                         gd3Offset += 0x20;
 
@@ -158,7 +161,7 @@ bool DecodeVGM::Decode(Frame& frame)
 
 void DecodeVGM::Close(Stream& stream)
 {
-    if (m_loop) stream.loop.frameId(m_loop);
+    stream.loop.frameId(m_loop);
     delete[] m_data;
 
     m_chip->PostProcess(stream);

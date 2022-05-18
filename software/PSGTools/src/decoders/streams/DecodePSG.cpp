@@ -1,5 +1,10 @@
 #include "DecodePSG.h"
 
+namespace
+{
+    const uint32_t PSGSignature = 0x1A475350;
+}
+
 bool DecodePSG::Open(Stream& stream)
 {
     m_fileStream.open(stream.file, std::fstream::binary);
@@ -8,15 +13,10 @@ bool DecodePSG::Open(Stream& stream)
         Header header;
         m_fileStream.read((char*)(&header), sizeof(header));
 
-        if (m_fileStream && header.m_1Ah == 0x1A
-            && header.m_psg[0] == 'P'
-            && header.m_psg[1] == 'S'
-            && header.m_psg[2] == 'G')
+        if (m_fileStream && header.m_sig == PSGSignature)
         {
             stream.info.type("PSG stream");
             stream.playback.frameRate(header.m_fps ? header.m_fps : 50);
-
-            m_skipFrames = 0;
             return true;
         }
     }

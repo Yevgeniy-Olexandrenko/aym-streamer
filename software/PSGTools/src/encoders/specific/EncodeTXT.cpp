@@ -10,7 +10,7 @@ bool EncodeTXT::Open(const Stream& stream)
             m_isTS = (stream.chip.count() == Chip::Count::TurboSound);
             m_loop = stream.loop.frameId();
             m_frameRate = stream.playback.frameRate();
-            m_displayType = DisplayType::Grouped;
+            m_displayType = DisplayType::Readable;
 
             PrintFrameHeader();
             return true;

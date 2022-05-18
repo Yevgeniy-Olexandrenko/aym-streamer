@@ -160,6 +160,18 @@ void Frame::ResetChanges()
 	memset(m_changes, false, sizeof(m_changes));
 }
 
+bool Frame::HasChanges() const
+{
+	for (uint8_t chip = 0; chip < 2; ++chip)
+	{
+		for (uint8_t reg = 0; reg < 16; ++reg)
+		{
+			if (IsChanged(chip, reg)) return true;
+		}
+	}
+	return false;
+}
+
 uint8_t& Frame::data(uint8_t chip, uint8_t reg)
 {
 	return m_data[chip][reg];

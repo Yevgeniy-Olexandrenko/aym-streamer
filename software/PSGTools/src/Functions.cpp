@@ -16,6 +16,7 @@
 
 // specific encoders
 #include "encoders/specific/EncodeTXT.h"
+#include "encoders/streams/EncodeAYM.h"
 
 namespace Functions
 {
@@ -59,6 +60,7 @@ namespace Functions
     bool EncodeFile(const std::filesystem::path& path, Stream& stream)
     {
         std::shared_ptr<Encoder> encoders[]{
+            std::shared_ptr<Encoder>(new EncodeAYM()),
             std::shared_ptr<Encoder>(new EncodeTXT()),
         };
 

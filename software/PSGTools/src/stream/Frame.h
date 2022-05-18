@@ -63,6 +63,7 @@ public:
 	void Reset();
 	void ResetData();
 	void ResetChanges();
+	bool HasChanges() const;
 	
 public:
 	uint8_t& data(uint8_t chip, uint8_t reg);

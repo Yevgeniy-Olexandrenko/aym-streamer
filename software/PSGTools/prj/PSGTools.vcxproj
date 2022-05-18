@@ -30,12 +30,14 @@
     <ClInclude Include="..\src\decoders\modules\DecodeSQT.h" />
     <ClInclude Include="..\src\decoders\modules\DecodeSTC.h" />
     <ClInclude Include="..\src\decoders\modules\DecodeSTP.h" />
+    <ClInclude Include="..\src\decoders\streams\DecodeAYM.h" />
     <ClInclude Include="..\src\decoders\streams\DecodePSG.h" />
     <ClInclude Include="..\src\decoders\streams\DecodeVGM.h" />
     <ClInclude Include="..\src\decoders\streams\DecodeVTX.h" />
     <ClInclude Include="..\src\decoders\streams\DecodeYM.h" />
     <ClInclude Include="..\src\encoders\specific\EncodeTXT.h" />
     <ClInclude Include="..\src\encoders\specific\EncodeWAV.h" />
+    <ClInclude Include="..\src\encoders\streams\EncodeAYM.h" />
     <ClInclude Include="..\src\encoders\streams\EncodePSG.h" />
     <ClInclude Include="..\src\encoders\streams\EncodeVGM.h" />
     <ClInclude Include="..\src\encoders\streams\EncodeVTX.h" />
@@ -65,6 +67,7 @@
     <ClCompile Include="..\src\decoders\modules\DecodeSQT.cpp" />
     <ClCompile Include="..\src\decoders\modules\DecodeSTC.cpp" />
     <ClCompile Include="..\src\decoders\modules\DecodeSTP.cpp" />
+    <ClCompile Include="..\src\decoders\streams\DecodeAYM.cpp" />
     <ClCompile Include="..\src\decoders\streams\DecodePSG.cpp" />
     <ClCompile Include="..\src\decoders\streams\DecodeVGM.cpp" />
     <ClCompile Include="..\src\decoders\streams\DecodeVTX.cpp" />
@@ -72,6 +75,7 @@
     <ClCompile Include="..\src\encoders\Encoder.cpp" />
     <ClCompile Include="..\src\encoders\specific\EncodeTXT.cpp" />
     <ClCompile Include="..\src\encoders\specific\EncodeWAV.cpp" />
+    <ClCompile Include="..\src\encoders\streams\EncodeAYM.cpp" />
     <ClCompile Include="..\src\encoders\streams\EncodePSG.cpp" />
     <ClCompile Include="..\src\encoders\streams\EncodeVGM.cpp" />
     <ClCompile Include="..\src\encoders\streams\EncodeVTX.cpp" />

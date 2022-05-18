@@ -144,6 +144,12 @@
     <ClInclude Include="..\src\encoders\specific\EncodeWAV.h">
       <Filter>Sources\encoders\specific</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\decoders\streams\DecodeAYM.h">
+      <Filter>Sources\decoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\encoders\streams\EncodeAYM.h">
+      <Filter>Sources\encoders\streams</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\PSGTools.cpp">
@@ -244,6 +250,12 @@
     </ClCompile>
     <ClCompile Include="..\src\encoders\specific\EncodeWAV.cpp">
       <Filter>Sources\encoders\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decoders\streams\DecodeAYM.cpp">
+      <Filter>Sources\decoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoders\streams\EncodeAYM.cpp">
+      <Filter>Sources\encoders\streams</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

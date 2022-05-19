@@ -32,7 +32,7 @@ class BitStream
 {
 public:
 	void Open(std::ostream& stream);
-	void Write(uint32_t data, uint8_t bits);
+	void Write(uint16_t data, uint8_t bits);
 	void Close();
 
 private:
@@ -51,6 +51,10 @@ public:
 
 private:
 	void WriteDelta(const Delta& delta);
+	void WriteChipDelta(const Frame& frame, uint8_t chip, bool isLast);
+	void WriteRegDelta (const Frame& frame, uint8_t chip, uint8_t reg);
+	void WritePerDelta (const Frame& frame, uint8_t chip, uint8_t per);
+	void WriteStepDelta();
 
 private:
 	std::ofstream m_fileStream;
@@ -59,4 +63,5 @@ private:
 	int16_t m_oldStep = 1;
 	int16_t m_newStep = 1;
 	Frame m_frame;
+	bool m_isTS;
 };

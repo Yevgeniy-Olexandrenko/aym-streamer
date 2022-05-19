@@ -8,6 +8,8 @@ bool EncodeAYM::Open(const Stream& stream)
         m_fileStream.open(stream.file);
         if (m_fileStream)
         {
+            m_isTS = (stream.chip.count() == Chip::Count::TurboSound);
+
             m_fileStream << "AYYM";
             m_bitStream.Open(m_fileStream);
 
@@ -23,64 +25,25 @@ void EncodeAYM::Encode(FrameId id, const Frame& frame)
 {
     if (frame.HasChanges())
     {
-        // write step delta
-        if (m_newStep != m_oldStep)
+        WriteStepDelta();
+        if (m_isTS)
         {
-            m_bitStream.Write(0x00, 8);
-            WriteDelta(Delta(m_oldStep, m_newStep));
-
-            m_oldStep = m_newStep;
-            m_newStep = 1;
+            WriteChipDelta(frame, 0, false);
+            WriteChipDelta(frame, 1, true);
         }
-
-        // write mask of changes
-        uint8_t mainMask = 0;
-        uint8_t extraMask = 0;
-
-        if (frame.IsChanged(Mixer)) mainMask |= 0b10000000;
-        if (frame.IsChangedPeriod(A_Period)) mainMask |= 0b01000000;
-        if (frame.IsChanged(A_Volume)) mainMask |= 0b00100000;
-        if (frame.IsChangedPeriod(B_Period)) mainMask |= 0b00010000;
-        if (frame.IsChanged(B_Volume)) mainMask |= 0b00001000;
-        if (frame.IsChangedPeriod(C_Period)) mainMask |= 0b00000100;
-        if (frame.IsChanged(C_Volume)) mainMask |= 0b00000010;
-        if (frame.IsChangedPeriod(N_Period)) extraMask |= 0b1000;
-        if (frame.IsChangedPeriod(E_Period)) extraMask |= 0b0100;
-        if (frame.IsChanged(E_Shape)) extraMask |= 0b0010;
-        if (extraMask) mainMask |= 0b00000001;
-
-        m_bitStream.Write(mainMask, 8);
-        if (mainMask & 0b00000001) m_bitStream.Write(extraMask, 4);
-
-        // write changes
-        if (mainMask & 0b10000000) WriteDelta(Delta(m_frame.Read(Mixer), frame.Read(Mixer)));
-        if (mainMask & 0b01000000) WriteDelta(Delta(m_frame.ReadPeriod(A_Period), frame.ReadPeriod(A_Period)));
-        if (mainMask & 0b00100000) WriteDelta(Delta(m_frame.Read(A_Volume), frame.Read(A_Volume)));
-        if (mainMask & 0b00010000) WriteDelta(Delta(m_frame.ReadPeriod(B_Period), frame.ReadPeriod(B_Period)));
-        if (mainMask & 0b00001000) WriteDelta(Delta(m_frame.Read(B_Volume), frame.Read(B_Volume)));
-        if (mainMask & 0b00000100) WriteDelta(Delta(m_frame.ReadPeriod(C_Period), frame.ReadPeriod(C_Period)));
-        if (mainMask & 0b00000010) WriteDelta(Delta(m_frame.Read(C_Volume), frame.Read(C_Volume)));
-        if (extraMask & 0b1000) WriteDelta(Delta(m_frame.ReadPeriod(N_Period), frame.ReadPeriod(N_Period)));
-        if (extraMask & 0b0100) WriteDelta(Delta(m_frame.ReadPeriod(E_Period), frame.ReadPeriod(E_Period)));
-        if (extraMask & 0b0010) WriteDelta(Delta(m_frame.Read(E_Shape), frame.Read(E_Shape)));
+        else
+            WriteChipDelta(frame, 0, true);
     }
     else
     {
         m_newStep++;
     }
-
     m_frame = frame;
 }
 
 void EncodeAYM::Close(const Stream& stream)
 {
-    // write step delta
-    if (m_newStep != m_oldStep)
-    {
-        m_bitStream.Write(0x00, 8);
-        WriteDelta(Delta(m_oldStep, m_newStep));
-    }
-
+    WriteStepDelta();
     m_bitStream.Close();
     m_fileStream.close();
 }
@@ -89,7 +52,6 @@ void EncodeAYM::Close(const Stream& stream)
 
 void EncodeAYM::WriteDelta(const Delta& delta)
 {
-#if 1
     int8_t index = m_deltaList.GetIndex(delta);
     if (index < 0)
     {
@@ -100,42 +62,70 @@ void EncodeAYM::WriteDelta(const Delta& delta)
             m_bitStream.Write(delta.GetValue(), delta.GetBits());
             break;
 
-        case 0:
-            m_bitStream.Write(0b100, 3); break;
-        case +1:
-            m_bitStream.Write(0b101, 3); break;
-        case -1:
-            m_bitStream.Write(0b110, 3); break;
+        case  0: m_bitStream.Write(0b100, 3); break;
+        case +1: m_bitStream.Write(0b101, 3); break;
+        case -1: m_bitStream.Write(0b110, 3); break;
         }
     }
     else
     {
         m_bitStream.Write(0b11100000 | index, 8);
     }
-#else
-    int8_t index = m_deltaList.GetIndex(delta);
-    if (index < 0)
-    {
-        switch (delta.GetValue())
-        {
-        default:
-            m_bitStream.Write(delta.GetBits() / 4 - 1, 4);
-            m_bitStream.Write(delta.GetValue(), delta.GetBits());
-            break;
+}
 
-        case 0: 
-            m_bitStream.Write(0b0100, 4); break;
-        case +1: 
-            m_bitStream.Write(0b0101, 4); break;
-        case -1: 
-            m_bitStream.Write(0b0110, 4); break;
-        }
-    }
-    else
+void EncodeAYM::WriteChipDelta(const Frame& frame, uint8_t chip, bool isLast)
+{
+    uint8_t mainMask = 0;
+    uint8_t extraMask = 0;
+
+    if (frame.IsChanged(Mixer)) mainMask |= 0b10000000;
+    if (frame.IsChangedPeriod(A_Period)) mainMask |= 0b01000000;
+    if (frame.IsChanged(A_Volume)) mainMask |= 0b00100000;
+    if (frame.IsChangedPeriod(B_Period)) mainMask |= 0b00010000;
+    if (frame.IsChanged(B_Volume)) mainMask |= 0b00001000;
+    if (frame.IsChangedPeriod(C_Period)) mainMask |= 0b00000100;
+    if (frame.IsChanged(C_Volume)) mainMask |= 0b00000010;
+    if (frame.IsChangedPeriod(N_Period)) extraMask |= 0b1000;
+    if (frame.IsChangedPeriod(E_Period)) extraMask |= 0b0100;
+    if (frame.IsChanged(E_Shape)) extraMask |= 0b0010;
+    if (!isLast) extraMask |= 0b0001;
+    if (extraMask) mainMask |= 0b00000001;
+
+    m_bitStream.Write(mainMask, 8);
+    if (mainMask & 0b00000001) m_bitStream.Write(extraMask, 4);
+
+    if (mainMask & 0b10000000) WriteRegDelta(frame, chip, Mixer);
+    if (mainMask & 0b01000000) WritePerDelta(frame, chip, A_Period);
+    if (mainMask & 0b00100000) WriteRegDelta(frame, chip, A_Volume);
+    if (mainMask & 0b00010000) WritePerDelta(frame, chip, B_Period);
+    if (mainMask & 0b00001000) WriteRegDelta(frame, chip, B_Volume);
+    if (mainMask & 0b00000100) WritePerDelta(frame, chip, C_Period);
+    if (mainMask & 0b00000010) WriteRegDelta(frame, chip, C_Volume);
+    if (extraMask & 0b1000) WritePerDelta(frame, chip, N_Period);
+    if (extraMask & 0b0100) WritePerDelta(frame, chip, E_Period);
+    if (extraMask & 0b0010) WriteRegDelta(frame, chip, E_Shape);
+}
+
+void EncodeAYM::WriteStepDelta()
+{
+    if (m_newStep != m_oldStep)
     {
-        m_bitStream.Write(0x80 | index, 8);
+        m_bitStream.Write(0x00, 8);
+        WriteDelta(Delta(m_oldStep, m_newStep));
+
+        m_oldStep = m_newStep;
+        m_newStep = 1;
     }
-#endif
+}
+
+void EncodeAYM::WriteRegDelta(const Frame& frame, uint8_t chip, uint8_t reg)
+{
+    WriteDelta(Delta(m_frame.Read(chip, reg), frame.Read(chip, reg)));
+}
+
+void EncodeAYM::WritePerDelta(const Frame& frame, uint8_t chip, uint8_t per)
+{
+    WriteDelta(Delta(m_frame.ReadPeriod(chip, per), frame.ReadPeriod(chip, per)));
 }
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
@@ -170,10 +160,9 @@ DeltaList::DeltaList()
 int8_t DeltaList::GetIndex(const Delta& delta)
 {
     int8_t index = -1;
-#if 1
     if (delta.GetBits() > 4)
     {
-        auto size = sizeof(m_list) / sizeof(m_list[0]);
+        int size = sizeof(m_list) / sizeof(m_list[0]);
         for (int i = 0; i < size; ++i)
         {
             if (m_list[i] == delta.GetValue())
@@ -186,7 +175,6 @@ int8_t DeltaList::GetIndex(const Delta& delta)
         m_list[m_writeIndex] = delta.GetValue();
         if (++m_writeIndex == size) m_writeIndex = 0;
     }
-#endif
     return index;
 }
 
@@ -198,11 +186,11 @@ void BitStream::Open(std::ostream& stream)
     m_buffer = m_count = 0;
 }
 
-void BitStream::Write(uint32_t data, uint8_t bits)
+void BitStream::Write(uint16_t data, uint8_t bits)
 {
     if (m_stream)
     {
-        uint8_t maxSize = uint8_t(sizeof(data) << 3);
+        uint8_t maxSize = uint8_t(sizeof(data) * 8);
         bits = std::min(bits, maxSize);
         data <<= (maxSize - bits);
 
@@ -220,7 +208,7 @@ void BitStream::Write(uint32_t data, uint8_t bits)
             }
         }
     }
-}
+} 
 
 void BitStream::Close()
 {

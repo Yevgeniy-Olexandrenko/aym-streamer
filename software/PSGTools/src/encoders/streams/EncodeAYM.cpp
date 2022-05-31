@@ -97,7 +97,7 @@ bool EncodeAYM::Open(const Stream& stream)
 {
     if (CheckFileExt(stream, "aym"))
     {
-        m_fileStream.open(stream.file);
+        m_fileStream.open(stream.file, std::fstream::binary);
         if (m_fileStream)
         {
             m_isTS = (stream.chip.count() == Chip::Count::TurboSound);

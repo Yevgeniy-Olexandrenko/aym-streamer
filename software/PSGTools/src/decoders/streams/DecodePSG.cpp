@@ -31,31 +31,31 @@ bool DecodePSG::Decode(Frame& frame)
         return true;
     }
 
-    uint8_t byte1, byte2;
-    while (m_fileStream.get((char&)byte1))
+    uint8_t data0, data1;
+    while (m_fileStream.get((char&)data0))
     {
-        // end of frame
-        if (byte1 == 0xFF) return true;
+        // beginning of the next frame
+        if (data0 == 0xFF) return true;
 
-        // delay (duplicated frames)
-        if (byte1 == 0xFE) 
+        // next frames are duplicates
+        if (data0 == 0xFE) 
         {
-            if (m_fileStream.get((char&)byte1))
+            if (m_fileStream.get((char&)data0))
             {
-                m_skipFrames = 4 * byte1 - 1;
+                m_skipFrames = 4 * data0 - 1;
             }
             return true;
         }
 
         // end of stream
-        if (byte1 == 0xFD) break;
+        if (data0 == 0xFD) break;
 
-        if (m_fileStream.get((char&)byte2))
+        if (m_fileStream.get((char&)data1))
         {
-            frame.Update(byte1, byte2);
+            frame.Update(data0, data1);
         }
     }
-    return false;
+    return frame.HasChanges();
 }
 
 void DecodePSG::Close(Stream& stream)

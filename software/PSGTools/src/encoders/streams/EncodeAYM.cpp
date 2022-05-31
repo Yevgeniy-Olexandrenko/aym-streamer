@@ -97,13 +97,13 @@ bool EncodeAYM::Open(const Stream& stream)
 {
     if (CheckFileExt(stream, "aym"))
     {
-        m_fileStream.open(stream.file, std::fstream::binary);
-        if (m_fileStream)
+        m_output.open(stream.file, std::fstream::binary);
+        if (m_output)
         {
             m_isTS = (stream.chip.count() == Chip::Count::TurboSound);
 
-            m_fileStream << "AYYM";
-            m_bitStream.Open(m_fileStream);
+            m_output << "AYYM";
+            m_bitStream.Open(m_output);
 
             // TODO
 
@@ -137,7 +137,7 @@ void EncodeAYM::Close(const Stream& stream)
 {
     WriteStepDelta();
     m_bitStream.Close();
-    m_fileStream.close();
+    m_output.close();
 }
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///

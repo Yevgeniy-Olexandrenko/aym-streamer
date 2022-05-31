@@ -54,7 +54,7 @@ private:
 	void WriteStepDelta();
 
 private:
-	std::ofstream m_fileStream;
+	std::ofstream m_output;
 	DeltaList m_deltaList;
 	BitStream m_bitStream;
 	uint16_t m_oldStep = 1;

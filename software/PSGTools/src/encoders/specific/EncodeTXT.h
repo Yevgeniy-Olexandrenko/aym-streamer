@@ -32,6 +32,6 @@ private:
 	Frame m_prevFrame;
 	FrameId m_loop;
 	FrameRate m_frameRate;
-	std::ofstream m_fileStream;
+	std::ofstream m_output;
 	DisplayType m_displayType;
 };

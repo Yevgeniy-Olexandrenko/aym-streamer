@@ -37,7 +37,7 @@ bool DecodeASC::Open(Stream& stream)
             {
                 Header header;
                 fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)(&header), std::min(sizeof(header), fileSize));
+                fileStream.read((char*)(&header), std::min((uint32_t)sizeof(Header), fileSize));
 
                 bool isHeaderOK = true;
                 isHeaderOK &= (header.patternsPointers < fileSize);

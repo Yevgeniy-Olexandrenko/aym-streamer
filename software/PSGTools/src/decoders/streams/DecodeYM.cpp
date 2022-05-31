@@ -106,8 +106,8 @@ bool DecodeYM::Open(Stream& stream)
 
 bool DecodeYM::Decode(Frame& frame)
 {
-    uint32_t frameSize = m_interleaved ? 1 : 16;
-    uint32_t valueSize = m_interleaved ? m_frames : 1;
+    size_t frameSize = m_interleaved ? 1 : 16;
+    size_t valueSize = m_interleaved ? m_frames : 1;
     uint8_t* dataPtr = (m_data + m_offset) + (m_frame * frameSize);
     m_frame++;
 

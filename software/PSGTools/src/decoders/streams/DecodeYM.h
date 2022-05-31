@@ -40,9 +40,9 @@ public:
 
 private:
     uint8_t* m_data;
-    uint32_t m_offset;
+    size_t   m_offset;
     bool     m_interleaved;
-    uint32_t m_frames;
+    size_t   m_frames;
     FrameId  m_frame;
     FrameId  m_loop;
 };

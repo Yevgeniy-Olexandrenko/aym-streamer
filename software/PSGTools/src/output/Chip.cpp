@@ -98,8 +98,8 @@ void Chip::freqValue(uint32_t freqValue)
 		return std::abs(int(freqValue) - frequencies[i]);
 	};
 
-	size_t f = 0;
-	for (size_t i = 1; i < 5; ++i)
+	int f = 0;
+	for (int i = 1; i < 5; ++i)
 	{
 		if (dist(i) < dist(f)) f = i;
 	}

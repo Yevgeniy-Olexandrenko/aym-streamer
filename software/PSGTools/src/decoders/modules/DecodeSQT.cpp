@@ -1,5 +1,8 @@
 #include "DecodeSQT.h"
 
+#pragma warning( disable : 4311)
+#pragma warning( disable : 4302)
+
 namespace
 {
 	const uint16_t SQT_Table[] =

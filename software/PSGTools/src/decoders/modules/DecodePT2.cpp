@@ -38,7 +38,7 @@ bool DecodePT2::Open(Stream& stream)
             {
                 Header header;
                 fileStream.seekg(0, fileStream.beg);
-                fileStream.read((char*)(&header), std::min(sizeof(header), fileSize));
+                fileStream.read((char*)(&header), std::min((uint32_t)sizeof(Header), fileSize));
 
                 bool isHeaderOk = true;
                 isHeaderOk &= (header.delay >= 3);

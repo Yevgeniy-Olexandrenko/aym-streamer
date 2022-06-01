@@ -47,7 +47,7 @@ namespace Functions
                 Frame frame;
                 while (decoder->Decode(frame))
                 {
-                    stream.frames.add(frame);
+                    stream.addFrame(frame);
                     frame.ResetChanges();
                 }
 
@@ -71,9 +71,9 @@ namespace Functions
         {
             if (encoder->Open(stream))
             {
-                for (FrameId id = 0; id < stream.frames.count(); ++id)
+                for (FrameId id = 0; id < stream.framesCount(); ++id)
                 {
-                    encoder->Encode(id, stream.frames.get(id));
+                    encoder->Encode(id, stream.getFrame(id));
                 }
 
                 encoder->Close(stream);

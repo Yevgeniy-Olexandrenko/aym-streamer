@@ -16,9 +16,6 @@
     <Filter Include="Sources\output\Emulator">
       <UniqueIdentifier>{96c475f2-9d82-4526-83d4-f31a499a46ef}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\output\Streamer">
-      <UniqueIdentifier>{d8709f9e-51ca-46b5-9705-8a9e1ab44b87}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources\stream">
       <UniqueIdentifier>{a61c2248-7658-45e0-be9d-23f4187b8bb0}</UniqueIdentifier>
     </Filter>
@@ -39,6 +36,9 @@
     </Filter>
     <Filter Include="Sources\encoders\streams">
       <UniqueIdentifier>{33f2c317-f14e-4ae1-a91a-ed2dd2d31d76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\output\Streamer">
+      <UniqueIdentifier>{d8709f9e-51ca-46b5-9705-8a9e1ab44b87}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -149,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="..\src\encoders\streams\EncodeAYM.h">
       <Filter>Sources\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Property.h">
+      <Filter>Sources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

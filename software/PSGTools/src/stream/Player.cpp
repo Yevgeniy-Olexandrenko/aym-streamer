@@ -63,7 +63,7 @@ bool Player::Init(const Stream& stream)
 	Stop();
 	m_isPlaying = false;
 
-	if (stream.frames.available() && m_output.Init(stream))
+	if (stream.framesCount() > 0 && m_output.Init(stream))
 	{
 		m_stream = &stream;
 		m_isPlaying = true;

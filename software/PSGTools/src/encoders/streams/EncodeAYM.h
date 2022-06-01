@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include "Property.h"
 #include "encoders/Encoder.h"
 
 class EncodeAYM : public Encoder
@@ -9,12 +10,9 @@ class EncodeAYM : public Encoder
 	{
 	public:
 		Delta(uint16_t from, uint16_t to);
-		int16_t value() const;
-		uint8_t size() const;
 
-	private:
-		int16_t m_value;
-		uint8_t m_size;
+		RO_PROP_DEF(int16_t, value);
+		RO_PROP_DEF(uint8_t, size);
 	};
 
 	class DeltaList

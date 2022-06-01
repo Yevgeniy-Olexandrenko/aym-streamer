@@ -61,35 +61,21 @@ std::string Chip::toString() const
 	return stream.str();
 }
 
-void Chip::count(Count count)
-{
-	m_count = count;
-}
-
-Chip::Count Chip::count() const
-{
-	return m_count;
-}
-
-void Chip::model(Model model)
-{
-	m_model = model;
-}
-
-Chip::Model Chip::model() const
-{
-	return m_model;
-}
-
 bool Chip::modelKnown() const
 {
 	return (model() != Model::Unknown);
 }
 
-void Chip::frequency(Frequency freq)
+bool Chip::frequencyKnown() const
 {
-	m_frequency = freq;
+	return (frequency() != Frequency::Unknown);
 }
+
+bool Chip::channelsKnown() const
+{
+	return (channels() != Channels::Unknown);
+}
+
 
 void Chip::freqValue(uint32_t freqValue)
 {
@@ -106,33 +92,8 @@ void Chip::freqValue(uint32_t freqValue)
 	frequency(Frequency(f));
 }
 
-Chip::Frequency Chip::frequency() const
-{
-	return m_frequency;
-}
-
 uint32_t Chip::freqValue() const
 {
 	size_t f = size_t(frequency());
 	return frequencies[f];
-}
-
-bool Chip::frequencyKnown() const
-{
-	return (frequency() != Frequency::Unknown);
-}
-
-void Chip::channels(Channels channels)
-{
-	m_channels = channels;
-}
-
-Chip::Channels Chip::channels() const
-{
-	return m_channels;
-}
-
-bool Chip::channelsKnown() const
-{
-	return (channels() != Channels::Unknown);
 }

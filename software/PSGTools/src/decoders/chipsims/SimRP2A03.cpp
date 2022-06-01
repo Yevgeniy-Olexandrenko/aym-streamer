@@ -690,9 +690,9 @@ void SimRP2A03::PostProcess(Stream& stream)
     float pulseVolFactor = 15.0f / std::max(m_maxVol[0], m_maxVol[1]);
     float noiseVolFactor = 15.0f / m_maxVol[2];
 
-    for (int i = 0, c = stream.frames.count(); i < c; ++i)
+    for (FrameId id = 0; id < stream.framesCount(); ++id)
     {
-        Frame& frame = const_cast<Frame&>(stream.frames.get(i));
+        Frame& frame = const_cast<Frame&>(stream.getFrame(id));
 
         // chip 0
         frame.data(0, A_Volume) = uint8_t(float(frame.data(0, A_Volume)) * pulseVolFactor);

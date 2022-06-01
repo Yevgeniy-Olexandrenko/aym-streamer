@@ -9,7 +9,7 @@ class Emulator : public Output, public WaveAudio
 public:
 	Emulator();
 	virtual ~Emulator();
-	std::string name() const;
+	std::string name() const override;
 
 public:
 	bool Open() override;

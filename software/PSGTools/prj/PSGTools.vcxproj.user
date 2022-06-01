@@ -3,21 +3,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>D:\projects\github\test\psg\00.pt3 D:\projects\github\test\psg\00.aym</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\projects\github\aym-streamer\chiptunes\Fatal Snipe\*.*"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>D:\projects\github\test\psg\00.pt3 D:\projects\github\test\psg\00.aym</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\projects\github\aym-streamer\chiptunes\Fatal Snipe\*.*"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>D:\projects\github\test\psg\00.pt3 D:\projects\github\test\psg\00.aym</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\projects\github\aym-streamer\chiptunes\Fatal Snipe\*.*"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)/../</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>D:\projects\github\test\psg\00.pt3 D:\projects\github\test\psg\00.aym</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\projects\github\aym-streamer\chiptunes\Fatal Snipe\*.*"</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

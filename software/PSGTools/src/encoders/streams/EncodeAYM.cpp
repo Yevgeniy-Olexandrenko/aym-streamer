@@ -10,16 +10,6 @@ EncodeAYM::Delta::Delta(uint16_t from, uint16_t to)
     else if (m_value <= 2047i16 && m_value >= (-2047i16 - 1)) m_size = 12;
 }
 
-int16_t EncodeAYM::Delta::value() const
-{
-    return m_value;
-}
-
-uint8_t EncodeAYM::Delta::size() const
-{
-    return m_size;
-}
-
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
 EncodeAYM::DeltaList::DeltaList()

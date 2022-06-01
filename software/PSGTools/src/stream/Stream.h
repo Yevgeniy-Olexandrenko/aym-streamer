@@ -5,6 +5,7 @@
 
 #include "Frame.h"
 #include "output/Chip.h"
+#include "Property.h"
 
 using FrameId = uint32_t;
 using FrameRate = uint16_t;
@@ -19,114 +20,90 @@ class Stream
 		Stream& m_stream;
 	};
 
+	using File = std::filesystem::path;
+	using Frames = std::vector<Frame>;
+
 public:
 
-	///////////////////////////////////////////////////////////////////////////////
+	/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
 	struct Info : public Delegate
 	{
 		Info(Stream& stream);
 
-		void title(const std::string& title);
-		const std::string& title() const;
-		bool titleKnown() const;
+		RW_PROP_DEF( std::string, title   );
+		RW_PROP_DEF( std::string, artist  );
+		RW_PROP_DEF( std::string, comment );
+		RW_PROP_DEF( std::string, type    );
 
-		void artist(const std::string& artist);
-		const std::string& artist() const;
-		bool artistKnown() const;
-
-		void comment(const std::string& comment);
-		const std::string& comment() const;
-		bool commentKnown() const;
-
-		void type(const std::string& type);
-		const std::string& type() const;
-
-	private:
-		std::string m_title;
-		std::string m_artist;
-		std::string m_comment;
-		std::string m_type;
+		RO_PROP_DEC( bool, titleKnown   );
+		RO_PROP_DEC( bool, artistKnown  );
+		RO_PROP_DEC( bool, commentKnown );
 	};
 
-	///////////////////////////////////////////////////////////////////////////////
-
-	struct Frames : public Delegate
-	{
-		Frames(Stream& stream);
-
-		void add(const Frame& frame);
-		const Frame& get(FrameId id) const;
-		uint32_t count() const;
-		FrameId lastFrameId() const;
-		bool available() const;
-
-	private:
-		std::vector<Frame> m_frames;
-	};
-
-	///////////////////////////////////////////////////////////////////////////////
+	/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
 	struct Loop : public Delegate
 	{
 		Loop(Stream& stream);
 
-		void frameId(FrameId id);
-		FrameId frameId() const;
-		uint32_t framesCount() const;
-		int extraLoops() const;
-		bool available() const;
-
+		RW_PROP_IMP( FrameId, frameId     );
+		RO_PROP_DEF( int,     extraLoops  );
+		RO_PROP_DEC( bool,    available   );
+		RO_PROP_DEC( size_t,  framesCount );
+		
 	private:
 		void ComputeExtraLoops();
 		void UpdateLoopFrameChanges();
-
-	private:
-		FrameId m_frameId;
-		int m_extraLoops;
 	};
 
-	///////////////////////////////////////////////////////////////////////////////
+	/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
 	struct Playback : public Delegate
 	{
 		Playback(Stream& stream);
 
-		const Frame& getFrame(FrameId id) const;
-		uint32_t framesCount() const;
-		FrameId lastFrameId() const;
+		RO_PROP_DEC( size_t,    framesCount );
+		RO_PROP_DEC( FrameId,   lastFrameId );
+		RW_PROP_DEF( FrameRate, frameRate   );
 
-		void frameRate(FrameRate frameRate);
-		FrameRate frameRate() const;
-
+	public:
+		const Frame& getFrame(FrameId frameId) const;
 		void realDuration(int& hh, int& mm, int& ss, int& ms) const;
 		void realDuration(int& hh, int& mm, int& ss) const;
-
 		void fakeDuration(int& hh, int& mm, int& ss, int& ms) const;
 		void fakeDuration(int& hh, int& mm, int& ss) const;
 
 	private:
-		void ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss, int& ms) const;
-		void ComputeDuration(uint32_t frameCount, int& hh, int& mm, int& ss) const;
-
-	private:
-		FrameRate m_frameRate;
+		void ComputeDuration(size_t frameCount, int& hh, int& mm, int& ss, int& ms) const;
+		void ComputeDuration(size_t frameCount, int& hh, int& mm, int& ss) const;
 	};
 
-	///////////////////////////////////////////////////////////////////////////////
+	/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
+public:
 	enum class Property
 	{
 		Title, Artist, Comment, Type, Chip, Frames, Duration
 	};
 
 	Stream();
+
+	RO_PROP_DEC( size_t,  framesCount );
+	RO_PROP_DEC( FrameId, lastFrameId );
+	
+public:
+	void addFrame(const Frame& frame);
+	const Frame& getFrame(FrameId frameId) const;
 	std::string property(Property property) const;
 
-	std::filesystem::path file;
-	Info     info;
-	Chip     chip;
-	Frames   frames;
-	Loop     loop;
+public:
+	File file;
+	Info info;
+	Chip chip;
+	Loop loop;
 	Playback playback;
+
+private:
+	Frames m_frames;
 };

@@ -52,6 +52,7 @@
     <ClInclude Include="..\src\output\Chip.h" />
     <ClInclude Include="..\src\output\Streamer\SerialPort.h" />
     <ClInclude Include="..\src\output\Streamer\Streamer.h" />
+    <ClInclude Include="..\src\Property.h" />
     <ClInclude Include="..\src\stream\Frame.h" />
     <ClInclude Include="..\src\stream\Player.h" />
     <ClInclude Include="..\src\stream\Stream.h" />

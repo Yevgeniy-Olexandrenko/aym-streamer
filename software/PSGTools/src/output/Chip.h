@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <string>
+#include "Property.h"
 
 struct Chip
 {
@@ -30,26 +31,16 @@ public:
 	Chip();
 	std::string toString() const;
 
-	void count(Count count);
-	Count count() const;
+	RW_PROP_DEF(Count, count);
+	RW_PROP_DEF(Model, model);
+	RW_PROP_DEF(Frequency, frequency);
+	RW_PROP_DEF(Channels, channels);
 
-	void model(Model model);
-	Model model() const;
+public:
 	bool modelKnown() const;
-
-	void frequency(Frequency frequency);
-	void freqValue(uint32_t freqValue);
-	Frequency frequency() const;
-	uint32_t freqValue() const;
 	bool frequencyKnown() const;
-
-	void channels(Channels channels);
-	Channels channels() const;
 	bool channelsKnown() const;
 
-private:
-	Count m_count;
-	Model m_model;
-	Frequency m_frequency;
-	Channels  m_channels;
+	void freqValue(uint32_t freqValue);
+	uint32_t freqValue() const;
 };

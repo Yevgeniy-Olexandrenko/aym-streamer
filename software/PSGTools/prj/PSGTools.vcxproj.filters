@@ -2,263 +2,386 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Sources">
-      <UniqueIdentifier>{1fc6a27e-93ab-493e-8525-7b8b8240d582}</UniqueIdentifier>
+      <UniqueIdentifier>{993ee04f-0c32-41ca-88fa-763ac708e220}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\encoders">
-      <UniqueIdentifier>{49040456-cd88-44f9-83c8-b1ef6b6cfd28}</UniqueIdentifier>
+    <Filter Include="Sources\psglib">
+      <UniqueIdentifier>{5932a2b9-a31c-495d-b1a9-4a6a8d9b842f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\decoders">
-      <UniqueIdentifier>{038e6189-8da3-46ef-b548-0bdafde6015c}</UniqueIdentifier>
+    <Filter Include="Sources\psgtools">
+      <UniqueIdentifier>{ddeb5be9-f47d-4043-a5d2-20a44260cc43}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\output">
-      <UniqueIdentifier>{ed5e2415-9dc9-40e5-b12f-f9c14b1de61d}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\components">
+      <UniqueIdentifier>{82f255f9-92fb-4b2e-a391-83e9d68e1d40}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\output\Emulator">
-      <UniqueIdentifier>{96c475f2-9d82-4526-83d4-f31a499a46ef}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\decoders">
+      <UniqueIdentifier>{ee193a59-381b-44c4-b837-95bc5b8340c4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\stream">
-      <UniqueIdentifier>{a61c2248-7658-45e0-be9d-23f4187b8bb0}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\encoders">
+      <UniqueIdentifier>{eecbc2b9-5b07-47ee-99ed-31f079d083ab}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\filelist">
-      <UniqueIdentifier>{2d3b7775-8be4-402d-ba43-2b9c877c6101}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\stream">
+      <UniqueIdentifier>{be96a3a8-0c0d-4f98-aa47-524d39d4944c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\decoders\modules">
-      <UniqueIdentifier>{76179d2c-4e53-448e-a4ad-8ed91411c0e0}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\output">
+      <UniqueIdentifier>{61c936fd-ad31-46b9-be8e-f15fd00329f8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\decoders\streams">
-      <UniqueIdentifier>{17cc3324-b1af-40c0-9dad-fc3c48153798}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\components\ayumi">
+      <UniqueIdentifier>{143f56f7-0cb8-4ecc-9770-5ce6739725be}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\decoders\chipsims">
-      <UniqueIdentifier>{4eb3d85e-0ba9-4004-beaa-cde186a404b8}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\components\lha">
+      <UniqueIdentifier>{16e3fb29-4fa9-4b02-8d39-9fbb4d3ce97f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\encoders\specific">
-      <UniqueIdentifier>{d2bdb999-e87e-471b-b032-60eab5650e17}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\components\zlib">
+      <UniqueIdentifier>{a4250d46-a8b6-42b7-8b27-2c73e593a3fa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\encoders\streams">
-      <UniqueIdentifier>{33f2c317-f14e-4ae1-a91a-ed2dd2d31d76}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\decoders\modules">
+      <UniqueIdentifier>{64e9f137-2bec-4928-867c-e9521e96ca55}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\output\Streamer">
-      <UniqueIdentifier>{d8709f9e-51ca-46b5-9705-8a9e1ab44b87}</UniqueIdentifier>
+    <Filter Include="Sources\psglib\decoders\streams">
+      <UniqueIdentifier>{0de74ef2-256a-462a-bde7-81721d30886f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psglib\decoders\chipsims">
+      <UniqueIdentifier>{ed31a234-3e5e-42f1-99ae-f352728ef3d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psglib\encoders\specific">
+      <UniqueIdentifier>{85f8c0a4-3e67-485c-8693-3386421d59bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psglib\encoders\streams">
+      <UniqueIdentifier>{cf020987-44d7-4aac-b6e2-cf617f34f65e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psglib\output\emulator">
+      <UniqueIdentifier>{23cabd78-4089-4bf7-a231-09b7be97c696}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psglib\output\streamer">
+      <UniqueIdentifier>{2545a190-54b5-4879-8ef5-45a13ed72e56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psgtools\components">
+      <UniqueIdentifier>{376cb7db-3165-4d3f-ae82-5df5e8a3dd9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psgtools\components\glob">
+      <UniqueIdentifier>{8fdf6ee8-ab18-4c80-9f9a-4d20feb078e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psgtools\components\terminal">
+      <UniqueIdentifier>{548de8e2-de57-4b83-b1eb-45fb65a224a4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\decoders\Decoder.h">
-      <Filter>Sources\decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\Encoder.h">
-      <Filter>Sources\encoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\Output.h">
-      <Filter>Sources\output</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\Chip.h">
-      <Filter>Sources\output</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\Emulator\Emulator.h">
-      <Filter>Sources\output\Emulator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\Emulator\WaveAudio.h">
-      <Filter>Sources\output\Emulator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\Streamer\SerialPort.h">
-      <Filter>Sources\output\Streamer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\output\Streamer\Streamer.h">
-      <Filter>Sources\output\Streamer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Interface.h">
-      <Filter>Sources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\stream\Frame.h">
-      <Filter>Sources\stream</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\stream\Player.h">
-      <Filter>Sources\stream</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\stream\Stream.h">
-      <Filter>Sources\stream</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\filelist\Filelist.h">
-      <Filter>Sources\filelist</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\modules\DecodeASC.h">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\modules\DecodePT2.h">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\modules\DecodePT3.h">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\modules\DecodeSTC.h">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\modules\DecodeSTP.h">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\streams\DecodePSG.h">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\streams\DecodeVGM.h">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\streams\DecodeVTX.h">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\streams\DecodeYM.h">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\chipsims\SimAY8910.h">
-      <Filter>Sources\decoders\chipsims</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\chipsims\SimRP2A03.h">
-      <Filter>Sources\decoders\chipsims</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\chipsims\SimSN76489.h">
-      <Filter>Sources\decoders\chipsims</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\chipsims\ChipSim.h">
-      <Filter>Sources\decoders\chipsims</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\modules\DecodeSQT.h">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Functions.h">
-      <Filter>Sources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\streams\EncodePSG.h">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\streams\EncodeVGM.h">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\streams\EncodeVTX.h">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\streams\EncodeYM.h">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\specific\EncodeTXT.h">
-      <Filter>Sources\encoders\specific</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\specific\EncodeWAV.h">
-      <Filter>Sources\encoders\specific</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\decoders\streams\DecodeAYM.h">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\encoders\streams\EncodeAYM.h">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Property.h">
-      <Filter>Sources</Filter>
-    </ClInclude>
+    <ClCompile Include="..\src\psglib\stream\Chip.cpp">
+      <Filter>Sources\psglib\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\stream\Frame.cpp">
+      <Filter>Sources\psglib\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\stream\Player.cpp">
+      <Filter>Sources\psglib\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\stream\Stream.cpp">
+      <Filter>Sources\psglib\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\PSGLib.cpp">
+      <Filter>Sources\psglib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\output\streamer\SerialPort.cpp">
+      <Filter>Sources\psglib\output\streamer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\output\streamer\Streamer.cpp">
+      <Filter>Sources\psglib\output\streamer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\output\emulator\Emulator.cpp">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\output\emulator\WaveAudio.cpp">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\specific\EncodeTXT.cpp">
+      <Filter>Sources\psglib\encoders\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\specific\EncodeWAV.cpp">
+      <Filter>Sources\psglib\encoders\specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\streams\EncodeAYM.cpp">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\streams\EncodePSG.cpp">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\streams\EncodeVGM.cpp">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\streams\EncodeVTX.cpp">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\streams\EncodeYM.cpp">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\Encoder.cpp">
+      <Filter>Sources\psglib\encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\streams\DecodeAYM.cpp">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\streams\DecodePSG.cpp">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\streams\DecodeVGM.cpp">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\streams\DecodeVTX.cpp">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\streams\DecodeYM.cpp">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\chipsims\SimAY8910.cpp">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03.cpp">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\chipsims\SimSN76489.cpp">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\modules\DecodeASC.cpp">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\modules\DecodePT2.cpp">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\modules\DecodePT3.cpp">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\modules\DecodeSQT.cpp">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\modules\DecodeSTC.cpp">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\modules\DecodeSTP.cpp">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\Decoder.cpp">
+      <Filter>Sources\psglib\decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\adler32.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\compress.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\crc32.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\deflate.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\gzio.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\infback.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\inffast.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\inflate.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\inftrees.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\trees.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\uncompr.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\zlib\zutil.c">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\lha\lh5_decode.cpp">
+      <Filter>Sources\psglib\components\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\components\ayumi\ayumi.cpp">
+      <Filter>Sources\psglib\components\ayumi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psgtools\components\glob\glob.cpp">
+      <Filter>Sources\psgtools\components\glob</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psgtools\Filelist.cpp">
+      <Filter>Sources\psgtools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psgtools\Interface.cpp">
+      <Filter>Sources\psgtools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psgtools\PSGTools.cpp">
+      <Filter>Sources\psgtools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\PSGTools.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\output\Emulator\Emulator.cpp">
-      <Filter>Sources\output\Emulator</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\output\Emulator\WaveAudio.cpp">
-      <Filter>Sources\output\Emulator</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\output\Streamer\SerialPort.cpp">
-      <Filter>Sources\output\Streamer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\output\Streamer\Streamer.cpp">
-      <Filter>Sources\output\Streamer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\output\Chip.cpp">
-      <Filter>Sources\output</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Interface.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\Decoder.cpp">
-      <Filter>Sources\decoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\stream\Frame.cpp">
-      <Filter>Sources\stream</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\stream\Player.cpp">
-      <Filter>Sources\stream</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\stream\Stream.cpp">
-      <Filter>Sources\stream</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\filelist\Filelist.cpp">
-      <Filter>Sources\filelist</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\modules\DecodeASC.cpp">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\modules\DecodePT2.cpp">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\modules\DecodePT3.cpp">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\modules\DecodeSTC.cpp">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\modules\DecodeSTP.cpp">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\streams\DecodePSG.cpp">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\streams\DecodeVGM.cpp">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\streams\DecodeVTX.cpp">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\streams\DecodeYM.cpp">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\chipsims\SimAY8910.cpp">
-      <Filter>Sources\decoders\chipsims</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\chipsims\SimRP2A03.cpp">
-      <Filter>Sources\decoders\chipsims</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\chipsims\SimSN76489.cpp">
-      <Filter>Sources\decoders\chipsims</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\modules\DecodeSQT.cpp">
-      <Filter>Sources\decoders\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Functions.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\Encoder.cpp">
-      <Filter>Sources\encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\streams\EncodePSG.cpp">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\streams\EncodeVGM.cpp">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\streams\EncodeVTX.cpp">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\streams\EncodeYM.cpp">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\specific\EncodeTXT.cpp">
-      <Filter>Sources\encoders\specific</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\specific\EncodeWAV.cpp">
-      <Filter>Sources\encoders\specific</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\decoders\streams\DecodeAYM.cpp">
-      <Filter>Sources\decoders\streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\encoders\streams\EncodeAYM.cpp">
-      <Filter>Sources\encoders\streams</Filter>
-    </ClCompile>
+    <ClInclude Include="..\src\psglib\stream\Chip.h">
+      <Filter>Sources\psglib\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\stream\Frame.h">
+      <Filter>Sources\psglib\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\stream\Player.h">
+      <Filter>Sources\psglib\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\stream\Stream.h">
+      <Filter>Sources\psglib\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\Property.h">
+      <Filter>Sources\psglib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\PSGLib.h">
+      <Filter>Sources\psglib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\streamer\SerialPort.h">
+      <Filter>Sources\psglib\output\streamer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\streamer\Streamer.h">
+      <Filter>Sources\psglib\output\streamer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\emulator\Emulator.h">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\emulator\WaveAudio.h">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\Output.h">
+      <Filter>Sources\psglib\output</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\specific\EncodeTXT.h">
+      <Filter>Sources\psglib\encoders\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\specific\EncodeWAV.h">
+      <Filter>Sources\psglib\encoders\specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\streams\EncodeAYM.h">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\streams\EncodePSG.h">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\streams\EncodeVGM.h">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\streams\EncodeVTX.h">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\streams\EncodeYM.h">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\Encoder.h">
+      <Filter>Sources\psglib\encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\streams\DecodeAYM.h">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\streams\DecodePSG.h">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\streams\DecodeVGM.h">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\streams\DecodeVTX.h">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\streams\DecodeYM.h">
+      <Filter>Sources\psglib\decoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\ChipSim.h">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\SimAY8910.h">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03.h">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\SimSN76489.h">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\modules\DecodeASC.h">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\modules\DecodePT2.h">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\modules\DecodePT3.h">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\modules\DecodeSQT.h">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\modules\DecodeSTC.h">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\modules\DecodeSTP.h">
+      <Filter>Sources\psglib\decoders\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\Decoder.h">
+      <Filter>Sources\psglib\decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\crc32.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\deflate.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\inffast.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\inffixed.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\inflate.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\inftrees.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\trees.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\zconf.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\zconf.in.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\zlib.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\zlib\zutil.h">
+      <Filter>Sources\psglib\components\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\lha\lh5_decode.h">
+      <Filter>Sources\psglib\components\lha</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\components\ayumi\ayumi.h">
+      <Filter>Sources\psglib\components\ayumi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\components\glob\glob.h">
+      <Filter>Sources\psgtools\components\glob</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\components\terminal\terminal.hpp">
+      <Filter>Sources\psgtools\components\terminal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\components\terminal\terminal_color.hpp">
+      <Filter>Sources\psgtools\components\terminal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\components\terminal\terminal_cursor.hpp">
+      <Filter>Sources\psgtools\components\terminal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\components\terminal\terminal_size.hpp">
+      <Filter>Sources\psgtools\components\terminal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\Filelist.h">
+      <Filter>Sources\psgtools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\Interface.h">
+      <Filter>Sources\psgtools</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

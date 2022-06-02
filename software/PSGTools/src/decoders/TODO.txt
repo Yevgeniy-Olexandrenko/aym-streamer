@@ -1,8 +1,0 @@
-To implement:
-STC - Sound Tracker v1.xx - 8974 modules
-ASC - ASC Sound Master v0.xx-2.xx - 3206 modules
-STP - Sound Tracker Pro - 2831 modules
-SQT - SQ-Tracker - 1752 modules
-
-Possible to implement:
-YM, AY, VGM, NSF

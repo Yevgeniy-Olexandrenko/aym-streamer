@@ -4,7 +4,7 @@
 
 namespace
 {
-	const bool k_processForAY8930 = true;
+	const bool k_processForAY8930 = !true;
 }
 
 Streamer::Streamer(int comPortIndex)

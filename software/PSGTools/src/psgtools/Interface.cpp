@@ -305,7 +305,7 @@ namespace Interface
     {
         size_t range1 = (height - 2) / 2;
         size_t range2 = (height - 2) - range1;
-        bool isTS = (stream.chip.count() == Chip::Count::TurboSound);
+        bool isTS = (stream.chip.count() == Chip::Count::TwoChips);
         cursor::show(false);
 
         // print header
@@ -449,7 +449,7 @@ namespace Interface
     {
         size_t range1 = (height - 2) / 2;
         size_t range2 = (height - 2) - range1;
-        bool isTS = (stream.chip.count() == Chip::Count::TurboSound);
+        bool isTS = (stream.chip.count() == Chip::Count::TwoChips);
 
         // prepare console for drawing
         streamPb.clear();

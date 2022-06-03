@@ -155,7 +155,7 @@ bool DecodePT3::Open(Stream& stream)
                 stream.chip.frequency(Chip::Frequency::F1750000);
             }
 
-            if (m_isTS) stream.chip.count(Chip::Count::TurboSound);
+            if (m_isTS) stream.chip.count(Chip::Count::TwoChips);
         }
         fileStream.close();
     }

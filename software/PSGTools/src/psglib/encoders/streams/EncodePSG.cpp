@@ -13,7 +13,7 @@ bool EncodePSG::Open(const Stream& stream)
             m_output << uint8_t(stream.play.frameRate());
             m_output << std::string(10, 0x00);
 
-            m_isTS = (stream.chip.count() == Chip::Count::TurboSound);
+            m_isTS = (stream.chip.count() == Chip::Count::TwoChips);
             m_skip = 0;
 
             return true;

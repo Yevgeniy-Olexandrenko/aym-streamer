@@ -90,7 +90,7 @@ bool EncodeAYM::Open(const Stream& stream)
         m_output.open(stream.file, std::fstream::binary);
         if (m_output)
         {
-            m_isTS = (stream.chip.count() == Chip::Count::TurboSound);
+            m_isTS = (stream.chip.count() == Chip::Count::TwoChips);
 
             m_output << "AYYM";
             m_bitStream.Open(m_output);

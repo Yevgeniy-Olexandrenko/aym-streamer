@@ -44,12 +44,12 @@ bool Emulator::Init(const Stream& stream)
         std::lock_guard<std::mutex> lock(m_mutex);
         chip.count(stream.chip.count());
 
-        chip.model(Chip::Model::AY);
+        chip.model(Chip::Model::AY8910);
         if (stream.chip.modelKnown())
         {
-            if (stream.chip.model() == Chip::Model::YM)
+            if (stream.chip.model() == Chip::Model::YM2149)
             {
-                chip.model(Chip::Model::YM);
+                chip.model(Chip::Model::YM2149);
             }
         }
 
@@ -66,7 +66,7 @@ bool Emulator::Init(const Stream& stream)
         }
 
         m_isOpened &= InitChip(0);
-        if (chip.count() == Chip::Count::TurboSound)
+        if (chip.count() == Chip::Count::TwoChips)
         {
             m_isOpened &= InitChip(1);
         }
@@ -79,7 +79,7 @@ bool Emulator::OutFrame(const Frame& frame, bool force)
     if (m_isOpened)
     {
         WriteToChip(0, frame, force);
-        if (chip.count() == Chip::Count::TurboSound)
+        if (chip.count() == Chip::Count::TwoChips)
         {
             WriteToChip(1, frame, force);
         }
@@ -98,7 +98,7 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
     auto sampbuf = (int16_t*)buffer;
     auto samples = (int)(size / sizeof(int16_t));
 
-    if (chip.count() == Chip::Count::TurboSound)
+    if (chip.count() == Chip::Count::TwoChips)
     {
         for (int i = 0; i < samples;)
         {
@@ -140,7 +140,7 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 bool Emulator::InitChip(uint8_t chipIndex)
 {
     ayumi* ay = &m_ay[chipIndex];
-    if (ayumi_configure(ay, (chip.model() == Chip::Model::YM), chip.freqValue(), k_sample_rate))
+    if (ayumi_configure(ay, (chip.model() == Chip::Model::YM2149), chip.freqValue(), k_sample_rate))
     {
         switch (chip.channels())
         {

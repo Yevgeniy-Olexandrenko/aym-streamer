@@ -7,7 +7,7 @@ namespace
 }
 
 Chip::Chip()
-	: m_count(Count::SingleChip)
+	: m_count(Count::OneChip)
 	, m_model(Model::Unknown)
 	, m_frequency(Frequency::Unknown)
 	, m_channels(Channels::Unknown)
@@ -20,14 +20,26 @@ std::string Chip::toString() const
 	{
 		switch (type)
 		{
-		case Model::AY: stream << "AY-3-8910(12)"; break;
-		case Model::YM: stream << "YM2149F"; break;
-		case Model::Compatible: stream << "AY/YM Compatible"; break;
+		case Model::AY8910:
+			stream << "AY-3-8910(12)";
+			break;
+
+		case Model::YM2149:
+			stream << "YM2149F";
+			break;
+
+		case Model::AY8930:
+			stream << "AY8930";
+			break;
+
+		case Model::Compatible:
+			stream << "AY/YM Compatible";
+			break;
 		}
 	};
 
 	std::stringstream stream;
-	if (count() == Count::TurboSound)
+	if (count() == Count::TwoChips)
 	{
 		if (modelKnown())
 		{

@@ -25,8 +25,8 @@ bool DecodeVTX::Open(Stream& stream)
 			fileStream.read((char*)(&hdr), sizeof(hdr));
 
 			Chip::Model chipType(Chip::Model::Unknown);
-			if (hdr.signature == AYSignature) chipType = Chip::Model::AY;
-			if (hdr.signature == YMSignature) chipType = Chip::Model::YM;
+			if (hdr.signature == AYSignature) chipType = Chip::Model::AY8910;
+			if (hdr.signature == YMSignature) chipType = Chip::Model::YM2149;
 
 			if (chipType != Chip::Model::Unknown)
 			{

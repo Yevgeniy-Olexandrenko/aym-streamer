@@ -7,7 +7,7 @@ bool EncodeTXT::Open(const Stream& stream)
         m_output.open(stream.file);
         if (m_output)
         {
-            m_isTS = (stream.chip.count() == Chip::Count::TurboSound);
+            m_isTS = (stream.chip.count() == Chip::Count::TwoChips);
             m_loop = stream.loop.frameId();
             m_frameRate = stream.play.frameRate();
             m_displayType = DisplayType::Readable;

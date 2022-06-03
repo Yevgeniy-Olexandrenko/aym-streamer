@@ -35,7 +35,7 @@ bool Streamer::Open()
 
 bool Streamer::Init(const Stream& stream)
 {
-	chip.count(Chip::Count::SingleChip);
+	chip.count(Chip::Count::OneChip);
 	chip.model(Chip::Model::Compatible);
 	chip.frequency(Chip::Frequency::F1773400);
 	chip.channels(Chip::Channels::ABC);

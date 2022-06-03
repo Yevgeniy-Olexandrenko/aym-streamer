@@ -60,16 +60,16 @@ bool DecodeVGM::Open(Stream& stream)
                     m_isTS = bool(header.ay8910Clock & 0x40000000);
                     auto divider = bool(header.ay8910Flags & 0x10);
                     auto ym_chip = bool(header.ay8910Type  & 0xF0);
-                    stream.chip.model(ym_chip ? Chip::Model::YM : Chip::Model::AY);
-                    stream.chip.count(m_isTS  ? Chip::Count::TurboSound : Chip::Count::SingleChip);
+                    stream.chip.model(ym_chip ? Chip::Model::YM2149 : Chip::Model::AY8910);
+                    stream.chip.count(m_isTS  ? Chip::Count::TwoChips : Chip::Count::OneChip);
                     stream.chip.freqValue((header.ay8910Clock & 0x3FFFFFFF) / (divider ? 2 : 1));
                 }
 
                 else if (m_chip->type() == ChipSim::Type::RP2A03)
                 {
                     m_isTS = true;
-                    stream.chip.model(Chip::Model::YM);
-                    stream.chip.count(m_isTS ? Chip::Count::TurboSound : Chip::Count::SingleChip);
+                    stream.chip.model(Chip::Model::YM2149);
+                    stream.chip.count(m_isTS ? Chip::Count::TwoChips : Chip::Count::OneChip);
                     stream.chip.freqValue(header.nesApuClock & 0x3FFFFFFF);
                 }
 

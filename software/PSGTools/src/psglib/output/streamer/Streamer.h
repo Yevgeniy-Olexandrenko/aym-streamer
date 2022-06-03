@@ -17,6 +17,9 @@ public:
 	void Close() override;
 
 private:
+	Frame ProcessForAY8930(const Frame& frame) const;
+
+private:
 	int m_portIndex;
 	SerialPort m_port;
 };

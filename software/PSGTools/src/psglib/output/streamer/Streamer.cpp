@@ -2,6 +2,11 @@
 #include "Streamer.h"
 #include "stream/Frame.h"
 
+namespace
+{
+	const bool k_processForAY8930 = true;
+}
+
 Streamer::Streamer(int comPortIndex)
 	: m_portIndex(comPortIndex)
 {
@@ -41,16 +46,18 @@ bool Streamer::OutFrame(const Frame& frame, bool force)
 {
 	if (m_isOpened)
 	{
+		Frame output = k_processForAY8930 ? ProcessForAY8930(frame) : frame;
+
 		char buffer[16 * 2 + 1];
 		int  bufPtr = 0;
 
 		for (uint8_t reg = 0; reg < 16; ++reg)
 		{
-			if (force || frame.IsChanged(reg))
+			if (force || output.IsChanged(reg))
 			{
 				// register number and value
 				buffer[bufPtr++] = char(reg);
-				buffer[bufPtr++] = char(frame.Read(reg));
+				buffer[bufPtr++] = char(output.Read(reg));
 			}
 		}
 
@@ -67,3 +74,39 @@ void Streamer::Close()
 	m_port.Close();
 }
 
+Frame Streamer::ProcessForAY8930(const Frame& frame) const
+{
+	auto ProcessChannel = [](int chan, Frame& frame)
+	{
+		uint8_t mixer = frame.Read(Mixer) >> chan;
+		uint8_t vol_e = frame.Read(A_Volume + chan);
+		
+		bool enableT = !(mixer & 0x01);
+		bool enableN = !(mixer & 0x08);
+		bool enableE =  (vol_e & 0x10);
+
+		if (enableE && !(enableT || enableN))
+		{
+			// enable tone and set period to zero
+			frame.Update(Mixer, (mixer & ~0x01) << chan);
+			frame.UpdatePeriod(A_Period + 2 * chan, 0x0);
+			return true;
+		}
+		return false;
+	};
+
+	Frame output = frame;
+	static bool prevFrameModified = false;
+
+	if (prevFrameModified)
+	{
+		prevFrameModified = false;
+		for (uint8_t reg = 0; reg <= 7; ++reg) 
+			output.changed(0, reg) = true;
+	}
+
+	prevFrameModified |= ProcessChannel(0, output);
+	prevFrameModified |= ProcessChannel(1, output);
+	prevFrameModified |= ProcessChannel(2, output);
+	return output;
+}

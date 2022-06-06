@@ -29,10 +29,11 @@ public:
 
 	void Process();
 	void RemoveDC();
+
 	double GetOutL() const;
 	double GetOutR() const;
 
-	private:
+private:
 	double Decimate(double* x) const;
 	double FilterDC(DCFilter& flter, int index, double x) const;
 

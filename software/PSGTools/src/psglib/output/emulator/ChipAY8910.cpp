@@ -84,7 +84,8 @@ void ChipAY8910::InternalWrite(byte reg, byte data)
         break;
 
     case 0x07:
-        for (int i = 0; i < 3; ++i, data >>= 1) m_channels[i].mixer.SetEnable(data);
+        for (int i = 0; i < 3; ++i, data >>= 1) 
+            m_channels[i].mixer.SetEnable(data);
         break;
 
     case 0x08: case 0x09: case 0x0A:
@@ -133,14 +134,16 @@ void ChipAY8910::ToneUnit::Reset()
 
 void ChipAY8910::ToneUnit::SetPeriodL(int period)
 {
-    period = (m_period & 0xFF00) | (period & 0xFF);
-    m_period = ((period == 0) | period);
+    m_period &= 0xFF00;
+    m_period |= (period & 0xFF);
+    m_period |= (m_period == 0);
 }
 
 void ChipAY8910::ToneUnit::SetPeriodH(int period)
 {
-    period = (m_period & 0x00FF) | (period & 0x0F) << 8;
-    m_period = ((period == 0) | period);
+    m_period &= 0x00FF;
+    m_period |= (period & 0x0F) << 8;
+    m_period |= (m_period == 0);
 }
 
 int ChipAY8910::ToneUnit::Update()
@@ -159,8 +162,8 @@ int ChipAY8910::ToneUnit::Update()
 
 void ChipAY8910::NoiseUnit::SetPeriod(int period)
 {
-    period &= 0x1F;
-    m_period = ((period == 0) | period);
+    m_period  = (period & 0x1F);
+    m_period |= (m_period == 0);
 }
 
 void ChipAY8910::NoiseUnit::Reset()
@@ -246,14 +249,16 @@ void ChipAY8910::EnvelopeUnit::Reset()
 
 void ChipAY8910::EnvelopeUnit::SetPeriodL(int period)
 {
-    period = (m_period & 0xFF00) | (period & 0xFF);
-    m_period = ((period == 0) | period);
+    m_period &= 0xFF00;
+    m_period |= (period & 0xFF);
+    m_period |= (m_period == 0);
 }
 
 void ChipAY8910::EnvelopeUnit::SetPeriodH(int period)
 {
-    period = (m_period & 0x00FF) | (period & 0xFF) << 8;
-    m_period = ((period == 0) | period);
+    m_period &= 0x00FF;
+    m_period |= (period & 0xFF) << 8;
+    m_period |= (m_period == 0);
 }
 
 void ChipAY8910::EnvelopeUnit::SetShape(int shape)

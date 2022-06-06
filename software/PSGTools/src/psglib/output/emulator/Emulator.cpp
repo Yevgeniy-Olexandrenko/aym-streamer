@@ -157,7 +157,8 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 bool Emulator::InitChip(uint8_t chipIndex)
 {
 #ifdef USE_NEW_AY8910
-    if (m_ay[chipIndex].Configure(chip.freqValue(), k_sample_rate, chip.model() == Chip::Model::YM2149))
+//    if (m_ay[chipIndex].Configure(chip.freqValue(), k_sample_rate, chip.model() == Chip::Model::YM2149))
+    if (m_ay[chipIndex].Configure(chip.freqValue(), k_sample_rate))
     {
         switch (chip.channels())
         {

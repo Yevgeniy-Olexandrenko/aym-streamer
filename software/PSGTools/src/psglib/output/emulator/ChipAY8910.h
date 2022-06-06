@@ -13,7 +13,7 @@ protected:
 	void InternalWrite(byte reg, byte data) override;
 	void InternalUpdate(double& outL, double& outR) override;
 
-protected:
+public:
 	class ToneUnit
 	{
 	public:
@@ -22,7 +22,7 @@ protected:
 		void SetPeriodH(int period);
 		int  Update();
 
-	private:
+	protected:
 		int m_period;
 		int m_counter;
 		int m_tone;
@@ -35,7 +35,7 @@ protected:
 		void SetPeriod(int period);
 		int  Update();
 
-	private:
+	protected:
 		int m_period;
 		int m_counter;
 		int m_noise;
@@ -49,7 +49,7 @@ protected:
 		void SetVolume(int volume);
 		int  GetOutput(int tone, int noise, int envelope) const;
 
-	private:
+	protected:
 		int m_T_Off;
 		int m_N_Off;
 		int m_E_On;
@@ -65,13 +65,16 @@ protected:
 		void SetShape(int shape);
 		int  Update();
 
-	private:
+	protected:
 		int m_counter;
 		int m_period;
 		int m_shape;
 		int m_segment;
 		int m_envelope;
 	};
+
+private:
+	const double* m_dacTable = nullptr;
 
 	struct Channel
 	{
@@ -80,11 +83,8 @@ protected:
 				
 		double panL;
 		double panR;
-	};
+	} m_channels[3];
 
-protected:
-	const double* m_dacTable = nullptr;
-	Channel       m_channels[3];
-	NoiseUnit     m_noise;
-	EnvelopeUnit  m_envelope;
+	NoiseUnit m_noise;
+	EnvelopeUnit m_envelope;
 };

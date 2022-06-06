@@ -33,7 +33,7 @@ private:
 
 private:
 #ifdef USE_NEW_AY8910
-	ChipAY8910 m_ay[2];
+	ChipAY8930 m_ay[2];
 #else
 	ayumi m_ay[2];
 #endif

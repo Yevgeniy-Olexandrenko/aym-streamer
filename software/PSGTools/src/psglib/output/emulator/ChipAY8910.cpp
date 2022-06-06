@@ -71,11 +71,15 @@ void ChipAY8910::InternalWrite(byte reg, byte data)
 {
     switch (reg)
     {
-    case 0x00: case 0x02: case 0x04:
+    case 0x00:
+    case 0x02: 
+    case 0x04:
         m_channels[reg >> 1].tone.SetPeriodL(data);
         break;
 
-    case 0x01: case 0x03: case 0x05:
+    case 0x01: 
+    case 0x03:
+    case 0x05:
         m_channels[reg >> 1].tone.SetPeriodH(data);
         break;
 
@@ -84,11 +88,15 @@ void ChipAY8910::InternalWrite(byte reg, byte data)
         break;
 
     case 0x07:
-        for (int i = 0; i < 3; ++i, data >>= 1) 
+        for (int i = 0; i < 3; ++i, data >>= 1)
+        {
             m_channels[i].mixer.SetEnable(data);
+        }
         break;
 
-    case 0x08: case 0x09: case 0x0A:
+    case 0x08:
+    case 0x09:
+    case 0x0A:
         m_channels[reg - 0x08].mixer.SetVolume(data);
         break;
 
@@ -108,16 +116,16 @@ void ChipAY8910::InternalWrite(byte reg, byte data)
 
 void ChipAY8910::InternalUpdate(double& outL, double& outR)
 {
-    int noise = m_noise.Update();
-    int envelope = m_envelope.Update();
+    int outN = m_noise.Update();
+    int outE = m_envelope.Update();
 
     for (Channel& channel : m_channels)
     {
-        int tone = channel.tone.Update();
-        int out  = channel.mixer.GetOutput(tone, noise, envelope);
+        int outT = channel.tone.Update();
+        int outM = channel.mixer.GetOutput(outT, outN, outE);
 
-        outL += m_dacTable[out] * channel.panL;
-        outR += m_dacTable[out] * channel.panR;
+        outL += m_dacTable[outM] * channel.panL;
+        outR += m_dacTable[outM] * channel.panR;
     }
 }
 
@@ -177,8 +185,7 @@ int ChipAY8910::NoiseUnit::Update()
     if (++m_counter >= (m_period << 1))
     {
         m_counter = 0;
-        int bit0x3 = ((m_noise ^ (m_noise >> 3)) & 1);
-        m_noise = (m_noise >> 1) | (bit0x3 << 16);
+        m_noise = (m_noise >> 1) | (((m_noise ^ (m_noise >> 3)) & 1) << 16);
     }
     return (m_noise & 1);
 }
@@ -208,7 +215,7 @@ void ChipAY8910::MixerUnit::SetVolume(int volume)
 int ChipAY8910::MixerUnit::GetOutput(int tone, int noise, int envelope) const
 {
     int out = (tone | m_T_Off) & (noise | m_N_Off);
-    return ((m_E_On ? envelope : m_volume) * out);
+    return (out * (m_E_On ? envelope : m_volume));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

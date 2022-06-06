@@ -216,6 +216,15 @@
     <ClCompile Include="..\src\psgtools\PSGTools.cpp">
       <Filter>Sources\psgtools</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\psglib\output\emulator\ChipAY89xx.cpp">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\output\emulator\ChipAY8910.cpp">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\output\emulator\ChipAY8930.cpp">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\psglib\stream\Chip.h">
@@ -382,6 +391,15 @@
     </ClInclude>
     <ClInclude Include="..\src\psgtools\Interface.h">
       <Filter>Sources\psgtools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\emulator\ChipAY89xx.h">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\emulator\ChipAY8910.h">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\emulator\ChipAY8930.h">
+      <Filter>Sources\psglib\output\emulator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -66,9 +66,6 @@ protected:
 		int  Update();
 
 	private:
-		void ResetSegment();
-
-	private:
 		int m_counter;
 		int m_period;
 		int m_shape;

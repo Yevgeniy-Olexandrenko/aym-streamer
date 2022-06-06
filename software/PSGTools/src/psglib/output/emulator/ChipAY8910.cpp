@@ -214,26 +214,26 @@ int ChipAY8910::MixerUnit::GetOutput(int tone, int noise, int envelope) const
 
 namespace
 {
-    enum class Envelope { SU, SD, HT, HB };
+    enum { SU = +1, SD = -1, HT = 0, HB = 0, RT = 0x1F, RB = 0x00 };
 
-    Envelope envelopes[16][2]
+    int envelopes[16][2][2]
     {
-        { Envelope::SD, Envelope::HB },
-        { Envelope::SD, Envelope::HB },
-        { Envelope::SD, Envelope::HB },
-        { Envelope::SD, Envelope::HB },
-        { Envelope::SU, Envelope::HB },
-        { Envelope::SU, Envelope::HB },
-        { Envelope::SU, Envelope::HB },
-        { Envelope::SU, Envelope::HB },
-        { Envelope::SD, Envelope::SD },
-        { Envelope::SD, Envelope::HB },
-        { Envelope::SD, Envelope::SU },
-        { Envelope::SD, Envelope::HT },
-        { Envelope::SU, Envelope::SU },
-        { Envelope::SU, Envelope::HT },
-        { Envelope::SU, Envelope::SD },
-        { Envelope::SU, Envelope::HB },
+        { { SD, RT }, { HB, RB }, },
+        { { SD, RT }, { HB, RB }, },
+        { { SD, RT }, { HB, RB }, },
+        { { SD, RT }, { HB, RB }, },
+        { { SU, RB }, { HB, RB }, },
+        { { SU, RB }, { HB, RB }, },
+        { { SU, RB }, { HB, RB }, },
+        { { SU, RB }, { HB, RB }, },
+        { { SD, RT }, { SD, RT }, },
+        { { SD, RT }, { HB, RB }, },
+        { { SD, RT }, { SU, RB }, },
+        { { SD, RT }, { HT, RT }, },
+        { { SU, RB }, { SU, RB }, },
+        { { SU, RB }, { HT, RT }, },
+        { { SU, RB }, { SD, RT }, },
+        { { SU, RB }, { HB, RB }, },
     };
 }
 
@@ -261,7 +261,7 @@ void ChipAY8910::EnvelopeUnit::SetShape(int shape)
     m_shape = (shape & 0x0F);
     m_counter = 0;
     m_segment = 0;
-    ResetSegment();
+    m_envelope = envelopes[m_shape][m_segment][1];
 }
 
 int ChipAY8910::EnvelopeUnit::Update()
@@ -270,22 +270,12 @@ int ChipAY8910::EnvelopeUnit::Update()
     {
         m_counter = 0;
 
-        Envelope env = envelopes[m_shape][m_segment];
-        bool doneSD = (env == Envelope::SD && --m_envelope < 0x00);
-        bool doneSU = (env == Envelope::SU && ++m_envelope > 0x1F);
-
-        if (doneSD || doneSU)
+        m_envelope += envelopes[m_shape][m_segment][0];
+        if (m_envelope < RB || m_envelope > RT)
         {
             m_segment ^= 1;
-            ResetSegment();
+            m_envelope = envelopes[m_shape][m_segment][1];
         }
     }
     return m_envelope;
 }
-
-void ChipAY8910::EnvelopeUnit::ResetSegment()
-{
-    Envelope env = envelopes[m_shape][m_segment];
-    m_envelope = (env == Envelope::SD || env == Envelope::HT ? 0x1F : 0x00);
-}
-

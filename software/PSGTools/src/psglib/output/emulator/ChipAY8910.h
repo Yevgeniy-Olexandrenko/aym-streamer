@@ -14,19 +14,75 @@ protected:
 	void InternalUpdate(double& outL, double& outR) override;
 
 protected:
+	class ToneUnit
+	{
+	public:
+		void Reset();
+		void SetPeriodL(int period);
+		void SetPeriodH(int period);
+		int  Update();
+
+	private:
+		int m_period;
+		int m_counter;
+		int m_tone;
+	};
+
+	class NoiseUnit
+	{
+	public:
+		void Reset();
+		void SetPeriod(int period);
+		int  Update();
+
+	private:
+		int m_period;
+		int m_counter;
+		int m_noise;
+	};
+
+	class MixerUnit
+	{
+	public:
+		void Reset();
+		void SetEnable(int flags);
+		void SetVolume(int volume);
+		int  GetOutput(int tone, int noise, int envelope) const;
+
+	private:
+		int m_T_Off;
+		int m_N_Off;
+		int m_E_On;
+		int m_volume;
+	};
+
+	class EnvelopeUnit
+	{
+	public:
+		void Reset();
+		void SetPeriodL(int period);
+		void SetPeriodH(int period);
+		void SetShape(int shape);
+		int  Update();
+
+	private:
+		void ResetSegment();
+
+	private:
+		int m_counter;
+		int m_period;
+		int m_shape;
+		int m_segment;
+		int m_envelope;
+	};
+
 	struct Channel
 	{
-		ToneUnit tone;
-		int volume;
-		int t_off;
-		int n_off;
-		int e_on;
-		
+		ToneUnit  tone;
+		MixerUnit mixer;
+				
 		double panL;
 		double panR;
-
-		void SetVolume(int volume);
-		void SetMixer(bool t_off, bool n_off, bool e_on);
 	};
 
 protected:

@@ -63,8 +63,7 @@ void ChipAY8910::InternalReset()
     for (Channel& channel : m_channels)
     {
         channel.tone.Reset();
-        channel.SetMixer(false, false, false);
-        channel.SetVolume(0);
+        channel.mixer.Reset();
     }
 }
 
@@ -73,45 +72,31 @@ void ChipAY8910::InternalWrite(byte reg, byte data)
     switch (reg)
     {
     case 0x00: case 0x02: case 0x04:
-    {
-        Channel& channel = m_channels[reg >> 1];
-        channel.tone.SetPeriod((channel.tone.GetPeriod() & 0xFF00) | data);
+        m_channels[reg >> 1].tone.SetPeriodL(data);
         break;
-    }
 
     case 0x01: case 0x03: case 0x05:
-    {
-        Channel& channel = m_channels[reg >> 1];
-        channel.tone.SetPeriod((channel.tone.GetPeriod() & 0x00FF) | (data << 8));
+        m_channels[reg >> 1].tone.SetPeriodH(data);
         break;
-    }
 
     case 0x06:
         m_noise.SetPeriod(data);
         break;
 
     case 0x07:
-        for (Channel& channel : m_channels)
-        {
-            channel.SetMixer(data & 0x01, data & 0x08, channel.e_on);
-            data >>= 1;
-        }
+        for (int i = 0; i < 3; ++i, data >>= 1) m_channels[i].mixer.SetEnable(data);
         break;
 
     case 0x08: case 0x09: case 0x0A:
-    {
-        Channel& channel = m_channels[reg - 0x08];
-        channel.SetMixer(channel.t_off, channel.n_off, data & 0x10);
-        channel.SetVolume(data);
+        m_channels[reg - 0x08].mixer.SetVolume(data);
         break;
-    }
 
     case 0x0B:
-        m_envelope.SetPeriod((m_envelope.GetPeriod() & 0xFF00) | data);
+        m_envelope.SetPeriodL(data);
         break;
 
     case 0x0C:
-        m_envelope.SetPeriod((m_envelope.GetPeriod() & 0x00FF) | (data << 8));
+        m_envelope.SetPeriodH(data);
         break;
 
     case 0x0D:
@@ -124,26 +109,183 @@ void ChipAY8910::InternalUpdate(double& outL, double& outR)
 {
     int noise = m_noise.Update();
     int envelope = m_envelope.Update();
-    int tone, out;
+
     for (Channel& channel : m_channels)
     {
-        tone = channel.tone.Update();
-        out  = (tone | channel.t_off) & (noise | channel.n_off);
-        out  = (channel.e_on ? envelope : channel.volume) * out;
+        int tone = channel.tone.Update();
+        int out  = channel.mixer.GetOutput(tone, noise, envelope);
 
         outL += m_dacTable[out] * channel.panL;
         outR += m_dacTable[out] * channel.panR;
     }
 }
 
-void ChipAY8910::Channel::SetVolume(int volume)
+////////////////////////////////////////////////////////////////////////////////
+// Tone Unit Implementation
+////////////////////////////////////////////////////////////////////////////////
+
+void ChipAY8910::ToneUnit::Reset()
 {
-    this->volume = ((volume & 0x0F) << 1) + 1;
+    m_tone = 0;
+    SetPeriodL(0);
+    SetPeriodH(0);
 }
 
-void ChipAY8910::Channel::SetMixer(bool t_off, bool n_off, bool e_on)
+void ChipAY8910::ToneUnit::SetPeriodL(int period)
 {
-    this->t_off = t_off;
-    this->n_off = n_off;
-    this->e_on  = e_on;
+    period = (m_period & 0xFF00) | (period & 0xFF);
+    m_period = ((period == 0) | period);
 }
+
+void ChipAY8910::ToneUnit::SetPeriodH(int period)
+{
+    period = (m_period & 0x00FF) | (period & 0x0F) << 8;
+    m_period = ((period == 0) | period);
+}
+
+int ChipAY8910::ToneUnit::Update()
+{
+    if (++m_counter >= m_period)
+    {
+        m_counter = 0;
+        m_tone ^= 1;
+    }
+    return m_tone;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Noise Unit Implementation
+////////////////////////////////////////////////////////////////////////////////
+
+void ChipAY8910::NoiseUnit::SetPeriod(int period)
+{
+    period &= 0x1F;
+    m_period = ((period == 0) | period);
+}
+
+void ChipAY8910::NoiseUnit::Reset()
+{
+    m_noise = 1;
+    SetPeriod(0);
+}
+
+int ChipAY8910::NoiseUnit::Update()
+{
+    if (++m_counter >= (m_period << 1))
+    {
+        m_counter = 0;
+        int bit0x3 = ((m_noise ^ (m_noise >> 3)) & 1);
+        m_noise = (m_noise >> 1) | (bit0x3 << 16);
+    }
+    return (m_noise & 1);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Mixer Unit Implementation
+////////////////////////////////////////////////////////////////////////////////
+
+void ChipAY8910::MixerUnit::Reset()
+{
+    SetEnable(0);
+    SetVolume(0);
+}
+
+void ChipAY8910::MixerUnit::SetEnable(int flags)
+{
+    m_T_Off = bool(flags & 0x01);
+    m_N_Off = bool(flags & 0x08);
+}
+
+void ChipAY8910::MixerUnit::SetVolume(int volume)
+{
+    m_volume = ((volume & 0x0F) << 1) + 1;
+    m_E_On = bool(volume & 0x10);
+}
+
+int ChipAY8910::MixerUnit::GetOutput(int tone, int noise, int envelope) const
+{
+    int out = (tone | m_T_Off) & (noise | m_N_Off);
+    return ((m_E_On ? envelope : m_volume) * out);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Envelope Unit Implementation
+////////////////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    enum class Envelope { SU, SD, HT, HB };
+
+    Envelope envelopes[16][2]
+    {
+        { Envelope::SD, Envelope::HB },
+        { Envelope::SD, Envelope::HB },
+        { Envelope::SD, Envelope::HB },
+        { Envelope::SD, Envelope::HB },
+        { Envelope::SU, Envelope::HB },
+        { Envelope::SU, Envelope::HB },
+        { Envelope::SU, Envelope::HB },
+        { Envelope::SU, Envelope::HB },
+        { Envelope::SD, Envelope::SD },
+        { Envelope::SD, Envelope::HB },
+        { Envelope::SD, Envelope::SU },
+        { Envelope::SD, Envelope::HT },
+        { Envelope::SU, Envelope::SU },
+        { Envelope::SU, Envelope::HT },
+        { Envelope::SU, Envelope::SD },
+        { Envelope::SU, Envelope::HB },
+    };
+}
+
+void ChipAY8910::EnvelopeUnit::Reset()
+{
+    SetPeriodL(0);
+    SetPeriodH(0);
+    SetShape(0);
+}
+
+void ChipAY8910::EnvelopeUnit::SetPeriodL(int period)
+{
+    period = (m_period & 0xFF00) | (period & 0xFF);
+    m_period = ((period == 0) | period);
+}
+
+void ChipAY8910::EnvelopeUnit::SetPeriodH(int period)
+{
+    period = (m_period & 0x00FF) | (period & 0xFF) << 8;
+    m_period = ((period == 0) | period);
+}
+
+void ChipAY8910::EnvelopeUnit::SetShape(int shape)
+{
+    m_shape = (shape & 0x0F);
+    m_counter = 0;
+    m_segment = 0;
+    ResetSegment();
+}
+
+int ChipAY8910::EnvelopeUnit::Update()
+{
+    if (++m_counter >= m_period)
+    {
+        m_counter = 0;
+
+        Envelope env = envelopes[m_shape][m_segment];
+        bool doneSD = (env == Envelope::SD && --m_envelope < 0x00);
+        bool doneSU = (env == Envelope::SU && ++m_envelope > 0x1F);
+
+        if (doneSD || doneSU)
+        {
+            m_segment ^= 1;
+            ResetSegment();
+        }
+    }
+    return m_envelope;
+}
+
+void ChipAY8910::EnvelopeUnit::ResetSegment()
+{
+    Envelope env = envelopes[m_shape][m_segment];
+    m_envelope = (env == Envelope::SD || env == Envelope::HT ? 0x1F : 0x00);
+}
+

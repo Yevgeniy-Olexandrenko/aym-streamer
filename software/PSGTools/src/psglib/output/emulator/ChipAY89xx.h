@@ -55,66 +55,6 @@ private:
 	double m_outR;
 
 protected:
-	class ToneUnit
-	{
-	public:
-		void SetPeriod(int period);
-		int  GetPeriod() const;
-		void Reset();
-		int  Update();
-
-	private:
-		int m_period;
-		int m_counter;
-		int m_tone;
-	};
-
-	class NoiseUnit
-	{
-	public:
-		void SetPeriod(int period);
-		void Reset();
-		int  Update();
-
-	private:
-		int m_period;
-		int m_counter;
-		int m_noise;
-	};
-
-	class MixerUnit
-	{
-	public:
-		void SetFlags(bool T_Off, bool N_Off, bool E_On);
-
-	private:
-		int m_T_Off;
-		int m_N_Off;
-		int m_E_On;
-		int m_volume;
-	};
-
-	class EnvelopeUnit
-	{
-	public:
-		void SetPeriod(int period);
-		void SetShape(int shape);
-		int  GetPeriod() const;
-		void Reset();
-		int  Update();
-
-	private:
-		void ResetSegment();
-
-	private:
-		int m_counter;
-		int m_period;
-		int m_shape;
-		int m_segment;
-		int m_envelope;
-	};
-
-protected:
 	virtual void InternalSetPan(int index, double panL, double panR) = 0;
 	virtual void InternalReset() = 0;
 	virtual void InternalWrite(byte reg, byte data) = 0;

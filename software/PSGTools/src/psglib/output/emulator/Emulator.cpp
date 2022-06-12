@@ -96,6 +96,10 @@ void Emulator::Close()
 
 void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 {
+#ifdef USE_NEW_AY8910
+    if (!m_ay[0]) return;
+#endif
+
     // buffer format must be 2 ch x 16 bit
     auto sampbuf = (int16_t*)buffer;
     auto samples = (int)(size / sizeof(int16_t));
@@ -105,13 +109,13 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
         for (int i = 0; i < samples;)
         {
 #ifdef USE_NEW_AY8910
-            m_ay[0].Process();
-            m_ay[1].Process();
-            m_ay[0].RemoveDC();
-            m_ay[1].RemoveDC();
+            m_ay[0]->Process();
+            m_ay[1]->Process();
+            m_ay[0]->RemoveDC();
+            m_ay[1]->RemoveDC();
 
-            double L = 0.5 * (m_ay[0].GetOutL() + m_ay[1].GetOutL());
-            double R = 0.5 * (m_ay[0].GetOutR() + m_ay[1].GetOutR());
+            double L = 0.5 * (m_ay[0]->GetOutL() + m_ay[1]->GetOutL());
+            double R = 0.5 * (m_ay[0]->GetOutR() + m_ay[1]->GetOutR());
 #else
             ayumi_process(&m_ay[0]);
             ayumi_process(&m_ay[1]);
@@ -133,11 +137,11 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
         for (int i = 0; i < samples;)
         {
 #ifdef USE_NEW_AY8910
-            m_ay[0].Process();
-            m_ay[0].RemoveDC();
+            m_ay[0]->Process();
+            m_ay[0]->RemoveDC();
 
-            double L = 0.5 * m_ay[0].GetOutL();
-            double R = 0.5 * m_ay[0].GetOutR();
+            double L = 0.5 * m_ay[0]->GetOutL();
+            double R = 0.5 * m_ay[0]->GetOutR();
 #else
             ayumi_process(&m_ay[0]);
             ayumi_remove_dc(&m_ay[0]);
@@ -157,27 +161,35 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 bool Emulator::InitChip(uint8_t chipIndex)
 {
 #ifdef USE_NEW_AY8910
-//    if (m_ay[chipIndex].Configure(chip.freqValue(), k_sample_rate, chip.model() == Chip::Model::YM2149))
-    if (m_ay[chipIndex].Configure(chip.freqValue(), k_sample_rate))
+    //switch (chip.model())
+    //{
+    //case Chip::Model::AY8910: m_ay[chipIndex].reset(new ChipAY8910(chip.freqValue(), k_sample_rate)); break;
+    //case Chip::Model::YM2149: m_ay[chipIndex].reset(new ChipYM2149(chip.freqValue(), k_sample_rate)); break;
+    //case Chip::Model::AY8930: m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate)); break;
+    //}
+    m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate));
+
+    if (m_ay[chipIndex])
     {
+        m_ay[chipIndex]->Reset();
         switch (chip.channels())
         {
         case Chip::Channels::MONO:
-            m_ay[chipIndex].SetPan(0, 0.5, true);
-            m_ay[chipIndex].SetPan(1, 0.5, true);
-            m_ay[chipIndex].SetPan(2, 0.5, true);
+            m_ay[chipIndex]->SetPan(0, 0.5, true);
+            m_ay[chipIndex]->SetPan(1, 0.5, true);
+            m_ay[chipIndex]->SetPan(2, 0.5, true);
             break;
 
         case Chip::Channels::ACB:
-            m_ay[chipIndex].SetPan(0, 0.1, true);
-            m_ay[chipIndex].SetPan(1, 0.9, true);
-            m_ay[chipIndex].SetPan(2, 0.5, true);
+            m_ay[chipIndex]->SetPan(0, 0.1, true);
+            m_ay[chipIndex]->SetPan(1, 0.9, true);
+            m_ay[chipIndex]->SetPan(2, 0.5, true);
             break;
 
         default: // ABC
-            m_ay[chipIndex].SetPan(0, 0.1, true);
-            m_ay[chipIndex].SetPan(1, 0.5, true);
-            m_ay[chipIndex].SetPan(2, 0.9, true);
+            m_ay[chipIndex]->SetPan(0, 0.1, true);
+            m_ay[chipIndex]->SetPan(1, 0.5, true);
+            m_ay[chipIndex]->SetPan(2, 0.9, true);
             break;
         }
         return true;
@@ -215,11 +227,13 @@ bool Emulator::InitChip(uint8_t chipIndex)
 void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
 {
 #ifdef USE_NEW_AY8910
-    for (uint8_t reg = 0; reg < 16; ++reg)
+    for (uint8_t reg = 0; reg < 32; ++reg)
     {
+        if (reg == 0x1d) continue;
+
         if (force || frame.IsChanged(reg))
         {
-            m_ay[chip].Write(reg, frame.Read(chip, reg));
+            m_ay[chip]->Write(reg, frame.Read(chip, reg));
         }
     }
 #else

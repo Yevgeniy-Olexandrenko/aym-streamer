@@ -3,8 +3,7 @@
 #define USE_NEW_AY8910
 
 #ifdef USE_NEW_AY8910
-#include "ChipAY8910.h"
-#include "ChipAY8930.h"
+#include "SoundChip.h"
 #else
 #include "ayumi.h"
 #endif
@@ -33,7 +32,7 @@ private:
 
 private:
 #ifdef USE_NEW_AY8910
-	ChipAY8930 m_ay[2];
+	std::shared_ptr<SoundChip> m_ay[2];
 #else
 	ayumi m_ay[2];
 #endif

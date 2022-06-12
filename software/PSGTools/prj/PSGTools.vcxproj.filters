@@ -225,6 +225,9 @@
     <ClCompile Include="..\src\psglib\output\emulator\ChipAY8930.cpp">
       <Filter>Sources\psglib\output\emulator</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\psglib\output\emulator\ay8910.cpp">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\psglib\stream\Chip.h">
@@ -399,6 +402,9 @@
       <Filter>Sources\psglib\output\emulator</Filter>
     </ClInclude>
     <ClInclude Include="..\src\psglib\output\emulator\ChipAY8930.h">
+      <Filter>Sources\psglib\output\emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\emulator\ay8910.h">
       <Filter>Sources\psglib\output\emulator</Filter>
     </ClInclude>
   </ItemGroup>

@@ -56,6 +56,7 @@
     <ClCompile Include="..\src\psglib\encoders\streams\EncodeVGM.cpp" />
     <ClCompile Include="..\src\psglib\encoders\streams\EncodeVTX.cpp" />
     <ClCompile Include="..\src\psglib\encoders\streams\EncodeYM.cpp" />
+    <ClCompile Include="..\src\psglib\output\emulator\ay8910.cpp" />
     <ClCompile Include="..\src\psglib\output\emulator\ChipAY8910.cpp" />
     <ClCompile Include="..\src\psglib\output\emulator\ChipAY8930.cpp" />
     <ClCompile Include="..\src\psglib\output\emulator\ChipAY89xx.cpp" />
@@ -111,6 +112,7 @@
     <ClInclude Include="..\src\psglib\encoders\streams\EncodeVGM.h" />
     <ClInclude Include="..\src\psglib\encoders\streams\EncodeVTX.h" />
     <ClInclude Include="..\src\psglib\encoders\streams\EncodeYM.h" />
+    <ClInclude Include="..\src\psglib\output\emulator\ay8910.h" />
     <ClInclude Include="..\src\psglib\output\emulator\ChipAY8910.h" />
     <ClInclude Include="..\src\psglib\output\emulator\ChipAY8930.h" />
     <ClInclude Include="..\src\psglib\output\emulator\ChipAY89xx.h" />

@@ -201,6 +201,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\components\ayumi;$(SolutionDir)..\src\psglib\components\lha;$(SolutionDir)..\src\psglib\components\zlib;$(SolutionDir)..\src\psglib\components;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -217,6 +218,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\components\ayumi;$(SolutionDir)..\src\psglib\components\lha;$(SolutionDir)..\src\psglib\components\zlib;$(SolutionDir)..\src\psglib\components;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -233,6 +235,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\components\ayumi;$(SolutionDir)..\src\psglib\components\lha;$(SolutionDir)..\src\psglib\components\zlib;$(SolutionDir)..\src\psglib\components;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -249,6 +252,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\components\ayumi;$(SolutionDir)..\src\psglib\components\lha;$(SolutionDir)..\src\psglib\components\zlib;$(SolutionDir)..\src\psglib\components;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

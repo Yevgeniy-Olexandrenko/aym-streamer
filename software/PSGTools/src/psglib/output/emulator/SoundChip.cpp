@@ -666,7 +666,7 @@ void SoundChip::Write(uint8_t reg, uint8_t data)
 				{
 					for (int i = 0; i < AY_EASHAPE; i++)
 					{
-						SoundChip::Write(i, 0);
+						SoundChip::Write(i + 0x00, 0);
 						SoundChip::Write(i + 0x10, 0);
 					}
 				}
@@ -736,12 +736,12 @@ void SoundChip::Process(double& outL, double& outR)
 		m_tone[chan].Update(isExp);
 		m_envelope[chan].Update();
 
-		uint8_t enableT = BIT(m_regs[AY_ENABLE], 0 + chan);
-		uint8_t enableN = BIT(m_regs[AY_ENABLE], 3 + chan);
+		uint8_t disableT = BIT(m_regs[AY_ENABLE], 0 + chan);
+		uint8_t disableN = BIT(m_regs[AY_ENABLE], 3 + chan);
 #if 0
-		int output = (m_tone[chan].GetOutput() & ~tone_enable(chan)) | (m_noise.GetOutput() & ~noise_enable(chan));
+		int output = (m_tone[chan].GetOutput() & ~disableT) | (m_noise.GetOutput() & ~disableN);
 #else
-		int output = (m_tone[chan].GetOutput() | enableT) & (m_noise.GetOutput() | enableN);
+		int output = (m_tone[chan].GetOutput() | disableT) & (m_noise.GetOutput() | disableN);
 #endif
 		if (output)
 		{
@@ -867,13 +867,13 @@ void SoundChip::NoiseUnit::Update(bool isExp, bool isNew)
 	{
 		// toggle the prescaler output. Noise is no different to channels
 		m_counter = 0;
-		m_prescale ^= 1;
+		m_prescale ^= true;
 
 		// TODO : verify algorithm for AY8930
 		if (isExp)
 		{
 			// AY8930 noise generator rate is twice compares as compatibility mode
-			if (++m_value >= ((uint8_t(m_shift) & m_maskAND) | m_maskOR))
+			if (++m_value >= uint8_t(m_shift & m_maskAND | m_maskOR))
 			{
 				m_value = 0;
 				m_shift = (m_shift >> 1) | ((BIT(m_shift, 0) ^ BIT(m_shift, 2)) << 16);

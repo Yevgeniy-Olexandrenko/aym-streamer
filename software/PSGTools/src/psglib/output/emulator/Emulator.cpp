@@ -227,7 +227,16 @@ bool Emulator::InitChip(uint8_t chipIndex)
 void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
 {
 #ifdef USE_NEW_AY8910
-    for (uint8_t reg = 0; reg < 32; ++reg)
+
+    for (int reg = 0x00; reg <= 0x0F; ++reg)
+    {
+        if (force || frame.IsChanged(reg))
+        {
+            m_ay[chip]->Write(reg, frame.Read(chip, reg));
+        }
+    }
+
+    for (int reg = 0x10; reg <= 0x1F; ++reg)
     {
         if (reg == 0x1d) continue;
 
@@ -236,6 +245,7 @@ void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
             m_ay[chip]->Write(reg, frame.Read(chip, reg));
         }
     }
+
 #else
     ayumi* ay = &m_ay[chip];
 

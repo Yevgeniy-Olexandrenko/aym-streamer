@@ -5,8 +5,20 @@
 #include "decoders/chipsims/SimSN76489.h"
 #include <sstream>
 
+#define DEBUG_OUT 1
+
 namespace
 {
+#if DEBUG_OUT
+    std::ofstream debug_out;
+    void DebugOut(int aa, int dd)
+    {
+        debug_out << 'r' << std::hex << std::setw(2) << std::setfill('0') << aa;
+        debug_out << ':' << std::hex << std::setw(2) << std::setfill('0') << dd;
+        debug_out << ' ';
+    }
+#endif
+
     const uint32_t VGMSignature = 0x206D6756;
     const uint32_t GD3Signature = 0x20336447;
 
@@ -123,6 +135,9 @@ bool DecodeVGM::Open(Stream& stream)
                             stream.info.type(stream.info.type() + " (" + GD3[4] + ")");
                     }
                 }
+#if DEBUG_OUT
+                debug_out.open("debug.txt");
+#endif
                 return true;
             }
             else
@@ -156,6 +171,10 @@ bool DecodeVGM::Decode(Frame& frame)
 
     m_chip->ConvertToPSG(frame);
     m_processedSamples -= m_samplesPerFrame;
+
+#if DEBUG_OUT
+    debug_out << std::endl;
+#endif
     return true;
 }
 
@@ -165,6 +184,10 @@ void DecodeVGM::Close(Stream& stream)
     delete[] m_data;
 
     m_chip->PostProcess(stream);
+
+#if DEBUG_OUT
+    debug_out.close();
+#endif
 }
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
@@ -198,6 +221,9 @@ int DecodeVGM::DecodeBlock()
                 uint8_t aa = m_dataPtr[1];
                 uint8_t dd = m_dataPtr[2];
                 m_chip->Write((aa & 0x80) >> 7, aa & 0x7F, dd);
+#if DEBUG_OUT
+                DebugOut(aa, dd);
+#endif
             }
             m_dataPtr += 2;
         }
@@ -210,6 +236,9 @@ int DecodeVGM::DecodeBlock()
                 uint8_t aa = m_dataPtr[1];
                 uint8_t dd = m_dataPtr[2];
                 m_chip->Write(0, aa, dd);
+#if DEBUG_OUT
+                DebugOut(aa, dd);
+#endif
             }
             m_dataPtr += 2;
         }

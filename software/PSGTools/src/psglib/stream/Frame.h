@@ -70,6 +70,6 @@ public:
 	bool& changed(uint8_t chip, uint8_t reg);
 
 private:
-	uint8_t m_data[2][32]{};
-	bool m_changes[2][32]{};
+	uint8_t m_data[2][16]{};
+	bool m_changes[2][16]{};
 };

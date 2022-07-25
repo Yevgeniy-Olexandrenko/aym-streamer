@@ -1,6 +1,15 @@
 #include "Frame.h"
 #include <cstring>
 
+namespace
+{
+	uint8_t mask[]
+	{
+		0xFF, 0x0F, 0xFF, 0x0F, 0xFF, 0x0F, 0x1F, 0x3F,
+		0x1F, 0x1F, 0x1F, 0xFF, 0xFF, 0x0F, 0x00, 0x00
+	};
+}
+
 Frame::Frame(const Frame& other)
 {
 	memcpy(m_data, other.m_data, sizeof(m_data));
@@ -67,6 +76,7 @@ void Frame::Write(uint8_t chip, uint8_t reg, uint8_t data)
 {
 	if (reg == E_Shape && data == 0xFF) return;
 
+	data &= mask[reg];
 	m_data[chip][reg] = data;
 	m_changes[chip][reg] = true;
 }
@@ -79,6 +89,7 @@ void Frame::Update(uint8_t chip, uint8_t reg, uint8_t data)
 	}
 	else
 	{
+		data &= mask[reg];
 		if (Read(chip, reg) != data)
 		{
 			m_data[chip][reg] = data;
@@ -153,7 +164,7 @@ bool Frame::HasChanges() const
 {
 	for (uint8_t chip = 0; chip < 2; ++chip)
 	{
-		for (uint8_t reg = 0; reg < 32; ++reg)
+		for (uint8_t reg = 0; reg < 16; ++reg)
 		{
 			if (IsChanged(chip, reg)) return true;
 		}

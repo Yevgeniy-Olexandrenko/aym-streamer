@@ -82,30 +82,30 @@ void Stream::Loop::UpdateLoopFrameChanges()
 {
 	if (available())
 	{
-		uint8_t loopFrameData, lastFrameData;
-		const Frame& lastFrame = m_stream.GetFrame(m_stream.lastFrameId());
-		Frame& loopFrame = const_cast<Frame&>(m_stream.GetFrame(frameId()));
+		//uint8_t loopFrameData, lastFrameData;
+		//const Frame& lastFrame = m_stream.GetFrame(m_stream.lastFrameId());
+		//Frame& loopFrame = const_cast<Frame&>(m_stream.GetFrame(frameId()));
 
-		for (uint8_t reg = 0; reg < 16; ++reg)
-		{
-			if (!loopFrame.IsChanged(0, reg))
-			{
-				loopFrameData = loopFrame.Read(0, reg);
-				lastFrameData = lastFrame.Read(0, reg);
+		//for (uint8_t reg = 0; reg < 16; ++reg)
+		//{
+		//	if (!loopFrame.IsChanged(0, reg))
+		//	{
+		//		loopFrameData = loopFrame.Read(0, reg);
+		//		lastFrameData = lastFrame.Read(0, reg);
 
-				if (loopFrameData != lastFrameData)
-					loopFrame.Write(0, reg, loopFrameData);
-			}
+		//		if (loopFrameData != lastFrameData)
+		//			loopFrame.Write(0, reg, loopFrameData);
+		//	}
 
-			if (!loopFrame.IsChanged(1, reg))
-			{
-				loopFrameData = loopFrame.Read(1, reg);
-				lastFrameData = lastFrame.Read(1, reg);
+		//	if (!loopFrame.IsChanged(1, reg))
+		//	{
+		//		loopFrameData = loopFrame.Read(1, reg);
+		//		lastFrameData = lastFrame.Read(1, reg);
 
-				if (loopFrameData != lastFrameData)
-					loopFrame.Write(1, reg, loopFrameData);
-			}
-		}
+		//		if (loopFrameData != lastFrameData)
+		//			loopFrame.Write(1, reg, loopFrameData);
+		//	}
+		//}
 	}
 }
 

@@ -98,6 +98,7 @@ protected:
 	SoundChip(ChipType chipType, PSGType psgType, int clockRate, int sampleRate);
 
 private:
+	void WriteDirect(uint8_t reg, uint8_t data);
 	void Process(double& outL, double& outR);
 
 	double Decimate(double* x) const;

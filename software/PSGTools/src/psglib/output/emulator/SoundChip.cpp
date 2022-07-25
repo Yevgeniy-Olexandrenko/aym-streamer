@@ -161,13 +161,20 @@ void SoundChip::Reset()
 
 void SoundChip::Write(uint8_t reg, uint8_t data)
 {
+	reg &= 0x0F;
+	reg |= get_register_bank();
+	WriteDirect(reg, data);
+}
+
+void SoundChip::WriteDirect(uint8_t reg, uint8_t data)
+{
 	if (m_chipType == ChipType::AY8914)
 	{
 		// AY8914 has different register map
-		reg = MAP_8914_TO_8910[reg & 0xF];
+		reg = MAP_8914_TO_8910[reg & 0x0F];
 	}
 
-	if ((reg & 0xf) == AY_EASHAPE) reg &= 0xf;
+	if ((reg & 0x0F) == AY_EASHAPE) reg &= 0x0F;
 	m_regs[reg] = data;
 
 	switch (reg)

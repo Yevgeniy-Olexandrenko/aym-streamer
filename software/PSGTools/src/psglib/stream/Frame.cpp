@@ -186,7 +186,7 @@ void Frame::Write(int chip, Register reg, uint8_t data)
 
 		// check if mode changed, reset registers
 		data &= info.mask;
-		if (info.index = 0x0D)
+		if (info.index == 0x0D)
 		{
 			if ((m_data[chip][info.index] ^ data) & 0xE0)
 			{

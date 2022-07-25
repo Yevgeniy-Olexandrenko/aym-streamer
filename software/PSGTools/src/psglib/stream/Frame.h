@@ -4,72 +4,111 @@
 
 enum
 {
-	A_Fine   = 0x00,
-	A_Coarse = 0x01,
-	B_Fine   = 0x02,
-	B_Coarse = 0x03,
-	C_Fine   = 0x04,
-	C_Coarse = 0x05,
-	N_Period = 0x06,
-	Mixer    = 0x07,
-	A_Volume = 0x08,
-	B_Volume = 0x09,
-	C_Volume = 0x0A,
-	E_Fine   = 0x0B,
-	E_Coarse = 0x0C,
-	E_Shape  = 0x0D,
-	PortA    = 0x0E,
-	PortB    = 0x0F,
+	// bank A
+	A_Fine    = 0x00, // 00
+	A_Coarse  = 0x01, // 01
+	B_Fine    = 0x02, // 02
+	B_Coarse  = 0x03, // 03
+	C_Fine    = 0x04, // 04
+	C_Coarse  = 0x05, // 05
+	N_Period  = 0x06, // 06
+	Mixer     = 0x07, // 07
+	A_Volume  = 0x08, // 08
+	B_Volume  = 0x09, // 09
+	C_Volume  = 0x0A, // 10
+	EA_Fine   = 0x0B, // 11
+	EA_Coarse = 0x0C, // 12
+	EA_Shape  = 0x0D, // 13
 
-	A_Period = A_Fine,
-	B_Period = B_Fine,
-	C_Period = C_Fine,
-	E_Period = E_Fine,
+	// bank B
+	EB_Fine   = 0x10, // 14
+	EB_Coarse = 0x11, // 15
+	EC_Fine   = 0x12, // 16
+	EC_Coarse = 0x13, // 17
+	EB_Shape  = 0x14, // 18
+	EC_Shape  = 0x15, // 19
+	A_Duty    = 0x16, // 20
+	B_Duty    = 0x17, // 21
+	C_Duty    = 0x18, // 22
+	N_AndMask = 0x19, // 23
+	N_OrMask  = 0x1A, // 24
+
+	// aliases
+	E_Fine    = EA_Fine,
+	E_Coarse  = EA_Coarse,
+	E_Shape   = EA_Shape,
+	A_Period  = A_Fine,
+	B_Period  = B_Fine,
+	C_Period  = C_Fine,
+	E_Period  = E_Fine,
 };
+
+using Register = uint8_t;
+using PeriodRegister = uint8_t;
+constexpr uint8_t UnchangedShape = 0xFF;
 
 class Frame
 {
+	static struct RegDefine
+	{
+		uint8_t comIndex; // 0xFF -> unknown register, b7 = 1 -> envelope shape register
+		uint8_t comMask;  // mask for register in compatibility mode
+		uint8_t expIndex; // 0xFF -> unknown register, b7 = 1 -> envelope shape register
+		uint8_t expMask;  // mask for register in expanded mode
+	} s_regDefines[32];
+
+	struct RegInfo
+	{
+		uint8_t flags;
+		uint8_t index;
+		uint8_t mask;
+	};
+
+	bool GetRegInfo(int chip, Register reg, RegInfo& regInfo) const;
+
 public:
 	Frame() = default;
 	Frame(const Frame& other);
 
-public:
-	uint8_t  Read(uint8_t chip, uint8_t reg) const;
-	bool     IsChanged(uint8_t chip, uint8_t reg) const;
-
-	uint16_t ReadPeriod(uint8_t chip, uint8_t period) const;
-	bool     IsChangedPeriod(uint8_t chip, uint8_t period) const;
-
-	uint8_t  Read(uint8_t reg) const;
-	bool     IsChanged(uint8_t reg) const;
-
-	uint16_t ReadPeriod(uint8_t period) const;
-	bool     IsChangedPeriod(uint8_t period) const;
-
-public:
-	void Write(uint8_t chip, uint8_t reg, uint8_t data);
-	void Update(uint8_t chip, uint8_t reg, uint8_t data);
-
-	void WritePeriod(uint8_t chip, uint8_t period, uint16_t data);
-	void UpdatePeriod(uint8_t chip, uint8_t period, uint16_t data);
-
-	void Write(uint8_t reg, uint8_t data);
-	void Update(uint8_t reg, uint8_t data);
-
-	void WritePeriod(uint8_t period, uint16_t data);
-	void UpdatePeriod(uint8_t period, uint16_t data);
-
-public:
 	void Reset();
 	void ResetData();
 	void ResetChanges();
 	bool HasChanges() const;
+
+	bool IsExpMode(int chip) const;
+	bool HasChangesInBank(int chip, int bank) const;
+
+public:
+	uint8_t  Read(int chip, Register reg) const;
+	bool     IsChanged(int chip, Register reg) const;
+
+	uint16_t ReadPeriod(int chip, PeriodRegister preg) const;
+	bool     IsChangedPeriod(int chip, PeriodRegister preg) const;
+
+	uint8_t  Read(Register reg) const;
+	bool     IsChanged(Register reg) const;
+
+	uint16_t ReadPeriod(PeriodRegister preg) const;
+	bool     IsChangedPeriod(PeriodRegister preg) const;
+
+public:
+	void Write(int chip, Register reg, uint8_t data);
+	void Update(int chip, Register reg, uint8_t data);
+
+	void WritePeriod(int chip, PeriodRegister preg, uint16_t data);
+	void UpdatePeriod(int chip, PeriodRegister preg, uint16_t data);
+
+	void Write(Register reg, uint8_t data);
+	void Update(Register reg, uint8_t data);
+
+	void WritePeriod(PeriodRegister preg, uint16_t data);
+	void UpdatePeriod(PeriodRegister preg, uint16_t data);
 	
 public:
-	uint8_t& data(uint8_t chip, uint8_t reg);
-	bool& changed(uint8_t chip, uint8_t reg);
+	uint8_t& data(int chip, Register reg);
+	bool& changed(int chip, Register reg);
 
 private:
-	uint8_t m_data[2][16]{};
-	bool m_changes[2][16]{};
+	uint8_t m_data[2][25]{};
+	bool m_changes[2][25]{};
 };

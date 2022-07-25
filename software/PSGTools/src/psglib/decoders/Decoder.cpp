@@ -23,8 +23,8 @@ std::string Decoder::ReadString(uint8_t* ptr, uint8_t size) const
 
 bool ModuleDecoder::Decode(Frame& frame)
 {
-    m_regs[0][E_Shape] = 0xFF;
-    m_regs[1][E_Shape] = 0xFF;
+    m_regs[0][E_Shape] = UnchangedShape;
+    m_regs[1][E_Shape] = UnchangedShape;
     bool isNewLoop = Play();
 
     if (m_loop == 0)
@@ -42,12 +42,12 @@ bool ModuleDecoder::Decode(Frame& frame)
 
     if (!isNewLoop)
     {
-        for (uint8_t reg = 0; reg < 16; ++reg)
+        for (Register reg = 0; reg < 16; ++reg)
             frame.Update(0, reg, m_regs[0][reg]);
 
         if (m_isTS)
         {
-            for (uint8_t reg = 0; reg < 16; ++reg)
+            for (Register reg = 0; reg < 16; ++reg)
                 frame.Update(1, reg, m_regs[1][reg]);
         }
         return true;

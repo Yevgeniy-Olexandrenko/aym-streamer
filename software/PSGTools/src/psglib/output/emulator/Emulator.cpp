@@ -178,17 +178,7 @@ void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
 {
     for (int reg = 0x00; reg <= 0x0F; ++reg)
     {
-        if (force || frame.IsChanged(reg))
-        {
-            m_ay[chip]->Write(reg, frame.Read(chip, reg));
-        }
-    }
-
-    for (int reg = 0x10; reg <= 0x1F; ++reg)
-    {
-        if (reg == 0x1d) continue;
-
-        if (force || frame.IsChanged(reg))
+        if (force || frame.IsChanged(chip, reg))
         {
             m_ay[chip]->Write(reg, frame.Read(chip, reg));
         }

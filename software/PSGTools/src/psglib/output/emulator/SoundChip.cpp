@@ -469,7 +469,7 @@ namespace
 {
 	enum { SU = +1, SD = -1, HT = 0, HB = 0, RT = 0x1F, RB = 0x00 };
 
-	int envelopes[16][2][2]
+	const int envelopes[16][2][2]
 	{
 		{ { SD, RT }, { HB, RB }, },
 		{ { SD, RT }, { HB, RB }, },

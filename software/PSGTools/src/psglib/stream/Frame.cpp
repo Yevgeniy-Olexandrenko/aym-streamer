@@ -99,7 +99,7 @@ bool Frame::HasChanges() const
 
 bool Frame::IsExpMode(int chip) const
 {
-	return ((m_data[chip][0x0D] & 0xE0) == 0xA0);
+	return ((m_data[chip][ModeBankRegIdx] & 0xE0) == 0xA0);
 }
 
 bool Frame::HasChangesInBank(int chip, int bank) const
@@ -186,7 +186,7 @@ void Frame::Write(int chip, Register reg, uint8_t data)
 
 		// check if mode changed, reset registers
 		data &= info.mask;
-		if (info.index == 0x0D)
+		if (info.index == ModeBankRegIdx)
 		{
 			if ((m_data[chip][info.index] ^ data) & 0xE0)
 			{

@@ -37,14 +37,23 @@ enum
 	E_Fine    = EA_Fine,
 	E_Coarse  = EA_Coarse,
 	E_Shape   = EA_Shape,
+	Mode_Bank = EA_Shape,
+
 	A_Period  = A_Fine,
 	B_Period  = B_Fine,
 	C_Period  = C_Fine,
 	E_Period  = E_Fine,
+
+	BankA_Fst = 0x00,
+	BankA_Lst = 0x0D,
+	BankB_Fst = 0x10,
+	BankB_Lst = 0x1D,
 };
 
 using Register = uint8_t;
 using PeriodRegister = uint8_t;
+
+constexpr uint8_t ModeBankRegIdx = 0x0D;
 constexpr uint8_t UnchangedShape = 0xFF;
 
 class Frame

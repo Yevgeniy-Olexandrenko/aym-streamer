@@ -139,12 +139,16 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 
 bool Emulator::InitChip(uint8_t chipIndex)
 {
+#if 1
+    m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate));
+#else
     switch (chip.model())
     {
     case Chip::Model::AY8910: m_ay[chipIndex].reset(new ChipAY8910(chip.freqValue(), k_sample_rate)); break;
     case Chip::Model::YM2149: m_ay[chipIndex].reset(new ChipYM2149(chip.freqValue(), k_sample_rate)); break;
     case Chip::Model::AY8930: m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate)); break;
     }
+#endif
 
     if (m_ay[chipIndex])
     {
@@ -176,7 +180,28 @@ bool Emulator::InitChip(uint8_t chipIndex)
 
 void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
 {
-    for (int reg = 0x00; reg <= 0x0F; ++reg)
+    if (frame.IsExpMode(chip))
+    {
+        bool switchBanks = false;
+        for (Register reg = BankB_Fst; reg < BankB_Lst; ++reg)
+        {
+            if (force || frame.IsChanged(chip, reg))
+            {
+                if (!switchBanks)
+                {
+                    m_ay[chip]->Write(Mode_Bank, frame.Read(chip, Mode_Bank) | 0x10);
+                    switchBanks = true;
+                }
+                m_ay[chip]->Write(reg, frame.Read(chip, reg));
+            }
+        }
+        if (switchBanks)
+        {
+            m_ay[chip]->Write(Mode_Bank, frame.Read(chip, Mode_Bank));
+        }
+    }
+
+    for (Register reg = BankA_Fst; reg <= BankA_Lst; ++reg)
     {
         if (force || frame.IsChanged(chip, reg))
         {

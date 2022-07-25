@@ -25,9 +25,6 @@
     <Filter Include="Sources\psglib\output">
       <UniqueIdentifier>{61c936fd-ad31-46b9-be8e-f15fd00329f8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\psglib\components\ayumi">
-      <UniqueIdentifier>{143f56f7-0cb8-4ecc-9770-5ce6739725be}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources\psglib\components\lha">
       <UniqueIdentifier>{16e3fb29-4fa9-4b02-8d39-9fbb4d3ce97f}</UniqueIdentifier>
     </Filter>
@@ -201,9 +198,6 @@
     <ClCompile Include="..\src\psglib\components\lha\lh5_decode.cpp">
       <Filter>Sources\psglib\components\lha</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\psglib\components\ayumi\ayumi.cpp">
-      <Filter>Sources\psglib\components\ayumi</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\psgtools\components\glob\glob.cpp">
       <Filter>Sources\psgtools\components\glob</Filter>
     </ClCompile>
@@ -218,6 +212,9 @@
     </ClCompile>
     <ClCompile Include="..\src\psglib\output\emulator\SoundChip.cpp">
       <Filter>Sources\psglib\output\emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\output\Output.cpp">
+      <Filter>Sources\psglib\output</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -361,9 +358,6 @@
     </ClInclude>
     <ClInclude Include="..\src\psglib\components\lha\lh5_decode.h">
       <Filter>Sources\psglib\components\lha</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\ayumi\ayumi.h">
-      <Filter>Sources\psglib\components\ayumi</Filter>
     </ClInclude>
     <ClInclude Include="..\src\psgtools\components\glob\glob.h">
       <Filter>Sources\psgtools\components\glob</Filter>

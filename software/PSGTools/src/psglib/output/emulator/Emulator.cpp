@@ -8,9 +8,6 @@ namespace
 }
 
 Emulator::Emulator()
-#ifndef USE_NEW_AY8910
-    : m_ay{0}
-#endif
 {
 }
 
@@ -96,9 +93,7 @@ void Emulator::Close()
 
 void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 {
-#ifdef USE_NEW_AY8910
     if (!m_ay[0]) return;
-#endif
 
     // buffer format must be 2 ch x 16 bit
     auto sampbuf = (int16_t*)buffer;
@@ -108,7 +103,6 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
     {
         for (int i = 0; i < samples;)
         {
-#ifdef USE_NEW_AY8910
             m_ay[0]->Process();
             m_ay[1]->Process();
             m_ay[0]->RemoveDC();
@@ -116,15 +110,7 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 
             double L = 0.5 * (m_ay[0]->GetOutL() + m_ay[1]->GetOutL());
             double R = 0.5 * (m_ay[0]->GetOutR() + m_ay[1]->GetOutR());
-#else
-            ayumi_process(&m_ay[0]);
-            ayumi_process(&m_ay[1]);
-            ayumi_remove_dc(&m_ay[0]);
-            ayumi_remove_dc(&m_ay[1]);
 
-            double L = 0.5 * (m_ay[0].left + m_ay[1].left);
-            double R = 0.5 * (m_ay[0].right + m_ay[1].right);
-#endif
             L = L > +1.0 ? +1.0 : (L < -1.0 ? -1.0 : L);
             R = R > +1.0 ? +1.0 : (R < -1.0 ? -1.0 : R);
 
@@ -136,19 +122,12 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
     {
         for (int i = 0; i < samples;)
         {
-#ifdef USE_NEW_AY8910
             m_ay[0]->Process();
             m_ay[0]->RemoveDC();
 
             double L = 0.5 * m_ay[0]->GetOutL();
             double R = 0.5 * m_ay[0]->GetOutR();
-#else
-            ayumi_process(&m_ay[0]);
-            ayumi_remove_dc(&m_ay[0]);
 
-            double L = 0.5 * m_ay[0].left;
-            double R = 0.5 * m_ay[0].right;
-#endif
             L = L > +1.0 ? +1.0 : (L < -1.0 ? -1.0 : L);
             R = R > +1.0 ? +1.0 : (R < -1.0 ? -1.0 : R);
 
@@ -160,14 +139,12 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 
 bool Emulator::InitChip(uint8_t chipIndex)
 {
-#ifdef USE_NEW_AY8910
-    //switch (chip.model())
-    //{
-    //case Chip::Model::AY8910: m_ay[chipIndex].reset(new ChipAY8910(chip.freqValue(), k_sample_rate)); break;
-    //case Chip::Model::YM2149: m_ay[chipIndex].reset(new ChipYM2149(chip.freqValue(), k_sample_rate)); break;
-    //case Chip::Model::AY8930: m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate)); break;
-    //}
-    m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate));
+    switch (chip.model())
+    {
+    case Chip::Model::AY8910: m_ay[chipIndex].reset(new ChipAY8910(chip.freqValue(), k_sample_rate)); break;
+    case Chip::Model::YM2149: m_ay[chipIndex].reset(new ChipYM2149(chip.freqValue(), k_sample_rate)); break;
+    case Chip::Model::AY8930: m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate)); break;
+    }
 
     if (m_ay[chipIndex])
     {
@@ -194,40 +171,11 @@ bool Emulator::InitChip(uint8_t chipIndex)
         }
         return true;
     }
-#else
-    ayumi* ay = &m_ay[chipIndex];
-    if (ayumi_configure(ay, (chip.model() == Chip::Model::YM2149), chip.freqValue(), k_sample_rate))
-    {
-        switch (chip.channels())
-        {
-        case Chip::Channels::MONO:
-            ayumi_set_pan(ay, 0, 0.5, true);
-            ayumi_set_pan(ay, 1, 0.5, true);
-            ayumi_set_pan(ay, 2, 0.5, true);
-            break;
-
-        case Chip::Channels::ACB:
-            ayumi_set_pan(ay, 0, 0.1, true);
-            ayumi_set_pan(ay, 1, 0.9, true);
-            ayumi_set_pan(ay, 2, 0.5, true);
-            break;
-
-        default: // ABC
-            ayumi_set_pan(ay, 0, 0.1, true);
-            ayumi_set_pan(ay, 1, 0.5, true);
-            ayumi_set_pan(ay, 2, 0.9, true);
-            break;
-        }
-        return true;
-    }
-#endif
     return false;
 }
 
 void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
 {
-#ifdef USE_NEW_AY8910
-
     for (int reg = 0x00; reg <= 0x0F; ++reg)
     {
         if (force || frame.IsChanged(reg))
@@ -245,34 +193,5 @@ void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
             m_ay[chip]->Write(reg, frame.Read(chip, reg));
         }
     }
-
-#else
-    ayumi* ay = &m_ay[chip];
-
-    uint8_t r7 = frame.Read(chip, Mixer);
-    uint8_t r8 = frame.Read(chip, A_Volume);
-    uint8_t r9 = frame.Read(chip, B_Volume);
-    uint8_t rA = frame.Read(chip, C_Volume);
-
-    ayumi_set_tone(ay, 0, frame.ReadPeriod(chip, A_Period));
-    ayumi_set_tone(ay, 1, frame.ReadPeriod(chip, B_Period));
-    ayumi_set_tone(ay, 2, frame.ReadPeriod(chip, C_Period));
-
-    ayumi_set_noise(ay, frame.Read(chip, N_Period));
-
-    ayumi_set_mixer(ay, 0, r7 >> 0 & 0x01, r7 >> 3 & 0x01, r8 >> 4);
-    ayumi_set_mixer(ay, 1, r7 >> 1 & 0x01, r7 >> 4 & 0x01, r9 >> 4);
-    ayumi_set_mixer(ay, 2, r7 >> 2 & 0x01, r7 >> 5 & 0x01, rA >> 4);
-
-    ayumi_set_volume(ay, 0, r8 & 0x0F);
-    ayumi_set_volume(ay, 1, r9 & 0x0F);
-    ayumi_set_volume(ay, 2, rA & 0x0F);
-
-    ayumi_set_envelope(ay, frame.ReadPeriod(chip, E_Period));
-    if (force || frame.IsChanged(chip, E_Shape))
-    {
-        ayumi_set_envelope_shape(ay, frame.Read(chip, E_Shape));
-    }
-#endif
 }
 

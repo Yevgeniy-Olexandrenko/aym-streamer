@@ -9,10 +9,9 @@ class Frame;
 class Output
 {
 public:
-	Chip m_chip;
-	virtual std::string name() const = 0;
+	Output();
+	std::string toString() const;
 
-public:
 	virtual bool Open() = 0;
 	virtual bool Init(const Stream& stream) = 0;
 	virtual bool Write(const Frame& frame);
@@ -21,7 +20,9 @@ public:
 protected:
 	virtual void WriteToChip(int chip, const Frame& frame);
 	virtual void WriteToChip(int chip, const std::vector<uint8_t>& data) = 0;
+	virtual const std::string GetOutputDeviceName() const = 0;
 
 protected:
-	bool m_isOpened = false;
+	bool m_isOpened;
+	Chip m_chip;
 };

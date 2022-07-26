@@ -3,18 +3,14 @@
 #include "stream/Frame.h"
 
 Streamer::Streamer(int comPortIndex)
-	: m_portIndex(comPortIndex)
+	: Output()
+	, m_portIndex(comPortIndex)
 {
 }
 
 Streamer::~Streamer()
 {
 	Close();
-}
-
-std::string Streamer::name() const
-{
-	return ("Streamer -> " + m_chip.toString());
 }
 
 bool Streamer::Open()
@@ -48,6 +44,11 @@ void Streamer::WriteToChip(int chip, const std::vector<uint8_t>& data)
 	auto dataBuff = (const char*)data.data();
 	auto sentSize = m_port.SendBinary(dataBuff, dataSize);
 	if (sentSize != dataSize) m_isOpened = false;
+}
+
+const std::string Streamer::GetOutputDeviceName() const
+{
+	return "Streamer";
 }
 
 Frame Streamer::ProcessForAY8930(const Frame& frame) const

@@ -3,17 +3,14 @@
 #include "stream/Stream.h"
 
 Emulator::Emulator()
+    : Output()
+    , WaveAudio()
 {
 }
 
 Emulator::~Emulator()
 {
     Close();
-}
-
-std::string Emulator::name() const
-{
-    return ("Emulator -> " + m_chip.toString());
 }
 
 bool Emulator::Open()
@@ -169,4 +166,9 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
             }
         }
     }
+}
+
+const std::string Emulator::GetOutputDeviceName() const
+{
+    return "Emulator";
 }

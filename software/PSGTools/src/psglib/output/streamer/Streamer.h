@@ -8,7 +8,6 @@ class Streamer : public Output
 public:
 	Streamer(int comPortIndex);
 	virtual ~Streamer();
-	std::string name() const override;
 
 public:
 	bool Open() override;
@@ -17,6 +16,7 @@ public:
 
 protected:
 	void WriteToChip(int chip, const std::vector<uint8_t>& data) override;
+	const std::string GetOutputDeviceName() const override;
 
 private:
 	Frame ProcessForAY8930(const Frame& frame) const;

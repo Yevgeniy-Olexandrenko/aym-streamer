@@ -5,6 +5,8 @@
 
 WaveAudio::WaveAudio()
 	: m_waveout(NULL)
+	, m_buffers{}
+	, m_format{}
 {
 }
 

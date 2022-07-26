@@ -1,6 +1,16 @@
 #include "Output.h"
 #include "stream/Frame.h"
 
+Output::Output()
+    : m_isOpened(false)
+{
+}
+
+std::string Output::toString() const
+{
+    return (GetOutputDeviceName() + " -> " + m_chip.toString());
+}
+
 bool Output::Write(const Frame& frame)
 {
     WriteToChip(0, frame);

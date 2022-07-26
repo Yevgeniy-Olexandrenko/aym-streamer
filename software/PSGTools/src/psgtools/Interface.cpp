@@ -191,7 +191,7 @@ namespace Interface
 
     void printOutputProperty(const std::string& label, const Output& output)
     {
-        std::string str = output.name();
+        std::string str = output.toString();
         trim(str);
 
         if (!str.empty())

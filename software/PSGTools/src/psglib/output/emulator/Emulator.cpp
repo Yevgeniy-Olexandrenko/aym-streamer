@@ -41,28 +41,26 @@ bool Emulator::Init(const Stream& stream)
     if (m_isOpened)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+        
+        switch (stream.chip.model())
+        {
+        case Chip::Model::AY8930:
+        case Chip::Model::YM2149:
+            chip.model(stream.chip.model());
+            break;
+        default:
+            chip.model(Chip::Model::AY8910);
+            break;
+        }
         chip.count(stream.chip.count());
 
-        chip.model(Chip::Model::AY8910);
-        if (stream.chip.modelKnown())
-        {
-            if (stream.chip.model() == Chip::Model::YM2149)
-            {
-                chip.model(Chip::Model::YM2149);
-            }
-        }
+        chip.frequency(stream.chip.frequencyKnown()
+            ? stream.chip.frequency()
+            : Chip::Frequency::F1750000);
 
-        chip.frequency(Chip::Frequency::F1750000);
-        if (stream.chip.frequencyKnown())
-        {
-            chip.frequency(stream.chip.frequency());
-        }
-
-        chip.channels(Chip::Channels::ABC);
-        if (stream.chip.channelsKnown())
-        {
-            chip.channels(stream.chip.channels());
-        }
+        chip.channels(stream.chip.channelsKnown()
+            ? stream.chip.channels()
+            : Chip::Channels::ABC);
 
         m_isOpened &= InitChip(0);
         if (chip.count() == Chip::Count::TwoChips)
@@ -139,16 +137,12 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
 
 bool Emulator::InitChip(uint8_t chipIndex)
 {
-#if 1
-    m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate));
-#else
     switch (chip.model())
     {
     case Chip::Model::AY8910: m_ay[chipIndex].reset(new ChipAY8910(chip.freqValue(), k_sample_rate)); break;
     case Chip::Model::YM2149: m_ay[chipIndex].reset(new ChipYM2149(chip.freqValue(), k_sample_rate)); break;
     case Chip::Model::AY8930: m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate)); break;
     }
-#endif
 
     if (m_ay[chipIndex])
     {

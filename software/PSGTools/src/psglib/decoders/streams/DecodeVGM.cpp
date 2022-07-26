@@ -5,7 +5,7 @@
 #include "decoders/chipsims/SimSN76489.h"
 #include <sstream>
 
-#define DEBUG_OUT 1
+#define DEBUG_OUT 0
 
 namespace
 {
@@ -71,14 +71,21 @@ bool DecodeVGM::Open(Stream& stream)
                 {
                     m_isTS = bool(header.ay8910Clock & 0x40000000);
                     auto divider = bool(header.ay8910Flags & 0x10);
-                    auto ym_chip = bool(header.ay8910Type  & 0xF0);
-                    stream.chip.model(ym_chip ? Chip::Model::YM2149 : Chip::Model::AY8910);
-                    stream.chip.count(m_isTS  ? Chip::Count::TwoChips : Chip::Count::OneChip);
-                    stream.chip.freqValue((header.ay8910Clock & 0x3FFFFFFF) / (divider ? 2 : 1));
+                    auto chipClk = (header.ay8910Clock & 0x3FFFFFFF) / (divider ? 2 : 1);
+
+                    Chip::Model chipModel = Chip::Model::AY8910;
+                    if (header.ay8910Type == 0x03) chipModel = Chip::Model::AY8930;
+                    if (header.ay8910Type >= 0x10) chipModel = Chip::Model::YM2149;
+                    Chip::Count chipCount = m_isTS ? Chip::Count::TwoChips : Chip::Count::OneChip;
+
+                    stream.chip.model(chipModel);
+                    stream.chip.count(chipCount);
+                    stream.chip.freqValue(chipClk);
                 }
 
                 else if (m_chip->type() == ChipSim::Type::RP2A03)
                 {
+                    // TODO
                     m_isTS = true;
                     stream.chip.model(Chip::Model::YM2149);
                     stream.chip.count(m_isTS ? Chip::Count::TwoChips : Chip::Count::OneChip);

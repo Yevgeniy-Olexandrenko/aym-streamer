@@ -8,7 +8,7 @@
 
 
 const std::string k_supportedFileTypes = "sqt|ym|stp|vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
-const int k_comPortIndex = 8;
+const int k_comPortIndex = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 

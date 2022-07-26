@@ -79,9 +79,8 @@ public:
 	Frame();
 	Frame(const Frame& other);
 
-	static Frame CreateSilence();
-	static Frame CreateFullyChanged(const Frame& other);
-	static Frame CreateComposition(const Frame& older, const Frame& newer);
+	Frame& operator!();
+	Frame& operator+=(const Frame& other);
 
 	void ResetData();
 	void ResetChanges(bool val = false);

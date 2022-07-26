@@ -129,8 +129,8 @@ void Player::PlaybackThread()
 		// play current frame
 		if (firstFrame)
 		{
-			Frame frame = Frame::CreateFullyChanged(m_stream->play.GetFrame(m_frameId));
-			if (!m_output.Write(frame)) isPlaying = false;
+			Frame frame(m_stream->play.GetFrame(m_frameId));
+			if (!m_output.Write(!frame)) isPlaying = false;
 			firstFrame = false;
 		}
 		else
@@ -152,7 +152,7 @@ void Player::PlaybackThread()
 	}
 
 	// silence output when job is done
-	m_output.Write(Frame::CreateSilence());
+	m_output.Write(!Frame());
 	m_isPlaying = isPlaying;
 	timeEndPeriod(1U);
 }

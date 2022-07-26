@@ -39,6 +39,7 @@ bool Streamer::Init(const Stream& stream)
 
 void Streamer::Close()
 {
+	Write(!Frame());
 	m_port.Close();
 }
 

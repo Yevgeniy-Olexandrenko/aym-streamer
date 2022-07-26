@@ -77,15 +77,13 @@ void Output::WriteToChip(int chip, const Frame& frame)
 const Frame& Output::AY8930_FixEnvelope(const Frame& frame) const
 {
     static Frame s_frame;
-//  s_frame = Frame::CreateComposition(s_frame, frame);
-    s_frame = frame;
+    s_frame += frame;
 
-    for (int chan = 0; chan < 3; ++chan) 
+    for (int chan = 0; chan < 3; ++chan)
+    {
         AY8930_FixEnvelopeInChannel(0, s_frame, chan);
 
-    if (m_chip.count() == Chip::Count::TwoChips)
-    {
-        for (int chan = 0; chan < 3; ++chan)
+        if (m_chip.count() == Chip::Count::TwoChips)
             AY8930_FixEnvelopeInChannel(1, s_frame, chan);
     }
     return s_frame;

@@ -75,38 +75,36 @@ Frame::Frame(const Frame& other)
 	memcpy(m_changes, other.m_changes, sizeof(m_changes));
 }
 
-Frame Frame::CreateSilence()
+Frame& Frame::operator!()
 {
-	Frame frame;
-	frame.ResetChanges(true);
-	return frame;
+	ResetChanges(true);
+	return *this;
 }
 
-Frame Frame::CreateFullyChanged(const Frame& other)
+Frame& Frame::operator+=(const Frame& other)
 {
-	Frame frame(other);
-	frame.ResetChanges(true);
-	return frame;
-}
-
-Frame Frame::CreateComposition(const Frame& older, const Frame& newer)
-{
-	Frame frame(older);
+	RegInfo info;
 	for (int chip = 0; chip < 2; ++chip)
 	{
-		RegInfo info;
 		for (Register reg = 0; reg < 32; ++reg)
 		{
-			if (frame.GetRegInfo(chip, reg, info))
+			if (GetRegInfo(chip, reg, info))
 			{
-				uint8_t data = !(info.flags & 0x80) || newer.m_changes[chip][info.index]
-					? newer.m_data[chip][info.index]
-					: UnchangedShape;
-				frame.Update(chip, reg, data);
+				if (info.flags & 0x80)
+				{
+					// special case - envelope shape register
+					m_data[chip][info.index] = other.m_data[chip][info.index];
+					m_changes[chip][info.index] = other.m_changes[chip][info.index];
+				}
+				else
+				{
+					// regular registers workflow
+					Update(chip, reg, other.m_data[chip][info.index]);
+				}
 			}
 		}
 	}
-	return frame;
+	return *this;
 }
 
 void Frame::ResetData()

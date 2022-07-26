@@ -2,11 +2,6 @@
 #include "Emulator.h"
 #include "stream/Stream.h"
 
-namespace
-{
-    const int k_sample_rate = 44100;
-}
-
 Emulator::Emulator()
 {
 }
@@ -18,14 +13,14 @@ Emulator::~Emulator()
 
 std::string Emulator::name() const
 {
-    return ("Emulator -> " + chip.toString());
+    return ("Emulator -> " + m_chip.toString());
 }
 
 bool Emulator::Open()
 {
     if (!m_isOpened)
     {
-        if (WaveAudio::Open(k_sample_rate, 100, 2, 2))
+        if (WaveAudio::Open(EmulatorSampleRate, 100, 2, 2))
         {
             m_isOpened = true;
 
@@ -46,39 +41,26 @@ bool Emulator::Init(const Stream& stream)
         {
         case Chip::Model::AY8930:
         case Chip::Model::YM2149:
-            chip.model(stream.chip.model());
+            m_chip.model(stream.chip.model());
             break;
         default:
-            chip.model(Chip::Model::AY8910);
+            m_chip.model(Chip::Model::AY8910);
             break;
         }
-        chip.count(stream.chip.count());
+        m_chip.count(stream.chip.count());
 
-        chip.frequency(stream.chip.frequencyKnown()
+        m_chip.frequency(stream.chip.frequencyKnown()
             ? stream.chip.frequency()
             : Chip::Frequency::F1750000);
 
-        chip.channels(stream.chip.channelsKnown()
+        m_chip.channels(stream.chip.channelsKnown()
             ? stream.chip.channels()
             : Chip::Channels::ABC);
 
         m_isOpened &= InitChip(0);
-        if (chip.count() == Chip::Count::TwoChips)
+        if (m_chip.count() == Chip::Count::TwoChips)
         {
             m_isOpened &= InitChip(1);
-        }
-    }
-    return m_isOpened;
-}
-
-bool Emulator::OutFrame(const Frame& frame, bool force)
-{
-    if (m_isOpened)
-    {
-        WriteToChip(0, frame, force);
-        if (chip.count() == Chip::Count::TwoChips)
-        {
-            WriteToChip(1, frame, force);
         }
     }
     return m_isOpened;
@@ -87,84 +69,42 @@ bool Emulator::OutFrame(const Frame& frame, bool force)
 void Emulator::Close()
 {
     WaveAudio::Close();
+    m_isOpened = false;
+
+    m_ay[0].reset();
+    m_ay[1].reset();
 }
 
-void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
+bool Emulator::InitChip(int chip)
 {
-    if (!m_ay[0]) return;
-
-    // buffer format must be 2 ch x 16 bit
-    auto sampbuf = (int16_t*)buffer;
-    auto samples = (int)(size / sizeof(int16_t));
-
-    if (chip.count() == Chip::Count::TwoChips)
+    switch (m_chip.model())
     {
-        for (int i = 0; i < samples;)
-        {
-            m_ay[0]->Process();
-            m_ay[1]->Process();
-            m_ay[0]->RemoveDC();
-            m_ay[1]->RemoveDC();
-
-            double L = 0.5 * (m_ay[0]->GetOutL() + m_ay[1]->GetOutL());
-            double R = 0.5 * (m_ay[0]->GetOutR() + m_ay[1]->GetOutR());
-
-            L = L > +1.0 ? +1.0 : (L < -1.0 ? -1.0 : L);
-            R = R > +1.0 ? +1.0 : (R < -1.0 ? -1.0 : R);
-
-            sampbuf[i++] = (int16_t)(INT16_MAX * L + 0.5);
-            sampbuf[i++] = (int16_t)(INT16_MAX * R + 0.5);
-        }
-    }
-    else
-    {
-        for (int i = 0; i < samples;)
-        {
-            m_ay[0]->Process();
-            m_ay[0]->RemoveDC();
-
-            double L = 0.5 * m_ay[0]->GetOutL();
-            double R = 0.5 * m_ay[0]->GetOutR();
-
-            L = L > +1.0 ? +1.0 : (L < -1.0 ? -1.0 : L);
-            R = R > +1.0 ? +1.0 : (R < -1.0 ? -1.0 : R);
-
-            sampbuf[i++] = (int16_t)(INT16_MAX * L + 0.5);
-            sampbuf[i++] = (int16_t)(INT16_MAX * R + 0.5);
-        }
-    }
-}
-
-bool Emulator::InitChip(uint8_t chipIndex)
-{
-    switch (chip.model())
-    {
-    case Chip::Model::AY8910: m_ay[chipIndex].reset(new ChipAY8910(chip.freqValue(), k_sample_rate)); break;
-    case Chip::Model::YM2149: m_ay[chipIndex].reset(new ChipYM2149(chip.freqValue(), k_sample_rate)); break;
-    case Chip::Model::AY8930: m_ay[chipIndex].reset(new ChipAY8930(chip.freqValue(), k_sample_rate)); break;
+    case Chip::Model::AY8910: m_ay[chip].reset(new ChipAY8910(m_chip.freqValue(), EmulatorSampleRate)); break;
+    case Chip::Model::YM2149: m_ay[chip].reset(new ChipYM2149(m_chip.freqValue(), EmulatorSampleRate)); break;
+    case Chip::Model::AY8930: m_ay[chip].reset(new ChipAY8930(m_chip.freqValue(), EmulatorSampleRate)); break;
     }
 
-    if (m_ay[chipIndex])
+    if (m_ay[chip])
     {
-        m_ay[chipIndex]->Reset();
-        switch (chip.channels())
+        m_ay[chip]->Reset();
+        switch (m_chip.channels())
         {
         case Chip::Channels::MONO:
-            m_ay[chipIndex]->SetPan(0, 0.5, true);
-            m_ay[chipIndex]->SetPan(1, 0.5, true);
-            m_ay[chipIndex]->SetPan(2, 0.5, true);
+            m_ay[chip]->SetPan(0, 0.5, true);
+            m_ay[chip]->SetPan(1, 0.5, true);
+            m_ay[chip]->SetPan(2, 0.5, true);
             break;
 
         case Chip::Channels::ACB:
-            m_ay[chipIndex]->SetPan(0, 0.1, true);
-            m_ay[chipIndex]->SetPan(1, 0.9, true);
-            m_ay[chipIndex]->SetPan(2, 0.5, true);
+            m_ay[chip]->SetPan(0, 0.1, true);
+            m_ay[chip]->SetPan(1, 0.9, true);
+            m_ay[chip]->SetPan(2, 0.5, true);
             break;
 
         default: // ABC
-            m_ay[chipIndex]->SetPan(0, 0.1, true);
-            m_ay[chipIndex]->SetPan(1, 0.5, true);
-            m_ay[chipIndex]->SetPan(2, 0.9, true);
+            m_ay[chip]->SetPan(0, 0.1, true);
+            m_ay[chip]->SetPan(1, 0.5, true);
+            m_ay[chip]->SetPan(2, 0.9, true);
             break;
         }
         return true;
@@ -172,35 +112,61 @@ bool Emulator::InitChip(uint8_t chipIndex)
     return false;
 }
 
-void Emulator::WriteToChip(uint8_t chip, const Frame& frame, bool force)
+void Emulator::WriteToChip(int chip, const std::vector<uint8_t>& data)
 {
-    if (frame.IsExpMode(chip))
-    {
-        bool switchBanks = false;
-        for (Register reg = BankB_Fst; reg < BankB_Lst; ++reg)
-        {
-            if (force || frame.IsChanged(chip, reg))
-            {
-                if (!switchBanks)
-                {
-                    m_ay[chip]->Write(Mode_Bank, frame.Read(chip, Mode_Bank) | 0x10);
-                    switchBanks = true;
-                }
-                m_ay[chip]->Write(reg, frame.Read(chip, reg));
-            }
-        }
-        if (switchBanks)
-        {
-            m_ay[chip]->Write(Mode_Bank, frame.Read(chip, Mode_Bank));
-        }
-    }
+    uint8_t reg, val;
+    const uint8_t* dataPtr = data.data();
 
-    for (Register reg = BankA_Fst; reg <= BankA_Lst; ++reg)
+    while ((reg = *dataPtr++) != 0xFF)
     {
-        if (force || frame.IsChanged(chip, reg))
-        {
-            m_ay[chip]->Write(reg, frame.Read(chip, reg));
-        }
+        val = *dataPtr++;
+        m_ay[chip]->Write(reg, val);
     }
 }
 
+void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
+{
+    if (m_ay[0])
+    {
+        // buffer format must be 2 ch x 16 bit
+        auto sampbuf = (int16_t*)buffer;
+        auto samples = (int)(size / sizeof(int16_t));
+
+        if (m_chip.count() == Chip::Count::TwoChips)
+        {
+            for (int i = 0; i < samples;)
+            {
+                m_ay[0]->Process();
+                m_ay[1]->Process();
+                m_ay[0]->RemoveDC();
+                m_ay[1]->RemoveDC();
+
+                double L = 0.5 * (m_ay[0]->GetOutL() + m_ay[1]->GetOutL());
+                double R = 0.5 * (m_ay[0]->GetOutR() + m_ay[1]->GetOutR());
+
+                L = L > +1.0 ? +1.0 : (L < -1.0 ? -1.0 : L);
+                R = R > +1.0 ? +1.0 : (R < -1.0 ? -1.0 : R);
+
+                sampbuf[i++] = (int16_t)(INT16_MAX * L + 0.5);
+                sampbuf[i++] = (int16_t)(INT16_MAX * R + 0.5);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < samples;)
+            {
+                m_ay[0]->Process();
+                m_ay[0]->RemoveDC();
+
+                double L = 0.5 * m_ay[0]->GetOutL();
+                double R = 0.5 * m_ay[0]->GetOutR();
+
+                L = L > +1.0 ? +1.0 : (L < -1.0 ? -1.0 : L);
+                R = R > +1.0 ? +1.0 : (R < -1.0 ? -1.0 : R);
+
+                sampbuf[i++] = (int16_t)(INT16_MAX * L + 0.5);
+                sampbuf[i++] = (int16_t)(INT16_MAX * R + 0.5);
+            }
+        }
+    }
+}

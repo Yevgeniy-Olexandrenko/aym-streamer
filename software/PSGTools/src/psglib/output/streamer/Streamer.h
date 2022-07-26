@@ -13,8 +13,10 @@ public:
 public:
 	bool Open() override;
 	bool Init(const Stream& stream) override;
-	bool OutFrame(const Frame& frame, bool force) override;
 	void Close() override;
+
+protected:
+	void WriteToChip(int chip, const std::vector<uint8_t>& data) override;
 
 private:
 	Frame ProcessForAY8930(const Frame& frame) const;

@@ -63,16 +63,30 @@ bool Frame::GetRegInfo(int chip, Register reg, RegInfo& regInfo) const
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
+Frame::Frame()
+{
+	ResetData();
+	ResetChanges();
+}
+
 Frame::Frame(const Frame& other)
 {
 	memcpy(m_data, other.m_data, sizeof(m_data));
 	memcpy(m_changes, other.m_changes, sizeof(m_changes));
 }
 
-void Frame::Reset()
+Frame Frame::CreateSilence()
 {
-	ResetData();
-	ResetChanges();
+	Frame frame;
+	frame.ResetChanges(true);
+	return frame;
+}
+
+Frame Frame::CreateFullyChanged(const Frame& other)
+{
+	Frame frame(other);
+	frame.ResetChanges(true);
+	return frame;
 }
 
 void Frame::ResetData()
@@ -80,9 +94,9 @@ void Frame::ResetData()
 	memset(m_data, 0x00, sizeof(m_data));
 }
 
-void Frame::ResetChanges()
+void Frame::ResetChanges(bool val)
 {
-	memset(m_changes, false, sizeof(m_changes));
+	memset(m_changes, val, sizeof(m_changes));
 }
 
 bool Frame::HasChanges() const
@@ -191,7 +205,7 @@ void Frame::Write(int chip, Register reg, uint8_t data)
 			if ((m_data[chip][info.index] ^ data) & 0xE0)
 			{
 				ResetData();
-				memset(m_changes, true, sizeof(m_changes));
+				ResetChanges(true);
 			}
 		}
 		

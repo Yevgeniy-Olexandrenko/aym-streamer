@@ -79,7 +79,8 @@ namespace PSG
             {
                 for (FrameId id = 0; id < stream.framesCount(); ++id)
                 {
-                    encoder->Encode(id, stream.GetFrame(id));
+                    const Frame& frame = stream.GetFrame(id);
+                    encoder->Encode(id, frame);
                 }
 
                 encoder->Close(stream);

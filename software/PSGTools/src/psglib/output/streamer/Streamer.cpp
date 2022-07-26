@@ -2,11 +2,6 @@
 #include "Streamer.h"
 #include "stream/Frame.h"
 
-namespace
-{
-	const bool k_processForAY8930 = !true;
-}
-
 Streamer::Streamer(int comPortIndex)
 	: m_portIndex(comPortIndex)
 {
@@ -19,7 +14,7 @@ Streamer::~Streamer()
 
 std::string Streamer::name() const
 {
-	return ("Streamer -> " + chip.toString());
+	return ("Streamer -> " + m_chip.toString());
 }
 
 bool Streamer::Open()
@@ -35,43 +30,24 @@ bool Streamer::Open()
 
 bool Streamer::Init(const Stream& stream)
 {
-	chip.count(Chip::Count::OneChip);
-	chip.model(Chip::Model::Compatible);
-	chip.frequency(Chip::Frequency::F1773400);
-	chip.channels(Chip::Channels::ABC);
+	m_chip.count(Chip::Count::OneChip);
+	m_chip.model(Chip::Model::Compatible);
+	m_chip.frequency(Chip::Frequency::F1773400);
+	m_chip.channels(Chip::Channels::ABC);
 	return true;
-}
-
-bool Streamer::OutFrame(const Frame& frame, bool force)
-{
-	if (m_isOpened)
-	{
-		Frame output = k_processForAY8930 ? ProcessForAY8930(frame) : frame;
-
-		char buffer[16 * 2 + 1];
-		int  bufPtr = 0;
-
-		for (uint8_t reg = 0; reg < 16; ++reg)
-		{
-			if (force || output.IsChanged(reg))
-			{
-				// register number and value
-				buffer[bufPtr++] = char(reg);
-				buffer[bufPtr++] = char(output.Read(reg));
-			}
-		}
-
-		// frame end marker
-		buffer[bufPtr++] = char(0xFF);
-		int bytesSent = m_port.SendBinary(buffer, bufPtr);
-		if (bytesSent != bufPtr) m_isOpened = false;
-	}
-	return m_isOpened;
 }
 
 void Streamer::Close()
 {
 	m_port.Close();
+}
+
+void Streamer::WriteToChip(int chip, const std::vector<uint8_t>& data)
+{
+	auto dataSize = (int)data.size();
+	auto dataBuff = (const char*)data.data();
+	auto sentSize = m_port.SendBinary(dataBuff, dataSize);
+	if (sentSize != dataSize) m_isOpened = false;
 }
 
 Frame Streamer::ProcessForAY8930(const Frame& frame) const

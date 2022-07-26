@@ -76,12 +76,14 @@ class Frame
 	bool GetRegInfo(int chip, Register reg, RegInfo& regInfo) const;
 
 public:
-	Frame() = default;
+	Frame();
 	Frame(const Frame& other);
 
-	void Reset();
+	static Frame CreateSilence();
+	static Frame CreateFullyChanged(const Frame& other);
+
 	void ResetData();
-	void ResetChanges();
+	void ResetChanges(bool val = false);
 	bool HasChanges() const;
 
 	bool IsExpMode(int chip) const;
@@ -118,6 +120,6 @@ public:
 	bool& changed(int chip, Register reg);
 
 private:
-	uint8_t m_data[2][25]{};
-	bool m_changes[2][25]{};
+	uint8_t m_data[2][25];
+	bool m_changes[2][25];
 };

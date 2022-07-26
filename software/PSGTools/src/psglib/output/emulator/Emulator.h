@@ -4,6 +4,8 @@
 #include "output/Output.h"
 #include "WaveAudio.h"
 
+constexpr int EmulatorSampleRate = 44100;
+
 class Emulator : public Output, public WaveAudio
 {
 public:
@@ -14,16 +16,13 @@ public:
 public:
 	bool Open() override;
 	bool Init(const Stream& stream) override;
-	bool OutFrame(const Frame& frame, bool force) override;
 	void Close() override;
 
 protected:
+	bool InitChip(int chip);
+	void WriteToChip(int chip, const std::vector<uint8_t>& data) override;
 	void FillBuffer(unsigned char* buffer, unsigned long size) override;
 
 private:
-	bool InitChip(uint8_t chipIndex);
-	void WriteToChip(uint8_t chipIndex, const Frame& frame, bool force);
-
-private:
-	std::shared_ptr<SoundChip> m_ay[2];
+	std::unique_ptr<SoundChip> m_ay[2];
 };

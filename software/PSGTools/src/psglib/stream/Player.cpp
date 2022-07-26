@@ -127,12 +127,17 @@ void Player::PlaybackThread()
 	while (isPlaying && !m_isPaused)
 	{
 		// play current frame
-		const Frame& frame = m_stream->play.GetFrame(m_frameId);
-		if (!m_output.OutFrame(frame, firstFrame))
+		if (firstFrame)
 		{
-			isPlaying = false;
+			Frame frame = Frame::CreateFullyChanged(m_stream->play.GetFrame(m_frameId));
+			if (!m_output.Write(frame)) isPlaying = false;
+			firstFrame = false;
 		}
-		firstFrame = false;
+		else
+		{
+			const Frame& frame = m_stream->play.GetFrame(m_frameId);
+			if (!m_output.Write(frame)) isPlaying = false;
+		}
 
 		// next frame timestamp waiting
 		frameNextTS += framePeriod;
@@ -147,7 +152,7 @@ void Player::PlaybackThread()
 	}
 
 	// silence output when job is done
-	m_output.OutFrame(Frame(), true);
+	m_output.Write(Frame::CreateSilence());
 	m_isPlaying = isPlaying;
 	timeEndPeriod(1U);
 }

@@ -10,7 +10,8 @@ SimAY8910::SimAY8910()
 
 void SimAY8910::Reset()
 {
-	m_frame.Reset();
+	m_frame.ResetData();
+	m_frame.ResetChanges();
 }
 
 void SimAY8910::Write(uint8_t chip, uint8_t reg, uint8_t data)

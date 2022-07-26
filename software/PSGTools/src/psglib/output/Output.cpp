@@ -13,8 +13,8 @@ std::string Output::toString() const
 
 bool Output::Write(const Frame& frame)
 {
-#if AY8930_PERFORM_ENV_FIX
-    const Frame& processedFrame = m_chip.model() == Chip::Model::AY8930
+#if AY8930_DO_ENVELOPE_FIX
+    const Frame& processedFrame = (m_chip.model() == Chip::Model::AY8930)
         ? AY8930_FixEnvelope(frame)
         : frame;
 #else
@@ -26,7 +26,6 @@ bool Output::Write(const Frame& frame)
     {
         WriteToChip(1, processedFrame);
     }
-
     return m_isOpened;
 }
 
@@ -36,7 +35,7 @@ void Output::WriteToChip(int chip, const Frame& frame)
     {
         std::vector<uint8_t> data;
 
-        if (frame.IsExpMode(chip))
+        if (m_chip.model() == Chip::Model::AY8930 && frame.IsExpMode(chip))
         {
             bool switchBanks = false;
             for (Register reg = BankB_Fst; reg < BankB_Lst; ++reg)
@@ -49,10 +48,11 @@ void Output::WriteToChip(int chip, const Frame& frame)
                         data.push_back(frame.Read(chip, Mode_Bank) | 0x10);
                         switchBanks = true;
                     }
-                    data.push_back(reg);
+                    data.push_back(reg & 0x0F);
                     data.push_back(frame.Read(chip, reg));
                 }
             }
+
             if (switchBanks)
             {
                 data.push_back(Mode_Bank);
@@ -64,7 +64,7 @@ void Output::WriteToChip(int chip, const Frame& frame)
         {
             if (frame.IsChanged(chip, reg))
             {
-                data.push_back(reg);
+                data.push_back(reg & 0x0F);
                 data.push_back(frame.Read(chip, reg));
             }
         }
@@ -95,6 +95,8 @@ void Output::AY8930_FixEnvelopeInChannel(int chip, Frame& frame, int chan) const
 {
     uint8_t mixer = frame.Read(chip, Mixer) >> chan;
     uint8_t vol_e = frame.Read(chip, A_Volume + chan);
+
+    if (frame.IsExpMode(chip)) vol_e >>= 1;
 
     bool enableT = !(mixer & 0x01);
     bool enableN = !(mixer & 0x08);

@@ -3,8 +3,8 @@
 #include <vector>
 #include "Stream/Chip.h"
 
-#define AY8930_FORCE_TO_CHOOSE 0
-#define AY8930_PERFORM_ENV_FIX 0
+#define AY8930_FORCE_TO_CHOOSE 1
+#define AY8930_DO_ENVELOPE_FIX 1
 
 class Stream;
 class Frame;

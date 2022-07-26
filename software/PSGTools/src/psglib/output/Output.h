@@ -3,6 +3,9 @@
 #include <vector>
 #include "Stream/Chip.h"
 
+#define AY8930_FORCE_TO_CHOOSE 0
+#define AY8930_PERFORM_ENV_FIX 0
+
 class Stream;
 class Frame;
 
@@ -21,6 +24,10 @@ protected:
 	virtual void WriteToChip(int chip, const Frame& frame);
 	virtual void WriteToChip(int chip, const std::vector<uint8_t>& data) = 0;
 	virtual const std::string GetOutputDeviceName() const = 0;
+
+private:
+	const Frame& AY8930_FixEnvelope(const Frame& frame) const;
+	void AY8930_FixEnvelopeInChannel(int chip, Frame& frame, int chan) const;
 
 protected:
 	bool m_isOpened;

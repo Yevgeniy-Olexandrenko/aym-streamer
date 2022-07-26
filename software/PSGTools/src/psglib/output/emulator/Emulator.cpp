@@ -34,6 +34,9 @@ bool Emulator::Init(const Stream& stream)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         
+#if AY8930_FORCE_TO_CHOOSE
+        m_chip.model(Chip::Model::AY8930);
+#else
         switch (stream.chip.model())
         {
         case Chip::Model::AY8930:
@@ -44,6 +47,7 @@ bool Emulator::Init(const Stream& stream)
             m_chip.model(Chip::Model::AY8910);
             break;
         }
+#endif
         m_chip.count(stream.chip.count());
 
         m_chip.frequency(stream.chip.frequencyKnown()

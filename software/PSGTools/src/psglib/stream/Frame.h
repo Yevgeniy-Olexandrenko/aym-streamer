@@ -81,6 +81,7 @@ public:
 
 	static Frame CreateSilence();
 	static Frame CreateFullyChanged(const Frame& other);
+	static Frame CreateComposition(const Frame& older, const Frame& newer);
 
 	void ResetData();
 	void ResetChanges(bool val = false);

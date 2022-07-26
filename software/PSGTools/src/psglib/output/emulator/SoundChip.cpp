@@ -303,11 +303,11 @@ void SoundChip::Process(double& outL, double& outR)
 
 		uint8_t disableT = BIT(m_regs[AY_ENABLE], 0 + chan);
 		uint8_t disableN = BIT(m_regs[AY_ENABLE], 3 + chan);
-#if 0
-		int output = (m_tone[chan].GetOutput() & ~disableT) | (m_noise.GetOutput() & ~disableN);
-#else
-		int output = (m_tone[chan].GetOutput() | disableT) & (m_noise.GetOutput() | disableN);
-#endif
+
+		int output = (m_chipType == ChipType::AY8930)
+			? (m_tone[chan].GetOutput() & ~disableT) | (m_noise.GetOutput() & ~disableN)
+			: (m_tone[chan].GetOutput() |  disableT) & (m_noise.GetOutput() |  disableN);
+
 		if (output)
 		{
 			int tone_envelope = m_tone[chan].GetEField(isExp, m_chipType == ChipType::AY8914);

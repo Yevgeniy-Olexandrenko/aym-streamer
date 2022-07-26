@@ -89,6 +89,26 @@ Frame Frame::CreateFullyChanged(const Frame& other)
 	return frame;
 }
 
+Frame Frame::CreateComposition(const Frame& older, const Frame& newer)
+{
+	Frame frame(older);
+	for (int chip = 0; chip < 2; ++chip)
+	{
+		RegInfo info;
+		for (Register reg = 0; reg < 32; ++reg)
+		{
+			if (frame.GetRegInfo(chip, reg, info))
+			{
+				uint8_t data = !(info.flags & 0x80) || newer.m_changes[chip][info.index]
+					? newer.m_data[chip][info.index]
+					: UnchangedShape;
+				frame.Update(chip, reg, data);
+			}
+		}
+	}
+	return frame;
+}
+
 void Frame::ResetData()
 {
 	memset(m_data, 0x00, sizeof(m_data));

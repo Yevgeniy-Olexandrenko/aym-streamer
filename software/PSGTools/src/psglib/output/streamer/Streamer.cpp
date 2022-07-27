@@ -34,7 +34,7 @@ bool Streamer::Init(const Stream& stream)
 		m_chip.model(Chip::Model::Compatible);
 #endif
 		m_chip.count(Chip::Count::OneChip);
-		m_chip.frequency(Chip::Frequency::F1773400);
+		m_chip.clock(Chip::Clock::F1773400);
 		m_chip.channels(Chip::Channels::ABC);
 	}
 	return Output::Init(stream);

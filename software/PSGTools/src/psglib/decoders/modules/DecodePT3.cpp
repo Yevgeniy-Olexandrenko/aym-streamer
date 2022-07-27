@@ -148,11 +148,11 @@ bool DecodePT3::Open(Stream& stream)
 
             if (m_chip[0].header->tonTableId == 1)
             {
-                stream.chip.frequency(Chip::Frequency::F1773400);
+                stream.chip.clock(Chip::Clock::F1773400);
             }
             else if (m_chip[0].header->tonTableId == 2 && m_ver > 3)
             {
-                stream.chip.frequency(Chip::Frequency::F1750000);
+                stream.chip.clock(Chip::Clock::F1750000);
             }
 
             if (m_isTS) stream.chip.count(Chip::Count::TwoChips);

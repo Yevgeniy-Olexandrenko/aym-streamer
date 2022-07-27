@@ -58,7 +58,7 @@ bool DecodeYM::Open(Stream& stream)
                             std::string author(p); p += author.size() + 1;
                             std::string comment(p); p += comment.size() + 1;
 
-                            stream.chip.freqValue(GetU32(ym5->chipFreq));
+                            stream.chip.clockValue(GetU32(ym5->chipFreq));
                             stream.play.frameRate(GetU16(ym5->playFreq));
                             stream.info.title(title);
                             stream.info.artist(author);

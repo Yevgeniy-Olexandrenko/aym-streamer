@@ -36,7 +36,7 @@ bool DecodeVTX::Open(Stream& stream)
 				if (hdr.stereo == Stereo::ABC ) stream.chip.channels(Chip::Channels::ABC);
 				if (hdr.stereo == Stereo::ACB ) stream.chip.channels(Chip::Channels::ACB);
 
-				stream.chip.freqValue(hdr.chipFreq);
+				stream.chip.clockValue(hdr.chipFreq);
 				stream.play.frameRate(hdr.frameFreq);
 
 				auto GetTextProperty = [](std::ifstream& stream)

@@ -17,7 +17,7 @@ bool Emulator::Open()
 {
     if (!m_isOpened)
     {
-        if (WaveAudio::Open(EmulatorSampleRate, 100, 2, 2))
+        if (WaveAudio::Open(k_emulatorSampleRate, 100, 2, 2))
         {
             m_isOpened = true;
 
@@ -50,9 +50,9 @@ bool Emulator::Init(const Stream& stream)
 #endif
         m_chip.count(stream.chip.count());
 
-        m_chip.frequency(stream.chip.frequencyKnown()
-            ? stream.chip.frequency()
-            : Chip::Frequency::F1750000);
+        m_chip.clock(stream.chip.clockKnown()
+            ? stream.chip.clock()
+            : Chip::Clock::F1750000);
 
         m_chip.channels(stream.chip.channelsKnown()
             ? stream.chip.channels()
@@ -80,9 +80,9 @@ bool Emulator::InitChip(int chip)
 {
     switch (m_chip.model())
     {
-    case Chip::Model::AY8910: m_ay[chip].reset(new ChipAY8910(m_chip.freqValue(), EmulatorSampleRate)); break;
-    case Chip::Model::YM2149: m_ay[chip].reset(new ChipYM2149(m_chip.freqValue(), EmulatorSampleRate)); break;
-    case Chip::Model::AY8930: m_ay[chip].reset(new ChipAY8930(m_chip.freqValue(), EmulatorSampleRate)); break;
+    case Chip::Model::AY8910: m_ay[chip].reset(new ChipAY8910(m_chip.clockValue(), k_emulatorSampleRate)); break;
+    case Chip::Model::YM2149: m_ay[chip].reset(new ChipYM2149(m_chip.clockValue(), k_emulatorSampleRate)); break;
+    case Chip::Model::AY8930: m_ay[chip].reset(new ChipAY8930(m_chip.clockValue(), k_emulatorSampleRate)); break;
     }
 
     if (m_ay[chip])

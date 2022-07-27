@@ -3,13 +3,13 @@
 
 namespace
 {
-	const int frequencies[] = { 0, 1000000, 1750000, 1773400, 2000000 };
+	const int k_clocks[] = { 0, 1000000, 1750000, 1773400, 2000000 };
 }
 
 Chip::Chip()
 	: m_count(Count::OneChip)
 	, m_model(Model::Unknown)
-	, m_frequency(Frequency::Unknown)
+	, m_clock(Clock::Unknown)
 	, m_channels(Channels::Unknown)
 {
 }
@@ -58,9 +58,9 @@ std::string Chip::toString() const
 		stream << ' ';
 	}
 
-	if (frequencyKnown())
+	if (clockKnown())
 	{
-		stream << double(freqValue()) / 1000000 << " MHz" << ' ';
+		stream << double(clockValue()) / 1000000 << " MHz" << ' ';
 	}
 
 	if (channelsKnown())
@@ -78,11 +78,11 @@ int Chip::countValue() const
 	return (count() == Chip::Count::TwoChips ? 2 : 1);
 }
 
-void Chip::freqValue(const uint32_t& freqValue)
+void Chip::clockValue(const int& clockValue)
 {
 	auto dist = [&](int i)
 	{
-		return std::abs(int(freqValue) - frequencies[i]);
+		return std::abs(clockValue - k_clocks[i]);
 	};
 
 	int f = 0;
@@ -90,13 +90,12 @@ void Chip::freqValue(const uint32_t& freqValue)
 	{
 		if (dist(i) < dist(f)) f = i;
 	}
-	frequency(Frequency(f));
+	clock(Clock(f));
 }
 
-uint32_t Chip::freqValue() const
+int Chip::clockValue() const
 {
-	size_t f = size_t(frequency());
-	return frequencies[f];
+	return k_clocks[size_t(clock())];
 }
 
 bool Chip::modelKnown() const
@@ -104,9 +103,9 @@ bool Chip::modelKnown() const
 	return (model() != Model::Unknown);
 }
 
-bool Chip::frequencyKnown() const
+bool Chip::clockKnown() const
 {
-	return (frequency() != Frequency::Unknown);
+	return (clock() != Clock::Unknown);
 }
 
 bool Chip::channelsKnown() const

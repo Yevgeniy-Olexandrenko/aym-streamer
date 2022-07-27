@@ -4,7 +4,7 @@
 #include "output/Output.h"
 #include "WaveAudio.h"
 
-constexpr int EmulatorSampleRate = 44100;
+constexpr int k_emulatorSampleRate = 44100;
 
 class Emulator : public Output, public WaveAudio
 {

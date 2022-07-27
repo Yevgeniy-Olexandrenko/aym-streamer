@@ -41,7 +41,7 @@ Frame::RegDefine Frame::s_regDefines[] =
 	{ 0xFF, 0x00, 0xFF, 0x00 }
 };
 
-bool Frame::GetRegInfo(int chip, Register reg, RegInfo& regInfo) const
+bool Frame::GetRegInfo(int chip, Register reg, RegInfo& info) const
 {
 	if (chip < 2 && reg < 32)
 	{
@@ -51,9 +51,9 @@ bool Frame::GetRegInfo(int chip, Register reg, RegInfo& regInfo) const
 
 		if (index != 0xFF)
 		{
-			regInfo.flags = (index & 0xE0);
-			regInfo.index = (index & 0x1F);
-			regInfo.mask = (IsExpMode(chip)
+			info.flags = (index & 0xE0);
+			info.index = (index & 0x1F);
+			info.mask  = (IsExpMode(chip)
 				? s_regDefines[reg].expMask
 				: s_regDefines[reg].comMask);
 			return true;
@@ -167,28 +167,38 @@ bool Frame::IsChanged(int chip, Register reg) const
 
 uint16_t Frame::ReadPeriod(int chip, PeriodRegister preg) const
 {
-	if (preg == A_Period || preg == B_Period || preg == C_Period || preg == E_Period)
+	uint16_t data = 0;
+	switch (preg)
 	{
-		return (Read(chip, preg + 0) | Read(chip, preg + 1) << 8);
+	case A_Period:
+	case B_Period:
+	case C_Period:
+	case EA_Period:
+	case EB_Period:
+	case EC_Period:
+		data |= Read(chip, preg + 1) << 8;
+	case N_Period:
+		data |= Read(chip, preg + 0);
 	}
-	else if (preg == N_Period)
-	{
-		return Read(chip, preg);
-	}
-	return 0;
+	return data;
 }
 
 bool Frame::IsChangedPeriod(int chip, PeriodRegister preg) const
 {
-	if (preg == A_Period || preg == B_Period || preg == C_Period || preg == E_Period)
+	bool changed = false;
+	switch (preg)
 	{
-		return (IsChanged(chip, preg + 0) || IsChanged(chip, preg + 1));
+	case A_Period:
+	case B_Period:
+	case C_Period:
+	case EA_Period:
+	case EB_Period:
+	case EC_Period:
+		changed |= IsChanged(chip, preg + 1);
+	case N_Period:
+		changed |= IsChanged(chip, preg + 0);
 	}
-	else if (preg == N_Period)
-	{
-		return IsChanged(chip, preg);
-	}
-	return false;
+	return changed;
 }
 
 uint8_t Frame::Read(Register reg) const
@@ -265,27 +275,33 @@ void Frame::Update(int chip, Register reg, uint8_t data)
 
 void Frame::WritePeriod(int chip, PeriodRegister preg, uint16_t data)
 {
-	if (preg == A_Period || preg == B_Period || preg == C_Period || preg == E_Period)
+	switch (preg)
 	{
-		Write(chip, preg + 0, uint8_t(data));
+	case A_Period:
+	case B_Period:
+	case C_Period:
+	case EA_Period:
+	case EB_Period:
+	case EC_Period:
 		Write(chip, preg + 1, data >> 8);
-	}
-	else if (preg == N_Period)
-	{
-		Write(chip, preg, uint8_t(data));
+	case N_Period:
+		Write(chip, preg + 0, uint8_t(data));
 	}
 }
 
 void Frame::UpdatePeriod(int chip, PeriodRegister preg, uint16_t data)
 {
-	if (preg == A_Period || preg == B_Period || preg == C_Period || preg == E_Period)
+	switch (preg)
 	{
-		Update(chip, preg + 0, uint8_t(data));
+	case A_Period:
+	case B_Period:
+	case C_Period:
+	case EA_Period:
+	case EB_Period:
+	case EC_Period:
 		Update(chip, preg + 1, data >> 8);
-	}
-	else if (preg == N_Period)
-	{
-		Update(chip, preg, uint8_t(data));
+	case N_Period:
+		Update(chip, preg + 0, uint8_t(data));
 	}
 }
 

@@ -44,6 +44,9 @@ enum
 	B_Period  = B_Fine,
 	C_Period  = C_Fine,
 	E_Period  = E_Fine,
+	EA_Period = EA_Fine,
+	EB_Period = EB_Fine,
+	EC_Period = EC_Fine,
 
 	BankA_Fst = 0x00,
 	BankA_Lst = 0x0D,
@@ -75,7 +78,7 @@ class Frame
 		uint8_t mask;
 	};
 
-	bool GetRegInfo(int chip, Register reg, RegInfo& regInfo) const;
+	bool GetRegInfo(int chip, Register reg, RegInfo& info) const;
 
 public:
 	Frame();

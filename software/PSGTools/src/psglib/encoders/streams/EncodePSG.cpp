@@ -13,9 +13,8 @@ bool EncodePSG::Open(const Stream& stream)
             m_output << uint8_t(stream.play.frameRate());
             m_output << std::string(10, 0x00);
 
-            m_isTS = (stream.chip.count() == Chip::Count::TwoChips);
+            m_chipCount = stream.chip.countValue();
             m_skip = 0;
-
             return true;
         }
     }
@@ -28,9 +27,9 @@ void EncodePSG::Encode(const Frame& frame)
     if (frame.HasChanges())
     {
         WriteFrameBeginOrSkip();
-        for (uint8_t chip = 0; chip < (m_isTS ? 2 : 1); ++chip)
+        for (int chip = 0; chip < m_chipCount; ++chip)
         {
-            for (uint8_t reg = 0; reg < 14; ++reg)
+            for (Register reg = BankA_Fst; reg <= BankB_Lst; ++reg)
             {
                 if (frame.IsChanged(chip, reg))
                 {

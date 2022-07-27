@@ -64,7 +64,7 @@ bool Emulator::Init(const Stream& stream)
             m_isOpened &= InitChip(1);
         }
     }
-    return m_isOpened;
+    return Output::Init(stream);
 }
 
 void Emulator::Close()

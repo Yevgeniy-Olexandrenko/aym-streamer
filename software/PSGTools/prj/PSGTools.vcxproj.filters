@@ -216,6 +216,9 @@
     <ClCompile Include="..\src\psglib\output\Output.cpp">
       <Filter>Sources\psglib\output</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\psglib\output\Processing.cpp">
+      <Filter>Sources\psglib\output</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\psglib\stream\Chip.h">
@@ -382,6 +385,9 @@
     </ClInclude>
     <ClInclude Include="..\src\psglib\output\emulator\SoundChip.h">
       <Filter>Sources\psglib\output\emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\Processing.h">
+      <Filter>Sources\psglib\output</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

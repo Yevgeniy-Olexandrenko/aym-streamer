@@ -11,20 +11,29 @@ std::string Output::toString() const
     return (GetOutputDeviceName() + " -> " + m_chip.toString());
 }
 
+bool Output::Init(const Stream& stream)
+{
+    m_fixAY8930Envelope.Reset();
+    m_convertExpToComp.Reset();
+    m_swapChannels.Reset();
+    m_disableChannels.Reset();
+    return m_isOpened;
+}
+
 bool Output::Write(const Frame& frame)
 {
-#if AY8930_DO_ENVELOPE_FIX
-    const Frame& processedFrame = (m_chip.model() == Chip::Model::AY8930)
-        ? AY8930_FixEnvelope(frame)
-        : frame;
-#else
-    const Frame& processedFrame = frame;
-#endif
+    const Frame* processed = &frame;
 
-    WriteToChip(0, processedFrame);
-    if (m_chip.count() == Chip::Count::TwoChips)
+    // post processing before output
+    processed = &m_fixAY8930Envelope (m_chip, *processed);
+    processed = &m_convertExpToComp  (m_chip, *processed);
+    processed = &m_swapChannels      (m_chip, *processed);
+    processed = &m_disableChannels   (m_chip, *processed);
+
+    // output to chip(s)
+    for (int chip = 0; chip < m_chip.countValue(); ++chip)
     {
-        WriteToChip(1, processedFrame);
+        WriteToChip(chip, *processed);
     }
     return m_isOpened;
 }
@@ -71,39 +80,5 @@ void Output::WriteToChip(int chip, const Frame& frame)
 
         data.push_back(0xFF);
         WriteToChip(chip, data);
-    }
-}
-
-const Frame& Output::AY8930_FixEnvelope(const Frame& frame) const
-{
-    static Frame s_frame;
-    s_frame += frame;
-
-    for (int chan = 0; chan < 3; ++chan)
-    {
-        AY8930_FixEnvelopeInChannel(0, s_frame, chan);
-
-        if (m_chip.count() == Chip::Count::TwoChips)
-            AY8930_FixEnvelopeInChannel(1, s_frame, chan);
-    }
-    return s_frame;
-}
-
-void Output::AY8930_FixEnvelopeInChannel(int chip, Frame& frame, int chan) const
-{
-    uint8_t mixer = frame.Read(chip, Mixer) >> chan;
-    uint8_t vol_e = frame.Read(chip, A_Volume + chan);
-
-    if (frame.IsExpMode(chip)) vol_e >>= 1;
-
-    bool enableT = !(mixer & 0x01);
-    bool enableN = !(mixer & 0x08);
-    bool enableE =  (vol_e & 0x10);
-
-    if (enableE && !(enableT || enableN))
-    {
-        // enable tone and set period to zero
-        frame.Update(chip, Mixer, (mixer & ~0x01) << chan);
-        frame.UpdatePeriod(chip, A_Period + 2 * chan, 0x0);
     }
 }

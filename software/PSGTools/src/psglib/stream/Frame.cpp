@@ -86,21 +86,13 @@ Frame& Frame::operator+=(const Frame& other)
 	RegInfo info;
 	for (int chip = 0; chip < 2; ++chip)
 	{
-		for (Register reg = 0; reg < 32; ++reg)
+		for (Register reg = BankA_Fst; reg <= BankB_Lst; ++reg)
 		{
 			if (GetRegInfo(chip, reg, info))
 			{
-				if (info.flags & 0x80)
-				{
-					// special case - envelope shape register
-					m_data[chip][info.index] = other.m_data[chip][info.index];
-					m_changes[chip][info.index] = other.m_changes[chip][info.index];
-				}
-				else
-				{
-					// regular registers workflow
-					Update(chip, reg, other.m_data[chip][info.index]);
-				}
+				auto unchangedShape = ((info.flags & 0x80) && !other.m_changes[chip][info.index]);
+				auto newData = (unchangedShape ? UnchangedShape : other.m_data[chip][info.index]);
+				Update(chip, reg, newData);
 			}
 		}
 	}

@@ -26,15 +26,18 @@ bool Streamer::Open()
 
 bool Streamer::Init(const Stream& stream)
 {
+	if (m_isOpened)
+	{
 #if AY8930_FORCE_TO_CHOOSE
-	m_chip.model(Chip::Model::AY8930);
+		m_chip.model(Chip::Model::AY8930);
 #else
-	m_chip.model(Chip::Model::Compatible);
+		m_chip.model(Chip::Model::Compatible);
 #endif
-	m_chip.count(Chip::Count::OneChip);
-	m_chip.frequency(Chip::Frequency::F1773400);
-	m_chip.channels(Chip::Channels::ABC);
-	return true;
+		m_chip.count(Chip::Count::OneChip);
+		m_chip.frequency(Chip::Frequency::F1773400);
+		m_chip.channels(Chip::Channels::ABC);
+	}
+	return Output::Init(stream);
 }
 
 void Streamer::Close()

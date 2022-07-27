@@ -258,7 +258,7 @@ int main(int argc, char* argv[])
     PrintDelimiter();
     std::cout << std::endl;
 
-#if 1
+#if 0
     m_output.reset(new Streamer(k_comPortIndex));
 #else
     m_output.reset(new Emulator());

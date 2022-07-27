@@ -73,6 +73,11 @@ std::string Chip::toString() const
 	return stream.str();
 }
 
+int Chip::countValue() const
+{
+	return (count() == Chip::Count::TwoChips ? 2 : 1);
+}
+
 void Chip::freqValue(const uint32_t& freqValue)
 {
 	auto dist = [&](int i)

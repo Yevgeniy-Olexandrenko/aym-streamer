@@ -19,9 +19,9 @@ bool EncodeTXT::Open(const Stream& stream)
     return false;
 }
 
-void EncodeTXT::Encode(FrameId id, const Frame& frame)
+void EncodeTXT::Encode(const Frame& frame)
 {
-    PrintFrameRegisters(id, frame);
+    PrintFrameRegisters(frame.GetId(), frame);
     m_prevFrame = frame;
 }
 

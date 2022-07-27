@@ -6,7 +6,6 @@
 #include "Frame.h"
 #include "Chip.h"
 
-using FrameId = uint32_t;
 using FrameRate = uint16_t;
 
 class Stream

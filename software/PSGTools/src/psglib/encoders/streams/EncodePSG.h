@@ -6,7 +6,7 @@ class EncodePSG : public Encoder
 {
 public:
 	bool Open(const Stream& stream) override;
-	void Encode(FrameId id, const Frame& frame) override;
+	void Encode(const Frame& frame) override;
 	void Close(const Stream& stream) override;
 
 private:

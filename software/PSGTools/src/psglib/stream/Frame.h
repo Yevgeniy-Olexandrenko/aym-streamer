@@ -51,11 +51,12 @@ enum
 	BankB_Lst = 0x1D,
 };
 
+using FrameId = uint32_t;
 using Register = uint8_t;
 using PeriodRegister = uint8_t;
 
-constexpr uint8_t ModeBankRegIdx = 0x0D;
-constexpr uint8_t UnchangedShape = 0xFF;
+constexpr uint8_t k_modeBankRegIdx = 0x0D;
+constexpr uint8_t k_unchangedShape = 0xFF;
 
 class Frame
 {
@@ -79,6 +80,9 @@ class Frame
 public:
 	Frame();
 	Frame(const Frame& other);
+
+	void SetId(FrameId id);
+	FrameId GetId() const;
 
 	Frame& operator!();
 	Frame& operator+=(const Frame& other);
@@ -121,6 +125,7 @@ public:
 	bool& changed(int chip, Register reg);
 
 private:
+	FrameId m_id;
 	uint8_t m_data[2][25];
 	bool m_changes[2][25];
 

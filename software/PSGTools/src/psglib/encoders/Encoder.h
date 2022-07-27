@@ -7,7 +7,7 @@ class Encoder
 {
 public:
 	virtual bool Open(const Stream& stream) = 0;
-	virtual void Encode(FrameId id, const Frame& frame) = 0;
+	virtual void Encode(const Frame& frame) = 0;
 	virtual void Close(const Stream& stream) = 0;
 
 protected:

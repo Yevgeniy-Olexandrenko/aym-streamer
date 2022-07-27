@@ -65,15 +65,27 @@ bool Frame::GetRegInfo(int chip, Register reg, RegInfo& regInfo) const
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
 Frame::Frame()
+	: m_id(0)
 {
 	ResetData();
 	ResetChanges();
 }
 
 Frame::Frame(const Frame& other)
+	: m_id(other.m_id)
 {
 	memcpy(m_data, other.m_data, sizeof(m_data));
 	memcpy(m_changes, other.m_changes, sizeof(m_changes));
+}
+
+void Frame::SetId(FrameId id)
+{
+	m_id = id;
+}
+
+FrameId Frame::GetId() const
+{
+	return m_id;
 }
 
 Frame& Frame::operator!()
@@ -92,7 +104,7 @@ Frame& Frame::operator+=(const Frame& other)
 			if (GetRegInfo(chip, reg, info))
 			{
 				auto unchangedShape = ((info.flags & 0x80) && !other.m_changes[chip][info.index]);
-				auto newData = (unchangedShape ? UnchangedShape : other.m_data[chip][info.index]);
+				auto newData = (unchangedShape ? k_unchangedShape : other.m_data[chip][info.index]);
 				Update(chip, reg, newData);
 			}
 		}
@@ -124,7 +136,7 @@ bool Frame::HasChanges() const
 
 bool Frame::IsExpMode(int chip) const
 {
-	return ((m_data[chip][ModeBankRegIdx] & 0xE0) == 0xA0);
+	return ((m_data[chip][k_modeBankRegIdx] & 0xE0) == 0xA0);
 }
 
 bool Frame::HasChangesInBank(int chip, int bank) const
@@ -207,11 +219,11 @@ void Frame::Write(int chip, Register reg, uint8_t data)
 	if (GetRegInfo(chip, reg, info))
 	{
 		// special case for the envelope shape register
-		if ((info.flags & 0x80) && data == UnchangedShape) return;
+		if ((info.flags & 0x80) && data == k_unchangedShape) return;
 
 		// check if mode changed, reset registers
 		data &= info.mask;
-		if (info.index == ModeBankRegIdx)
+		if (info.index == k_modeBankRegIdx)
 		{
 			if ((m_data[chip][info.index] ^ data) & 0xE0)
 			{

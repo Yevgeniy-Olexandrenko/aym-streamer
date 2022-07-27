@@ -103,7 +103,7 @@ bool EncodeAYM::Open(const Stream& stream)
     return false;
 }
 
-void EncodeAYM::Encode(FrameId id, const Frame& frame)
+void EncodeAYM::Encode(const Frame& frame)
 {
     if (frame.HasChanges())
     {

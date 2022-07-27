@@ -22,7 +22,7 @@ bool EncodePSG::Open(const Stream& stream)
     return false;
 }
 
-void EncodePSG::Encode(FrameId id, const Frame& frame)
+void EncodePSG::Encode(const Frame& frame)
 {
     m_skip++;
     if (frame.HasChanges())

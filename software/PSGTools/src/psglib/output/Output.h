@@ -12,6 +12,7 @@ class Output
 {
 public:
 	Output();
+	virtual ~Output();
 	std::string toString() const;
 
 	virtual bool Open() = 0;

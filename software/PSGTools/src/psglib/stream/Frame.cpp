@@ -1,5 +1,6 @@
 ﻿#include "Frame.h"
 #include <cstring>
+#include <iomanip>
 
 Frame::RegDefine Frame::s_regDefines[] =
 {
@@ -310,4 +311,35 @@ bool& Frame::changed(int chip, Register reg)
 	RegInfo info;
 	static bool dummy = 0;
 	return (GetRegInfo(chip, reg, info) ? m_changes[chip][info.index] : dummy);
+}
+
+std::ostream& operator<<(std::ostream& os, const Frame& frame)
+{
+	Frame::RegInfo info;
+	for (int chip = 0; chip < 2; ++chip)
+	{
+		for (Register reg = BankA_Fst; reg <= BankB_Lst; ++reg)
+		{
+			if (frame.GetRegInfo(chip, reg, info))
+			{
+				if (frame.m_changes[chip][info.index])
+				{
+					os << std::hex << std::setw(2) << std::setfill('0');
+					os << int(reg);
+					os << ':';
+
+					uint8_t data = frame.m_data[chip][info.index];
+					os << std::hex << std::setw(2) << std::setfill('0');
+					os << int(data);
+					os << ' ';
+				}
+				else
+				{
+					os << "--:-- ";
+				}
+			}
+		}
+		os << (chip ? "\n" : "| ");
+	}
+	return os;
 }

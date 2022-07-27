@@ -3,7 +3,7 @@
 void Processing::Reset()
 {
     m_frame.ResetData();
-    m_frame.ResetChanges(true);
+    m_frame.ResetChanges();
 }
 
 void Processing::Update(const Frame& frame)

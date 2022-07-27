@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <iostream>
 
 enum
 {
@@ -122,4 +123,7 @@ public:
 private:
 	uint8_t m_data[2][25];
 	bool m_changes[2][25];
+
+public:
+	friend std::ostream& operator<<(std::ostream& os, const Frame& frame);
 };

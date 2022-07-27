@@ -1,9 +1,26 @@
 #include "Output.h"
 #include "stream/Frame.h"
 
+#define DEBUG_OUT 1
+
+#if DEBUG_OUT
+#include <fstream>
+std::ofstream debug_out;
+#endif
+
 Output::Output()
     : m_isOpened(false)
 {
+#if DEBUG_OUT
+    debug_out.open(__FILE__".txt");
+#endif
+}
+
+Output::~Output()
+{
+#if DEBUG_OUT
+    debug_out.close();
+#endif
 }
 
 std::string Output::toString() const
@@ -29,6 +46,12 @@ bool Output::Write(const Frame& frame)
     processed = &m_convertExpToComp  (m_chip, *processed);
     processed = &m_swapChannels      (m_chip, *processed);
     processed = &m_disableChannels   (m_chip, *processed);
+
+#if DEBUG_OUT
+    Frame& oldFrame = const_cast<Frame&>(frame);
+    Frame& newFrame = const_cast<Frame&>(*processed);
+    debug_out << oldFrame << newFrame << "\n";
+#endif
 
     // output to chip(s)
     for (int chip = 0; chip < m_chip.countValue(); ++chip)

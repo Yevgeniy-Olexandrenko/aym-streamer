@@ -32,9 +32,23 @@ bool DecodeVTX::Open(Stream& stream)
 			{
 				stream.chip.model(chipType);
 
-				if (hdr.stereo == Stereo::MONO) stream.chip.channels(Chip::Channels::MONO);
-				if (hdr.stereo == Stereo::ABC ) stream.chip.channels(Chip::Channels::ABC);
-				if (hdr.stereo == Stereo::ACB ) stream.chip.channels(Chip::Channels::ACB);
+				if (hdr.stereo == Stereo::MONO)
+				{
+					stream.chip.output(Chip::Output::Mono);
+				}
+				else
+				{
+					stream.chip.output(Chip::Output::Stereo);
+					switch (hdr.stereo)
+					{
+					case Stereo::ABC: stream.chip.stereo(Chip::Stereo::ABC); break;
+					case Stereo::ACB: stream.chip.stereo(Chip::Stereo::ACB); break;
+					case Stereo::BAC: stream.chip.stereo(Chip::Stereo::BAC); break;
+					case Stereo::BCA: stream.chip.stereo(Chip::Stereo::BCA); break;
+					case Stereo::CAB: stream.chip.stereo(Chip::Stereo::CAB); break;
+					case Stereo::CBA: stream.chip.stereo(Chip::Stereo::CBA); break;
+					}
+				}
 
 				stream.chip.clockValue(hdr.chipFreq);
 				stream.play.frameRate(hdr.frameFreq);

@@ -143,7 +143,7 @@ bool DecodeVGM::Open(Stream& stream)
                     }
                 }
 #if DEBUG_OUT
-                debug_out.open("debug.txt");
+                debug_out.open(__FILE__".txt");
 #endif
                 return true;
             }

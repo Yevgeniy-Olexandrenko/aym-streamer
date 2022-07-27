@@ -10,18 +10,19 @@ Chip::Chip()
 	: m_count(Count::OneChip)
 	, m_model(Model::Unknown)
 	, m_clock(Clock::Unknown)
-	, m_channels(Channels::Unknown)
+	, m_output(Output::Unknown)
+	, m_stereo(Stereo::Unknown)
 {
 }
 
 std::string Chip::toString() const
 {
-	auto PrintChipType = [](std::ostream& stream, Model type)
+	auto OutputModel = [](std::ostream& stream, Model type)
 	{
 		switch (type)
 		{
 		case Model::AY8910:
-			stream << "AY-3-8910(12)";
+			stream << "AY-3-8910";
 			break;
 
 		case Model::YM2149:
@@ -44,7 +45,7 @@ std::string Chip::toString() const
 		if (modelKnown())
 		{
 			stream << "2 x ";
-			PrintChipType(stream, model());
+			OutputModel(stream, model());
 		}
 		else
 		{
@@ -54,7 +55,7 @@ std::string Chip::toString() const
 	}
 	else if (modelKnown())
 	{
-		PrintChipType(stream, model());
+		OutputModel(stream, model());
 		stream << ' ';
 	}
 
@@ -63,11 +64,28 @@ std::string Chip::toString() const
 		stream << double(clockValue()) / 1000000 << " MHz" << ' ';
 	}
 
-	if (channelsKnown())
+	if (outputKnown())
 	{
-		if (channels() == Chip::Channels::MONO) stream << "MONO";
-		if (channels() == Chip::Channels::ABC ) stream << "ABC";
-		if (channels() == Chip::Channels::ACB ) stream << "ACB";
+		if (output() == Output::Mono)
+		{
+			stream << "Mono";
+		}
+		else if (stereoKnown())
+		{
+			switch (stereo())
+			{
+			case Stereo::ABC: stream << "ABC"; break;
+			case Stereo::ACB: stream << "ACB"; break;
+			case Stereo::BAC: stream << "BAC"; break;
+			case Stereo::BCA: stream << "BCA"; break;
+			case Stereo::CAB: stream << "CAB"; break;
+			case Stereo::CBA: stream << "CBA"; break;
+			}
+		}
+		else
+		{
+			stream << "Stereo";
+		}
 	}
 
 	return stream.str();
@@ -108,7 +126,12 @@ bool Chip::clockKnown() const
 	return (clock() != Clock::Unknown);
 }
 
-bool Chip::channelsKnown() const
+bool Chip::outputKnown() const
 {
-	return (channels() != Channels::Unknown);
+	return (output() != Output::Unknown);
+}
+
+bool Chip::stereoKnown() const
+{
+	return (stereo() != Stereo::Unknown);
 }

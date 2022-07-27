@@ -1,7 +1,7 @@
 #include "Output.h"
 #include "stream/Frame.h"
 
-#define DEBUG_OUT 1
+#define DEBUG_OUT 0
 
 #if DEBUG_OUT
 #include <fstream>

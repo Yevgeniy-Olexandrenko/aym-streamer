@@ -49,19 +49,13 @@ bool Emulator::Init(const Stream& stream)
         }
 #endif
         m_chip.count(stream.chip.count());
+        m_chip.clock(stream.chip.clockKnown() ? stream.chip.clock() : Chip::Clock::F1750000);
+        m_chip.output(stream.chip.outputKnown() ? stream.chip.output() : Chip::Output::Stereo);
+        m_chip.stereo(stream.chip.stereoKnown() ? stream.chip.stereo() : Chip::Stereo::ABC);
 
-        m_chip.clock(stream.chip.clockKnown()
-            ? stream.chip.clock()
-            : Chip::Clock::F1750000);
-
-        m_chip.channels(stream.chip.channelsKnown()
-            ? stream.chip.channels()
-            : Chip::Channels::ABC);
-
-        m_isOpened &= InitChip(0);
-        if (m_chip.count() == Chip::Count::TwoChips)
+        for (int chip = 0; chip < m_chip.countValue(); ++chip)
         {
-            m_isOpened &= InitChip(1);
+            m_isOpened &= InitChip(chip);
         }
     }
     return Output::Init(stream);
@@ -88,25 +82,17 @@ bool Emulator::InitChip(int chip)
     if (m_ay[chip])
     {
         m_ay[chip]->Reset();
-        switch (m_chip.channels())
+        if (m_chip.output() == Chip::Output::Mono)
         {
-        case Chip::Channels::MONO:
             m_ay[chip]->SetPan(0, 0.5, true);
             m_ay[chip]->SetPan(1, 0.5, true);
             m_ay[chip]->SetPan(2, 0.5, true);
-            break;
-
-        case Chip::Channels::ACB:
-            m_ay[chip]->SetPan(0, 0.1, true);
-            m_ay[chip]->SetPan(1, 0.9, true);
-            m_ay[chip]->SetPan(2, 0.5, true);
-            break;
-
-        default: // ABC
+        }
+        else
+        {
             m_ay[chip]->SetPan(0, 0.1, true);
             m_ay[chip]->SetPan(1, 0.5, true);
             m_ay[chip]->SetPan(2, 0.9, true);
-            break;
         }
         return true;
     }

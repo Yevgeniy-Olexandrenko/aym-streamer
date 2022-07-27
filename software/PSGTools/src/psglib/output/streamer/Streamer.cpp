@@ -1,6 +1,6 @@
 #include <thread>
 #include "Streamer.h"
-#include "stream/Frame.h"
+#include "stream/Stream.h"
 
 Streamer::Streamer(int comPortIndex)
 	: Output()
@@ -35,7 +35,8 @@ bool Streamer::Init(const Stream& stream)
 #endif
 		m_chip.count(Chip::Count::OneChip);
 		m_chip.clock(Chip::Clock::F1773400);
-		m_chip.channels(Chip::Channels::ABC);
+		m_chip.output(Chip::Output::Stereo);
+		m_chip.stereo(stream.chip.stereoKnown() ? stream.chip.stereo() : Chip::Stereo::ABC);
 	}
 	return Output::Init(stream);
 }

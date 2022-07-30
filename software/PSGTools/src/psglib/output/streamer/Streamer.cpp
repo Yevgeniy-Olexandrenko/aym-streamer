@@ -3,59 +3,56 @@
 #include "stream/Stream.h"
 
 Streamer::Streamer(int comPortIndex)
-	: Output()
-	, m_portIndex(comPortIndex)
+	: m_portIndex(comPortIndex)
 {
 }
 
 Streamer::~Streamer()
 {
-	Close();
+	CloseDevice();
 }
 
-bool Streamer::Open()
+bool Streamer::OpenDevice()
 {
 	m_port.Open(m_portIndex);
-	if (m_isOpened = m_port.SetBaudRate(SerialPort::BaudRate::_57600))
+	if (m_port.SetBaudRate(SerialPort::BaudRate::_57600))
 	{
 		// wait before AYM Streame become ready
 		std::this_thread::sleep_for(std::chrono::seconds(5));
+		return true;
 	}
-	return m_isOpened;
+	return false;
 }
 
-bool Streamer::Init(const Stream& stream)
+bool Streamer::InitDstChip(const Chip& srcChip, Chip& dstChip)
 {
-	if (m_isOpened)
-	{
 #if AY8930_FORCE_TO_CHOOSE
-		m_chip.model(Chip::Model::AY8930);
+	dstChip.model(Chip::Model::AY8930);
 #else
-		m_chip.model(Chip::Model::Compatible);
+	dstChip.model(Chip::Model::Compatible);
 #endif
-		m_chip.count(Chip::Count::OneChip);
-		m_chip.clock(Chip::Clock::F1773400);
-		m_chip.output(Chip::Output::Stereo);
-		m_chip.stereo(stream.chip.stereoKnown() ? stream.chip.stereo() : Chip::Stereo::ABC);
-	}
-	return Output::Init(stream);
+	dstChip.count(Chip::Count::OneChip);
+	dstChip.clock(Chip::Clock::F1773400);
+	dstChip.output(Chip::Output::Stereo);
+	dstChip.stereo(srcChip.stereoKnown() ? srcChip.stereo() : Chip::Stereo::ABC);
+	return true;
 }
 
-void Streamer::Close()
-{
-	Write(!Frame());
-	m_port.Close();
-}
-
-void Streamer::WriteToChip(int chip, const std::vector<uint8_t>& data)
+bool Streamer::WriteToChip(int chip, const std::vector<uint8_t>& data)
 {
 	auto dataSize = (int)data.size();
 	auto dataBuff = (const char*)data.data();
 	auto sentSize = m_port.SendBinary(dataBuff, dataSize);
-	if (sentSize != dataSize) m_isOpened = false;
+	return (sentSize == dataSize);
 }
 
-const std::string Streamer::GetOutputDeviceName() const
+const std::string Streamer::GetDeviceName() const
 {
 	return "Streamer";
+}
+
+void Streamer::CloseDevice()
+{
+	Write(!Frame());
+	m_port.Close();
 }

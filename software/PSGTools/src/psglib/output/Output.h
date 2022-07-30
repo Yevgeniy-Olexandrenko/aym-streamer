@@ -3,7 +3,7 @@
 #include <vector>
 #include "stream/Processing.h"
 
-#define AY8930_FORCE_TO_CHOOSE 0
+#define AY8930_FORCE_TO_CHOOSE 1
 
 class Stream;
 class Frame;
@@ -14,28 +14,29 @@ public:
 	Output();
 	virtual ~Output();
 	
-	virtual bool Open() = 0;
-	virtual bool Init(const Stream& stream);
-	virtual bool Write(const Frame& frame);
-	virtual void Close() = 0;
+	bool Open();
+	bool Init(const Stream& stream);
+	bool Write(const Frame& frame);
+	void Close();
 
 	const Frame& GetFrame() const;
 	std::string toString() const;
 
 protected:
-	virtual void WriteToChip(int chip, const Frame& frame);
-	virtual void WriteToChip(int chip, const std::vector<uint8_t>& data) = 0;
-	virtual const std::string GetOutputDeviceName() const = 0;
+	virtual bool OpenDevice() = 0;
+	virtual bool InitDstChip(const Chip& srcChip, Chip& dstChip) = 0;
+	virtual bool WriteToChip(int chip, const std::vector<uint8_t>& data) = 0;
+	virtual const std::string GetDeviceName() const = 0;
+	virtual void CloseDevice() = 0;
 
 private:
 	void Reset() override;
 	const Frame& operator()(const Chip& chip, const Frame& frame) override;
 
-protected:
+private:
 	bool m_isOpened;
 	Chip m_chip;
 
-private:
 	FixAY8930Envelope m_fixAY8930Envelope;
 	ConvertExpToComp  m_convertExpToComp;
 	ConvertToNewClock m_convertToNewClock;

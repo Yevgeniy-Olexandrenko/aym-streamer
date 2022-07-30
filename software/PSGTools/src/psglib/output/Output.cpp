@@ -1,5 +1,6 @@
 #include "Output.h"
-#include "stream/Frame.h"
+#include "stream/Stream.h"
+#include <cassert>
 
 #define DEBUG_OUT 0
 
@@ -23,71 +24,106 @@ Output::~Output()
 #endif
 }
 
+bool Output::Open()
+{
+    m_isOpened = OpenDevice();
+    return m_isOpened;
+}
+
 bool Output::Init(const Stream& stream)
 {
-    // m_chip.stereo(Chip::Stereo::BCA);
+    if (m_isOpened)
+    {
+        if (m_isOpened &= InitDstChip(stream.chip, m_chip))
+        {
+            // check if the output chip setup is correct
+            assert(m_chip.modelKnown());
+            assert(m_chip.clockKnown());
+            assert(m_chip.outputKnown());
+            assert(m_chip.output() == Chip::Output::Stereo && m_chip.stereoKnown());
 
-    // reset post-processing
-    static_cast<Processing&>(*this).Reset();
+            // restrict stereo modes available for exp mode
+            if (stream.IsExpModeUsed() && m_chip.output() == Chip::Output::Stereo)
+            {
+                if (m_chip.stereo() != Chip::Stereo::ABC || m_chip.stereo() != Chip::Stereo::ACB)
+                {
+                    m_chip.stereo(Chip::Stereo::ABC);
+                }
+            }
+
+            // reset post-processing
+            static_cast<Processing&>(*this).Reset();
+        }
+    }
     return m_isOpened;
 }
 
 bool Output::Write(const Frame& frame)
 {
-    // post-processing before output
-    const Frame& processed = static_cast<Processing&>(*this)(m_chip, frame);
-
-    // output to chip(s)
-    for (int chip = 0; chip < m_chip.countValue(); ++chip)
+    if (m_isOpened)
     {
-        WriteToChip(chip, processed);
+        // processing before output
+        const Frame& pframe = static_cast<Processing&>(*this)(m_chip, frame);
+
+        // output to chip(s)
+        std::vector<uint8_t> data(64);
+        for (int chip = 0; chip < m_chip.countValue(); ++chip)
+        {
+            data.clear();
+            if (m_chip.model() == Chip::Model::AY8930 && pframe.IsExpMode(chip))
+            {
+                bool switchBanks = false;
+                for (Register reg = BankB_Fst; reg < BankB_Lst; ++reg)
+                {
+                    if (pframe.IsChanged(chip, reg))
+                    {
+                        if (!switchBanks)
+                        {
+                            data.push_back(Mode_Bank);
+                            data.push_back(pframe.Read(chip, Mode_Bank) | 0x10);
+                            switchBanks = true;
+                        }
+                        data.push_back(reg & 0x0F);
+                        data.push_back(pframe.Read(chip, reg));
+                    }
+                }
+                if (switchBanks)
+                {
+                    data.push_back(Mode_Bank);
+                    data.push_back(pframe.Read(chip, Mode_Bank));
+                }
+            }
+
+            for (Register reg = BankA_Fst; reg <= BankA_Lst; ++reg)
+            {
+                if (pframe.IsChanged(chip, reg))
+                {
+                    data.push_back(reg & 0x0F);
+                    data.push_back(pframe.Read(chip, reg));
+                }
+            }
+
+            data.push_back(0xFF);
+            if (!(m_isOpened &= WriteToChip(chip, data))) break;
+        }
     }
     return m_isOpened;
 }
 
-void Output::WriteToChip(int chip, const Frame& frame)
+void Output::Close()
 {
-    if (m_isOpened)
-    {
-        std::vector<uint8_t> data;
+    CloseDevice();
+    m_isOpened = false;
+}
 
-        if (m_chip.model() == Chip::Model::AY8930 && frame.IsExpMode(chip))
-        {
-            bool switchBanks = false;
-            for (Register reg = BankB_Fst; reg < BankB_Lst; ++reg)
-            {
-                if (frame.IsChanged(chip, reg))
-                {
-                    if (!switchBanks)
-                    {
-                        data.push_back(Mode_Bank);
-                        data.push_back(frame.Read(chip, Mode_Bank) | 0x10);
-                        switchBanks = true;
-                    }
-                    data.push_back(reg & 0x0F);
-                    data.push_back(frame.Read(chip, reg));
-                }
-            }
+const Frame& Output::GetFrame() const
+{
+    return m_frame;
+}
 
-            if (switchBanks)
-            {
-                data.push_back(Mode_Bank);
-                data.push_back(frame.Read(chip, Mode_Bank));
-            }
-        }
-
-        for (Register reg = BankA_Fst; reg <= BankA_Lst; ++reg)
-        {
-            if (frame.IsChanged(chip, reg))
-            {
-                data.push_back(reg & 0x0F);
-                data.push_back(frame.Read(chip, reg));
-            }
-        }
-
-        data.push_back(0xFF);
-        WriteToChip(chip, data);
-    }
+std::string Output::toString() const
+{
+    return (GetDeviceName() + " -> " + m_chip.toString());
 }
 
 void Output::Reset()
@@ -117,14 +153,4 @@ const Frame& Output::operator()(const Chip& chip, const Frame& frame)
 #endif
 
     return m_frame;
-}
-
-const Frame& Output::GetFrame() const
-{
-    return m_frame;
-}
-
-std::string Output::toString() const
-{
-    return (GetOutputDeviceName() + " -> " + m_chip.toString());
 }

@@ -9,14 +9,12 @@ public:
 	Streamer(int comPortIndex);
 	virtual ~Streamer();
 
-public:
-	bool Open() override;
-	bool Init(const Stream& stream) override;
-	void Close() override;
-
 protected:
-	void WriteToChip(int chip, const std::vector<uint8_t>& data) override;
-	const std::string GetOutputDeviceName() const override;
+	bool OpenDevice() override;
+	bool InitDstChip(const Chip& srcChip, Chip& dstChip) override;
+	bool WriteToChip(int chip, const std::vector<uint8_t>& data) override;
+	const std::string GetDeviceName() const override;
+	void CloseDevice() override;
 
 private:
 	int m_portIndex;

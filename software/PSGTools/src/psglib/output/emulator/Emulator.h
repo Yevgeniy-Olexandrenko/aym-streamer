@@ -12,16 +12,13 @@ public:
 	Emulator();
 	virtual ~Emulator();
 
-public:
-	bool Open() override;
-	bool Init(const Stream& stream) override;
-	void Close() override;
-
 protected:
-	bool InitChip(int chip);
-	void WriteToChip(int chip, const std::vector<uint8_t>& data) override;
+	bool OpenDevice() override;
+	bool InitDstChip(const Chip& srcChip, Chip& dstChip) override;
+	bool WriteToChip(int chip, const std::vector<uint8_t>& data) override;
 	void FillBuffer(unsigned char* buffer, unsigned long size) override;
-	const std::string GetOutputDeviceName() const override;
+	const std::string GetDeviceName() const override;
+	void CloseDevice() override;
 
 private:
 	std::unique_ptr<SoundChip> m_ay[2];

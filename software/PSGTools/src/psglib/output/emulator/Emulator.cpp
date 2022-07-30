@@ -3,86 +3,62 @@
 #include "stream/Stream.h"
 
 Emulator::Emulator()
-    : Output()
-    , WaveAudio()
 {
 }
 
 Emulator::~Emulator()
 {
-    Close();
+    CloseDevice();
 }
 
-bool Emulator::Open()
+bool Emulator::OpenDevice()
 {
-    if (!m_isOpened)
+    if (WaveAudio::Open(k_emulatorSampleRate, 100, 2, 2))
     {
-        if (WaveAudio::Open(k_emulatorSampleRate, 100, 2, 2))
-        {
-            m_isOpened = true;
-
-            // make some delay for warm up the wave audio
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
+        // make some delay for warm up the wave audio
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        return true;
     }
-    return m_isOpened;
+    return false;
 }
 
-bool Emulator::Init(const Stream& stream)
+bool Emulator::InitDstChip(const Chip& srcChip, Chip& dstChip)
 {
-    if (m_isOpened)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        
+    std::lock_guard<std::mutex> lock(m_mutex);
+
 #if AY8930_FORCE_TO_CHOOSE
-        m_chip.model(Chip::Model::AY8930);
+    dstChip.model(Chip::Model::AY8930);
 #else
-        switch (stream.chip.model())
-        {
-        case Chip::Model::AY8930:
-        case Chip::Model::YM2149:
-            m_chip.model(stream.chip.model());
-            break;
-        default:
-            m_chip.model(Chip::Model::AY8910);
-            break;
-        }
+    switch (srcChip.model())
+    {
+    case Chip::Model::AY8930:
+    case Chip::Model::YM2149:
+        dstChip.model(srcChip.model());
+        break;
+    default:
+        dstChip.model(Chip::Model::AY8910);
+        break;
+    }
 #endif
-        m_chip.count(stream.chip.count());
-        m_chip.clock(stream.chip.clockKnown() ? stream.chip.clock() : Chip::Clock::F1750000);
-        m_chip.output(stream.chip.outputKnown() ? stream.chip.output() : Chip::Output::Stereo);
-        m_chip.stereo(stream.chip.stereoKnown() ? stream.chip.stereo() : Chip::Stereo::ABC);
+    dstChip.count(srcChip.count());
+    dstChip.clock(srcChip.clockKnown() ? srcChip.clock() : Chip::Clock::F1750000);
+    dstChip.output(srcChip.outputKnown() ? srcChip.output() : Chip::Output::Stereo);
+    dstChip.stereo(srcChip.stereoKnown() ? srcChip.stereo() : Chip::Stereo::ABC);
 
-        for (int chip = 0; chip < m_chip.countValue(); ++chip)
+    for (int chip = 0; chip < dstChip.countValue(); ++chip)
+    {
+        // create chip emulator
+        switch (dstChip.model())
         {
-            m_isOpened &= InitChip(chip);
+        case Chip::Model::AY8910: m_ay[chip].reset(new ChipAY8910(dstChip.clockValue(), k_emulatorSampleRate)); break;
+        case Chip::Model::YM2149: m_ay[chip].reset(new ChipYM2149(dstChip.clockValue(), k_emulatorSampleRate)); break;
+        case Chip::Model::AY8930: m_ay[chip].reset(new ChipAY8930(dstChip.clockValue(), k_emulatorSampleRate)); break;
         }
-    }
-    return Output::Init(stream);
-}
-
-void Emulator::Close()
-{
-    WaveAudio::Close();
-    m_isOpened = false;
-
-    m_ay[0].reset();
-    m_ay[1].reset();
-}
-
-bool Emulator::InitChip(int chip)
-{
-    switch (m_chip.model())
-    {
-    case Chip::Model::AY8910: m_ay[chip].reset(new ChipAY8910(m_chip.clockValue(), k_emulatorSampleRate)); break;
-    case Chip::Model::YM2149: m_ay[chip].reset(new ChipYM2149(m_chip.clockValue(), k_emulatorSampleRate)); break;
-    case Chip::Model::AY8930: m_ay[chip].reset(new ChipAY8930(m_chip.clockValue(), k_emulatorSampleRate)); break;
-    }
-
-    if (m_ay[chip])
-    {
+        if (!m_ay[chip]) return false;
+        
+        // initialize chip emulator
         m_ay[chip]->Reset();
-        if (m_chip.output() == Chip::Output::Mono)
+        if (dstChip.output() == Chip::Output::Mono)
         {
             m_ay[chip]->SetPan(0, 0.5, true);
             m_ay[chip]->SetPan(1, 0.5, true);
@@ -93,13 +69,12 @@ bool Emulator::InitChip(int chip)
             m_ay[chip]->SetPan(0, 0.1, true);
             m_ay[chip]->SetPan(1, 0.5, true);
             m_ay[chip]->SetPan(2, 0.9, true);
-        }
-        return true;
+        }        
     }
-    return false;
+    return true;
 }
 
-void Emulator::WriteToChip(int chip, const std::vector<uint8_t>& data)
+bool Emulator::WriteToChip(int chip, const std::vector<uint8_t>& data)
 {
     uint8_t reg, val;
     const uint8_t* dataPtr = data.data();
@@ -109,6 +84,7 @@ void Emulator::WriteToChip(int chip, const std::vector<uint8_t>& data)
         val = *dataPtr++;
         m_ay[chip]->Write(reg, val);
     }
+    return true;
 }
 
 void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
@@ -119,7 +95,7 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
         auto sampbuf = (int16_t*)buffer;
         auto samples = (int)(size / sizeof(int16_t));
 
-        if (m_chip.count() == Chip::Count::TwoChips)
+        if (m_ay[1])
         {
             for (int i = 0; i < samples;)
             {
@@ -158,7 +134,14 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
     }
 }
 
-const std::string Emulator::GetOutputDeviceName() const
+const std::string Emulator::GetDeviceName() const
 {
     return "Emulator";
+}
+
+void Emulator::CloseDevice()
+{
+    WaveAudio::Close();
+    m_ay[0].reset();
+    m_ay[1].reset();
 }

@@ -94,6 +94,7 @@ public:
 public:
 	void AddFrame(const Frame& frame);
 	const Frame& GetFrame(FrameId frameId) const;
+	bool IsExpModeUsed() const;
 
 public:
 	File file;
@@ -104,4 +105,5 @@ public:
 
 private:
 	Frames m_frames;
+	bool m_expModeUsed;
 };

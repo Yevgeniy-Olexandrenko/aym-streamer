@@ -180,6 +180,7 @@ Stream::Stream()
 	: info(*this)
 	, loop(*this)
 	, play(*this)
+	, m_expModeUsed(false)
 {
 }
 
@@ -255,10 +256,17 @@ void Stream::AddFrame(const Frame& frame)
 		FrameId id = m_frames.size();
 		m_frames.push_back(frame);
 		m_frames.back().SetId(id);
+		m_expModeUsed |= m_frames.back().IsExpMode(0);
+		m_expModeUsed |= m_frames.back().IsExpMode(1);
 	}
 }
 
 const Frame& Stream::GetFrame(FrameId frameId) const
 {
 	return m_frames[frameId];
+}
+
+bool Stream::IsExpModeUsed() const
+{
+	return m_expModeUsed;
 }

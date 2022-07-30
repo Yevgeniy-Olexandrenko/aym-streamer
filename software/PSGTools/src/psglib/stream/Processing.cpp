@@ -55,15 +55,59 @@ const Frame& ConvertExpToComp::operator()(const Chip& chip, const Frame& frame)
 #ifdef Enable_ConvertExpToComp
     if (chip.model() != Chip::Model::AY8930)
     {
-        // TODO
-
+        m_frame.ResetChanges();
         for (int count = chip.countValue(), chip = 0; chip < count; ++chip)
         {
             if (frame.IsExpMode(chip))
             {
-                // TODO
+                m_frame.UpdatePeriod(chip, A_Period, frame.ReadPeriod(chip, A_Period));
+                m_frame.UpdatePeriod(chip, B_Period, frame.ReadPeriod(chip, B_Period));
+                m_frame.UpdatePeriod(chip, C_Period, frame.ReadPeriod(chip, C_Period));
+                m_frame.UpdatePeriod(chip, N_Period, frame.ReadPeriod(chip, N_Period));
+                m_frame.Update(chip, Mixer, frame.Read(chip, Mixer));
+
+                // convert volume + envelope flag registers
+                uint8_t a_volume = frame.Read(chip, A_Volume);
+                uint8_t b_volume = frame.Read(chip, B_Volume);
+                uint8_t c_volume = frame.Read(chip, C_Volume);
+                m_frame.Update(chip, A_Volume, a_volume >> 1);
+                m_frame.Update(chip, B_Volume, b_volume >> 1);
+                m_frame.Update(chip, C_Volume, c_volume >> 1);
+
+                // choose envelope depending on channels priority
+#if 1
+                auto e_period = frame.ReadPeriod(chip, EC_Period);
+                auto e_shape = frame.Read(chip, EC_Shape);
+                m_frame.UpdatePeriod(chip, E_Period, e_period);
+                m_frame.Update(chip, E_Shape, e_shape);
+                if (e_shape != k_unchangedShape)
+                    e_shape &= 0x0F;
+#else
+                auto e_period = frame.ReadPeriod(chip, EA_Period);
+                auto e_shape = frame.Read(chip, EA_Shape);
+                if ((a_volume & 0x20) == 0)
+                {
+                    if ((b_volume & 0x20) != 0)
+                    {
+                        e_period = frame.ReadPeriod(chip, EB_Period);
+                        e_shape = frame.Read(chip, EB_Shape);
+                    }
+                    else if ((c_volume & 0x20) != 0)
+                    {
+                        e_period = frame.ReadPeriod(chip, EC_Period);
+                        e_shape = frame.Read(chip, EC_Shape);
+                        if (e_shape != k_unchangedShape)
+                            e_shape &= 0x0F;
+                    }
+                }
+                if (e_shape != k_unchangedShape) 
+                    e_shape &= 0x0F;
+                m_frame.UpdatePeriod(chip, E_Period, e_period);
+                m_frame.Update(chip, E_Shape, e_shape);
+#endif
             }
         }
+        return m_frame;
     }
 #endif
     return frame;
@@ -72,9 +116,19 @@ const Frame& ConvertExpToComp::operator()(const Chip& chip, const Frame& frame)
 const Frame& ConvertToNewClock::operator()(const Chip& chip, const Frame& frame)
 {
 #ifdef Enable_ConvertToNewClock
+    {
+        Update(frame);
 
-    // TODO
+        uint16_t a_period = m_frame.ReadPeriod(A_Period);
+        uint16_t b_period = m_frame.ReadPeriod(B_Period);
+        uint16_t c_period = m_frame.ReadPeriod(C_Period);
 
+        m_frame.UpdatePeriod(A_Period, a_period << 1);
+        m_frame.UpdatePeriod(B_Period, b_period << 1);
+        m_frame.UpdatePeriod(C_Period, c_period << 1);
+
+        return m_frame;
+    }
 #endif
     return frame;
 }

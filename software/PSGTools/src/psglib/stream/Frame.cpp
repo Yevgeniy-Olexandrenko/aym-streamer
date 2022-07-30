@@ -122,17 +122,16 @@ Frame& Frame::operator!()
 
 Frame& Frame::operator+=(const Frame& other)
 {
-	RegInfo info;
 	for (int chip = 0; chip < 2; ++chip)
 	{
+		if (IsExpMode(chip) != other.IsExpMode(chip))
+		{
+			SetExpMode(chip, other.IsExpMode(chip));
+		}
+
 		for (Register reg = BankA_Fst; reg <= BankB_Lst; ++reg)
 		{
-			if (GetRegInfo(chip, reg, info))
-			{
-				auto unchangedShape = ((info.flags & 0x80) && !other.m_changes[chip][info.index]);
-				auto newData = (unchangedShape ? k_unchangedShape : other.m_data[chip][info.index]);
-				Update(chip, reg, newData);
-			}
+			Update(chip, reg, other.Read(chip, reg));
 		}
 	}
 	return *this;
@@ -165,16 +164,10 @@ bool Frame::IsExpMode(int chip) const
 	return ((m_data[chip][k_modeBankRegIdx] & 0xE0) == 0xA0);
 }
 
-bool Frame::HasChangesInBank(int chip, int bank) const
+void Frame::SetExpMode(int chip, bool yes)
 {
-	if (IsExpMode(chip) || bank == 0)
-	{
-		for (Register reg = 0; reg < 16; ++reg)
-		{
-			if (IsChanged(chip, 16 * bank + reg)) return true;
-		}
-	}
-	return false;
+	uint8_t data = (m_data[chip][k_modeBankRegIdx] & 0x0F) | (yes ? 0xA0 : 0x00);
+	Write(chip, Mode_Bank, data);
 }
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
@@ -182,7 +175,15 @@ bool Frame::HasChangesInBank(int chip, int bank) const
 uint8_t Frame::Read(int chip, Register reg) const
 {
 	RegInfo info;
-	return (GetRegInfo(chip, reg, info) ? m_data[chip][info.index] : 0x00);
+	if (GetRegInfo(chip, reg, info))
+	{
+		if ((info.flags & 0x80) && !m_changes[chip][info.index])
+		{
+			return k_unchangedShape;
+		}
+		return m_data[chip][info.index];
+	}
+	return 0x00;
 }
 
 bool Frame::IsChanged(int chip, Register reg) const
@@ -394,6 +395,13 @@ void Frame::UpdateChannel(int chip, int chan, const Channel& data)
 }
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+
+const uint8_t& Frame::data(int chip, Register reg) const
+{
+	RegInfo info;
+	static uint8_t dummy = 0;
+	return (GetRegInfo(chip, reg, info) ? m_data[chip][info.index] : dummy);
+}
 
 uint8_t& Frame::data(int chip, Register reg)
 {

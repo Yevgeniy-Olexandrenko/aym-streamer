@@ -257,7 +257,7 @@ int main(int argc, char* argv[])
     PrintDelimiter();
     std::cout << std::endl;
 
-#if 1
+#if 0
     const int k_comPortIndex = 4;
     m_output.reset(new Streamer(k_comPortIndex));
 #else

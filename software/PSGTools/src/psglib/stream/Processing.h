@@ -3,7 +3,7 @@
 #include "stream/Chip.h"
 #include "stream/Frame.h"
 
-//#define Enable_FixAY8930Envelope
+#define Enable_FixAY8930Envelope
 //#define Enable_ConvertExpToComp
 //#define Enable_ConvertToNewClock
 //#define Enable_DisableChannels

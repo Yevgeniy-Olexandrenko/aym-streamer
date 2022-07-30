@@ -80,17 +80,17 @@ bool Output::Write(const Frame& frame)
                         if (!switchBanks)
                         {
                             data.push_back(Mode_Bank);
-                            data.push_back(pframe.Read(chip, Mode_Bank) | 0x10);
+                            data.push_back(pframe.data(chip, Mode_Bank) | 0x10);
                             switchBanks = true;
                         }
                         data.push_back(reg & 0x0F);
-                        data.push_back(pframe.Read(chip, reg));
+                        data.push_back(pframe.data(chip, reg));
                     }
                 }
                 if (switchBanks)
                 {
                     data.push_back(Mode_Bank);
-                    data.push_back(pframe.Read(chip, Mode_Bank));
+                    data.push_back(pframe.data(chip, Mode_Bank));
                 }
             }
 
@@ -99,7 +99,7 @@ bool Output::Write(const Frame& frame)
                 if (pframe.IsChanged(chip, reg))
                 {
                     data.push_back(reg & 0x0F);
-                    data.push_back(pframe.Read(chip, reg));
+                    data.push_back(pframe.data(chip, reg));
                 }
             }
 

@@ -81,7 +81,7 @@ public:
 	bool HasChanges() const;
 
 	bool IsExpMode(int chip) const;
-	bool HasChangesInBank(int chip, int bank) const;
+	void SetExpMode(int chip, bool yes);
 
 public:
 	uint8_t  Read(int chip, Register reg) const;
@@ -126,6 +126,7 @@ public:
 	void UpdateChannel(int chip, int chan, const Channel& data);
 	
 public:
+	const uint8_t& data(int chip, Register reg) const;
 	uint8_t& data(int chip, Register reg);
 	bool& changed(int chip, Register reg);
 

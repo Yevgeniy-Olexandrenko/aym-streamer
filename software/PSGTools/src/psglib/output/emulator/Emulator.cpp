@@ -31,7 +31,9 @@ bool Emulator::InitDstChip(const Chip& srcChip, Chip& dstChip)
 #else
     switch (srcChip.model())
     {
+#if !AY8930_FORCE_TO_DISCARD
     case Chip::Model::AY8930:
+#endif
     case Chip::Model::YM2149:
         dstChip.model(srcChip.model());
         break;

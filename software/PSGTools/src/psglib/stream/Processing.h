@@ -3,17 +3,17 @@
 #include "stream/Chip.h"
 #include "stream/Frame.h"
 
-#define Enable_FixAY8930Envelope
+//#define Enable_FixAY8930Envelope
 //#define Enable_ConvertExpToComp
-//#define Enable_SwapChannels
+//#define Enable_ConvertToNewClock
 //#define Enable_DisableChannels
+#define Enable_SwapChannelsOrder
 
 class Processing
 {
 public:
-	void Reset();
-	void Update(const Frame& frame);
-
+	virtual void Reset();
+	virtual void Update(const Frame& frame);
 	virtual const Frame& operator()(const Chip& chip, const Frame& frame) = 0;
 
 protected:
@@ -32,7 +32,13 @@ public:
 	const Frame& operator()(const Chip& chip, const Frame& frame) override;
 };
 
-class SwapChannels : public Processing
+class ConvertToNewClock : public Processing
+{
+public:
+	const Frame& operator()(const Chip& chip, const Frame& frame) override;
+};
+
+class SwapChannelsOrder : public Processing
 {
 public:
 	const Frame& operator()(const Chip& chip, const Frame& frame) override;

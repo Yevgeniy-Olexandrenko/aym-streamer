@@ -23,40 +23,24 @@ Output::~Output()
 #endif
 }
 
-std::string Output::toString() const
-{
-    return (GetOutputDeviceName() + " -> " + m_chip.toString());
-}
-
 bool Output::Init(const Stream& stream)
 {
-    m_fixAY8930Envelope.Reset();
-    m_convertExpToComp.Reset();
-    m_swapChannels.Reset();
-    m_disableChannels.Reset();
+    // m_chip.stereo(Chip::Stereo::BCA);
+
+    // reset post-processing
+    static_cast<Processing&>(*this).Reset();
     return m_isOpened;
 }
 
 bool Output::Write(const Frame& frame)
 {
-    const Frame* processed = &frame;
-
-    // post processing before output
-    processed = &m_fixAY8930Envelope (m_chip, *processed);
-    processed = &m_convertExpToComp  (m_chip, *processed);
-    processed = &m_swapChannels      (m_chip, *processed);
-    processed = &m_disableChannels   (m_chip, *processed);
-
-#if DEBUG_OUT
-    Frame& oldFrame = const_cast<Frame&>(frame);
-    Frame& newFrame = const_cast<Frame&>(*processed);
-    debug_out << oldFrame << newFrame << "\n";
-#endif
+    // post-processing before output
+    const Frame& processed = static_cast<Processing&>(*this)(m_chip, frame);
 
     // output to chip(s)
     for (int chip = 0; chip < m_chip.countValue(); ++chip)
     {
-        WriteToChip(chip, *processed);
+        WriteToChip(chip, processed);
     }
     return m_isOpened;
 }
@@ -104,4 +88,43 @@ void Output::WriteToChip(int chip, const Frame& frame)
         data.push_back(0xFF);
         WriteToChip(chip, data);
     }
+}
+
+void Output::Reset()
+{
+    m_fixAY8930Envelope.Reset();
+    m_convertExpToComp.Reset();
+    m_convertToNewClock.Reset();
+    m_swapChannelsOrder.Reset();
+    m_disableChannels.Reset();
+    Processing::Reset();
+}
+
+const Frame& Output::operator()(const Chip& chip, const Frame& frame)
+{
+    const Frame* processed = &frame;
+    processed = &m_fixAY8930Envelope (chip, *processed);
+    processed = &m_convertExpToComp  (chip, *processed);
+    processed = &m_convertToNewClock(chip,  *processed);
+    processed = &m_swapChannelsOrder (chip, *processed);
+    processed = &m_disableChannels   (chip, *processed);
+    Update(*processed);
+
+#if DEBUG_OUT
+    Frame& oldFrame = const_cast<Frame&>(frame);
+    Frame& newFrame = const_cast<Frame&>(m_frame);
+    debug_out << oldFrame << newFrame << "\n";
+#endif
+
+    return m_frame;
+}
+
+const Frame& Output::GetFrame() const
+{
+    return m_frame;
+}
+
+std::string Output::toString() const
+{
+    return (GetOutputDeviceName() + " -> " + m_chip.toString());
 }

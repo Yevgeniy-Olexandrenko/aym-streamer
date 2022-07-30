@@ -59,13 +59,13 @@
     <ClCompile Include="..\src\psglib\output\emulator\SoundChip.cpp" />
     <ClCompile Include="..\src\psglib\output\emulator\WaveAudio.cpp" />
     <ClCompile Include="..\src\psglib\output\Output.cpp" />
-    <ClCompile Include="..\src\psglib\output\Processing.cpp" />
     <ClCompile Include="..\src\psglib\output\streamer\SerialPort.cpp" />
     <ClCompile Include="..\src\psglib\output\streamer\Streamer.cpp" />
     <ClCompile Include="..\src\psglib\PSGLib.cpp" />
     <ClCompile Include="..\src\psglib\stream\Chip.cpp" />
     <ClCompile Include="..\src\psglib\stream\Frame.cpp" />
     <ClCompile Include="..\src\psglib\stream\Player.cpp" />
+    <ClCompile Include="..\src\psglib\stream\Processing.cpp" />
     <ClCompile Include="..\src\psglib\stream\Stream.cpp" />
     <ClCompile Include="..\src\psgtools\components\glob\glob.cpp" />
     <ClCompile Include="..\src\psgtools\Filelist.cpp" />
@@ -113,7 +113,6 @@
     <ClInclude Include="..\src\psglib\output\emulator\SoundChip.h" />
     <ClInclude Include="..\src\psglib\output\emulator\WaveAudio.h" />
     <ClInclude Include="..\src\psglib\output\Output.h" />
-    <ClInclude Include="..\src\psglib\output\Processing.h" />
     <ClInclude Include="..\src\psglib\output\streamer\SerialPort.h" />
     <ClInclude Include="..\src\psglib\output\streamer\Streamer.h" />
     <ClInclude Include="..\src\psglib\Property.h" />
@@ -121,6 +120,7 @@
     <ClInclude Include="..\src\psglib\stream\Chip.h" />
     <ClInclude Include="..\src\psglib\stream\Frame.h" />
     <ClInclude Include="..\src\psglib\stream\Player.h" />
+    <ClInclude Include="..\src\psglib\stream\Processing.h" />
     <ClInclude Include="..\src\psglib\stream\Stream.h" />
     <ClInclude Include="..\src\psgtools\components\glob\glob.h" />
     <ClInclude Include="..\src\psgtools\components\terminal\terminal.hpp" />

@@ -1,4 +1,5 @@
 #include "Processing.h"
+#include <cassert>
 
 void Processing::Reset()
 {
@@ -15,6 +16,8 @@ void Processing::Update(const Frame& frame)
 const Frame& FixAY8930Envelope::operator()(const Chip& chip, const Frame& frame)
 {
 #ifdef Enable_FixAY8930Envelope
+    assert(chip.modelKnown());
+
     if (chip.model() == Chip::Model::AY8930)
     {
         Update(frame);
@@ -56,7 +59,7 @@ const Frame& ConvertExpToComp::operator()(const Chip& chip, const Frame& frame)
 
         for (int count = chip.countValue(), chip = 0; chip < count; ++chip)
         {
-            if (frame->IsExpMode(chip))
+            if (frame.IsExpMode(chip))
             {
                 // TODO
             }
@@ -66,12 +69,59 @@ const Frame& ConvertExpToComp::operator()(const Chip& chip, const Frame& frame)
     return frame;
 }
 
-const Frame& SwapChannels::operator()(const Chip& chip, const Frame& frame)
+const Frame& ConvertToNewClock::operator()(const Chip& chip, const Frame& frame)
 {
-#ifdef Enable_SwapChannels
+#ifdef Enable_ConvertToNewClock
 
     // TODO
 
+#endif
+    return frame;
+}
+
+const Frame& SwapChannelsOrder::operator()(const Chip& chip, const Frame& frame)
+{
+#ifdef Enable_SwapChannelsOrder
+    assert(chip.outputKnown());
+    assert(chip.stereoKnown());
+
+    if (chip.output() == Chip::Output::Stereo && chip.stereo() != Chip::Stereo::ABC)
+    {
+        auto SwapChannels = [&](int chip, int l, int r)
+        {
+            Frame::Channel lchan = m_frame.ReadChannel(chip, l);
+            Frame::Channel rchan = m_frame.ReadChannel(chip, r);
+            m_frame.UpdateChannel(chip, l, rchan);
+            m_frame.UpdateChannel(chip, r, lchan);
+        };
+
+        Update(frame);
+        Chip::Stereo stereo{ chip.stereo() };
+        for (int count = chip.countValue(), chip = 0; chip < count; ++chip)
+        {
+            switch (stereo)
+            {
+            case Chip::Stereo::ACB:
+                SwapChannels(chip, 1, 2);
+                break;
+            case Chip::Stereo::BAC:
+                SwapChannels(chip, 0, 1);
+                break;
+            case Chip::Stereo::BCA:
+                SwapChannels(chip, 0, 1);
+                SwapChannels(chip, 1, 2);
+                break;
+            case Chip::Stereo::CAB:
+                SwapChannels(chip, 1, 2);
+                SwapChannels(chip, 0, 1);
+                break;
+            case Chip::Stereo::CBA:
+                SwapChannels(chip, 0, 2);
+                break;
+            }
+        }
+        return m_frame;
+    }
 #endif
     return frame;
 }

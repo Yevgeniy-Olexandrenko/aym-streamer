@@ -63,21 +63,7 @@ constexpr uint8_t k_unchangedShape = 0xFF;
 
 class Frame
 {
-	static struct RegDefine
-	{
-		uint8_t comIndex; // 0xFF -> unknown register, b7 = 1 -> envelope shape register
-		uint8_t comMask;  // mask for register in compatibility mode
-		uint8_t expIndex; // 0xFF -> unknown register, b7 = 1 -> envelope shape register
-		uint8_t expMask;  // mask for register in expanded mode
-	} s_regDefines[32];
-
-	struct RegInfo
-	{
-		uint8_t flags;
-		uint8_t index;
-		uint8_t mask;
-	};
-
+	struct RegInfo;
 	bool GetRegInfo(int chip, Register reg, RegInfo& info) const;
 
 public:
@@ -122,6 +108,22 @@ public:
 
 	void WritePeriod(PeriodRegister preg, uint16_t data);
 	void UpdatePeriod(PeriodRegister preg, uint16_t data);
+
+public:
+	struct Channel
+	{
+		uint8_t tFine;
+		uint8_t	tCoarse;
+		uint8_t tDuty;   // doesn't matter in comp mode
+		uint8_t	mixer;   // taken chan Tone & Noise bits
+		uint8_t volume;
+		uint8_t	eFine;   // taken from chan A in comp mode
+		uint8_t	eCoarse; // taken from chan A in comp mode
+		uint8_t	eShape;  // taken from chan A in comp mode + exp mode flags
+	};
+
+	Channel ReadChannel(int chip, int chan) const;
+	void UpdateChannel(int chip, int chan, const Channel& data);
 	
 public:
 	uint8_t& data(int chip, Register reg);

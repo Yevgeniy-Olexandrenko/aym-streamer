@@ -2,43 +2,69 @@
 #include <cstring>
 #include <iomanip>
 
-Frame::RegDefine Frame::s_regDefines[] =
+namespace
 {
-	// bank A
-	{ 0x00, 0xFF, 0x00, 0xFF },
-	{ 0x01, 0x0F, 0x01, 0xFF },
-	{ 0x02, 0xFF, 0x02, 0xFF },
-	{ 0x03, 0x0F, 0x03, 0xFF },
-	{ 0x04, 0xFF, 0x04, 0xFF },
-	{ 0x05, 0x0F, 0x05, 0xFF },
-	{ 0x06, 0x1F, 0x06, 0xFF },
-	{ 0x07, 0x3F, 0x07, 0x3F },
-	{ 0x08, 0x1F, 0x08, 0x3F },
-	{ 0x09, 0x1F, 0x09, 0x3F },
-	{ 0x0A, 0x1F, 0x0A, 0x3F },
-	{ 0x0B, 0xFF, 0x0B, 0xFF },
-	{ 0x0C, 0xFF, 0x0C, 0xFF },
-	{ 0x8D, 0xEF, 0x8D, 0xEF },
-	{ 0xFF, 0x00, 0xFF, 0x00 },
-	{ 0xFF, 0x00, 0xFF, 0x00 },
+	const Register k_tFine[]   = { A_Fine,    B_Fine,    C_Fine    };
+	const Register k_tCoarse[] = { A_Coarse,  B_Coarse,  C_Coarse  };
+	const Register k_tDuty[]   = { A_Duty,    B_Duty,    C_Duty    };
+	const Register k_volume[]  = { A_Volume,  B_Volume,  C_Volume  };
+	const Register k_eFine[]   = { EA_Fine,   EB_Fine,   EC_Fine   };
+	const Register k_eCoarse[] = { EA_Coarse, EB_Coarse, EC_Coarse };
+	const Register k_eShape[]  = { EA_Shape,  EB_Shape,  EC_Shape  };
 
-	// bank B
-	{ 0xFF, 0x00, 0x0E, 0xFF },
-	{ 0xFF, 0x00, 0x0F, 0xFF },
-	{ 0xFF, 0x00, 0x10, 0xFF },
-	{ 0xFF, 0x00, 0x11, 0xFF },
-	{ 0xFF, 0x00, 0x92, 0x0F },
-	{ 0xFF, 0x00, 0x93, 0x0F },
-	{ 0xFF, 0x00, 0x14, 0x0F },
-	{ 0xFF, 0x00, 0x15, 0x0F },
-	{ 0xFF, 0x00, 0x16, 0x0F },
-	{ 0xFF, 0x00, 0x17, 0xFF },
-	{ 0xFF, 0x00, 0x18, 0xFF },
-	{ 0xFF, 0x00, 0xFF, 0x00 },
-	{ 0xFF, 0x00, 0xFF, 0x00 },
-	{ 0xFF, 0x00, 0x8D, 0xEF },
-	{ 0xFF, 0x00, 0xFF, 0x00 },
-	{ 0xFF, 0x00, 0xFF, 0x00 }
+	struct RegDefine
+	{
+		uint8_t comIndex; // 0xFF -> unknown register, b7 = 1 -> envelope shape register
+		uint8_t comMask;  // mask for register in compatibility mode
+		uint8_t expIndex; // 0xFF -> unknown register, b7 = 1 -> envelope shape register
+		uint8_t expMask;  // mask for register in expanded mode
+	};
+
+	const RegDefine k_regDefines[] =
+	{
+		// bank A
+		{ 0x00, 0xFF, 0x00, 0xFF },
+		{ 0x01, 0x0F, 0x01, 0xFF },
+		{ 0x02, 0xFF, 0x02, 0xFF },
+		{ 0x03, 0x0F, 0x03, 0xFF },
+		{ 0x04, 0xFF, 0x04, 0xFF },
+		{ 0x05, 0x0F, 0x05, 0xFF },
+		{ 0x06, 0x1F, 0x06, 0xFF },
+		{ 0x07, 0x3F, 0x07, 0x3F },
+		{ 0x08, 0x1F, 0x08, 0x3F },
+		{ 0x09, 0x1F, 0x09, 0x3F },
+		{ 0x0A, 0x1F, 0x0A, 0x3F },
+		{ 0x0B, 0xFF, 0x0B, 0xFF },
+		{ 0x0C, 0xFF, 0x0C, 0xFF },
+		{ 0x8D, 0xEF, 0x8D, 0xEF },
+		{ 0xFF, 0x00, 0xFF, 0x00 },
+		{ 0xFF, 0x00, 0xFF, 0x00 },
+
+		// bank B
+		{ 0xFF, 0x00, 0x0E, 0xFF },
+		{ 0xFF, 0x00, 0x0F, 0xFF },
+		{ 0xFF, 0x00, 0x10, 0xFF },
+		{ 0xFF, 0x00, 0x11, 0xFF },
+		{ 0xFF, 0x00, 0x92, 0x0F },
+		{ 0xFF, 0x00, 0x93, 0x0F },
+		{ 0xFF, 0x00, 0x14, 0x0F },
+		{ 0xFF, 0x00, 0x15, 0x0F },
+		{ 0xFF, 0x00, 0x16, 0x0F },
+		{ 0xFF, 0x00, 0x17, 0xFF },
+		{ 0xFF, 0x00, 0x18, 0xFF },
+		{ 0xFF, 0x00, 0xFF, 0x00 },
+		{ 0xFF, 0x00, 0xFF, 0x00 },
+		{ 0xFF, 0x00, 0x8D, 0xEF },
+		{ 0xFF, 0x00, 0xFF, 0x00 },
+		{ 0xFF, 0x00, 0xFF, 0x00 }
+	};
+}
+
+struct Frame::RegInfo
+{
+	uint8_t flags;
+	uint8_t index;
+	uint8_t mask;
 };
 
 bool Frame::GetRegInfo(int chip, Register reg, RegInfo& info) const
@@ -46,16 +72,16 @@ bool Frame::GetRegInfo(int chip, Register reg, RegInfo& info) const
 	if (chip < 2 && reg < 32)
 	{
 		uint8_t index = (IsExpMode(chip)
-			? s_regDefines[reg].expIndex
-			: s_regDefines[reg].comIndex);
+			? k_regDefines[reg].expIndex
+			: k_regDefines[reg].comIndex);
 
 		if (index != 0xFF)
 		{
 			info.flags = (index & 0xE0);
 			info.index = (index & 0x1F);
 			info.mask  = (IsExpMode(chip)
-				? s_regDefines[reg].expMask
-				: s_regDefines[reg].comMask);
+				? k_regDefines[reg].expMask
+				: k_regDefines[reg].comMask);
 			return true;
 		}
 	}
@@ -327,6 +353,48 @@ void Frame::UpdatePeriod(PeriodRegister preg, uint16_t data)
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
+Frame::Channel Frame::ReadChannel(int chip, int chan) const
+{
+	Channel data{};
+	if (chan >= 0 && chan <= 2)
+	{
+		bool isExpMode = IsExpMode(chip);
+		auto orExpMode = uint8_t(isExpMode ? 0xA0 : 0x00);
+
+		data.tFine   = Read(chip, k_tFine[chan]);
+		data.tCoarse = Read(chip, k_tCoarse[chan]);
+		data.tDuty   = Read(chip, k_tDuty[chan]);
+		data.mixer   = Read(chip, Mixer) >> chan & 0x09;
+		data.volume  = Read(chip, k_volume[chan]);
+		data.eFine   = Read(chip, isExpMode ? k_eFine[chan] : E_Fine);
+		data.eCoarse = Read(chip, isExpMode ? k_eFine[chan] : E_Coarse);
+		data.eShape  = IsChanged(chip, isExpMode ? k_eFine[chan] : E_Shape)
+			? (Read(chip, isExpMode ? k_eFine[chan] : E_Shape) & 0x0F) | orExpMode
+			: k_unchangedShape;
+	}
+	return data;
+}
+
+void Frame::UpdateChannel(int chip, int chan, const Channel& data)
+{
+	if (chan >= 0 && chan <= 2)
+	{
+		bool isExpMode = IsExpMode(chip);
+		auto mixerData = Read(chip, Mixer) & ~(0x09 << chan);
+
+		Update(chip, k_tFine[chan], data.tFine);
+		Update(chip, k_tCoarse[chan], data.tCoarse);
+		Update(chip, k_tDuty[chan], data.tDuty);
+		Update(chip, Mixer, mixerData | data.mixer << chan);
+		Update(chip, k_volume[chan], data.volume);
+		Update(chip, k_eFine[chan], data.eFine);
+		Update(chip, k_eCoarse[chan], data.eCoarse);
+		Update(chip, k_eShape[chan], data.eShape);
+	}
+}
+
+/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+
 uint8_t& Frame::data(int chip, Register reg)
 {
 	RegInfo info;
@@ -340,6 +408,8 @@ bool& Frame::changed(int chip, Register reg)
 	static bool dummy = 0;
 	return (GetRegInfo(chip, reg, info) ? m_changes[chip][info.index] : dummy);
 }
+
+/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
 std::ostream& operator<<(std::ostream& os, const Frame& frame)
 {

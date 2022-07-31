@@ -36,8 +36,6 @@ bool Output::Init(const Stream& stream)
     {
         if (m_isOpened &= InitDstChip(stream.chip, m_chip))
         {
-            m_chip.stereo(Chip::Stereo::ACB);
-
             // check if the output chip setup is correct
             assert(m_chip.modelKnown());
             assert(m_chip.clockKnown());

@@ -365,12 +365,23 @@ void SoundChip::ToneUnit::Reset()
 
 void SoundChip::ToneUnit::Update(bool isExp)
 {
-	m_counter += (isExp ? 16 : 1);
-	while (m_counter >= m_period)
+	if (isExp)
 	{
-		m_counter -= m_period;
-		m_dutyCounter = (m_dutyCounter - 1) & 0x1F;
-		m_output = isExp ? BIT(m_dutyCycle, m_dutyCounter) : BIT(m_dutyCounter, 0);
+		m_counter += 32;
+		while (m_counter >= m_period)
+		{
+			m_counter -= m_period;
+			m_dutyCounter = (m_dutyCounter + 1) & 0x1F;
+			m_output = BIT(m_dutyCycle, 0x1F - m_dutyCounter);
+		}
+	}
+	else
+	{
+		if (++m_counter >= m_period)
+		{
+			m_counter = 0;
+			m_output ^= true;
+		}
 	}
 }
 

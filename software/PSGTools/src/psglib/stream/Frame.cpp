@@ -333,8 +333,8 @@ Frame::Channel Frame::ReadChannel(int chip, int chan) const
 		data.mixer   = Read(chip, Mixer) >> chan & 0x09;
 		data.volume  = Read(chip, k_volume[chan]);
 		data.eFine   = Read(chip, isExpMode ? k_eFine[chan] : E_Fine);
-		data.eCoarse = Read(chip, isExpMode ? k_eFine[chan] : E_Coarse);
-		data.eShape  = Read(chip, isExpMode ? k_eFine[chan] : E_Shape);
+		data.eCoarse = Read(chip, isExpMode ? k_eCoarse[chan] : E_Coarse);
+		data.eShape  = Read(chip, isExpMode ? k_eShape[chan] : E_Shape);
 
 		if (data.eShape != k_unchangedShape && isExpMode)
 		{

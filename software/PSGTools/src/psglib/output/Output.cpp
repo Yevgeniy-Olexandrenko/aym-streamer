@@ -36,6 +36,8 @@ bool Output::Init(const Stream& stream)
     {
         if (m_isOpened &= InitDstChip(stream.chip, m_chip))
         {
+            m_chip.stereo(Chip::Stereo::ACB);
+
             // check if the output chip setup is correct
             assert(m_chip.modelKnown());
             assert(m_chip.clockKnown());
@@ -45,7 +47,7 @@ bool Output::Init(const Stream& stream)
             // restrict stereo modes available for exp mode
             if (stream.IsExpModeUsed() && m_chip.output() == Chip::Output::Stereo)
             {
-                if (m_chip.stereo() != Chip::Stereo::ABC || m_chip.stereo() != Chip::Stereo::ACB)
+                if (m_chip.stereo() != Chip::Stereo::ABC && m_chip.stereo() != Chip::Stereo::ACB)
                 {
                     m_chip.stereo(Chip::Stereo::ABC);
                 }

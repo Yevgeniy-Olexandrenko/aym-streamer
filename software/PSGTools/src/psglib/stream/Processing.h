@@ -7,7 +7,7 @@
 //#define Enable_ConvertExpToComp
 //#define Enable_ConvertToNewClock
 //#define Enable_DisableChannels
-//#define Enable_SwapChannelsOrder
+#define Enable_SwapChannelsOrder
 
 class Processing
 {

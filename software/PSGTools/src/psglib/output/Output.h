@@ -3,7 +3,7 @@
 #include <vector>
 #include "stream/Processing.h"
 
-#define AY8930_FORCE_TO_CHOOSE  1
+#define AY8930_FORCE_TO_CHOOSE  0
 #define AY8930_FORCE_TO_DISCARD 0
 
 class Stream;

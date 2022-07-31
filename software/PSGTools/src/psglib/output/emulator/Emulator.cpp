@@ -62,15 +62,15 @@ bool Emulator::InitDstChip(const Chip& srcChip, Chip& dstChip)
         m_ay[chip]->Reset();
         if (dstChip.output() == Chip::Output::Mono)
         {
-            m_ay[chip]->SetPan(0, 0.5, true);
-            m_ay[chip]->SetPan(1, 0.5, true);
-            m_ay[chip]->SetPan(2, 0.5, true);
+            m_ay[chip]->SetPan(0, 0.5, false);
+            m_ay[chip]->SetPan(1, 0.5, false);
+            m_ay[chip]->SetPan(2, 0.5, false);
         }
         else
         {
-            m_ay[chip]->SetPan(0, 0.1, true);
-            m_ay[chip]->SetPan(1, 0.5, true);
-            m_ay[chip]->SetPan(2, 0.9, true);
+            m_ay[chip]->SetPan(0, 0.1, false);
+            m_ay[chip]->SetPan(1, 0.5, false);
+            m_ay[chip]->SetPan(2, 0.9, false);
         }        
     }
     return true;

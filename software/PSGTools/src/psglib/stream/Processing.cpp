@@ -41,6 +41,7 @@ const Frame& FixAY8930Envelope::operator()(const Chip& chip, const Frame& frame)
                     mixer = m_frame.Read(chip, Mixer);
                     m_frame.Update(chip, Mixer, mixer & ~(0x01 << chan));
                     m_frame.UpdatePeriod(chip, A_Period + 2 * chan, 0x0);
+                    m_frame.Update(chip, A_Duty + chan, 0x8);
                 }
             }
         }

@@ -664,10 +664,10 @@ void SimRP2A03::ConvertToPSG(Frame& frame)
     frame.Update(0, E_Fine, bt_period & 0xFF);
     frame.Update(0, E_Coarse, bt_period >> 8 & 0xFF);
     frame.Update(0, B_Volume, 0x10);
-    if (frame.Read(0, E_Shape) != 0x0E)
-    {
-        frame.Write(0, E_Shape, 0x0E);
-    }
+//@@    if (frame.Read(0, E_Shape) != 0x0E)
+//@@    {
+//@@        frame.Write(0, E_Shape, 0x0E);
+//@@    }
 
     if (bn_enable)
     {

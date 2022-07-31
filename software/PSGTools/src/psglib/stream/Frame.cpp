@@ -167,7 +167,7 @@ bool Frame::IsExpMode(int chip) const
 void Frame::SetExpMode(int chip, bool yes)
 {
 	uint8_t data = (m_data[chip][k_modeBankRegIdx] & 0x0F) | (yes ? 0xA0 : 0x00);
-	Write(chip, Mode_Bank, data);
+	Update(chip, Mode_Bank, data);
 }
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
@@ -250,41 +250,33 @@ bool Frame::IsChangedPeriod(PeriodRegister preg) const
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
 
-void Frame::Write(int chip, Register reg, uint8_t data)
-{
-	RegInfo info;
-	if (GetRegInfo(chip, reg, info))
-	{
-		// special case for the envelope shape register
-		if ((info.flags & 0x80) && data == k_unchangedShape) return;
-
-		// check if mode changed, reset registers
-		data &= info.mask;
-		if (info.index == k_modeBankRegIdx)
-		{
-			if ((m_data[chip][info.index] ^ data) & 0xE0)
-			{
-				ResetData();
-				ResetChanges(true);
-			}
-		}
-		
-		// write new value in register
-		m_data[chip][info.index] = data;
-		m_changes[chip][info.index] = true;
-	}
-}
-
 void Frame::Update(int chip, Register reg, uint8_t data)
 {
 	RegInfo info;
 	if (GetRegInfo(chip, reg, info))
 	{
+		// special case for the envelope shape register
 		if ((info.flags & 0x80))
 		{
 			// the envelope shape register can be overwritten with
 			// the same value, which resets the envelope generator
-			Write(chip, reg, data);
+			if (data != k_unchangedShape)
+			{
+				data &= info.mask;
+				if (info.index == k_modeBankRegIdx)
+				{
+					// check if mode changed, reset registers
+					if ((m_data[chip][info.index] ^ data) & 0xE0)
+					{
+						ResetData();
+						ResetChanges(true);
+					}
+				}
+
+				// write new value in register
+				m_data[chip][info.index] = data;
+				m_changes[chip][info.index] = true;
+			}
 		}
 		else
 		{
@@ -297,22 +289,6 @@ void Frame::Update(int chip, Register reg, uint8_t data)
 				m_changes[chip][info.index] = true;
 			}
 		}
-	}
-}
-
-void Frame::WritePeriod(int chip, PeriodRegister preg, uint16_t data)
-{
-	switch (preg)
-	{
-	case A_Period:
-	case B_Period:
-	case C_Period:
-	case EA_Period:
-	case EB_Period:
-	case EC_Period:
-		Write(chip, preg + 1, data >> 8);
-	case N_Period:
-		Write(chip, preg + 0, uint8_t(data));
 	}
 }
 
@@ -332,19 +308,9 @@ void Frame::UpdatePeriod(int chip, PeriodRegister preg, uint16_t data)
 	}
 }
 
-void Frame::Write(Register reg, uint8_t data)
-{
-	Write(0, reg, data);
-}
-
 void Frame::Update(Register reg, uint8_t data)
 {
 	Update(0, reg, data);
-}
-
-void Frame::WritePeriod(PeriodRegister preg, uint16_t data)
-{
-	WritePeriod(0, preg, data);
 }
 
 void Frame::UpdatePeriod(PeriodRegister preg, uint16_t data)
@@ -360,8 +326,7 @@ Frame::Channel Frame::ReadChannel(int chip, int chan) const
 	if (chan >= 0 && chan <= 2)
 	{
 		bool isExpMode = IsExpMode(chip);
-		auto orExpMode = uint8_t(isExpMode ? 0xA0 : 0x00);
-
+		
 		data.tFine   = Read(chip, k_tFine[chan]);
 		data.tCoarse = Read(chip, k_tCoarse[chan]);
 		data.tDuty   = Read(chip, k_tDuty[chan]);
@@ -369,9 +334,13 @@ Frame::Channel Frame::ReadChannel(int chip, int chan) const
 		data.volume  = Read(chip, k_volume[chan]);
 		data.eFine   = Read(chip, isExpMode ? k_eFine[chan] : E_Fine);
 		data.eCoarse = Read(chip, isExpMode ? k_eFine[chan] : E_Coarse);
-		data.eShape  = IsChanged(chip, isExpMode ? k_eFine[chan] : E_Shape)
-			? (Read(chip, isExpMode ? k_eFine[chan] : E_Shape) & 0x0F) | orExpMode
-			: k_unchangedShape;
+		data.eShape  = Read(chip, isExpMode ? k_eFine[chan] : E_Shape);
+
+		if (data.eShape != k_unchangedShape && isExpMode)
+		{
+			data.eShape &= 0x0F;
+			data.eShape |= 0xA0;
+		}
 	}
 	return data;
 }

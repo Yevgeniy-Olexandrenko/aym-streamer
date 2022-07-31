@@ -97,16 +97,10 @@ public:
 	bool     IsChangedPeriod(PeriodRegister preg) const;
 
 public:
-	void Write(int chip, Register reg, uint8_t data);
 	void Update(int chip, Register reg, uint8_t data);
-
-	void WritePeriod(int chip, PeriodRegister preg, uint16_t data);
 	void UpdatePeriod(int chip, PeriodRegister preg, uint16_t data);
 
-	void Write(Register reg, uint8_t data);
 	void Update(Register reg, uint8_t data);
-
-	void WritePeriod(PeriodRegister preg, uint16_t data);
 	void UpdatePeriod(PeriodRegister preg, uint16_t data);
 
 public:

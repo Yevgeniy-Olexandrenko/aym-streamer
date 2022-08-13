@@ -5,35 +5,37 @@
 
 class Filelist
 {
+	using FilePath = std::filesystem::path;
 	using PathHash = std::size_t;
 
 public:
 	Filelist(const std::string& exts);
-	Filelist(const std::string& exts, const std::filesystem::path& path);
+	Filelist(const std::string& exts, const FilePath& path);
 
 public:
 	bool     IsEmpty() const;
 	uint32_t GetNumberOfFiles() const;
 	int32_t  GetCurrFileIndex() const;
 
-	bool GetPrevFile(std::filesystem::path& path) const;
-	bool GetNextFile(std::filesystem::path& path) const;
+	bool GetPrevFile(FilePath& path) const;
+	bool GetNextFile(FilePath& path) const;
 	void RandomShuffle();
 
-	bool ExportPlaylist(const std::filesystem::path& path);
+	bool InsertFile(const FilePath& path);
+	bool ContainsFile(const FilePath& path);
+	bool ExportPlaylist(const FilePath& path);
 
 private:
-	void ImportPlaylistM3U(const std::filesystem::path& path);
-	void ImportPlaylistAYL(const std::filesystem::path& path);
-	void ImportFolder(const std::filesystem::path& path);
-	void ImportFile(const std::filesystem::path& path);
+	void ImportFolder(const FilePath& path);
+	void ImportPlaylistM3U(const FilePath& path);
+	void ImportPlaylistAYL(const FilePath& path);
 
-	bool ExportPlaylistM3U(const std::filesystem::path& path);
-	bool ExportPlaylistAYL(const std::filesystem::path& path);
+	bool ExportPlaylistM3U(const FilePath& path);
+	bool ExportPlaylistAYL(const FilePath& path);
 
 private:
-	std::vector<std::filesystem::path> m_exts;
-	std::vector<std::filesystem::path> m_files;
+	std::vector<FilePath> m_exts;
+	std::vector<FilePath> m_files;
 	std::set<PathHash> m_hashes;
 	mutable int32_t m_index;
 };

@@ -29,7 +29,7 @@ Filelist::Filelist(const std::string& exts)
     }
 }
 
-Filelist::Filelist(const std::string& exts, const std::filesystem::path& path)
+Filelist::Filelist(const std::string& exts, const FilePath& path)
     : Filelist(exts)
 {
     for (auto path : glob::glob(path.string()))
@@ -51,7 +51,7 @@ Filelist::Filelist(const std::string& exts, const std::filesystem::path& path)
             }
             else
             {
-                ImportFile(path);
+                InsertFile(path);
             }
         }
         else
@@ -78,7 +78,7 @@ int32_t Filelist::GetCurrFileIndex() const
     return m_index;
 }
 
-bool Filelist::GetPrevFile(std::filesystem::path& path) const
+bool Filelist::GetPrevFile(FilePath& path) const
 {
     if (!IsEmpty())
     {
@@ -91,7 +91,7 @@ bool Filelist::GetPrevFile(std::filesystem::path& path) const
     return false;
 }
 
-bool Filelist::GetNextFile(std::filesystem::path& path) const
+bool Filelist::GetNextFile(FilePath& path) const
 {
     if (!IsEmpty())
     {
@@ -112,7 +112,34 @@ void Filelist::RandomShuffle()
     m_index = -1;
 }
 
-bool Filelist::ExportPlaylist(const std::filesystem::path& path)
+bool Filelist::InsertFile(const FilePath& path)
+{
+    if (path.has_filename())
+    {
+        auto extension = path.extension().string();
+        std::for_each(extension.begin(), extension.end(), [](char& c) { c = ::tolower(c); });
+
+        if (std::find(m_exts.begin(), m_exts.end(), extension) != m_exts.end())
+        {
+            if (std::filesystem::exists(path))
+            {
+                if (m_hashes.insert(std::filesystem::hash_value(path)).second)
+                {
+                    m_files.push_back(path);
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool Filelist::ContainsFile(const FilePath& path)
+{
+    return (m_hashes.find(std::filesystem::hash_value(path)) != m_hashes.end());
+}
+
+bool Filelist::ExportPlaylist(const FilePath& path)
 {
     if (path.has_filename())
     {
@@ -128,7 +155,20 @@ bool Filelist::ExportPlaylist(const std::filesystem::path& path)
     return false;
 }
 
-void Filelist::ImportPlaylistM3U(const std::filesystem::path& path)
+////////////////////////////////////////////////////////////////////////////////
+
+void Filelist::ImportFolder(const FilePath& path)
+{
+    for (const auto& file : std::filesystem::directory_iterator(path))
+    {
+        if (std::filesystem::is_regular_file(file))
+        {
+            InsertFile(file);
+        }
+    }
+}
+
+void Filelist::ImportPlaylistM3U(const FilePath& path)
 {
     std::ifstream fileStream;
     fileStream.open(path);
@@ -141,14 +181,14 @@ void Filelist::ImportPlaylistM3U(const std::filesystem::path& path)
             if (!entity.empty() && entity[0] != '#')
             {
                 auto entityPath = ConvertToAbsolute(path, entity);
-                ImportFile(entityPath);
+                InsertFile(entityPath);
             }
         }
         fileStream.close();
     }
 }
 
-void Filelist::ImportPlaylistAYL(const std::filesystem::path& path)
+void Filelist::ImportPlaylistAYL(const FilePath& path)
 {
     std::ifstream fileStream;
     fileStream.open(path);
@@ -166,7 +206,7 @@ void Filelist::ImportPlaylistAYL(const std::filesystem::path& path)
                 else if (!skipLine)
                 {
                     auto entityPath = ConvertToAbsolute(path, entity);
-                    ImportFile(entityPath);
+                    InsertFile(entityPath);
                 }
             }
         }
@@ -174,38 +214,7 @@ void Filelist::ImportPlaylistAYL(const std::filesystem::path& path)
     }
 }
 
-void Filelist::ImportFolder(const std::filesystem::path& path)
-{
-    for (const auto& file : std::filesystem::directory_iterator(path))
-    {
-        if (std::filesystem::is_regular_file(file))
-        {
-            ImportFile(file);
-        }
-    }
-}
-
-void Filelist::ImportFile(const std::filesystem::path& path)
-{
-    if (path.has_filename())
-    {
-        auto extension = path.extension().string();
-        std::for_each(extension.begin(), extension.end(), [](char& c) { c = ::tolower(c); });
-
-        if (std::find(m_exts.begin(), m_exts.end(), extension) != m_exts.end())
-        {
-            if (std::filesystem::exists(path))
-            {
-                if (m_hashes.insert(std::filesystem::hash_value(path)).second)
-                {
-                    m_files.push_back(path);
-                }
-            }
-        }
-    }
-}
-
-bool Filelist::ExportPlaylistM3U(const std::filesystem::path& path)
+bool Filelist::ExportPlaylistM3U(const FilePath& path)
 {
     std::ofstream stream;
     stream.open(path);
@@ -225,7 +234,7 @@ bool Filelist::ExportPlaylistM3U(const std::filesystem::path& path)
     return false;
 }
 
-bool Filelist::ExportPlaylistAYL(const std::filesystem::path& path)
+bool Filelist::ExportPlaylistAYL(const FilePath& path)
 {
     std::ofstream stream;
     stream.open(path);

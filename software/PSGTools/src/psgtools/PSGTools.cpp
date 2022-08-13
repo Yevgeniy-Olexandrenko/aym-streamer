@@ -4,15 +4,14 @@
 
 #include "PSGLib.h"
 #include "Filelist.h"
-#include "Interface.h"
+#include "interface/ConsoleGUI.h"
 
-
+const std::filesystem::path k_favoritesPath = "favorites.m3u";
 const std::string k_supportedFileTypes = "sqt|ym|stp|vgz|vgm|asc|stc|pt2|pt3|psg|vtx";
 
-////////////////////////////////////////////////////////////////////////////////
-
 std::shared_ptr<Filelist> m_filelist;
-std::shared_ptr<Stream>   m_stream;
+std::shared_ptr<Filelist> m_favorites;
+
 std::shared_ptr<Output>   m_output;
 std::shared_ptr<Player>   m_player;
 
@@ -25,113 +24,86 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
     return TRUE;
 }
 
-void PrintDelimiter()
+void PrintWellcome()
 {
+    gui::Init(L"PSG Tools");
+
     using namespace terminal;
-    size_t term_w = terminal_width() - 2;
-    std::cout << ' ' << color::bright_cyan;
-    std::cout << std::string(term_w, '-');
+    std::cout << ' ' << color::bright_blue << std::string(gui::k_consoleWidth - 2, '-') << std::endl;
+    std::cout << ' ' << color::bright_red << "PSG Tools v1.0" << std::endl;
+    std::cout << ' ' << color::bright_red << "by Yevgeniy Olexandrenko" << std::endl;
+    std::cout << ' ' << color::bright_blue << std::string(gui::k_consoleWidth - 2, '-') << std::endl;
     std::cout << color::reset << std::endl;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-bool SetConsoleWindowSize(SHORT x, SHORT y)
-{
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    if (h == INVALID_HANDLE_VALUE)
-        return false;
-
-    // If either dimension is greater than the largest console window we can have,
-    // there is no point in attempting the change.
-    {
-        COORD largestSize = GetLargestConsoleWindowSize(h);
-        if (x > largestSize.X)
-            return false;
-        if (y > largestSize.Y)
-            return false;
-    }
-
-
-    CONSOLE_SCREEN_BUFFER_INFO bufferInfo;
-    if (!GetConsoleScreenBufferInfo(h, &bufferInfo))
-        return false;
-
-    SMALL_RECT& winInfo = bufferInfo.srWindow;
-    COORD windowSize = { winInfo.Right - winInfo.Left + 1, winInfo.Bottom - winInfo.Top + 1 };
-
-    if (windowSize.X > x || windowSize.Y > y)
-    {
-        // window size needs to be adjusted before the buffer size can be reduced.
-        SMALL_RECT info =
-        {
-            0,
-            0,
-            x < windowSize.X ? x - 1 : windowSize.X - 1,
-            y < windowSize.Y ? y - 1 : windowSize.Y - 1
-        };
-
-        if (!SetConsoleWindowInfo(h, TRUE, &info))
-            return false;
-    }
-
-    COORD size = { x, y };
-    if (!SetConsoleScreenBufferSize(h, size))
-        return false;
-
-
-    SMALL_RECT info = { 0, 0, x - 1, y - 1 };
-    if (!SetConsoleWindowInfo(h, TRUE, &info))
-        return false;
-
-    return true;
+    std::cout << " ENTER\t- Pause/Resume current song playback" << std::endl;
+    std::cout << " DOWN\t- Go to next song in playlist" << std::endl;
+    std::cout << " UP\t- Go to previous song in playlist" << std::endl;
+    std::cout << " F\t- Add/Remove current song to/from favorites" << std::endl;
+    std::cout << color::reset << std::endl;
 }
 
 void PlayInputFiles()
 {
-    using namespace terminal;
+    ////////////////////////////////////////////////////////////////////////////
+#if 0
+    const int k_comPortIndex = 4;
+    m_output.reset(new Streamer(k_comPortIndex));
+#else
+    m_output.reset(new Emulator());
+#endif
+    m_player.reset(new Player(*m_output));
+#if 0
+    m_filelist->RandomShuffle();
+#endif
+    ////////////////////////////////////////////////////////////////////////////
 
-//    m_filelist->shuffle();
     bool goToPrev = false;
-
     std::filesystem::path path;
-    while (true)
-    {
-        bool isDone = goToPrev ? m_filelist->GetPrevFile(path) : m_filelist->GetNextFile(path);
-        if (!isDone) break;
 
-        m_stream.reset(new Stream());
-        if (PSG::Decode(path, *m_stream))
+    while (goToPrev ? m_filelist->GetPrevFile(path) : m_filelist->GetNextFile(path))
+    {
+        Stream stream;
+        if (PSG::Decode(path, stream))
         {
             goToPrev = false; // if decoding OK, move to next by default
-            Interface::PrintInputFile(*m_stream, m_filelist->GetCurrFileIndex(), m_filelist->GetNumberOfFiles());
 
-            if (m_player->Init(*m_stream))
+            size_t staticHeight  = 0;
+            size_t dynamicHeight = 0;
+
+            if (m_player->Init(stream))
             {
-                Interface::PrintModuleInfo(*m_stream, *m_output);
-                std::cout << std::endl;
+                bool printStatic = true;
+                FrameId frameId  = -1;
 
                 m_player->Play();
-                auto start = std::chrono::steady_clock::now();
-
-                FrameId oldFrame = -1;
                 while (m_player->IsPlaying())
                 {
-                    SetConsoleWindowSize(87, 32);
-                    Interface::HandleKeyboardInput();
-
-                    FrameId newFrame = m_player->GetFrameId();
-                    if (newFrame != oldFrame)
+                    gui::Update();
+                    if (m_player->GetFrameId() != frameId)
                     {
-                        oldFrame = newFrame;
-                        Interface::PrintModuleFrames2(*m_stream, newFrame, 12);
-                        cursor::move_down(12);
-                        Interface::PrintPlaybackProgress();
-                        cursor::move_up(12);
+                        frameId = m_player->GetFrameId();
+
+                        terminal::cursor::move_up(dynamicHeight);
+                        dynamicHeight = 0;
+
+                        if (printStatic)
+                        {
+                            gui::Clear(staticHeight);
+                            staticHeight = 0;
+
+                            auto index = m_filelist->GetCurrFileIndex();
+                            auto amount = m_filelist->GetNumberOfFiles();
+                            auto favorite = m_favorites->ContainsFile(stream.file);
+
+                            staticHeight += gui::PrintInputFile(stream, index, amount, favorite);
+                            staticHeight += gui::PrintStreamInfo(stream, *m_output);
+                            printStatic = false;
+                        }
+
+                        dynamicHeight += gui::PrintStreamFrames(stream, frameId);
+                        dynamicHeight += gui::PrintPlaybackProgress(stream, frameId);
                     }
 
-                    if (Interface::GetKey(VK_UP).pressed)
+                    if (gui::GetKeyState(VK_UP).pressed)
                     {
                         if (!m_player->IsPaused())
                         {
@@ -141,7 +113,7 @@ void PlayInputFiles()
                         }
                     }
 
-                    if (Interface::GetKey(VK_DOWN).pressed)
+                    if (gui::GetKeyState(VK_DOWN).pressed)
                     {
                         if (!m_player->IsPaused())
                         {
@@ -151,7 +123,7 @@ void PlayInputFiles()
                         }
                     }
 
-                    if (Interface::GetKey(VK_RETURN).pressed)
+                    if (gui::GetKeyState(VK_RETURN).pressed)
                     {
                         if (m_player->IsPaused())
                             m_player->Play();
@@ -159,24 +131,21 @@ void PlayInputFiles()
                             m_player->Stop();
                     }
 
+                    if (gui::GetKeyState('F').pressed)
+                    {
+                        if (m_favorites->ContainsFile (stream.file)
+                            ? m_favorites->EraseFile  (stream.file)
+                            : m_favorites->InsertFile (stream.file))
+                        {
+                            m_favorites->ExportPlaylist(k_favoritesPath);
+                            printStatic = true;   
+                        }
+                    }
+
                     Sleep(1);
                 }
-                Interface::PrintBlankArea(0, 13);
 
-
-                //uint32_t duration = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-                //        int ms = duration % 1000; duration /= 1000;
-                //        int ss = duration % 60;   duration /= 60;
-                //        int mm = duration % 60;   duration /= 60;
-                //        int hh = duration;
-                //
-                //        std::cout << std::endl;
-                //        std::cout << " Duration: " <<
-                //            std::setfill('0') << std::setw(2) << hh << ':' <<
-                //            std::setfill('0') << std::setw(2) << mm << ':' <<
-                //            std::setfill('0') << std::setw(2) << ss << '.' <<
-                //            std::setfill('0') << std::setw(3) << ms << std::endl;
-
+                gui::Clear(dynamicHeight);
             }
             else
             {
@@ -194,15 +163,12 @@ void PlayInputFiles()
 void ConvertInputFiles(const std::filesystem::path& outputPath)
 {
     std::filesystem::path path;
-    while (true)
+    while (m_filelist->GetNextFile(path))
     {
-        bool isDone = m_filelist->GetNextFile(path);
-        if (!isDone) break;
-
-        m_stream.reset(new Stream());
-        if (PSG::Decode(path, *m_stream))
+        Stream stream;
+        if (PSG::Decode(path, stream))
         {
-            if (PSG::Encode(outputPath, *m_stream))
+            if (PSG::Encode(outputPath, stream))
             {
                 std::cout << "Done file encoding: " << outputPath << std::endl;
             }
@@ -220,55 +186,29 @@ void ConvertInputFiles(const std::filesystem::path& outputPath)
 
 int main(int argc, char* argv[])
 {
-    if (argc < 2) return 1;
-
     bool isConverting = false;
     std::filesystem::path inputPath;
     std::filesystem::path outputPath;
 
-    inputPath = argv[1];
+    // setup input path
+    if (argc > 1)
+        inputPath = argv[1];
+    else
+        inputPath = k_favoritesPath;
+    
+    // setup output path
     if (argc > 2)
     {
         outputPath = argv[2];
         isConverting = true;
     }
 
-#if 1
-    SetConsoleWindowSize(87, 32);
-
-    HWND consoleWindow = GetConsoleWindow();
-    SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
-
-
-    HANDLE hInput;
-    DWORD prev_mode;
-    hInput = GetStdHandle(STD_INPUT_HANDLE);
-    GetConsoleMode(hInput, &prev_mode);
-    SetConsoleMode(hInput, prev_mode & ~ENABLE_QUICK_EDIT_MODE);
-#endif    
- 
-    using namespace terminal;
-    SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
-    size_t w = terminal_width() - 1;
-
-    PrintDelimiter();
-    std::cout << ' ' << color::bright_red << "PSG Tools v1.0" << color::reset << std::endl;
-    std::cout << ' ' << color::bright_red << "by Yevgeniy Olexandrenko" << color::reset << std::endl;
-    PrintDelimiter();
-    std::cout << std::endl;
-
-#if 0
-    const int k_comPortIndex = 4;
-    m_output.reset(new Streamer(k_comPortIndex));
-#else
-    m_output.reset(new Emulator());
-#endif
-    m_player.reset(new Player(*m_output));
+    // setup file lists
     m_filelist.reset(new Filelist(k_supportedFileTypes, inputPath));
+    m_favorites.reset(new Filelist(k_supportedFileTypes, k_favoritesPath));
 
-#if 0
-    m_filelist->ExportPlaylist("playlist.ayl");
-#endif
+    PrintWellcome();
+    SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
 
     if (!m_filelist->IsEmpty())
     {
@@ -281,7 +221,5 @@ int main(int argc, char* argv[])
             PlayInputFiles();
         }
     }
-    cursor::show(true);
-
     return 0;
 }

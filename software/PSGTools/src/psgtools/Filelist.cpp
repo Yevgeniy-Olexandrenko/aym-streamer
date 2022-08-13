@@ -112,6 +112,20 @@ void Filelist::RandomShuffle()
     m_index = -1;
 }
 
+bool Filelist::EraseFile(const FilePath& path)
+{
+    auto hashIt = m_hashes.find(std::filesystem::hash_value(path));
+    auto fileIt = std::find(m_files.begin(), m_files.end(), path);
+
+    if (hashIt != m_hashes.end() && fileIt != m_files.end())
+    {
+        m_hashes.erase(hashIt);
+        m_files.erase(fileIt);
+        return true;
+    }
+    return false;
+}
+
 bool Filelist::InsertFile(const FilePath& path)
 {
     if (path.has_filename())

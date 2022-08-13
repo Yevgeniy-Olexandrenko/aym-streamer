@@ -69,7 +69,9 @@
     <ClCompile Include="..\src\psglib\stream\Stream.cpp" />
     <ClCompile Include="..\src\psgtools\components\glob\glob.cpp" />
     <ClCompile Include="..\src\psgtools\Filelist.cpp" />
-    <ClCompile Include="..\src\psgtools\Interface.cpp" />
+    <ClCompile Include="..\src\psgtools\interface\ConsoleGUI.cpp" />
+    <ClCompile Include="..\src\psgtools\interface\KeyboardInput.cpp" />
+    <ClCompile Include="..\src\psgtools\interface\PrintBuffer.cpp" />
     <ClCompile Include="..\src\psgtools\PSGTools.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -128,7 +130,9 @@
     <ClInclude Include="..\src\psgtools\components\terminal\terminal_cursor.hpp" />
     <ClInclude Include="..\src\psgtools\components\terminal\terminal_size.hpp" />
     <ClInclude Include="..\src\psgtools\Filelist.h" />
-    <ClInclude Include="..\src\psgtools\Interface.h" />
+    <ClInclude Include="..\src\psgtools\interface\ConsoleGUI.h" />
+    <ClInclude Include="..\src\psgtools\interface\KeyboardInput.h" />
+    <ClInclude Include="..\src\psgtools\interface\PrintBuffer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

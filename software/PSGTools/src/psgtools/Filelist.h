@@ -21,6 +21,7 @@ public:
 	bool GetNextFile(FilePath& path) const;
 	void RandomShuffle();
 
+	bool EraseFile(const FilePath& path);
 	bool InsertFile(const FilePath& path);
 	bool ContainsFile(const FilePath& path);
 	bool ExportPlaylist(const FilePath& path);

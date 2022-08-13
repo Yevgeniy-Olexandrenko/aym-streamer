@@ -61,6 +61,9 @@
     <Filter Include="Sources\psgtools\components\terminal">
       <UniqueIdentifier>{548de8e2-de57-4b83-b1eb-45fb65a224a4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\psgtools\interface">
+      <UniqueIdentifier>{664194dd-3929-4428-96ff-ebebfa778f72}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\psglib\stream\Chip.cpp">
@@ -204,9 +207,6 @@
     <ClCompile Include="..\src\psgtools\Filelist.cpp">
       <Filter>Sources\psgtools</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\psgtools\Interface.cpp">
-      <Filter>Sources\psgtools</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\psgtools\PSGTools.cpp">
       <Filter>Sources\psgtools</Filter>
     </ClCompile>
@@ -218,6 +218,15 @@
     </ClCompile>
     <ClCompile Include="..\src\psglib\stream\Processing.cpp">
       <Filter>Sources\psglib\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psgtools\interface\ConsoleGUI.cpp">
+      <Filter>Sources\psgtools\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psgtools\interface\KeyboardInput.cpp">
+      <Filter>Sources\psgtools\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psgtools\interface\PrintBuffer.cpp">
+      <Filter>Sources\psgtools\interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -380,14 +389,20 @@
     <ClInclude Include="..\src\psgtools\Filelist.h">
       <Filter>Sources\psgtools</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\psgtools\Interface.h">
-      <Filter>Sources\psgtools</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\psglib\output\emulator\SoundChip.h">
       <Filter>Sources\psglib\output\emulator</Filter>
     </ClInclude>
     <ClInclude Include="..\src\psglib\stream\Processing.h">
       <Filter>Sources\psglib\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\interface\ConsoleGUI.h">
+      <Filter>Sources\psgtools\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\interface\KeyboardInput.h">
+      <Filter>Sources\psgtools\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psgtools\interface\PrintBuffer.h">
+      <Filter>Sources\psgtools\interface</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

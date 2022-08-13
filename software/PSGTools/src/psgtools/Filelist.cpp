@@ -43,44 +43,44 @@ Filelist::Filelist(const std::string& exts, const std::filesystem::path& path)
         {
             if (path.extension() == ".m3u")
             {
-                ParsePlaylistM3U(path);
+                ImportPlaylistM3U(path);
             }
             else if (path.extension() == ".ayl")
             {
-                ParsePlaylistAYL(path);
+                ImportPlaylistAYL(path);
             }
             else
             {
-                InsertPath(path);
+                ImportFile(path);
             }
         }
         else
         {
-            ParseFolder(path);
+            ImportFolder(path);
         }
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Filelist::empty() const
+bool Filelist::IsEmpty() const
 {
     return m_files.empty();
 }
 
-uint32_t Filelist::count() const
+uint32_t Filelist::GetNumberOfFiles() const
 {
     return (uint32_t)m_files.size();
 }
 
-int32_t Filelist::index() const
+int32_t Filelist::GetCurrFileIndex() const
 {
     return m_index;
 }
 
-bool Filelist::prev(std::filesystem::path& path) const
+bool Filelist::GetPrevFile(std::filesystem::path& path) const
 {
-    if (!empty())
+    if (!IsEmpty())
     {
         if (m_index > 0)
         {
@@ -91,9 +91,9 @@ bool Filelist::prev(std::filesystem::path& path) const
     return false;
 }
 
-bool Filelist::next(std::filesystem::path& path) const
+bool Filelist::GetNextFile(std::filesystem::path& path) const
 {
-    if (!empty())
+    if (!IsEmpty())
     {
         if (m_index < int(m_files.size() - 1))
         {
@@ -104,7 +104,7 @@ bool Filelist::next(std::filesystem::path& path) const
     return false;
 }
 
-void Filelist::shuffle()
+void Filelist::RandomShuffle()
 {
     std::random_device randomDevice;
     std::mt19937 randomGenerator(randomDevice());
@@ -112,7 +112,23 @@ void Filelist::shuffle()
     m_index = -1;
 }
 
-void Filelist::ParsePlaylistM3U(const std::filesystem::path& path)
+bool Filelist::ExportPlaylist(const std::filesystem::path& path)
+{
+    if (path.has_filename())
+    {
+        if (path.extension() == ".m3u")
+        {
+            return ExportPlaylistM3U(std::filesystem::absolute(path));
+        }
+        else if (path.extension() == ".ayl")
+        {
+            return ExportPlaylistAYL(std::filesystem::absolute(path));
+        }
+    }
+    return false;
+}
+
+void Filelist::ImportPlaylistM3U(const std::filesystem::path& path)
 {
     std::ifstream fileStream;
     fileStream.open(path);
@@ -122,14 +138,17 @@ void Filelist::ParsePlaylistM3U(const std::filesystem::path& path)
         std::string entity;
         while (getline(fileStream, entity))
         {
-            auto entityPath = ConvertToAbsolute(path, entity);
-            InsertPath(entityPath);
+            if (!entity.empty() && entity[0] != '#')
+            {
+                auto entityPath = ConvertToAbsolute(path, entity);
+                ImportFile(entityPath);
+            }
         }
         fileStream.close();
     }
 }
 
-void Filelist::ParsePlaylistAYL(const std::filesystem::path& path)
+void Filelist::ImportPlaylistAYL(const std::filesystem::path& path)
 {
     std::ifstream fileStream;
     fileStream.open(path);
@@ -147,7 +166,7 @@ void Filelist::ParsePlaylistAYL(const std::filesystem::path& path)
                 else if (!skipLine)
                 {
                     auto entityPath = ConvertToAbsolute(path, entity);
-                    InsertPath(entityPath);
+                    ImportFile(entityPath);
                 }
             }
         }
@@ -155,18 +174,18 @@ void Filelist::ParsePlaylistAYL(const std::filesystem::path& path)
     }
 }
 
-void Filelist::ParseFolder(const std::filesystem::path& path)
+void Filelist::ImportFolder(const std::filesystem::path& path)
 {
     for (const auto& file : std::filesystem::directory_iterator(path))
     {
         if (std::filesystem::is_regular_file(file))
         {
-            InsertPath(file);
+            ImportFile(file);
         }
     }
 }
 
-void Filelist::InsertPath(const std::filesystem::path& path)
+void Filelist::ImportFile(const std::filesystem::path& path)
 {
     if (path.has_filename())
     {
@@ -184,4 +203,46 @@ void Filelist::InsertPath(const std::filesystem::path& path)
             }
         }
     }
+}
+
+bool Filelist::ExportPlaylistM3U(const std::filesystem::path& path)
+{
+    std::ofstream stream;
+    stream.open(path);
+
+    if (stream)
+    {
+        auto basePath = path.parent_path();
+        for (const auto& filePath : m_files)
+        {
+            auto proximateFilePath = std::filesystem::proximate(filePath, basePath);
+            stream << proximateFilePath.string() << std::endl;
+        }
+
+        stream.close();
+        return true;
+    }
+    return false;
+}
+
+bool Filelist::ExportPlaylistAYL(const std::filesystem::path& path)
+{
+    std::ofstream stream;
+    stream.open(path);
+
+    if (stream)
+    {
+        stream << "ZX Spectrum Sound Chip Emulator Play List File v1.0" << std::endl;
+
+        auto basePath = path.parent_path();
+        for (const auto& filePath : m_files)
+        {
+            auto proximateFilePath = std::filesystem::proximate(filePath, basePath);
+            stream << proximateFilePath.string() << std::endl;
+        }
+
+        stream.close();
+        return true;
+    }
+    return false;
 }

@@ -98,14 +98,14 @@ void PlayInputFiles()
     std::filesystem::path path;
     while (true)
     {
-        bool isDone = goToPrev ? m_filelist->prev(path) : m_filelist->next(path);
+        bool isDone = goToPrev ? m_filelist->GetPrevFile(path) : m_filelist->GetNextFile(path);
         if (!isDone) break;
 
         m_stream.reset(new Stream());
         if (PSG::Decode(path, *m_stream))
         {
             goToPrev = false; // if decoding OK, move to next by default
-            Interface::PrintInputFile(*m_stream, m_filelist->index(), m_filelist->count());
+            Interface::PrintInputFile(*m_stream, m_filelist->GetCurrFileIndex(), m_filelist->GetNumberOfFiles());
 
             if (m_player->Init(*m_stream))
             {
@@ -196,7 +196,7 @@ void ConvertInputFiles(const std::filesystem::path& outputPath)
     std::filesystem::path path;
     while (true)
     {
-        bool isDone = m_filelist->next(path);
+        bool isDone = m_filelist->GetNextFile(path);
         if (!isDone) break;
 
         m_stream.reset(new Stream());
@@ -266,7 +266,11 @@ int main(int argc, char* argv[])
     m_player.reset(new Player(*m_output));
     m_filelist.reset(new Filelist(k_supportedFileTypes, inputPath));
 
-    if (!m_filelist->empty())
+#if 0
+    m_filelist->ExportPlaylist("playlist.ayl");
+#endif
+
+    if (!m_filelist->IsEmpty())
     {
         if (isConverting)
         {

@@ -319,14 +319,27 @@ namespace gui
 
 	size_t PrintPlaybackProgress(const Stream& stream, int frameId)
 	{
-        std::string numberStr = "00:00:00";
-        size_t strLen = numberStr.length();
-        size_t delLen = std::max(int(terminal_width() - strLen - 8), 2);
+        int hh = 0, mm = 0, ss = 0;
+        size_t playbackFrames  = stream.play.framesCount();
+        size_t remainingFrames = (playbackFrames - frameId);
+        stream.play.ComputeDuration(remainingFrames, hh, mm, ss);
 
-        std::cout << ' ' << color::bright_cyan;
-        std::cout << std::string(delLen, '-') << '[';
-        std::cout << ' ' << color::bright_white << numberStr;
-        std::cout << ' ' << color::bright_cyan << "]--";
+        static const std::string k_spinner = R"(_\|/)";
+        char spin = k_spinner[frameId >> 2 & 3];
+
+        auto range = size_t(terminal_width() - 1 - 2 - 2 - 10 - 2 - 2 - 1);
+        auto size1 = size_t(float(frameId * range) / playbackFrames + 0.5f);
+        auto size2 = size_t(range - size1);
+
+        std::cout << ' ' << color::bright_blue << std::string(2 + size1, '-');
+        std::cout << color::bright_cyan << "[ ";
+        std::cout << color::bright_magenta << spin << ' ';
+        std::cout << color::bright_white <<
+            std::setfill('0') << std::setw(2) << hh << ':' <<
+            std::setfill('0') << std::setw(2) << mm << ':' <<
+            std::setfill('0') << std::setw(2) << ss;
+        std::cout << color::bright_cyan << " ]";
+        std::cout << color::bright_blue << std::string(size2 + 2, '-');
         std::cout << color::reset << std::endl;
 		return 1;
 	}

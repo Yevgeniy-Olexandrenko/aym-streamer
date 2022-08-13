@@ -67,12 +67,13 @@ public:
 
 	public:
 		const Frame& GetFrame(FrameId frameId) const;
+
 		void GetRealDuration(int& hh, int& mm, int& ss, int& ms) const;
 		void GetRealDuration(int& hh, int& mm, int& ss) const;
+
 		void GetFakeDuration(int& hh, int& mm, int& ss, int& ms) const;
 		void GetFakeDuration(int& hh, int& mm, int& ss) const;
 
-	private:
 		void ComputeDuration(size_t frameCount, int& hh, int& mm, int& ss, int& ms) const;
 		void ComputeDuration(size_t frameCount, int& hh, int& mm, int& ss) const;
 	};

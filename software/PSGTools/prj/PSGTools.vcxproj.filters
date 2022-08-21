@@ -228,6 +228,9 @@
     <ClCompile Include="..\src\psgtools\interface\PrintBuffer.cpp">
       <Filter>Sources\psgtools\interface</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03_.cpp">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\psglib\stream\Chip.h">
@@ -403,6 +406,9 @@
     </ClInclude>
     <ClInclude Include="..\src\psgtools\interface\PrintBuffer.h">
       <Filter>Sources\psgtools\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03_.h">
+      <Filter>Sources\psglib\decoders\chipsims</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

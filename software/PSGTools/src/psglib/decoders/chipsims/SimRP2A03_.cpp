@@ -129,6 +129,103 @@ void SimRP2A03_::PostProcess(Stream& stream)
 
 void SimRP2A03_::ConvertToAY8910(const State& state, Frame& frame)
 {
+    uint8_t mixer = 0x3F;
+
+    // Pulse 1 -> Square A
+    if (state.pulse1_enable)
+    {
+        uint16_t period = ConvertPeriod(state.pulse1_period);
+        uint8_t  volume = ConvertVolume(state.pulse1_volume);
+
+        frame.UpdatePeriod(A_Period, period);
+        frame.Update(A_Volume, volume);
+        mixer &= ~(1 << 0);
+
+        if (volume > m_maxVol[0]) m_maxVol[0] = volume;
+    }
+
+    // Pulse 2 -> Square C
+    if (state.pulse2_enable)
+    {
+        uint16_t period = ConvertPeriod(state.pulse2_period);
+        uint8_t  volume = ConvertVolume(state.pulse2_volume);
+
+        frame.UpdatePeriod(C_Period, period);
+        frame.Update(C_Volume, volume);
+        mixer &= ~(1 << 2);
+
+        if (volume > m_maxVol[1]) m_maxVol[1] = volume;
+    }
+
+    // Triangle -> Envelope B
+    if (state.triangle_enable)
+    {
+        uint16_t period = ConvertPeriod(state.triangle_period >> 2);
+
+        if (frame.data(0, E_Shape) != 0x0E) frame.Update(E_Shape, 0x0E);
+        frame.UpdatePeriod(E_Period, period);
+        frame.Update(B_Volume, 0x10);
+    }
+    else
+    {
+        frame.UpdatePeriod(E_Period, 0xFFFF);
+    }
+
+    // Noise -> automatically chosen channel
+    if (state.noise_enable)
+    {
+        uint16_t period = ConvertPeriod(state.noise_period >> 6);
+        uint8_t  volume = ConvertVolume(state.noise_volume);
+
+        frame.UpdatePeriod(N_Period, period);
+
+        // choose Square B if Triangle is disabled
+        if (!state.triangle_enable)
+        {
+            frame.Update(B_Volume, volume);
+            mixer &= ~(1 << 4);
+        }
+
+        // choose Square A if Pulse 1 is disabled
+        else if (!state.pulse1_enable)
+        {
+            frame.Update(A_Volume, volume);
+            mixer &= ~(1 << 3);
+        }
+
+        // choose Square C if Pulse 2 is disabled
+        else if (!state.pulse2_enable)
+        {
+            frame.Update(C_Volume, volume);
+            mixer &= ~(1 << 5);
+        }
+
+        // choose Square A if Noise volume is very close
+        else if (std::abs(int(frame.data(0, A_Volume)) - int(volume)) < 2)
+        {
+            mixer &= ~(1 << 3);
+        }
+
+        // choose Square C if Noise volume is very close
+        else if (std::abs(int(frame.data(0, C_Volume)) - int(volume)) < 2)
+        {
+            mixer &= ~(1 << 5);
+        }
+
+        // choose Square B ignoring Triangle
+        else
+        {
+            frame.Update(B_Volume, volume);
+            mixer &= ~(1 << 4);
+        }
+
+        if (volume > m_maxVol[2]) m_maxVol[2] = volume;
+    }
+
+    // Mixers
+    {
+        frame.Update(Mixer, mixer);
+    }
 }
 
 void SimRP2A03_::ConvertToAY8910x2(const State& state, Frame& frame)
@@ -139,9 +236,6 @@ void SimRP2A03_::ConvertToAY8910x2(const State& state, Frame& frame)
     // Pulse 1 -> Chip 0 Square A + Chip 1 Square A
     if (state.pulse1_enable)
     {
-        mixer0 &= ~(1 << 0);
-        mixer1 &= ~(1 << 0);
-
         uint16_t period0 = ConvertPeriod(state.pulse1_period);
         uint8_t  volume0 = ConvertVolume(state.pulse1_volume);
 
@@ -152,9 +246,11 @@ void SimRP2A03_::ConvertToAY8910x2(const State& state, Frame& frame)
 
         frame.UpdatePeriod(0, A_Period, period0);
         frame.Update(0, A_Volume, volume0);
+        mixer0 &= ~(1 << 0);
 
         frame.UpdatePeriod(1, A_Period, period1);
         frame.Update(1, A_Volume, volume1);
+        mixer1 &= ~(1 << 0);
 
         if (volume0 > m_maxVol[0]) m_maxVol[0] = volume0;
     }
@@ -162,9 +258,6 @@ void SimRP2A03_::ConvertToAY8910x2(const State& state, Frame& frame)
     // Pulse 2 -> Chip 0 Square C + Chip 1 Square C
     if (state.pulse2_enable)
     {
-        mixer0 &= ~(1 << 2);
-        mixer1 &= ~(1 << 2);
-
         uint16_t period0 = ConvertPeriod(state.pulse2_period);
         uint8_t  volume0 = ConvertVolume(state.pulse2_volume);
 
@@ -175,33 +268,38 @@ void SimRP2A03_::ConvertToAY8910x2(const State& state, Frame& frame)
 
         frame.UpdatePeriod(0, C_Period, period0);
         frame.Update(0, C_Volume, volume0);
+        mixer0 &= ~(1 << 2);
 
         frame.UpdatePeriod(1, C_Period, period1);
         frame.Update(1, C_Volume, volume1);
+        mixer1 &= ~(1 << 2);
 
         if (volume0 > m_maxVol[1]) m_maxVol[1] = volume0;
     }
 
     // Triangle -> Chip 0 Envelope in Channel B
+    if (state.triangle_enable)
     {
         uint16_t period = ConvertPeriod(state.triangle_period >> 2);
-        if (!state.triangle_enable || !period) period = 0xFFFF;
 
-        frame.Update(0, B_Volume, 0x10);
-        frame.UpdatePeriod(0, E_Period, period);
         if (frame.data(0, E_Shape) != 0x0E) frame.Update(0, E_Shape, 0x0E);
+        frame.UpdatePeriod(0, E_Period, period);
+        frame.Update(0, B_Volume, 0x10);
+    }
+    else
+    {
+        frame.UpdatePeriod(0, E_Period, 0xFFFF);
     }
 
     // Noise -> Chip 1 Noise in Channel B
     if (state.noise_enable)
     {
-        mixer1 &= ~(1 << 4);
-
         uint16_t period = ConvertPeriod(state.noise_period >> 6);
         uint8_t  volume = ConvertVolume(state.noise_volume);
 
         frame.UpdatePeriod(1, N_Period, period);
         frame.Update(1, B_Volume, volume);
+        mixer1 &= ~(1 << 4);
 
         if (volume > m_maxVol[2]) m_maxVol[2] = volume;
     }
@@ -223,8 +321,6 @@ void SimRP2A03_::ConvertToAY8930(const State& state, Frame& frame)
     // Pulse 1 -> Square A
     if (state.pulse1_enable)
     {
-        mixer &= ~(1 << 0);
-
         uint16_t period = ConvertPeriod(state.pulse1_period << 1);
         uint8_t  volume = ConvertVolume(state.pulse1_volume);
         uint8_t  duty = 0x02 + state.pulse1_duty;
@@ -232,6 +328,7 @@ void SimRP2A03_::ConvertToAY8930(const State& state, Frame& frame)
         frame.UpdatePeriod(A_Period, period);
         frame.Update(A_Volume, volume);
         frame.Update(A_Duty, duty);
+        mixer &= ~(1 << 0);
 
         if (volume > m_maxVol[0]) m_maxVol[0] = volume;
     }
@@ -239,44 +336,36 @@ void SimRP2A03_::ConvertToAY8930(const State& state, Frame& frame)
     // Pulse 2 -> Square C
     if (state.pulse2_enable)
     {
-        mixer &= ~(1 << 2);
-
         uint16_t period = ConvertPeriod(state.pulse2_period << 1);
         uint8_t  volume = ConvertVolume(state.pulse2_volume);
         uint8_t  duty = 0x02 + state.pulse2_duty;
 
-        frame.UpdatePeriod(0, C_Period, period);
-        frame.Update(0, C_Volume, volume);
+        frame.UpdatePeriod(C_Period, period);
+        frame.Update(C_Volume, volume);
         frame.Update(C_Duty, duty);
+        mixer &= ~(1 << 2);
 
         if (volume > m_maxVol[1]) m_maxVol[1] = volume;
     }
 
     // Triangle -> Envelope B
+    if (state.triangle_enable)
     {
         uint16_t period = ConvertPeriod(state.triangle_period >> 2);
-        if (!state.triangle_enable || !period) period = 0xFFFF;
 
-        frame.Update(B_Volume, 0x20);
-        frame.UpdatePeriod(EB_Period, period);
+        // workaround for mixer
+        frame.UpdatePeriod(B_Period, 0x0000);
+        frame.Update(B_Duty, 0x08);
+        mixer &= ~(1 << 1);
+
+        // turn on triangle waveform
         if (frame.data(0, EB_Shape) != 0x0E) frame.Update(EB_Shape, 0x0E);
+        frame.UpdatePeriod(EB_Period, period);
+        frame.Update(B_Volume, 0x20);
     }
-
-    // Noise ???
-    if (state.noise_enable)
-    {
-#if 0
-        mixer &= ~(1 << 4);
-
-        uint16_t period = ConvertPeriod(state.noise_period >> 6);
-        uint8_t  volume = ConvertVolume(state.noise_volume);
-
-        frame.UpdatePeriod(N_Period, period);
-        frame.Update(B_Volume, volume);
-
-        if (volume > m_maxVol[2]) m_maxVol[2] = volume;
-#endif
-    }
+    
+    // Noise
+    // TODO
 
     // Mixers
     {

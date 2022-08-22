@@ -32,6 +32,9 @@
     <ClCompile Include="..\src\psglib\components\zlib\trees.c" />
     <ClCompile Include="..\src\psglib\components\zlib\uncompr.c" />
     <ClCompile Include="..\src\psglib\components\zlib\zutil.c" />
+    <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesApu.cpp" />
+    <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCartridge.cpp" />
+    <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCpu.cpp" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimAY8910.cpp" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03.cpp" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03_.cpp" />
@@ -89,6 +92,9 @@
     <ClInclude Include="..\src\psglib\components\zlib\zlib.h" />
     <ClInclude Include="..\src\psglib\components\zlib\zutil.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\ChipSim.h" />
+    <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesApu.h" />
+    <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesCartridge.h" />
+    <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesCpu.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimAY8910.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03_.h" />

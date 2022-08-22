@@ -2,6 +2,7 @@
 #include "zlib.h"
 #include "decoders/chipsims/SimAY8910.h"
 #include "decoders/chipsims/SimRP2A03.h"
+#include "decoders/chipsims/SimRP2A03_.h"
 #include "decoders/chipsims/SimSN76489.h"
 #include <sstream>
 
@@ -47,7 +48,7 @@ bool DecodeVGM::Open(Stream& stream)
     if (ReadFile(stream.file.string().c_str(), (uint8_t*)(&header), sizeof(header)))
     {
         if (header.version >= 0x151 && header.ay8910Clock) m_chip.reset(new SimAY8910());
-        if (header.version >= 0x161 && header.nesApuClock) m_chip.reset(new SimRP2A03());
+        if (header.version >= 0x161 && header.nesApuClock) m_chip.reset(new SimRP2A03_());
 
         if (header.ident == VGMSignature && m_chip)
         {

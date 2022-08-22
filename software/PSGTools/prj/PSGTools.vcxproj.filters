@@ -64,6 +64,9 @@
     <Filter Include="Sources\psgtools\interface">
       <UniqueIdentifier>{664194dd-3929-4428-96ff-ebebfa778f72}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\psglib\decoders\chipsims\nes">
+      <UniqueIdentifier>{3c0d5e3c-2c3f-40b2-8d6e-f3402804320e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\psglib\stream\Chip.cpp">
@@ -230,6 +233,15 @@
     </ClCompile>
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03_.cpp">
       <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesApu.cpp">
+      <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCartridge.cpp">
+      <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCpu.cpp">
+      <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -409,6 +421,15 @@
     </ClInclude>
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03_.h">
       <Filter>Sources\psglib\decoders\chipsims</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesApu.h">
+      <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesCartridge.h">
+      <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesCpu.h">
+      <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

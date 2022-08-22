@@ -91,6 +91,14 @@ bool DecodeVGM::Open(Stream& stream)
                     stream.chip.model(Chip::Model::YM2149);
                     stream.chip.count(m_isTS ? Chip::Count::TwoChips : Chip::Count::OneChip);
                     stream.chip.clockValue(header.nesApuClock & 0x3FFFFFFF);
+
+#if 1
+                    auto convertMethod = SimRP2A03_::ConvertMethod::AY8910x2;
+                    auto dstClockRate  = uint32_t(stream.chip.clockValue());
+
+                    SimRP2A03_& simRP2A03 = static_cast<SimRP2A03_&>(*m_chip.get());
+                    simRP2A03.Configure(convertMethod, dstClockRate);
+#endif
                 }
 
                 m_samplesPerFrame = (44100 / frameRate);

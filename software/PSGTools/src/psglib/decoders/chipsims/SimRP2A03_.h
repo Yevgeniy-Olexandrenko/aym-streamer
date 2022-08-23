@@ -52,6 +52,4 @@ private:
 private:
     ConvertMethod m_convertMethod;
     uint32_t m_dstClockRate;
-
-    int m_maxVol[3]{};
 };

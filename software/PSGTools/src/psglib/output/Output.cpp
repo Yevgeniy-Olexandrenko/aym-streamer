@@ -40,7 +40,7 @@ bool Output::Init(const Stream& stream)
             assert(m_chip.modelKnown());
             assert(m_chip.clockKnown());
             assert(m_chip.outputKnown());
-            assert(m_chip.output() == Chip::Output::Stereo && m_chip.stereoKnown());
+            if (m_chip.output() == Chip::Output::Stereo) assert(m_chip.stereoKnown());
 
             // restrict stereo modes available for exp mode
             if (stream.IsExpModeUsed() && m_chip.output() == Chip::Output::Stereo)

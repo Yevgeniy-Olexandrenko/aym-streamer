@@ -175,7 +175,7 @@ void NesApu::Write(uint16_t addr, uint8_t data)
         break;
 
     case TRITMRH:
-        m_triangle.timer_period = ((m_triangle.timer_period & 0x00FF) | ((data & 0x07) << 8));
+        m_triangle.timer_period = ((m_triangle.timer_period & 0x00FF) | (data & 0x07) << 8);
         if (m_triangle.enabled) m_triangle.len_counter = length_lut[data >> 3];
         m_triangle.halt = true;
         break;
@@ -425,7 +425,7 @@ void NesApu::Process(uint32_t cpu_cycles)
         }
 
         // clocked on every cycle
-        if ((m_triangle.lin_counter > 0) && (m_triangle.len_counter > 0))
+        if (m_triangle.lin_counter > 0 && m_triangle.len_counter > 0)
         {
             if (m_triangle.timer) --m_triangle.timer;
             else

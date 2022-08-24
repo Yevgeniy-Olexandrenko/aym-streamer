@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "stream/Processing.h"
+#include "Processing.h"
 
 #define AY8930_FORCE_TO_CHOOSE  0
 #define AY8930_FORCE_TO_DISCARD 0

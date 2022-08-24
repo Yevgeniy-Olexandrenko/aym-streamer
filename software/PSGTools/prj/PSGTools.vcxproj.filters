@@ -216,9 +216,6 @@
     <ClCompile Include="..\src\psglib\output\Output.cpp">
       <Filter>Sources\psglib\output</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\psglib\stream\Processing.cpp">
-      <Filter>Sources\psglib\stream</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\psgtools\interface\ConsoleGUI.cpp">
       <Filter>Sources\psgtools\interface</Filter>
     </ClCompile>
@@ -239,6 +236,9 @@
     </ClCompile>
     <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCpu.cpp">
       <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\output\Processing.cpp">
+      <Filter>Sources\psglib\output</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -401,9 +401,6 @@
     <ClInclude Include="..\src\psglib\output\emulator\SoundChip.h">
       <Filter>Sources\psglib\output\emulator</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\psglib\stream\Processing.h">
-      <Filter>Sources\psglib\stream</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\psgtools\interface\ConsoleGUI.h">
       <Filter>Sources\psgtools\interface</Filter>
     </ClInclude>
@@ -424,6 +421,9 @@
     </ClInclude>
     <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesCpu.h">
       <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\output\Processing.h">
+      <Filter>Sources\psglib\output</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

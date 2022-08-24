@@ -63,58 +63,57 @@ bool DecodeVGM::Open(Stream& stream)
                 }
                 m_dataPtr = m_data + dataOffset;
 
-                int frameRate = 60;// DetectFrameRate();
-                stream.play.frameRate(frameRate);
-                stream.info.type("VGM stream");
-
+                int clockRate = 0;
+                int frameRate = 60;
+                
                 if (m_chip->type() == ChipSim::Type::AY8910)
                 {
-                    m_isTS = bool(header.ay8910Clock & 0x40000000);
-                    auto divider = bool(header.ay8910Flags & 0x10);
-                    auto chipClock = (header.ay8910Clock & 0x3FFFFFFF) / (divider ? 2 : 1);
+                    clockRate = (header.ay8910Clock & 0x3FFFFFFF);
+                    if (header.ay8910Flags & 0x10) clockRate /= 2;
 
-                    Chip::Model chipModel = Chip::Model::AY8910;
-                    if (header.ay8910Type == 0x03) chipModel = Chip::Model::AY8930;
-                    if (header.ay8910Type >= 0x10) chipModel = Chip::Model::YM2149;
-                    Chip::Count chipCount = m_isTS ? Chip::Count::TwoChips : Chip::Count::OneChip;
+                    // TODO: detect frame rate
 
-                    stream.chip.model(chipModel);
-                    stream.chip.count(chipCount);
-                    stream.chip.clockValue(chipClock);
+                    Chip::Model model = Chip::Model::AY8910;
+                    if (header.ay8910Type == 0x03) model = Chip::Model::AY8930;
+                    if (header.ay8910Type >= 0x10) model = Chip::Model::YM2149;
+
+                    Chip::Count count = (header.ay8910Clock & 0x40000000)
+                        ? Chip::Count::TwoChips
+                        : Chip::Count::OneChip;
+
+                    if (!stream.chip.clockKnown()) stream.chip.clockValue(clockRate);
+                    if (!stream.chip.modelKnown()) stream.chip.model(model);
+                    stream.chip.count(count);
                 }
 
                 else if (m_chip->type() == ChipSim::Type::RP2A03)
                 {
-#if 1
-                    // TODO
-                    m_isTS = false;
-                    stream.chip.model(Chip::Model::YM2149);
-                    stream.chip.count(Chip::Count::OneChip);
-                    stream.chip.clockValue(header.nesApuClock & 0x3FFFFFFF);
-                    stream.chip.output(Chip::Output::Mono);
-                    //stream.chip.clockValue(1000000);
+                    clockRate = (header.nesApuClock & 0x3FFFFFFF);
 
-                    auto convertMethod = SimRP2A03::ConvertMethod::SingleChip;
-                    auto dstClockRate  = uint32_t(stream.chip.clockValue());
+                    // TODO: detect frame rate
 
-                    SimRP2A03& simRP2A03 = static_cast<SimRP2A03&>(*m_chip.get());
-                    simRP2A03.Configure(convertMethod, dstClockRate);
-#else
-                    // TODO
-                    m_isTS = true;
-                    stream.chip.model(Chip::Model::YM2149);
-                    stream.chip.count(m_isTS ? Chip::Count::TwoChips : Chip::Count::OneChip);
-                    stream.chip.clockValue(header.nesApuClock & 0x3FFFFFFF);
-                    //stream.chip.output(Chip::Output::Mono);
+                    auto outputType = SimRP2A03::OutputType::SingleChip;
+                    if (stream.chip.model() == Chip::Model::AY8930)
+                         outputType = SimRP2A03::OutputType::AY8930Chip;
+                    else if (stream.chip.count() == Chip::Count::TwoChips)
+                         outputType = SimRP2A03::OutputType::DoubleChip;
 
-                    auto convertMethod = SimRP2A03::ConvertMethod::DoubleChip;
-                    auto dstClockRate = uint32_t(stream.chip.clockValue());
+                    Chip::Count count = (outputType == SimRP2A03::OutputType::AY8930Chip)
+                        ? Chip::Count::OneChip
+                        : stream.chip.count();
 
-                    SimRP2A03& simRP2A03 = static_cast<SimRP2A03&>(*m_chip.get());
-                    simRP2A03.Configure(convertMethod, dstClockRate);
-#endif
+                    if (!stream.chip.clockKnown())  stream.chip.clockValue(clockRate);
+                    if (!stream.chip.modelKnown())  stream.chip.model(Chip::Model::YM2149);
+                    if (!stream.chip.outputKnown()) stream.chip.output(Chip::Output::Mono);
+                    stream.chip.count(count);
+
+                    static_cast<SimRP2A03*>(m_chip.get())->ConfigureOutput(outputType);
                 }
 
+                stream.info.type("VGM stream");
+                stream.play.frameRate(frameRate);
+
+                m_chip->ConfigureClock(clockRate, stream.chip.clockValue());
                 m_samplesPerFrame = (44100 / frameRate);
                 m_processedSamples = 0;
 

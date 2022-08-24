@@ -5,6 +5,7 @@
 namespace
 {
     const float k_gainDefaultValue = 1.0f; // 1.75f;
+    const float k_noiseVolumePower = std::sqrt(2.0f);
 }
 
 struct SimRP2A03::State
@@ -30,17 +31,19 @@ struct SimRP2A03::State
 
 SimRP2A03::SimRP2A03()
     : ChipSim(Type::RP2A03)
-    , NesApu(44100, NesCpu::Clock::NTSC)
-    , m_convertMethod(ConvertMethod::SingleChip)
-    , m_dstClockRate(m_cpuClock)
+    , m_outputType(OutputType::SingleChip)
 {
-    Reset();
 }
 
-void SimRP2A03::Configure(ConvertMethod convertMethod, uint32_t dstClockRate)
+void SimRP2A03::ConfigureClock(int srcClock, int dstClock)
 {
-    m_convertMethod = convertMethod;
-    m_dstClockRate  = dstClockRate;
+    ChipSim::ConfigureClock(srcClock, dstClock);
+    NesApu::Init(44100, srcClock);
+}
+
+void SimRP2A03::ConfigureOutput(OutputType outputType)
+{
+    m_outputType = outputType;
 }
 
 void SimRP2A03::Reset()
@@ -92,11 +95,11 @@ void SimRP2A03::Convert(Frame& frame)
     state.noise_mode   = m_noise.mode;
     state.noise_enable = (m_noise.len_counter && m_noise.envelope.out);
 
-    switch (m_convertMethod)
+    switch (m_outputType)
     {
-    case ConvertMethod::SingleChip: ConvertToSingleChip(state, frame); break;
-    case ConvertMethod::DoubleChip: ConvertToDoubleChip(state, frame); break;
-    case ConvertMethod::AY8930Chip: ConvertToAY8930Chip(state, frame); break;
+    case OutputType::SingleChip: ConvertToSingleChip(state, frame); break;
+    case OutputType::DoubleChip: ConvertToDoubleChip(state, frame); break;
+    case OutputType::AY8930Chip: ConvertToAY8930Chip(state, frame); break;
     }
 }
 
@@ -152,12 +155,12 @@ void SimRP2A03::ConvertToSingleChip(const State& state, Frame& frame)
         frame.UpdatePeriod(N_Period, period);
 
         if (!state.pulse1_enable)
-            frame.Update(A_Volume, volumeN / std::sqrt(2.f));
+            frame.Update(A_Volume, uint8_t(volumeN / k_noiseVolumePower));
 
         else if (!state.pulse2_enable)
-            frame.Update(C_Volume, volumeN / std::sqrt(2.f));
+            frame.Update(C_Volume, uint8_t(volumeN / k_noiseVolumePower));
 
-        if (volumeA + volumeC <= volumeN * std::sqrt(2.f))
+        if (volumeA + volumeC <= volumeN * k_noiseVolumePower)
         {
             EnableNoise(mixer, Frame::Channel::A);
             EnableNoise(mixer, Frame::Channel::C);
@@ -321,12 +324,12 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
         frame.UpdatePeriod(N_Period, period);
 
         if (!state.pulse1_enable)
-            frame.Update(A_Volume, volumeN / std::sqrt(2.f));
+            frame.Update(A_Volume, uint8_t(volumeN / k_noiseVolumePower));
 
         else if (!state.pulse2_enable)
-            frame.Update(C_Volume, volumeN / std::sqrt(2.f));
+            frame.Update(C_Volume, uint8_t(volumeN / k_noiseVolumePower));
         
-        if (volumeA + volumeC <= volumeN * std::sqrt(2.f))
+        if (volumeA + volumeC <= volumeN * k_noiseVolumePower)
         {
             EnableNoise(mixer, Frame::Channel::A);
             EnableNoise(mixer, Frame::Channel::C);
@@ -345,14 +348,14 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
 
 uint16_t SimRP2A03::ConvertPeriod(uint16_t period) const
 {
-    auto converted = double(period) * m_dstClockRate / m_cpuClock;
+    auto converted = double(period) * m_dstClock / m_srcClock;
     return uint16_t(converted + 0.5f);
 }
 
 uint8_t SimRP2A03::ConvertVolume(uint8_t volume) const
 {
     auto signal = std::min(std::sqrt(float(volume) * k_gainDefaultValue / 15.f), 1.f);
-    auto maxVol = (m_convertMethod == ConvertMethod::AY8930Chip ? 31.f : 15.f);
+    auto maxVol = (m_outputType == OutputType::AY8930Chip ? 31.f : 15.f);
     return uint8_t(maxVol * signal + 0.5f);
 }
 

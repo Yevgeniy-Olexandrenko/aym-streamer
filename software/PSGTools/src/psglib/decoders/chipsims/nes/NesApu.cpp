@@ -54,13 +54,19 @@ const uint8_t length_lut[32] =
 
 ////////////////////////////////////////////////////////////////////////////////
 
-NesApu::NesApu(int sampleRate, uint32_t cpuClock)
-    : m_cpuClock(cpuClock)
-    , m_cpuCyclesPerSample((uint32_t)((((uint64_t)m_cpuClock) << 16) / sampleRate))
-    , m_noisePeriods(nullptr)
+NesApu::NesApu()
+    : m_noisePeriods(nullptr)
     , m_dmcPeriods(nullptr)
     , m_cpuCycles(0)
 {
+    Init(44100, (int)NesCpu::Clock::NTSC);
+}
+
+void NesApu::Init(int sampleRate, int cpuClock)
+{
+    m_cpuClock = cpuClock;
+    m_cpuCyclesPerSample = (uint32_t)((((uint64_t)cpuClock) << 16) / sampleRate);
+
     if (m_cpuClock == (uint32_t)NesCpu::Clock::NTSC)
     {
         m_noisePeriods = noise_periods_ntsc;
@@ -73,29 +79,22 @@ NesApu::NesApu(int sampleRate, uint32_t cpuClock)
     }
 
     for (int n = 0; n < 31; ++n)
-    {
         m_P12MixLut[n] = (uint32_t)((95.52 / (8128.0 / (double)n + 100.0)) * 0xFFFFFFFFUL);
-    }
 
     for (int n = 0; n < 203; ++n)
-    {
         m_TNDMixLut[n] = (uint32_t)((163.67 / (24329.0 / (double)n + 100.0)) * 0xFFFFFFFFUL);
-    }
-}
 
-NesApu::NesApu(int sampleRate, NesCpu::Clock cpuClock)
-    : NesApu(sampleRate, (uint32_t)cpuClock)
-{
+    Reset();
 }
 
 void NesApu::Reset()
 {
-    memset(&m_pulse1, 0, sizeof(m_pulse1));
-    memset(&m_pulse2, 0, sizeof(m_pulse2));
-    memset(&m_triangle, 0, sizeof(m_triangle));
-    memset(&m_noise, 0, sizeof(m_noise));
-    memset(&m_dmc, 0, sizeof(m_dmc));
-    memset(&m_frame, 0, sizeof(m_frame));
+    memset(&m_pulse1,   0, sizeof(m_pulse1)   );
+    memset(&m_pulse2,   0, sizeof(m_pulse2)   );
+    memset(&m_triangle, 0, sizeof(m_triangle) );
+    memset(&m_noise,    0, sizeof(m_noise)    );
+    memset(&m_dmc,      0, sizeof(m_dmc)      );
+    memset(&m_frame,    0, sizeof(m_frame)    );
     m_cpuCycles = 0;
 
     for (int i = 0x00; i <= 0x13; ++i) Write(i, 0x00);

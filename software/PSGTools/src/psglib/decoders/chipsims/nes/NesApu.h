@@ -133,12 +133,14 @@ public:
     };
 
 public:
-    NesApu(int sampleRate, uint32_t cpuClock);
-    NesApu(int sampleRate, NesCpu::Clock cpuClock);
+    NesApu();
 
+    void Init(int sampleRate, int cpuClock);
     void Reset();
+
     void Write(uint16_t addr, uint8_t data);
     uint8_t Read(uint16_t addr);
+
     int32_t Output();
 
 protected:

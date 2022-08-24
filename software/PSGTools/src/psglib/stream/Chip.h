@@ -18,7 +18,7 @@ public:
 	std::string toString() const;
 
 	RW_PROP_DEF( Count,  count      );
-	RW_PROP_IMP( int,    countValue );
+	RO_PROP_IMP( int,    countValue );
 	RW_PROP_DEF( Model,  model      );
 	RW_PROP_DEF( Clock,  clock      );
 	RW_PROP_IMP( int,    clockValue );

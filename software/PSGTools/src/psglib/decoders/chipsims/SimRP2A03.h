@@ -6,13 +6,15 @@
 class SimRP2A03 : public ChipSim, public NesApu
 {
 public:
-    enum class ConvertMethod
+    enum class OutputType
     {
         SingleChip, DoubleChip, AY8930Chip
     };
 
     SimRP2A03();
-    void Configure(ConvertMethod convertMethod, uint32_t dstClockRate);
+
+    void ConfigureClock(int srcClock, int dstClock) override;
+    void ConfigureOutput(OutputType outputType);
 
     void Reset() override;
     void Write(int chip, Register reg, uint8_t data) override;
@@ -35,6 +37,5 @@ private:
     void DisableNoise(uint8_t& mixer, int chan) const;
 
 private:
-    ConvertMethod m_convertMethod;
-    uint32_t m_dstClockRate;
+    OutputType m_outputType;
 };

@@ -44,7 +44,7 @@ void PrintWellcome()
 void PlayInputFiles()
 {
     ////////////////////////////////////////////////////////////////////////////
-#if 1
+#if 0
     const int k_comPortIndex = 4;
     m_output.reset(new Streamer(k_comPortIndex));
 #else
@@ -62,6 +62,12 @@ void PlayInputFiles()
     while (goToPrev ? m_filelist->GetPrevFile(path) : m_filelist->GetNextFile(path))
     {
         Stream stream;
+#if 0
+        //stream.chip.model(Chip::Model::AY8930);
+        //stream.chip.count(Chip::Count::TwoChips);
+        //stream.chip.output(Chip::Output::Stereo);
+        stream.chip.clockValue(1500000);
+#endif
         if (PSG::Decode(path, stream))
         {
             goToPrev = false; // if decoding OK, move to next by default

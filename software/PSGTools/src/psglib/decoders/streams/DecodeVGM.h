@@ -102,5 +102,4 @@ private:
     int m_processedSamples;
 
     std::shared_ptr<ChipSim> m_chip;
-    bool m_isTS;
 };

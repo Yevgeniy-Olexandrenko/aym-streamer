@@ -138,9 +138,6 @@
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimAY8910.cpp">
       <Filter>Sources\psglib\decoders\chipsims</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03.cpp">
-      <Filter>Sources\psglib\decoders\chipsims</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimSN76489.cpp">
       <Filter>Sources\psglib\decoders\chipsims</Filter>
     </ClCompile>
@@ -231,7 +228,7 @@
     <ClCompile Include="..\src\psgtools\interface\PrintBuffer.cpp">
       <Filter>Sources\psgtools\interface</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03_.cpp">
+    <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03.cpp">
       <Filter>Sources\psglib\decoders\chipsims</Filter>
     </ClCompile>
     <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesApu.cpp">
@@ -321,9 +318,6 @@
       <Filter>Sources\psglib\decoders\chipsims</Filter>
     </ClInclude>
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimAY8910.h">
-      <Filter>Sources\psglib\decoders\chipsims</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03.h">
       <Filter>Sources\psglib\decoders\chipsims</Filter>
     </ClInclude>
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimSN76489.h">
@@ -419,7 +413,7 @@
     <ClInclude Include="..\src\psgtools\interface\PrintBuffer.h">
       <Filter>Sources\psgtools\interface</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03_.h">
+    <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03.h">
       <Filter>Sources\psglib\decoders\chipsims</Filter>
     </ClInclude>
     <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesApu.h">

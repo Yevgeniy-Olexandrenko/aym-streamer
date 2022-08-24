@@ -37,7 +37,6 @@
     <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCpu.cpp" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimAY8910.cpp" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03.cpp" />
-    <ClCompile Include="..\src\psglib\decoders\chipsims\SimRP2A03_.cpp" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\SimSN76489.cpp" />
     <ClCompile Include="..\src\psglib\decoders\Decoder.cpp" />
     <ClCompile Include="..\src\psglib\decoders\modules\DecodeASC.cpp" />
@@ -97,7 +96,6 @@
     <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesCpu.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimAY8910.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03.h" />
-    <ClInclude Include="..\src\psglib\decoders\chipsims\SimRP2A03_.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\SimSN76489.h" />
     <ClInclude Include="..\src\psglib\decoders\Decoder.h" />
     <ClInclude Include="..\src\psglib\decoders\modules\DecodeASC.h" />

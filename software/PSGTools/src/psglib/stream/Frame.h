@@ -106,6 +106,8 @@ public:
 public:
 	struct Channel
 	{
+		enum { A = 0, B = 1, C = 2 };
+
 		uint8_t tFine;
 		uint8_t	tCoarse;
 		uint8_t tDuty;   // doesn't matter in comp mode

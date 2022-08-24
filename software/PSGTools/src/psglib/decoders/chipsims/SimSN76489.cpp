@@ -11,7 +11,7 @@ void SimSN76489::Reset()
 	// TODO
 }
 
-void SimSN76489::Write(uint8_t chip, uint8_t reg, uint8_t data)
+void SimSN76489::Write(int chip, Register reg, uint8_t data)
 {
 	// TODO
 }
@@ -21,12 +21,7 @@ void SimSN76489::Simulate(int samples)
 	// TODO
 }
 
-void SimSN76489::ConvertToPSG(Frame& frame)
-{
-	// TODO
-}
-
-void SimSN76489::PostProcess(Stream& stream)
+void SimSN76489::Convert(Frame& frame)
 {
 	// TODO
 }

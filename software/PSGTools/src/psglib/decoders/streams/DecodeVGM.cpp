@@ -2,7 +2,6 @@
 #include "zlib.h"
 #include "decoders/chipsims/SimAY8910.h"
 #include "decoders/chipsims/SimRP2A03.h"
-#include "decoders/chipsims/SimRP2A03_.h"
 #include "decoders/chipsims/SimSN76489.h"
 #include <sstream>
 
@@ -48,7 +47,7 @@ bool DecodeVGM::Open(Stream& stream)
     if (ReadFile(stream.file.string().c_str(), (uint8_t*)(&header), sizeof(header)))
     {
         if (header.version >= 0x151 && header.ay8910Clock) m_chip.reset(new SimAY8910());
-        if (header.version >= 0x161 && header.nesApuClock) m_chip.reset(new SimRP2A03_());
+        if (header.version >= 0x161 && header.nesApuClock) m_chip.reset(new SimRP2A03());
 
         if (header.ident == VGMSignature && m_chip)
         {
@@ -108,10 +107,10 @@ bool DecodeVGM::Open(Stream& stream)
                     stream.chip.clockValue(header.nesApuClock & 0x3FFFFFFF);
                     //stream.chip.output(Chip::Output::Mono);
 
-                    auto convertMethod = SimRP2A03_::ConvertMethod::AY8910x2;
+                    auto convertMethod = SimRP2A03::ConvertMethod::DoubleChip;
                     auto dstClockRate = uint32_t(stream.chip.clockValue());
 
-                    SimRP2A03_& simRP2A03 = static_cast<SimRP2A03_&>(*m_chip.get());
+                    SimRP2A03& simRP2A03 = static_cast<SimRP2A03&>(*m_chip.get());
                     simRP2A03.Configure(convertMethod, dstClockRate);
 #endif
                 }
@@ -200,7 +199,7 @@ bool DecodeVGM::Decode(Frame& frame)
         }
     }
 
-    m_chip->ConvertToPSG(frame);
+    m_chip->Convert(frame);
     m_processedSamples -= m_samplesPerFrame;
 
 #if DEBUG_OUT
@@ -213,8 +212,6 @@ void DecodeVGM::Close(Stream& stream)
 {
     stream.loop.frameId(m_loop);
     delete[] m_data;
-
-    m_chip->PostProcess(stream);
 
 #if DEBUG_OUT
     debug_out.close();

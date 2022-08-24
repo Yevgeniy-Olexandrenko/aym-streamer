@@ -1,0 +1,56 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           The Jetsons -
+                     Cogswell's Caper!
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        Iku Mizutani, Kazuko Umino
+Game developer:      Natsume
+Game publisher:      Taito (W) /
+                     Mattel (A)
+Game release date:   1992-12 (U) /
+                     1993-04-23 (J) /
+                     1993-08-26 (E) /
+                     1993 (A)
+
+Package created by:  Sonic of 8!
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Intro                            0:40   -
+02 Call Jingle                      0:03   -
+03 Map                              0:08   0:08
+04 Stage Start                      0:07   -
+05 Stage 1                          0:52   0:32
+06 Boss BGM                         0:11   0:11
+07 Stage Clear                      0:04   -
+08 Stages 2, 11 ~ Cutscene 1        0:21   0:21
+09 Stages 3, 6                      0:13   0:11
+10 Stage 4                          0:53   0:48
+11 Stage 5                          0:26   0:25
+12 Stage 7                          0:34   0:34
+13 Stage 8                          0:26   0:26
+14 Stage 9                          0:31   0:31
+15 Stage 10                         0:20   0:20
+16 Cutscene 2                       0:06   0:05
+17 Cutscene 3                       0:04   -
+18 Cutscene 4                       0:16   -
+19 Stage 12                         0:24   0:21
+20 Staff Roll                       0:46   0:36
+21 Game Over                        0:07   -
+
+Total Length                        7:32  13:00
+
+
+Notes:
+-
+
+
+Package history:
+1.00 2020-04-13 Sonic of 8!: Initial release.

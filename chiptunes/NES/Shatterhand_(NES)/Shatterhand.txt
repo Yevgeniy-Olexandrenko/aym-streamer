@@ -1,0 +1,49 @@
+***********************************************
+* VGM music package                           *
+* http://vgm.mdscene.net/                     *
+***********************************************
+Game name:           Shatterhand (UE) / Tokkyuu
+                     Shirei Solbrain (J)
+System:              Nintendo Entertainment
+                     System / Famicom
+Music hardware:      NES APU (N2A03)
+
+Music author:        Iku Mizutani
+Game developer:      Natsume
+Game publisher:      Jaleco (UE) / Angel (J)
+Game release date:   1991-10-26 (J) /
+                     1991-12 (U) /
+                     1992-11-19 (E)
+
+Package created by:  GTheGuardian
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Intro                            0:22   -
+02 Game Start                       0:09   -
+03 Area A                           1:11   1:11
+04 Boss                             0:27   0:26
+05 Area Clear                       0:07   -
+06 Stage Select                     0:15   0:15
+07 Area B                           0:39   0:39
+08 Area C                           1:03   1:03
+09 Area C, Area F (JP)              1:07   1:07
+10 Area D                           1:02   1:01
+11 Area E, Area F                   0:48   0:48
+12 Area G                           1:00   1:00
+13 Ending                           1:32   1:32
+14 Ranking                          0:09   0:09
+15 Game Over                        0:16   -
+
+Total Length                       10:06  19:17
+
+
+Notes:
+This pack was made using NEZPlug 0.9.4.8 + 2 +
+19.20 VGM mod.
+
+
+Package history:
+1.00 2013-07-10 GTheGuardian: Initial release.

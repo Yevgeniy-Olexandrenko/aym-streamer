@@ -1,0 +1,44 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Ferrari Grand Prix
+                     Challenge (U, E) /
+                     Ferrari (J)
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        Neil Baldwin
+Game developer:      System 3
+Game publisher:      Acclaim (U, E) /
+                     Coconuts Japan (J)
+Game release date:   1992-06 (U) /
+                     1992-11-13 (J) /
+                     1992 (E)
+
+Package created by:  The789Guy
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Title Screen                     2:33   2:25
+02 Menu Theme 1                     0:32   0:26
+03 Menu Theme 2                     0:51   0:41
+04 Race Theme 1                     2:02   2:02
+05 Lap Times / Continue             0:10   -
+06 Qualifying Times                 0:19   0:19
+07 Race Theme 2                     0:25   0:20
+08 Race Theme 3                     2:02   1:47
+09 Ranking                          1:13   1:09
+
+Total Length                       10:09  19:19
+
+
+Notes:
+-
+
+
+Package history:
+1.00 2021-09-29 The789Guy: Initial release.

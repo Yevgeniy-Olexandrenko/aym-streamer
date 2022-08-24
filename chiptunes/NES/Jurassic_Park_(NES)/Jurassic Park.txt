@@ -1,0 +1,45 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Jurassic Park (U)
+System:              Nintendo Entertainment
+                     System
+Music hardware:      NES APU (N2A03)
+
+Music author:        Jonathan Dunn
+Game developer:      Ocean of America, Inc.
+Game publisher:      Ocean of America, Inc.
+Game release date:   1993-06-01
+
+Package created by:  JayKass
+Package version:     1.01
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Title Screen                     0:07   0:03
+02 Intro                            0:18   0:05
+03 Menu / Level 5: Radio the
+   Mainland                         1:55   1:55
+04 Level Intro (DNA Message Chain)  0:10   -
+05 Level 1: Triceratops Stampede    2:08   1:42
+06 Level 2: T-Rex Confrontation     4:34   4:22
+07 Level 3: Restore Computer Power /
+   Level 6: Escape the Island       2:53   2:14
+08 Level 4: The Raptor Nests        1:09   1:00
+09 Boss Battle                      0:10   0:10
+10 Radio Message / Continue         0:04   0:04
+11 Helipad / Credits                0:09   0:09
+
+Total Length                       13:36  25:20
+
+
+Notes:
+Created with NEZplug v0.9.4.8 + 2 + 19.20
+
+
+Package history:
+1.00 2021-04-16 JayKass: Initial Release
+1.01 2021-09-06 Valley Bell: Added fixed
+ screenshot, thanks GTheGuardian.

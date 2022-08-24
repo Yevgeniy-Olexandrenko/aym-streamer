@@ -1,0 +1,45 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           James Bond Jr.
+System:              Nintendo Entertainment
+                     System
+Music hardware:      NES APU (N2A03)
+
+Music author:        Neil Baldwin
+Game developer:      Eurocom
+Game publisher:      THQ
+Game release date:   1992-09
+
+Package created by:  The789Guy
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Title Screen                     0:48   0:21
+02 Cutscene                         0:43   0:09
+03 Level 1: Disable Missiles        4:12   4:11
+04 Level 2: Recover the Blueprints  0:29   0:19
+05 Level 3: Destroy Factory Rooms   0:36   0:33
+06 Level 4: Save the Scientists     1:04   0:09
+07 Totem Boss ~ Factory Machine ~
+   Scientist Room                   0:21   0:17
+08 Battle with Scumlord             0:35   0:19
+09 Objective Complete               0:04   -
+10 Continue Screen                  0:05   -
+11 Unused Music                     1:15   1:10
+
+Total Length                       10:11  17:39
+
+
+Notes:
+This pack was generated with
+NEZplug 0.9.4.8 + 2 + 19.20 VGM mod.
+
+Titles come from NSFE set.
+
+
+Package history:
+1.00 2021-09-07 The789Guy: Initial release.

@@ -1,0 +1,67 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Super Mario Bros. 3
+System:              Nintendo Enterainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        Koji Kondo
+Game developer:      Nintendo EAD
+Game publisher:      Nintendo
+Game release date:   1990-02-12 (U) /
+                     1988-10-23 (J) /
+                     1991-08-29 (E)
+
+Package created by:  Sonic of 8!
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 World 1 Map                      0:14   0:14
+02 Overworld BGM                    0:29   0:26
+03 Invincible BGM                   0:03   0:03
+04 Miss                             0:04   -
+05 World 2 Map                      0:04   0:04
+06 Athletic BGM                     0:34   0:31
+07 Course Clear Fanfare             0:04   -
+08 World 3 Map                      0:13   0:13
+09 Underwater BGM                   0:30   0:26
+10 Music Box                        0:17   0:17
+11 Slot BGM ~ Nervous Breakdown BGM 0:02   0:02
+12 World 4 Map                      0:13   0:13
+13 Underground BGM                  0:19   0:19
+14 World 5 Map                      0:07   0:06
+15 Enemy Battle                     0:19   0:13
+16 Toad's House                     0:13   0:13
+17 World 6 Map                      0:06   0:06
+18 Fortress BGM                     0:18   0:18
+19 Fortress Boss                    0:20   0:16
+20 Fireworks Fanfare                0:05   -
+21 Whistle Sound ~ Warp Island      0:11   0:09
+22 World 7 Map                      0:08   0:08
+23 King's Room                      0:07   0:07
+24 Airship BGM                      0:30   0:30
+25 World 8 Map                      0:09   0:09
+26 King Koopa                       0:16   0:15
+27 King Koopa Defeated              0:04   -
+28 World Clear Fanfare              0:07   -
+29 Ending                           1:28   0:51
+30 Game Over                        0:04   -
+31 World 5 Sky Map                  0:09   0:09
+32 Hurry!                           0:03   -
+
+Total Length                        7:50  14:07
+
+
+Notes:
+Tracks 1 ~ 31 are available in
+Game Sound Museum ~Famicom Edition~ ND
+Super Mario Bros. 3 by Scitron Digital Contents
+(SDEX-0031).
+
+
+Package history:
+1.00 2016-01-17 Sonic of 8!: Initial release.

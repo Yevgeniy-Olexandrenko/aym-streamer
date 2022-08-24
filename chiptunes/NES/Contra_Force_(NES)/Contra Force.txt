@@ -1,0 +1,47 @@
+***********************************************
+* VGM music package                           *
+* http://vgm.mdscene.net/                     *
+***********************************************
+Game name:           Contra Force
+System:              Nintendo Entertainment
+                     System / Famicom
+Music hardware:      NES APU (N2A03)
+
+Music author:        Kenichi Matsubara,
+                     Yasuhiko Manno,
+                     Tomoya Tomita
+Game developer:      Konami
+Game publisher:      Konami
+Game release date:   1992-09-30
+
+Package created by:  GTheGuardian
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Opening                          0:35   -
+02 Character Selection              0:22   0:21
+03 Stage 1                          0:38   0:36
+04 Boss                             0:17   0:15
+05 Stage Clear                      0:04   -
+06 Intermission                     0:30   0:30
+07 Stage 2                          0:45   0:45
+08 Stage 3                          0:34   0:34
+09 Stage 4                          0:32   0:32
+10 Stage 5                          0:36   0:36
+11 Final Boss                       0:19   0:19
+12 Ending                           1:26   0:26
+13 Game Over                        0:05   -
+14 Character Selection (Pause)      0:22   0:21
+
+Total Length                        7:03  12:17
+
+
+Notes:
+This pack was made using NEZPlug 0.9.4.8 + 2 +
+19.20 VGM mod.
+
+
+Package history:
+1.00 2013-06-25 GTheGuardian: Initial release.

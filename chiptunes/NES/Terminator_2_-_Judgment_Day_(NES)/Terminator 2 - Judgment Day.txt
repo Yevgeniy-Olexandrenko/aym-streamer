@@ -1,0 +1,42 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Terminator 2: Judgment Day
+                     (U, E) / Terminator 2 (J)
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        Geoff Follin
+Game developer:      Software Creations
+Game publisher:      LJN (U, E) /
+                     Pack-In-Video (J)
+Game release date:   1992-02 (U) /
+                     1992-06-26 (J) / 1992 (E)
+
+Package created by:  The789Guy
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Title Screen                     1:20   1:20
+02 The Story                        0:05   0:03
+03 Truck Stop (Level 1)             3:20   3:20
+04 Level Complete                   0:05   -
+05 Drainage Canal (Level 2) ~
+   Cyberdyne (Level 4)              3:20   3:20
+06 Pescadero State (Level 3)        3:24   3:09
+07 Steel Mill (Level 5)             3:17   3:16
+08 Unknown Jingle                   0:06   -
+
+Total Length                       14:57  29:24
+
+
+Notes:
+-
+
+
+Package history:
+1.00 2021-10-06 The789Guy: Initial release.

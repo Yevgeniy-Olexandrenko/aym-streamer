@@ -1,0 +1,53 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           RoboCop 3
+System:              Nintendo Entertainment
+                     System
+Music hardware:      NES APU (N2A03)
+
+Music author:        Jeroen Tel
+Game developer:      Probe
+Game publisher:      Ocean
+Game release date:   1992-08 (U) /
+                     1994-07-28 (E)
+
+Package created by:  The789Guy
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Title Screen                     4:48   3:28
+02 Level 1: Cadillac Heights - Dusk 0:26   0:26
+03 Repair Laboratory                0:17   0:17
+04 Level 2: Rocket Motors Factory   0:17   0:17
+05 Level 3: Cadillac Heights - Day  0:17   0:17
+06 Level 4: Back to OCP             0:26   0:26
+07 Ninja Battle                     1:08   1:08
+08 Ending / High Scores             0:30   0:30
+09 Game Over                        0:09   -
+
+Total Length                        8:18  15:06
+
+
+Notes:
+This pack was generated with
+NEZplug Version 0.9.4.8 + 2 + 19.20 VGM mod.
+
+Although this version lacks credits, the game
+has a high score screen, and among the listed
+scores is "J. Tel". It also shares the same
+soundtrack as the C64 release, which is
+credited to "The Sonic Circle" (an alias for
+Jeroen Tel).
+
+Size reduction (vgm_cmp):
+ 1.86 MB -> 617 KB (32.4 %)
+
+
+Package history:
+0.90 2021-10-07 The789Guy: Initial release.
+1.00 2022-06-02 The789Guy: Relogged the entire
+ pack.

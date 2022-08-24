@@ -1,0 +1,52 @@
+***********************************************
+* VGM music package                           *
+* http://vgm.mdscene.net/                     *
+***********************************************
+Game name:           Power Blade 2 (UE) /
+                     Captain Saver (J)
+System:              Nintendo Entertainment
+                     System / Famicom
+Music hardware:      NES APU (N2A03)
+
+Music author:        Kinuyo Yamashita
+Game developer:      Natsume
+Game publisher:      Taito
+Game release date:   1992-09-29
+
+Package created by:  GTheGuardian
+Package version:     2.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Intro                            1:11   0:52
+02 Password                         0:17   0:17
+03 Game Start                       0:08   -
+04 Stage Select                     0:10   0:10
+05 Stage 1                          0:45   0:37
+06 Boss                             0:36   0:34
+07 Stage Clear                      0:02   -
+08 Stage 2                          1:00   0:51
+09 Stage 3                          0:39   0:32
+10 Stage 4                          0:48   0:45
+11 Stage 5                          0:43   0:43
+12 Cutscene 1                       0:32   0:11
+13 Stage 6                          0:38   0:32
+14 Cutscene 2                       0:12   -
+15 Final Boss                       0:26   0:23
+16 Ending                           1:42   -
+17 Player Miss                      0:02   -
+18 Game Over                        0:03   -
+19 Pause                            0:01   -
+
+Total Length                        9:54  16:20
+
+
+Notes:
+This pack was made using MESS 0.148 VGM mod.
+
+
+Package history:
+1.00 2013-04-25 GTheGuardian: Initial release.
+2.00 2013-12-26 GTheGuardian: Logged Player
+ Miss and Pause Jingles.

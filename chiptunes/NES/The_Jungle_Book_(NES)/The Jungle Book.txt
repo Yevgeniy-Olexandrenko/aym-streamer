@@ -1,0 +1,43 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           The Jungle Book
+System:              Nintendo Entertainment
+                     System
+Music hardware:      NES APU (N2A03)
+
+Music author:        Neil Baldwin
+Game developer:      Eurocom
+Game publisher:      Virgin Interactive
+Game release date:   1994
+
+Package created by:  Gnome
+Package version:     1.05
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Virgin Logo ~ Level Clear        0:04   -
+02 Title Screen ~ Level 1 & Level 6 0:54   0:53
+03 Level 2 & Level 5                0:31   0:31
+04 Level 3                          1:21   1:21
+05 Level 4, Level 7 & Level 10      0:31   0:31
+06 Level 8                          0:10   0:10
+07 Credits                          0:43   0:43
+08 Cutscene ~ Level 9               0:44   0:43
+09 Boss Encounter                   0:02   -
+10 Boss Battle                      0:15   0:15
+11 Bonus ~ Ending                   0:17   0:17
+12 Life Lost                        0:02   -
+
+Total Length                        5:35  10:06
+
+
+Notes:
+-
+
+
+Package history:
+1.00 2017-09-23 Gnome: Initial release.
+1.05 2017-09-24 Gnome: Trimmed silence.

@@ -1,0 +1,55 @@
+***********************************************
+* VGM music package                           *
+* http://vgm.mdscene.net/                     *
+***********************************************
+Game name:           Super C (U) /
+                     Super Contra (J) /
+                     Probotector II: Return of
+                     the Evil Forces (E)
+System:              Nintendo Entertainment
+                     System / Famicom
+Music hardware:      NES APU (N2A03)
+
+Music author:        Kazuki Muraoka,
+                     Motoaki Furukawa,
+                     Hidenori Maezawa
+Game developer:      Konami
+Game publisher:      Konami
+Game release date:   1990-02-02
+
+Package created by:  GTheGuardian
+Package version:     1.01
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Thunder Landing (Area 1)         0:57   0:54
+02 Great Heli - Ruined Base
+   (Boss 1)                         0:52   0:19
+03 Pattern Clear 1 (Area Clear)     0:04   -
+04 In A Tight Squeeze (Area 2)      0:34   0:32
+05 Ruined Base (Boss 2)             0:21   0:19
+06 Jungle Juncture (Area 3)         0:45   0:45
+07 Creature from Outer Space
+   (Boss 3)                         0:25   0:24
+08 No Escape (Area 4, 7)            0:47   0:47
+09 M-3 (Area 5)                     0:31   0:30
+10 Hotter Than Hell (Area 6)        0:34   0:34
+11 Deathbed (Area 8)                0:37   0:37
+12 Pattern Clear 2 (All Area Clear) 0:06   -
+13 Free World (Ending)              0:49   -
+14 Game Over                        0:03   -
+
+Total Length                        7:23  13:04
+
+
+Notes:
+This pack was made using MESS 0.148 VGM mod.
+
+Track names are from
+"Music from Super Contra & A-Jax" (K30X-7702)
+
+
+Package history:
+1.00 2013-06-25 GTheGuardian: Initial release.
+1.01 2014-05-12 GTheGuardian: Fixed song list.

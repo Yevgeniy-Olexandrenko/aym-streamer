@@ -1,0 +1,49 @@
+***********************************************
+* VGM music package                           *
+* http://vgm.mdscene.net/                     *
+***********************************************
+Game name:           Monster in my Pocket
+System:              Nintendo Entertainment
+                     System / Famicom
+Music hardware:      NES APU (N2A03)
+
+Music author:        Kozo Nakamura,
+                     Hiroshi Takeyasu
+Game developer:      Konami
+Game publisher:      Konami
+Game release date:   1992-01
+
+Package created by:  GTheGuardian
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Get out from a Pocket (Title)    0:24   -
+02 Twist and Select (Player Select) 0:14   0:13
+03 Warlock Eyes (Opening)           0:19   0:13
+04 Theme of MM's (Stage 1)          0:45   0:37
+05 Theme of EMM's (Boss)            0:27   0:26
+06 Stage Clear                      0:03   -
+07 Dancin' in the Kitchen (Stage 2) 0:40   0:40
+08 Cola Float (Stage 3)             0:38   0:38
+09 Monster Rap (Stage 4)            0:41   0:35
+10 Asia Club (Stage 5)              0:24   0:21
+11 Earthquake (Stage 6-1)           0:38   0:38
+12 Boss World (Stage 6-2)           0:33   0:21
+13 Theme of Warlock (Final Boss)    0:21   0:21
+14 Monster Happiness (Ending)       0:26   0:26
+15 Monster Boogie (Credits)         1:15   -
+16 I'm Down (Game Over)             0:06   -
+
+Total Length                        7:54  13:23
+
+
+Notes:
+Track names are taken from Game's Sound test.
+
+This pack was made using MESS0148 VGM mod.
+
+
+Package history:
+1.00 2013-04-24 GTheGuardian: Initial release.

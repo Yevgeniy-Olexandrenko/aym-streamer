@@ -1,0 +1,57 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Battletoads
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        David Wise
+Game developer:      Rare
+Game publisher:      Tradewest (U, E) /
+                     Masaya (J)
+Game release date:   1991-06-01 (U) /
+                     1991-12-20 (J) /
+                     1993-02-18 (E)
+
+Package created by:  The789Guy
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Title                            1:21   0:06
+02 Interlude                        0:55   -
+03 Ragnarok's Canyon                1:18   1:07
+04 Level Complete                   0:03   -
+05 Wookie Hole                      1:47   1:40
+06 Turbo Tunnel                     0:10   0:08
+07 Turbo Tunnel Bike Race           1:23   1:17
+08 Arctic Caverns                   0:55   0:50
+09 Surf CIty & Terra Tubes          1:01   0:57
+10 Karnath's Lair                   1:11   1:03
+11 Volkmire's Inferno               0:28   0:24
+12 Jet Turbo                        0:47   0:37
+13 Intruder Excluder                0:52   0:36
+14 Rat Race                         0:48   0:41
+15 Clinger-Winger                   0:20   0:08
+16 The Revolution                   1:17   1:09
+17 Boss Battle, Armageddon & Ending 0:10   0:08
+18 Unused                           0:43   0:36
+19 Continue & Game Over             0:21   0:13
+20 Pause Beat                       0:08   0:04
+
+Total Length                       15:56  27:39
+
+
+Notes:
+Tracks 1, 4, and 20 were generated with
+MAME 0.236 VGM mod.
+
+All other tracks generated with
+NEZplug 0.9.4.8 + 2 + 19.20 VGM mod.
+
+
+Package history:
+1.00 2021-10-05 The789Guy: Initial release.

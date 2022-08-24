@@ -1,0 +1,47 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           DuckTales (UE) / Wanpaku
+                     Dakku Yume Bōken (J)
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        Hiroshige Tonomura
+Game developer:      Capcom
+Game publisher:      Capcom
+Game release date:   1989-09-14 (U) /
+                     1990-01-26 (J) /
+                     1990-12-14 (E)
+Package created by:  Gnome
+Package version:     1.01
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Opening                          0:52   -
+02 Land Select                      0:03   0:03
+03 The Amazon                       0:38   0:38
+04 Transylvania                     0:43   0:38
+05 African Mines                    0:57   0:30
+06 The Himalayas                    0:36   0:34
+07 The Moon                         0:50   0:35
+08 Launchpad Copter                 0:17   0:15
+09 Boss Battle                      0:24   0:15
+10 Item                             0:04   -
+11 Invincibility                    0:02   0:02
+12 Lost a Life                      0:02   -
+13 Game Over                        0:03   -
+
+Total Length                        5:30   9:00
+
+
+Notes:
+This pack was made using
+NEZplug Version 0.9.4.8 + 2 + 19.20 VGM mod.
+
+
+Package history:
+1.00 2017-03-21 Gnome: Initial release.
+1.01 2017-03-25 Gnome: Updated date format.

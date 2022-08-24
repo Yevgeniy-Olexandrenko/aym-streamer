@@ -1,0 +1,66 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Gimmick! (J)
+System:              Family Computer
+Music hardware:      NES APU (RP2A03), YM2149
+
+Music author:        Masashi Kageyama
+Game developer:      Sunsoft
+Game publisher:      Sunsoft
+Game release date:   1992-01
+
+Package created by:  ctr
+Package version:     1.01
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Good Morning (Opening)           1:19   -
+02 No Limits (Map)                  0:16   0:16
+03 Happy Birthday (Stage 1)         1:00   0:59
+04 Good Weather (Stage 2)           0:56   0:54
+05 Paradox (Stage 3 Underground)    0:10   0:10
+06 Slow Illusion
+   (Stage 3 Aboveground)            0:53   0:53
+07 Paradigm (Stage 4)               0:40   0:32
+08 Lion Heart (Stage 5)             1:15   1:00
+09 Cadbury (Stage 6 Interior)       1:07   0:47
+10 Innocent (Stage 6 Exterior)      0:19   0:09
+11 Aporia (Boss)                    0:47   0:47
+12 Identity Believer
+   (Boss Serious Mode)              0:34   0:32
+13 Siesta (Normal End)              0:44   -
+14 Just Friends (Secret Item Stage) 0:56   0:45
+15 Sophia (Stage 7)                 1:29   1:04
+16 Evidence of My Life
+   (Last Battle Part 1)             0:08   0:04
+17 Long Tomorrow
+   (Last Battle Part 2)             0:32   0:30
+18 Good Night (True End)            1:40   -
+19 Strange Memories of Death
+   (Unused)                         1:10   0:59
+20 Cadbury (Alt)                    1:04   0:47
+
+Total Length                       17:00  28:05
+
+
+Notes:
+This game is known as Mr. Gimmick outside
+Japan.
+
+This pack covers the Japanese Famicom version
+of this game, which uses expansion audio
+provided by an YM2149 SSG inside the Yamaha
+YM6630 / Sunsoft 5B mapper.
+
+The European and unreleased US version has
+slightly different music and is not covered by
+this pack.
+
+
+Package history:
+1.00 2017-03-17 ctr: Initial release
+1.01 2020-01-20 ctr: More accurate description
+ of the EU / US versions.

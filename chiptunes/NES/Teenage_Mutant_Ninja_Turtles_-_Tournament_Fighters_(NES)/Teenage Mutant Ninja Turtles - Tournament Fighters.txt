@@ -1,0 +1,67 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Teenage Mutant Ninja
+                     Turtles: Tournament
+                     Fighters (U) / Teenage
+                     Mutant Hero Turtles:
+                     Tournament Fighters (E)
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        Junichiro Kaneda,
+                     Ayako Nishigaki
+Game developer:      Konami
+Game publisher:      Konami
+Game release date:   1993 (E) / 1994-02 (U)
+
+Package created by:  The789Guy
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Story (Prologue, Part 1)         0:18   -
+02 Shredder's Invitation (Prologue,
+   Part 2)                          0:26   0:04
+03 Heroes United (Prologue, Part 3) 0:26   -
+04 Player Select                    0:06   0:06
+05 VS                               0:05   -
+06 Sewer                            1:17   1:14
+07 Sewer (faster)                   0:28   -
+08 Downtown                         0:35   0:26
+09 Downtown (faster)                0:29   -
+10 Bonus Game                       0:19   0:15
+11 Bonus Game Lost                  0:05   -
+12 Pirate Ship                      0:53   0:46
+13 Pirate Ship (faster)             0:33   -
+14 Shredder's Speech                0:04   0:04
+15 Waterfront                       0:45   0:38
+16 Waterfront (faster)              0:43   -
+17 Shredder Wins                    0:06   0:06
+18 Ending                           0:56   -
+19 Staff Roll                       1:45   -
+20 Tournament                       0:05   -
+21 VS Battle Finished               0:03   -
+22 Tournament Results ~ Bonus Game
+   Win                              0:06   0:03
+23 Results (short)                  0:05   -
+24 Score ~ Continue                 0:07   0:07
+25 Game Over                        0:05   -
+
+Total Length                       10:50  14:39
+
+
+Notes:
+This pack was made with
+NEZplug Version 0.9.4.8 + 2 + 19.20 VGM mod.
+
+Composers are credited as
+"J_Kane" and "Nishigaki Ayachan"
+in staff credits.
+
+
+Package history:
+1.00 2022-02-02 The789Guy: Initial release.

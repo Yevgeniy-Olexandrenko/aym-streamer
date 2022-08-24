@@ -1,0 +1,39 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Side Pocket
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        K. Suzuki
+Game developer:      Data East
+Game publisher:      Data East (U) / Namco (J)
+Game release date:   1987-10-30
+
+Package created by:  drdevil
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Main BGM                         0:26   0:26
+02 Bonus Star                       0:51   0:51
+03 Stage Clear                      0:03   -
+04 Points Calculation               0:10   0:10
+05 Trick Shot                       0:10   0:10
+06 Trick Shot Complete              0:05   -
+07 Points Calculation - Trick Shot  0:38   0:19
+08 City Champion                    0:19   0:19
+09 Game Over                        0:05   -
+
+Total Length                        2:46   5:01
+
+
+Notes:
+-
+
+
+Package history:
+1.00 2016-04-02 drdevil: Initial release.

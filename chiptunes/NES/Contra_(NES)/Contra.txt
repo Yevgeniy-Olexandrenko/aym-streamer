@@ -1,0 +1,52 @@
+***********************************************
+* VGM music package                           *
+* http://vgm.mdscene.net/                     *
+***********************************************
+Game name:           Contra (JU) /
+                     Probotector (E)
+System:              Nintendo Entertainment
+                     System / Famicom
+Music hardware:      NES APU (N2A03)
+
+Music author:        Kazuki Muraoka,
+                     Hidenori Maezawa,
+                     Kiyohiro Sada
+Game developer:      Konami
+Game publisher:      Konami
+Game release date:   1988-02-09
+
+Package created by:  GTheGuardian
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Contra (Title)                   0:05   -
+02 Introduction                     1:03   -
+03 Jungle Battle (Stage 1, 7)       0:51   0:50
+04 Triumphant Return 1
+   (Stage Clear)                    0:04   -
+05 Maze Fortress 1 (Stage 2, 4)     0:51   0:45
+06 Maze Fortress 2
+   (Stage 2, 4 Boss)                0:35   0:35
+07 Waterfall of Bloodshed (Stage 3) 0:42   0:32
+08 Fortress of Ice (Stage 5)        0:35   0:32
+09 Fortress of Flame (Stage 6)      0:22   0:22
+10 Horrible Heartbeat (Stage 8)     0:34   0:23
+11 Triumphant Return 2
+   (All Stage Clear)                0:08   -
+12 Sandinista (Ending)              1:23   -
+13 Game Over                        0:06   -
+
+Total Length                        7:19  11:17
+
+
+Notes:
+This pack was made using MESS0148 VGM mod.
+
+Track names are taken from
+"Konami Game Music Vol.4 ~A-JAX~"
+
+
+Package history:
+1.00 2013-07-23 GTheGuardian: Initial release.

@@ -85,7 +85,7 @@ bool DecodeVGM::Open(Stream& stream)
 
                 else if (m_chip->type() == ChipSim::Type::RP2A03)
                 {
-#if 0
+#if 1
                     // TODO
                     m_isTS = false;
                     stream.chip.model(Chip::Model::AY8930);
@@ -94,10 +94,10 @@ bool DecodeVGM::Open(Stream& stream)
                     stream.chip.output(Chip::Output::Mono);
                     //stream.chip.clockValue(1000000);
 
-                    auto convertMethod = SimRP2A03_::ConvertMethod::AY8930;
+                    auto convertMethod = SimRP2A03::ConvertMethod::AY8930Chip;
                     auto dstClockRate  = uint32_t(stream.chip.clockValue());
 
-                    SimRP2A03_& simRP2A03 = static_cast<SimRP2A03_&>(*m_chip.get());
+                    SimRP2A03& simRP2A03 = static_cast<SimRP2A03&>(*m_chip.get());
                     simRP2A03.Configure(convertMethod, dstClockRate);
 #else
                     // TODO

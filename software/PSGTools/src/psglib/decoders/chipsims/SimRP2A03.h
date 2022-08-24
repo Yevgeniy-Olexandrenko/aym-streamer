@@ -31,6 +31,8 @@ private:
 
     void EnableTone(uint8_t& mixer, int chan) const;
     void EnableNoise(uint8_t& mixer, int chan) const;
+    void DisableTone(uint8_t& mixer, int chan) const;
+    void DisableNoise(uint8_t& mixer, int chan) const;
 
 private:
     ConvertMethod m_convertMethod;

@@ -44,7 +44,7 @@ void PrintWellcome()
 void PlayInputFiles()
 {
     ////////////////////////////////////////////////////////////////////////////
-#if 0
+#if 1
     const int k_comPortIndex = 4;
     m_output.reset(new Streamer(k_comPortIndex));
 #else

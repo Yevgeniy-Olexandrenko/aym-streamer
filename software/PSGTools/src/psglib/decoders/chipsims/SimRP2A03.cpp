@@ -74,13 +74,13 @@ void SimRP2A03::Convert(Frame& frame)
     state.pulse1_period = m_pulse1.timer_period;
     state.pulse1_volume = m_pulse1.envelope.out;
     state.pulse1_duty   = m_pulse1.duty;
-    state.pulse1_enable = (m_pulse1.len_counter > 0 && !m_pulse1.sweep.silence);
+    state.pulse1_enable = (m_pulse1.len_counter && !m_pulse1.sweep.silence && m_pulse1.envelope.out);
 
     // pulse 2 channel
     state.pulse2_period = m_pulse2.timer_period;
     state.pulse2_volume = m_pulse2.envelope.out;
     state.pulse2_duty   = m_pulse2.duty;
-    state.pulse2_enable = (m_pulse2.len_counter > 0 && !m_pulse2.sweep.silence);
+    state.pulse2_enable = (m_pulse2.len_counter && !m_pulse2.sweep.silence && m_pulse2.envelope.out);
 
     // triangle channel
     state.triangle_period = m_triangle.timer_period;
@@ -90,7 +90,7 @@ void SimRP2A03::Convert(Frame& frame)
     state.noise_period = m_noise.timer_period;
     state.noise_volume = m_noise.envelope.out;
     state.noise_mode   = m_noise.mode;
-    state.noise_enable = (m_noise.len_counter > 0);
+    state.noise_enable = (m_noise.len_counter && m_noise.envelope.out);
 
     switch (m_convertMethod)
     {
@@ -261,7 +261,7 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
     uint8_t mixer = 0x3F;
 
     // go to expanded mode
-    frame.SetExpMode(0, true);
+    if (!frame.IsExpMode(0)) frame.SetExpMode(0, true);
 
     // workaround for mixer
     EnableTone(mixer, Frame::Channel::B);
@@ -298,46 +298,44 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
     if (state.triangle_enable)
     {
         uint16_t period = ConvertPeriod(state.triangle_period >> 3);
-       
-        if (frame.data(0, EB_Shape) != 0x0E) frame.Update(EB_Shape, 0x0E);
+
+        if (frame.data(0, EB_Shape) != 0x0A) frame.Update(EB_Shape, 0x0A);
         frame.UpdatePeriod(EB_Period, period);
         frame.Update(B_Volume, 0x20);
     }
     else
     {
-        frame.UpdatePeriod(EB_Period, 0xFFFF);
+        frame.Update(B_Volume, 0x10);
     }
 
     // Noise -> automatically chosen channel A or C
     if (state.noise_enable)
     {
         uint16_t period = ConvertPeriod(state.noise_period >> 4);
-        uint8_t  volume = ConvertVolume(state.noise_volume);
+
+        int volumeN = ConvertVolume(state.noise_volume);
+        int volumeA = frame.data(0, A_Volume);
+        int volumeC = frame.data(0, C_Volume);
 
         frame.Update(N_AndMask, 0x0F);
         frame.Update(N_OrMask,  0x00);
         frame.UpdatePeriod(N_Period, period);
 
         if (!state.pulse1_enable)
+            frame.Update(A_Volume, volumeN / std::sqrt(2.f));
+
+        else if (!state.pulse2_enable)
+            frame.Update(C_Volume, volumeN / std::sqrt(2.f));
+        
+        if (volumeA + volumeC <= volumeN * std::sqrt(2.f))
         {
             EnableNoise(mixer, Frame::Channel::A);
-            frame.Update(A_Volume, volume);
-        }
-        else if (!state.pulse2_enable)
-        {
             EnableNoise(mixer, Frame::Channel::C);
-            frame.Update(C_Volume, volume);
         }
+        else if (std::abs(volumeN - volumeA) < std::abs(volumeN - volumeC))
+            EnableNoise(mixer, Frame::Channel::A);
         else
-        {
-            auto proximityToA = std::abs(int(volume) - int(frame.data(0, A_Volume)));
-            auto proximityToC = std::abs(int(volume) - int(frame.data(0, C_Volume)));
-
-            if (proximityToA < proximityToC)
-                EnableNoise(mixer, Frame::Channel::A);
-            else
-                EnableNoise(mixer, Frame::Channel::C);
-        }
+            EnableNoise(mixer, Frame::Channel::C);
     }
 
     // Mixers
@@ -367,4 +365,14 @@ void SimRP2A03::EnableTone(uint8_t& mixer, int chan) const
 void SimRP2A03::EnableNoise(uint8_t& mixer, int chan) const
 {
     mixer &= ~(1 << (3 + chan));
+}
+
+void SimRP2A03::DisableTone(uint8_t& mixer, int chan) const
+{
+    mixer |= (1 << chan);
+}
+
+void SimRP2A03::DisableNoise(uint8_t& mixer, int chan) const
+{
+    mixer |= (1 << (3 + chan));
 }

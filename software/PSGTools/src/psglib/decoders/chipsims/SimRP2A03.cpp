@@ -131,44 +131,43 @@ void SimRP2A03::ConvertToSingleChip(const State& state, Frame& frame)
     {
         uint16_t period = ConvertPeriod(state.triangle_period >> 3);
 
-        if (frame.data(0, E_Shape) != 0x0E) frame.Update(E_Shape, 0x0E);
+        if (frame.data(0, E_Shape) != 0x0A) frame.Update(E_Shape, 0x0A);
         frame.UpdatePeriod(E_Period, period);
         frame.Update(B_Volume, 0x10);
     }
     else
     {
-        frame.UpdatePeriod(E_Period, 0xFFFF);
+        frame.Update(B_Volume, 0x08);
     }
-
+    
     // Noise -> automatically chosen channel A or C
     if (state.noise_enable)
     {
         uint16_t period = ConvertPeriod(state.noise_period >> 7);
-        uint8_t  volume = ConvertVolume(state.noise_volume);
+
+        int volumeN = ConvertVolume(state.noise_volume);
+        int volumeA = frame.data(0, A_Volume);
+        int volumeC = frame.data(0, C_Volume);
 
         frame.UpdatePeriod(N_Period, period);
+
         if (!state.pulse1_enable)
+            frame.Update(A_Volume, volumeN / std::sqrt(2.f));
+
+        else if (!state.pulse2_enable)
+            frame.Update(C_Volume, volumeN / std::sqrt(2.f));
+
+        if (volumeA + volumeC <= volumeN * std::sqrt(2.f))
         {
             EnableNoise(mixer, Frame::Channel::A);
-            frame.Update(A_Volume, volume);
-        }
-        else if (!state.pulse2_enable)
-        {
             EnableNoise(mixer, Frame::Channel::C);
-            frame.Update(C_Volume, volume);
         }
+        else if (std::abs(volumeN - volumeA) < std::abs(volumeN - volumeC))
+            EnableNoise(mixer, Frame::Channel::A);
         else
-        {
-            auto deltaA = std::abs(int(volume) - int(frame.data(0, A_Volume)));
-            auto deltaC = std::abs(int(volume) - int(frame.data(0, C_Volume)));
-
-            if (deltaA < deltaC)
-                EnableNoise(mixer, Frame::Channel::A);
-            else
-                EnableNoise(mixer, Frame::Channel::C);
-        }
+            EnableNoise(mixer, Frame::Channel::C);
     }
-    
+        
     // Mixer
     {
         frame.Update(Mixer, mixer);
@@ -229,15 +228,15 @@ void SimRP2A03::ConvertToDoubleChip(const State& state, Frame& frame)
     {
         uint16_t period = ConvertPeriod(state.triangle_period >> 3);
 
-        if (frame.data(0, E_Shape) != 0x0E) frame.Update(0, E_Shape, 0x0E);
+        if (frame.data(0, E_Shape) != 0x0A) frame.Update(0, E_Shape, 0x0A);
         frame.UpdatePeriod(0, E_Period, period);
         frame.Update(0, B_Volume, 0x10);
     }
     else
     {
-        frame.UpdatePeriod(0, E_Period, 0xFFFF);
+        frame.Update(0, B_Volume, 0x08);
     }
-
+    
     // Noise -> Chip 1 Noise in Channel B
     if (state.noise_enable)
     {

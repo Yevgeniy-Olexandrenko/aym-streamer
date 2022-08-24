@@ -88,13 +88,13 @@ bool DecodeVGM::Open(Stream& stream)
 #if 1
                     // TODO
                     m_isTS = false;
-                    stream.chip.model(Chip::Model::AY8930);
+                    stream.chip.model(Chip::Model::YM2149);
                     stream.chip.count(Chip::Count::OneChip);
                     stream.chip.clockValue(header.nesApuClock & 0x3FFFFFFF);
                     stream.chip.output(Chip::Output::Mono);
                     //stream.chip.clockValue(1000000);
 
-                    auto convertMethod = SimRP2A03::ConvertMethod::AY8930Chip;
+                    auto convertMethod = SimRP2A03::ConvertMethod::SingleChip;
                     auto dstClockRate  = uint32_t(stream.chip.clockValue());
 
                     SimRP2A03& simRP2A03 = static_cast<SimRP2A03&>(*m_chip.get());

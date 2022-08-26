@@ -1,6 +1,10 @@
 ﻿#include <iostream>
 #include <chrono>
 #include <Windows.h>
+#include <sstream>
+#include <fstream>
+
+#undef max
 
 #include "PSGLib.h"
 #include "Filelist.h"
@@ -23,6 +27,86 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
     }
     return TRUE;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct FrameRefs
+{
+    const Frame* prev = nullptr;
+    const Frame* next = nullptr;
+};
+
+std::vector<FrameRefs> m_framesRefs;
+
+bool IsSameFrames(const Frame& f1, const Frame& f2)
+{
+    for (int chip = 0; chip < 2; ++chip)
+    {
+        for (Register reg = BankA_Fst; reg <= BankA_Lst; ++reg)
+        {
+            if (f1.Read(chip, reg) != f2.Read(chip, reg)) return false;
+        }
+
+        for (Register reg = BankB_Fst; reg <= BankB_Lst; ++reg)
+        {
+            if (f1.Read(chip, reg) != f2.Read(chip, reg)) return false;
+        }
+    }
+    return true;
+}
+
+void ComputeFrameRefs(const Stream& stream)
+{
+    int count = stream.framesCount();
+    int depth = count;// 32;
+
+    m_framesRefs.resize(count);
+    for (int frameId = 1; frameId < count; ++frameId)
+    {
+        for (int otherId = frameId - 1, lastId = std::max(frameId - depth, 0); otherId >= lastId; --otherId)
+        {
+            const Frame& frame = stream.GetFrame(frameId);
+            const Frame& other = stream.GetFrame(otherId);
+
+            if (IsSameFrames(frame, other))
+            {
+                m_framesRefs[frameId].prev = &other;
+                m_framesRefs[otherId].next = &frame;
+                break;
+            }
+        }
+    }
+
+    std::ofstream debug_out;
+    debug_out.open("test.txt");
+    if (debug_out)
+    {
+        int unique = 0;
+        int count = m_framesRefs.size();
+
+        for (int frameId = 1; frameId < count; ++frameId)
+        {
+            if (m_framesRefs[frameId].next)
+                debug_out << std::setw(5) << std::setfill('0') << int(m_framesRefs[frameId].next->GetId());
+            else
+                debug_out << "-----";
+
+            debug_out << " -> " << std::setw(5) << std::setfill('0') << frameId << " -> ";
+
+            if (m_framesRefs[frameId].prev)
+                debug_out << std::setw(5) << std::setfill('0') << int(m_framesRefs[frameId].prev->GetId());
+            else
+                debug_out << "-----";
+            debug_out << "\n";
+
+            if (!m_framesRefs[frameId].prev) unique++;
+        }
+        debug_out << "duplicates: " << int(100.f * (count - unique) / count + 0.5f) << "%\n";
+        debug_out.close();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 void PrintWellcome()
 {
@@ -70,6 +154,9 @@ void PlayInputFiles()
 #endif
         if (PSG::Decode(path, stream))
         {
+            ComputeFrameRefs(stream);
+
+
             goToPrev = false; // if decoding OK, move to next by default
 
             size_t staticHeight  = 0;

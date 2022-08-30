@@ -19,19 +19,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\psglib\components\lha\lh5_decode.cpp" />
-    <ClCompile Include="..\src\psglib\components\zlib\adler32.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\compress.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\crc32.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\deflate.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\gzio.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\infback.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\inffast.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\inflate.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\inftrees.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\trees.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\uncompr.c" />
-    <ClCompile Include="..\src\psglib\components\zlib\zutil.c" />
+    <ClCompile Include="..\src\psglib\compression\lha\lh5_decode.cpp" />
+    <ClCompile Include="..\src\psglib\compression\zlib\adler32.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\compress.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\crc32.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\deflate.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\gzio.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\infback.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\inffast.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\inflate.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\inftrees.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\trees.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\uncompr.c" />
+    <ClCompile Include="..\src\psglib\compression\zlib\zutil.c" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesApu.cpp" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCartridge.cpp" />
     <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCpu.cpp" />
@@ -78,18 +78,18 @@
     <ClCompile Include="..\src\psgtools\PSGTools.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\psglib\components\lha\lh5_decode.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\crc32.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\deflate.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\inffast.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\inffixed.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\inflate.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\inftrees.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\trees.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\zconf.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\zconf.in.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\zlib.h" />
-    <ClInclude Include="..\src\psglib\components\zlib\zutil.h" />
+    <ClInclude Include="..\src\psglib\compression\lha\lh5_decode.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\crc32.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\deflate.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\inffast.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\inffixed.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\inflate.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\inftrees.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\trees.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\zconf.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\zconf.in.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\zlib.h" />
+    <ClInclude Include="..\src\psglib\compression\zlib\zutil.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\ChipSim.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesApu.h" />
     <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesCartridge.h" />
@@ -211,7 +211,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\components\ayumi;$(SolutionDir)..\src\psglib\components\lha;$(SolutionDir)..\src\psglib\components\zlib;$(SolutionDir)..\src\psglib\components;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\compression\lha;$(SolutionDir)..\src\psglib\compression\zlib;$(SolutionDir)..\src\psglib\compression;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -228,7 +228,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\components\ayumi;$(SolutionDir)..\src\psglib\components\lha;$(SolutionDir)..\src\psglib\components\zlib;$(SolutionDir)..\src\psglib\components;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\compression\lha;$(SolutionDir)..\src\psglib\compression\zlib;$(SolutionDir)..\src\psglib\compression;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -245,7 +245,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\components\ayumi;$(SolutionDir)..\src\psglib\components\lha;$(SolutionDir)..\src\psglib\components\zlib;$(SolutionDir)..\src\psglib\components;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\compression\lha;$(SolutionDir)..\src\psglib\compression\zlib;$(SolutionDir)..\src\psglib\compression;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -262,7 +262,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\components\ayumi;$(SolutionDir)..\src\psglib\components\lha;$(SolutionDir)..\src\psglib\components\zlib;$(SolutionDir)..\src\psglib\components;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\src\psglib\compression\lha;$(SolutionDir)..\src\psglib\compression\zlib;$(SolutionDir)..\src\psglib\compression;$(SolutionDir)..\src\psglib;$(SolutionDir)..\src\psgtools\components\terminal;$(SolutionDir)..\src\psgtools\components\glob;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>

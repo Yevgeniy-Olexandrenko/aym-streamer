@@ -10,9 +10,6 @@
     <Filter Include="Sources\psgtools">
       <UniqueIdentifier>{ddeb5be9-f47d-4043-a5d2-20a44260cc43}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\psglib\components">
-      <UniqueIdentifier>{82f255f9-92fb-4b2e-a391-83e9d68e1d40}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources\psglib\decoders">
       <UniqueIdentifier>{ee193a59-381b-44c4-b837-95bc5b8340c4}</UniqueIdentifier>
     </Filter>
@@ -24,12 +21,6 @@
     </Filter>
     <Filter Include="Sources\psglib\output">
       <UniqueIdentifier>{61c936fd-ad31-46b9-be8e-f15fd00329f8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Sources\psglib\components\lha">
-      <UniqueIdentifier>{16e3fb29-4fa9-4b02-8d39-9fbb4d3ce97f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Sources\psglib\components\zlib">
-      <UniqueIdentifier>{a4250d46-a8b6-42b7-8b27-2c73e593a3fa}</UniqueIdentifier>
     </Filter>
     <Filter Include="Sources\psglib\decoders\modules">
       <UniqueIdentifier>{64e9f137-2bec-4928-867c-e9521e96ca55}</UniqueIdentifier>
@@ -66,6 +57,15 @@
     </Filter>
     <Filter Include="Sources\psglib\decoders\chipsims\nes">
       <UniqueIdentifier>{3c0d5e3c-2c3f-40b2-8d6e-f3402804320e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psglib\compression">
+      <UniqueIdentifier>{ab81ffcf-da7b-4daa-a3a4-21f7200d2679}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psglib\compression\lha">
+      <UniqueIdentifier>{d419a085-482e-47ca-a366-465d8b25650f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\psglib\compression\zlib">
+      <UniqueIdentifier>{521e54e2-ef25-481d-9be9-d3ed605e4a5c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -162,45 +162,6 @@
     <ClCompile Include="..\src\psglib\decoders\Decoder.cpp">
       <Filter>Sources\psglib\decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\adler32.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\compress.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\crc32.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\deflate.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\gzio.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\infback.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\inffast.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\inflate.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\inftrees.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\trees.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\uncompr.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\zlib\zutil.c">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\psglib\components\lha\lh5_decode.cpp">
-      <Filter>Sources\psglib\components\lha</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\psgtools\components\glob\glob.cpp">
       <Filter>Sources\psgtools\components\glob</Filter>
     </ClCompile>
@@ -239,6 +200,45 @@
     </ClCompile>
     <ClCompile Include="..\src\psglib\output\Processing.cpp">
       <Filter>Sources\psglib\output</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\lha\lh5_decode.cpp">
+      <Filter>Sources\psglib\compression\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\adler32.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\compress.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\crc32.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\deflate.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\gzio.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\infback.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\inffast.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\inflate.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\inftrees.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\trees.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\uncompr.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\compression\zlib\zutil.c">
+      <Filter>Sources\psglib\compression\zlib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -344,42 +344,6 @@
     <ClInclude Include="..\src\psglib\decoders\Decoder.h">
       <Filter>Sources\psglib\decoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\crc32.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\deflate.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\inffast.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\inffixed.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\inflate.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\inftrees.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\trees.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\zconf.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\zconf.in.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\zlib.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\zlib\zutil.h">
-      <Filter>Sources\psglib\components\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\psglib\components\lha\lh5_decode.h">
-      <Filter>Sources\psglib\components\lha</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\psgtools\components\glob\glob.h">
       <Filter>Sources\psgtools\components\glob</Filter>
     </ClInclude>
@@ -424,6 +388,42 @@
     </ClInclude>
     <ClInclude Include="..\src\psglib\output\Processing.h">
       <Filter>Sources\psglib\output</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\lha\lh5_decode.h">
+      <Filter>Sources\psglib\compression\lha</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\crc32.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\deflate.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\inffast.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\inffixed.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\inflate.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\inftrees.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\trees.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\zconf.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\zconf.in.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\zlib.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\compression\zlib\zutil.h">
+      <Filter>Sources\psglib\compression\zlib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

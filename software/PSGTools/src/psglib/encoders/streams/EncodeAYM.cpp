@@ -155,37 +155,38 @@ void EncodeAYM::WriteDelta(const Delta& delta)
     }
 }
 
-void EncodeAYM::WriteChipDelta(const Frame& frame, uint8_t chip, bool isLast)
+void EncodeAYM::WriteChipDelta(const Frame& frame, int chip, bool isLast)
 {
     uint8_t loMask = 0;
     uint8_t hiMask = 0;
 
-    if (frame.IsChanged(Mixer)) loMask |= 0b10000000;
-    if (frame.IsChangedPeriod(A_Period)) loMask |= 0b01000000;
-    if (frame.IsChanged(A_Volume)) loMask |= 0b00100000;
-    if (frame.IsChangedPeriod(B_Period)) loMask |= 0b00010000;
-    if (frame.IsChanged(B_Volume)) loMask |= 0b00001000;
-    if (frame.IsChangedPeriod(C_Period)) loMask |= 0b00000100;
-    if (frame.IsChanged(C_Volume)) loMask |= 0b00000010;
-    if (frame.IsChangedPeriod(N_Period)) hiMask |= 0b1000;
-    if (frame.IsChangedPeriod(E_Period)) hiMask |= 0b0100;
-    if (frame.IsChanged(E_Shape)) hiMask |= 0b0010;
-    if (!isLast) hiMask |= 0b0001;
-    if (hiMask ) loMask |= 0b00000001;
+    if (frame.IsChanged(Mixer))          loMask |= (1 << 0);
+    if (frame.IsChangedPeriod(A_Period)) loMask |= (1 << 1);
+    if (frame.IsChanged(A_Volume))       loMask |= (1 << 2);
+    if (frame.IsChangedPeriod(B_Period)) loMask |= (1 << 3);
+    if (frame.IsChanged(B_Volume))       loMask |= (1 << 4);
+    if (frame.IsChangedPeriod(C_Period)) loMask |= (1 << 5);
+    if (frame.IsChanged(C_Volume))       loMask |= (1 << 6);
+    if (frame.IsChangedPeriod(N_Period)) hiMask |= (1 << 0);
+    if (frame.IsChangedPeriod(E_Period)) hiMask |= (1 << 1);
+    if (frame.IsChanged(E_Shape))        hiMask |= (1 << 2);
+
+    if (!isLast) hiMask |= (1 << 3);
+    if (hiMask ) loMask |= (1 << 7);
 
     m_bitStream.Write(loMask, 8);
-    if (loMask & 0b00000001) m_bitStream.Write(hiMask, 4);
+    if (loMask & (1 << 7)) m_bitStream.Write(hiMask, 4);
 
-    if (loMask & 0b10000000) WriteRegDelta(frame, chip, Mixer);
-    if (loMask & 0b01000000) WritePerDelta(frame, chip, A_Period);
-    if (loMask & 0b00100000) WriteRegDelta(frame, chip, A_Volume);
-    if (loMask & 0b00010000) WritePerDelta(frame, chip, B_Period);
-    if (loMask & 0b00001000) WriteRegDelta(frame, chip, B_Volume);
-    if (loMask & 0b00000100) WritePerDelta(frame, chip, C_Period);
-    if (loMask & 0b00000010) WriteRegDelta(frame, chip, C_Volume);
-    if (hiMask & 0b1000) WritePerDelta(frame, chip, N_Period);
-    if (hiMask & 0b0100) WritePerDelta(frame, chip, E_Period);
-    if (hiMask & 0b0010) WriteRegDelta(frame, chip, E_Shape);
+    if (loMask & (1 << 0)) WriteRDelta(frame, chip, Mixer);
+    if (loMask & (1 << 1)) WritePDelta(frame, chip, A_Period);
+    if (loMask & (1 << 2)) WriteRDelta(frame, chip, A_Volume);
+    if (loMask & (1 << 3)) WritePDelta(frame, chip, B_Period);
+    if (loMask & (1 << 4)) WriteRDelta(frame, chip, B_Volume);
+    if (loMask & (1 << 5)) WritePDelta(frame, chip, C_Period);
+    if (loMask & (1 << 6)) WriteRDelta(frame, chip, C_Volume);
+    if (hiMask & (1 << 0)) WritePDelta(frame, chip, N_Period);
+    if (hiMask & (1 << 1)) WritePDelta(frame, chip, E_Period);
+    if (hiMask & (1 << 2)) WriteRDelta(frame, chip, E_Shape);
 }
 
 void EncodeAYM::WriteStepDelta()
@@ -200,12 +201,12 @@ void EncodeAYM::WriteStepDelta()
     }
 }
 
-void EncodeAYM::WriteRegDelta(const Frame& frame, uint8_t chip, uint8_t reg)
+void EncodeAYM::WriteRDelta(const Frame& frame, int chip, Register r)
 {
-    WriteDelta({ m_frame.Read(chip, reg), frame.Read(chip, reg) });
+    WriteDelta({ m_frame.Read(chip, r), frame.Read(chip, r) });
 }
 
-void EncodeAYM::WritePerDelta(const Frame& frame, uint8_t chip, uint8_t per)
+void EncodeAYM::WritePDelta(const Frame& frame, int chip, PeriodRegister p)
 {
-    WriteDelta({ m_frame.ReadPeriod(chip, per), frame.ReadPeriod(chip, per) });
+    WriteDelta({ m_frame.ReadPeriod(chip, p), frame.ReadPeriod(chip, p) });
 }

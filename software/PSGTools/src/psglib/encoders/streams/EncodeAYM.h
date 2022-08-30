@@ -46,9 +46,9 @@ public:
 
 private:
 	void WriteDelta(const Delta& delta);
-	void WriteChipDelta(const Frame& frame, uint8_t chip, bool isLast);
-	void WriteRegDelta (const Frame& frame, uint8_t chip, uint8_t reg);
-	void WritePerDelta (const Frame& frame, uint8_t chip, uint8_t per);
+	void WriteChipDelta(const Frame& frame, int chip, bool isLast);
+	void WriteRDelta (const Frame& frame, int chip, Register r);
+	void WritePDelta (const Frame& frame, int chip, PeriodRegister p);
 	void WriteStepDelta();
 
 private:

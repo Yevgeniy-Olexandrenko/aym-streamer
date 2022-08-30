@@ -154,7 +154,7 @@ void PlayInputFiles()
 #endif
         if (PSG::Decode(path, stream))
         {
-            ComputeFrameRefs(stream);
+            //ComputeFrameRefs(stream);
 
 
             goToPrev = false; // if decoding OK, move to next by default

@@ -80,6 +80,10 @@ public:
 	void ResetChanges(bool val = false);
 	bool HasChanges() const;
 
+public:
+	void ResetData(int chip);
+	void ResetChanges(int chip, bool val);
+
 	bool IsExpMode(int chip) const;
 	void SetExpMode(int chip, bool yes);
 

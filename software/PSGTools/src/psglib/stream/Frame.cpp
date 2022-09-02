@@ -88,7 +88,7 @@ bool Frame::GetRegInfo(int chip, Register reg, RegInfo& info) const
 	return false;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 Frame::Frame()
 	: m_id(0)
@@ -139,12 +139,12 @@ Frame& Frame::operator+=(const Frame& other)
 
 void Frame::ResetData()
 {
-	memset(m_data, 0x00, sizeof(m_data));
+	for (int chip = 0; chip < 2; ++chip) ResetData(chip);
 }
 
 void Frame::ResetChanges(bool val)
 {
-	memset(m_changes, val, sizeof(m_changes));
+	for (int chip = 0; chip < 2; ++chip) ResetChanges(chip, val);
 }
 
 bool Frame::HasChanges() const
@@ -159,6 +159,18 @@ bool Frame::HasChanges() const
 	return false;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+void Frame::ResetData(int chip)
+{
+	memset(m_data[chip], 0x00, sizeof(m_data[chip]));
+}
+
+void Frame::ResetChanges(int chip, bool val)
+{
+	memset(m_changes[chip], val, sizeof(m_changes[chip]));
+}
+
 bool Frame::IsExpMode(int chip) const
 {
 	return ((m_data[chip][k_modeBankRegIdx] & 0xE0) == 0xA0);
@@ -170,7 +182,7 @@ void Frame::SetExpMode(int chip, bool yes)
 	Update(chip, Mode_Bank, data);
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 uint8_t Frame::Read(int chip, Register reg) const
 {
@@ -248,7 +260,7 @@ bool Frame::IsChangedPeriod(PeriodRegister preg) const
 	return IsChangedPeriod(0, preg);
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void Frame::Update(int chip, Register reg, uint8_t data)
 {
@@ -268,8 +280,8 @@ void Frame::Update(int chip, Register reg, uint8_t data)
 					// check if mode changed, reset registers
 					if ((m_data[chip][info.index] ^ data) & 0xE0)
 					{
-						ResetData();
-						ResetChanges(true);
+						ResetData(chip);
+						ResetChanges(chip, true);
 					}
 				}
 
@@ -318,7 +330,7 @@ void Frame::UpdatePeriod(PeriodRegister preg, uint16_t data)
 	UpdatePeriod(0, preg, data);
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 Frame::Channel Frame::ReadChannel(int chip, int chan) const
 {
@@ -363,7 +375,7 @@ void Frame::UpdateChannel(int chip, int chan, const Channel& data)
 	}
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 const uint8_t& Frame::data(int chip, Register reg) const
 {
@@ -386,7 +398,7 @@ bool& Frame::changed(int chip, Register reg)
 	return (GetRegInfo(chip, reg, info) ? m_changes[chip][info.index] : dummy);
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, const Frame& frame)
 {

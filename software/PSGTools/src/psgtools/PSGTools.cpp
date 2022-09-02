@@ -146,10 +146,10 @@ void PlayInputFiles()
     while (goToPrev ? m_filelist->GetPrevFile(path) : m_filelist->GetNextFile(path))
     {
         Stream stream;
-#if 0
+#if 1
         stream.chip.model(Chip::Model::AY8930);
         //stream.chip.count(Chip::Count::TwoChips);
-        //stream.chip.output(Chip::Output::Stereo);
+        stream.chip.output(Chip::Output::Stereo);
         //stream.chip.clockValue(1500000);
 #endif
         if (PSG::Decode(path, stream))

@@ -193,69 +193,216 @@ namespace gui
 
 	////////////////////////////////////////////////////////////////////////////
 
+    const std::string k_headerForExpMode = "|07|0100 0816 0C0B 0D|0302 0917 1110 14|0504 0A18 1312 15|191A06|";
+    const std::string k_headerForComMode = "|R7|R1R0 R8|R3R2 R9|R5R4 RA|RCRB RD|R6|";
+
+    enum RegColorType { Highlight, Changed, WithNoise, WithEnvelope, Hidden, Unchanged };
+    SHORT RegColors[] { BG_DARK_MAGENTA | FG_WHITE, FG_GREEN, FG_CYAN, FG_YELLOW, FG_RED, FG_DARK_GREY };
+
     void printNibble(uint8_t nibble)
     {
         nibble &= 0x0F;
         m_framesBuffer.draw(char((nibble >= 0x0A ? 'A' - 0x0A : '0') + nibble));
     };
 
-    void printRegisterValue(int chip, const Frame& frame, int reg, bool highlight)
+    void printRegisterValue(int chip, const Frame& frame, int reg, RegColorType regColorType)
     {
-        if (frame.IsChanged(chip, reg))
+        if (frame.IsChanged(chip, reg) || regColorType == Highlight)
         {
-            m_framesBuffer.color(highlight ? BG_DARK_MAGENTA | FG_WHITE : FG_GREEN);
-
-            uint8_t data = frame.Read(chip, reg);
+            m_framesBuffer.color(RegColors[regColorType]);
+            uint8_t data = frame.data(chip, reg);
             printNibble(data >> 4);
             printNibble(data);
         }
         else
         {
-            m_framesBuffer.color(highlight ? BG_DARK_MAGENTA | FG_DARK_GREY : FG_DARK_GREY);
+            m_framesBuffer.color(RegColors[Unchanged]);
             m_framesBuffer.draw("..");
         }
     }
 
-    void printRegistersValues(int chipIndex, const Frame& frame, bool highlight)
+    void printRegistersValuesForCompatibleMode(int chip, const Frame& frame, bool highlight)
     {
-        uint16_t color = highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN;
+        uint8_t mixer = frame.Read(chip, Mixer);
+        uint8_t vol_a = frame.Read(chip, A_Volume);
+        uint8_t vol_b = frame.Read(chip, B_Volume);
+        uint8_t vol_c = frame.Read(chip, C_Volume);
+
+        bool enableAT = !(mixer & 0b00000001);
+        bool enableBT = !(mixer & 0b00000010);
+        bool enableCT = !(mixer & 0b00000100);
+        bool enableAN = !(mixer & 0b00001000);
+        bool enableBN = !(mixer & 0b00010000);
+        bool enableCN = !(mixer & 0b00100000);
+        bool enableAE = (vol_a & 0x10);
+        bool enableBE = (vol_b & 0x10);
+        bool enableCE = (vol_c & 0x10);
+        bool enableAM = ((enableAT || enableAN) && (enableAE || vol_a));
+        bool enableBM = ((enableBT || enableBN) && (enableBE || vol_b));
+        bool enableCM = ((enableCT || enableCN) && (enableCE || vol_c));
+
+        bool enableM = (enableAM || enableBM || enableCM);
+        bool enableA = (enableAT || enableAN || enableAE);
+        bool enableB = (enableBT || enableBN || enableBE);
+        bool enableC = (enableCT || enableCN || enableCE);
+        bool enableE = (enableAE || enableBE || enableCE);
+        bool enableN = (enableAN || enableBN || enableCN);
+
+        RegColorType mixerColorType = (highlight ? Highlight : (enableM ? Changed : Hidden));
+        RegColorType channelAColorType = (highlight ? Highlight : (enableA ? (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)) : Hidden));
+        RegColorType channelBColorType = (highlight ? Highlight : (enableB ? (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)) : Hidden));
+        RegColorType channelCColorType = (highlight ? Highlight : (enableC ? (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)) : Hidden));
+        RegColorType envelopeColorType = (highlight ? Highlight : (enableE ? Changed : Hidden));
+        RegColorType noiseColorType = (highlight ? Highlight : (enableN ? Changed : Hidden));
+
+        uint16_t color = (highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chipIndex, frame, Mixer, highlight);
+        printRegisterValue(chip, frame, Mixer, mixerColorType);
+
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chipIndex, frame, A_Coarse, highlight);
-        printRegisterValue(chipIndex, frame, A_Fine, highlight);
+        printRegisterValue(chip, frame, A_Coarse, channelAColorType);
+        printRegisterValue(chip, frame, A_Fine, channelAColorType);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chipIndex, frame, A_Volume, highlight);
+        printRegisterValue(chip, frame, A_Volume, channelAColorType);
+
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chipIndex, frame, B_Coarse, highlight);
-        printRegisterValue(chipIndex, frame, B_Fine, highlight);
+        printRegisterValue(chip, frame, B_Coarse, channelBColorType);
+        printRegisterValue(chip, frame, B_Fine, channelBColorType);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chipIndex, frame, B_Volume, highlight);
+        printRegisterValue(chip, frame, B_Volume, channelBColorType);
+
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chipIndex, frame, C_Coarse, highlight);
-        printRegisterValue(chipIndex, frame, C_Fine, highlight);
+        printRegisterValue(chip, frame, C_Coarse, channelCColorType);
+        printRegisterValue(chip, frame, C_Fine, channelCColorType);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chipIndex, frame, C_Volume, highlight);
+        printRegisterValue(chip, frame, C_Volume, channelCColorType);
+
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chipIndex, frame, E_Coarse, highlight);
-        printRegisterValue(chipIndex, frame, E_Fine, highlight);
+        printRegisterValue(chip, frame, E_Coarse, envelopeColorType);
+        printRegisterValue(chip, frame, E_Fine, envelopeColorType);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chipIndex, frame, E_Shape, highlight);
+        printRegisterValue(chip, frame, E_Shape, envelopeColorType);
+
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chipIndex, frame, N_Period, highlight);
+        printRegisterValue(chip, frame, N_Period, noiseColorType);
         m_framesBuffer.color(color).draw('|');
     }
 
-    void printRegistersHeader()
+    void printRegistersValuesForExpandedMode(int chip, const Frame& frame, bool highlight)
     {
-        std::string str = "|R7|R1R0 R8|R3R2 R9|R5R4 RA|RCRB RD|R6|";
+        uint8_t mixer = frame.Read(chip, Mixer);
+        uint8_t vol_a = frame.Read(chip, A_Volume);
+        uint8_t vol_b = frame.Read(chip, B_Volume);
+        uint8_t vol_c = frame.Read(chip, C_Volume);
+
+        bool enableAT = !(mixer & 0b00000001);
+        bool enableBT = !(mixer & 0b00000010);
+        bool enableCT = !(mixer & 0b00000100);
+        bool enableAN = !(mixer & 0b00001000);
+        bool enableBN = !(mixer & 0b00010000);
+        bool enableCN = !(mixer & 0b00100000);
+        bool enableAE = (vol_a & 0x20);
+        bool enableBE = (vol_b & 0x20);
+        bool enableCE = (vol_c & 0x20);
+        bool enableAM = ((enableAT || enableAN) && (enableAE || vol_a));
+        bool enableBM = ((enableBT || enableBN) && (enableBE || vol_b));
+        bool enableCM = ((enableCT || enableCN) && (enableCE || vol_c));
+
+        bool enableM = (enableAM || enableBM || enableCM);
+        bool enableA = (enableAT || enableAN || enableAE);
+        bool enableB = (enableBT || enableBN || enableBE);
+        bool enableC = (enableCT || enableCN || enableCE);
+        bool enableN = (enableAN || enableBN || enableCN);
+
+        RegColorType mixerColorType = (highlight ? Highlight : (enableM ? Changed : Hidden));
+        RegColorType channelAColorType = (highlight ? Highlight : (enableA ? (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)) : Hidden));
+        RegColorType channelBColorType = (highlight ? Highlight : (enableB ? (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)) : Hidden));
+        RegColorType channelCColorType = (highlight ? Highlight : (enableC ? (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)) : Hidden));
+        RegColorType envelopeAColorType = (highlight ? Highlight : (enableAE ? Changed : Hidden));
+        RegColorType envelopeBColorType = (highlight ? Highlight : (enableBE ? Changed : Hidden));
+        RegColorType envelopeCColorType = (highlight ? Highlight : (enableCE ? Changed : Hidden));
+        RegColorType noiseColorType = (highlight ? Highlight : (enableN ? Changed : Hidden));
+
+        uint16_t color = (highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
+        m_framesBuffer.color(color).draw('|');
+        printRegisterValue(chip, frame, Mixer, mixerColorType);
+
+        m_framesBuffer.color(color).draw('|');
+        printRegisterValue(chip, frame, A_Coarse, channelAColorType);
+        printRegisterValue(chip, frame, A_Fine, channelAColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, A_Volume, channelAColorType);
+        printRegisterValue(chip, frame, A_Duty, channelAColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, EA_Coarse, envelopeAColorType);
+        printRegisterValue(chip, frame, EA_Fine, envelopeAColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, EA_Shape, envelopeAColorType);
+
+        m_framesBuffer.color(color).draw('|');
+        printRegisterValue(chip, frame, B_Coarse, channelBColorType);
+        printRegisterValue(chip, frame, B_Fine, channelBColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, B_Volume, channelBColorType);
+        printRegisterValue(chip, frame, B_Duty, channelBColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, EB_Coarse, envelopeBColorType);
+        printRegisterValue(chip, frame, EB_Fine, envelopeBColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, EB_Shape, envelopeBColorType);
+
+        m_framesBuffer.color(color).draw('|');
+        printRegisterValue(chip, frame, C_Coarse, channelCColorType);
+        printRegisterValue(chip, frame, C_Fine, channelCColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, C_Volume, channelCColorType);
+        printRegisterValue(chip, frame, C_Duty, channelCColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, EC_Coarse, envelopeCColorType);
+        printRegisterValue(chip, frame, EC_Fine, envelopeCColorType);
+        m_framesBuffer.draw(' ');
+        printRegisterValue(chip, frame, EC_Shape, envelopeCColorType);
+        m_framesBuffer.color(color).draw('|');
+
+        printRegisterValue(chip, frame, N_AndMask, noiseColorType);
+        printRegisterValue(chip, frame, N_OrMask, noiseColorType);
+        printRegisterValue(chip, frame, N_Period, noiseColorType);       
+        m_framesBuffer.color(color).draw('|');
+    }
+
+    void printRegistersValues(bool isExpMode, int chip, const Frame& frame, bool highlight)
+    {
+        if (frame.IsExpMode(chip))
+            printRegistersValuesForExpandedMode(chip, frame, highlight);
+        else
+            printRegistersValuesForCompatibleMode(chip, frame, highlight);
+    }
+
+    void printRegistersHeaderForMode(const std::string& str)
+    {
+        bool regIdx = false;
         for (size_t i = 0; i < str.length(); ++i)
         {
-            m_framesBuffer.color(FG_GREY);
-            if (str[i] == '|') m_framesBuffer.color(FG_CYAN);
-            if (str[i] == 'R') m_framesBuffer.color(FG_DARK_CYAN);
+            if (str[i] == '|' || str[i] == ' ')
+                m_framesBuffer.color(FG_CYAN);
+            else
+            {
+                if (regIdx)
+                    m_framesBuffer.color(FG_GREY);
+                else
+                    m_framesBuffer.color(FG_DARK_CYAN);
+                regIdx ^= true;
+            }
             m_framesBuffer.draw(str[i]);
         }
+    }
+
+    void printRegistersHeader(bool isExpMode)
+    {
+        if (isExpMode)
+            printRegistersHeaderForMode(k_headerForExpMode);
+        else
+            printRegistersHeaderForMode(k_headerForComMode);
     }
 
 	size_t PrintStreamFrames(const Stream& stream, int frameId)
@@ -264,6 +411,7 @@ namespace gui
         size_t range1 = (height - 2) / 2;
         size_t range2 = (height - 2) - range1;
         bool isTS = (stream.chip.count() == Chip::Count::TwoChips);
+        bool isExpMode = stream.IsExpModeUsed();
 
         // prepare console for drawing
         m_framesBuffer.clear();
@@ -272,18 +420,24 @@ namespace gui
         terminal::cursor::move_up(m_framesBuffer.h);
 
         // print header
-        int offset = isTS ? 1 : 20;
+        int regs_w = isExpMode ? k_headerForExpMode.length() : k_headerForComMode.length();
+        int offset = ((m_framesBuffer.w - 2 - 6) - (isTS ? 2 * regs_w + 1 : regs_w)) / 2;
         m_framesBuffer.position(offset, 0).color(FG_DARK_CYAN).draw("FRAME").move(1, 0);
-        printRegistersHeader();
+        printRegistersHeader(isExpMode);
         if (isTS)
         {
             m_framesBuffer.move(1, 0);
-            printRegistersHeader();
+            printRegistersHeader(isExpMode);
         }
 
+        // prepare fake frame
+        Frame fakeFrame;
+        fakeFrame.SetExpMode(0, isExpMode);
+        fakeFrame.SetExpMode(1, isExpMode);
+        fakeFrame.ResetChanges();
+
         // print frames
-        Frame fakeFrame; int y = 1;
-        for (int i = int(frameId - range1); i <= int(frameId + range2); ++i, ++y)
+        for (int i = int(frameId - range1), y = 1; i <= int(frameId + range2); ++i, ++y)
         {
             bool highlight = (i == frameId);
             bool useFakeFrame = (i < 0 || i >= int(stream.play.framesCount()));
@@ -303,11 +457,11 @@ namespace gui
             m_framesBuffer.draw(' ');
 
             // print frame registers
-            printRegistersValues(0, frame, highlight);
+            printRegistersValues(isExpMode, 0, frame, highlight);
             if (isTS)
             {
                 m_framesBuffer.draw(' ');
-                printRegistersValues(1, frame, highlight);
+                printRegistersValues(isExpMode, 1, frame, highlight);
             }
         }
         m_framesBuffer.render();

@@ -155,10 +155,15 @@ void SimRP2A03::ConvertToSingleChip(const State& state, Frame& frame)
         frame.UpdatePeriod(N_Period, period);
 
         if (!state.pulse1_enable)
-            frame.Update(A_Volume, uint8_t(volumeN / k_noiseVolumePower));
-
-        else if (!state.pulse2_enable)
-            frame.Update(C_Volume, uint8_t(volumeN / k_noiseVolumePower));
+        {
+            volumeA = int(0.5f * (volumeN * k_noiseVolumePower));
+            frame.Update(A_Volume, uint8_t(volumeA));
+        }
+        if (!state.pulse2_enable)
+        {
+            volumeC = int(0.5f * (volumeN * k_noiseVolumePower));
+            frame.Update(C_Volume, uint8_t(volumeC));
+        }
 
         if (volumeA + volumeC <= volumeN * k_noiseVolumePower)
         {
@@ -324,10 +329,15 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
         frame.UpdatePeriod(N_Period, period);
 
         if (!state.pulse1_enable)
-            frame.Update(A_Volume, uint8_t(volumeN / k_noiseVolumePower));
-
-        else if (!state.pulse2_enable)
-            frame.Update(C_Volume, uint8_t(volumeN / k_noiseVolumePower));
+        {
+            volumeA = int(0.5f * (volumeN * k_noiseVolumePower));
+            frame.Update(A_Volume, uint8_t(volumeA));
+        }
+        if (!state.pulse2_enable)
+        {
+            volumeC = int(0.5f * (volumeN * k_noiseVolumePower));
+            frame.Update(C_Volume, uint8_t(volumeC));
+        }
         
         if (volumeA + volumeC <= volumeN * k_noiseVolumePower)
         {

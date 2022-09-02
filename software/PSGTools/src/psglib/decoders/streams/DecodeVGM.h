@@ -3,6 +3,8 @@
 #include <memory>
 #include "decoders/Decoder.h"
 
+#define DBG_DECODE_VGM 0
+
 class ChipSim;
 
 class DecodeVGM : public Decoder
@@ -101,5 +103,5 @@ private:
     int m_samplesPerFrame;
     int m_processedSamples;
 
-    std::shared_ptr<ChipSim> m_chip;
+    std::shared_ptr<ChipSim> m_simulator;
 };

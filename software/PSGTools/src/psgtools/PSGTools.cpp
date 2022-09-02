@@ -147,10 +147,10 @@ void PlayInputFiles()
     {
         Stream stream;
 #if 0
-        //stream.chip.model(Chip::Model::AY8930);
+        stream.chip.model(Chip::Model::AY8930);
         //stream.chip.count(Chip::Count::TwoChips);
         //stream.chip.output(Chip::Output::Stereo);
-        stream.chip.clockValue(1500000);
+        //stream.chip.clockValue(1500000);
 #endif
         if (PSG::Decode(path, stream))
         {

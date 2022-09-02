@@ -5,20 +5,28 @@
 #include "decoders/chipsims/SimSN76489.h"
 #include <sstream>
 
-#define DEBUG_OUT 0
+// debug output
+#if DBG_DECODE_VGM
+std::ofstream debug_out;
+#define DebugOpen() \
+    debug_out.open("dbg_decode_vgm.txt");
+#define DebugPrintWrite(aa, bb) \
+    debug_out << 'r' << std::hex << std::setw(2) << std::setfill('0') << int(aa); \
+    debug_out << ':' << std::hex << std::setw(2) << std::setfill('0') << int(dd); \
+    debug_out << ' ';
+#define DebugPrintNewLine() \
+    debug_out << std::endl;
+#define DebugClose() \
+    debug_out.close();
+#else
+#define DebugOpen()
+#define DebugPrintWrite(aa, bb)
+#define DebugPrintNewLine()
+#define DebugClose()
+#endif
 
 namespace
 {
-#if DEBUG_OUT
-    std::ofstream debug_out;
-    void DebugOut(int aa, int dd)
-    {
-        debug_out << 'r' << std::hex << std::setw(2) << std::setfill('0') << aa;
-        debug_out << ':' << std::hex << std::setw(2) << std::setfill('0') << dd;
-        debug_out << ' ';
-    }
-#endif
-
     const uint32_t VGMSignature = 0x206D6756;
     const uint32_t GD3Signature = 0x20336447;
 
@@ -46,10 +54,10 @@ bool DecodeVGM::Open(Stream& stream)
     Header header;
     if (ReadFile(stream.file.string().c_str(), (uint8_t*)(&header), sizeof(header)))
     {
-        if (header.version >= 0x151 && header.ay8910Clock) m_chip.reset(new SimAY8910());
-        if (header.version >= 0x161 && header.nesApuClock) m_chip.reset(new SimRP2A03());
+        if (header.version >= 0x151 && header.ay8910Clock) m_simulator.reset(new SimAY8910());
+        if (header.version >= 0x161 && header.nesApuClock) m_simulator.reset(new SimRP2A03());
 
-        if (header.ident == VGMSignature && m_chip)
+        if (header.ident == VGMSignature && m_simulator)
         {
             int fileSize = 0x04 + header.eofOffset;
             m_data = new uint8_t[fileSize];
@@ -66,7 +74,7 @@ bool DecodeVGM::Open(Stream& stream)
                 int clockRate = 0;
                 int frameRate = 60;
                 
-                if (m_chip->type() == ChipSim::Type::AY8910)
+                if (m_simulator->type() == ChipSim::Type::AY8910)
                 {
                     clockRate = (header.ay8910Clock & 0x3FFFFFFF);
                     if (header.ay8910Flags & 0x10) clockRate /= 2;
@@ -86,7 +94,7 @@ bool DecodeVGM::Open(Stream& stream)
                     stream.chip.count(count);
                 }
 
-                else if (m_chip->type() == ChipSim::Type::RP2A03)
+                else if (m_simulator->type() == ChipSim::Type::RP2A03)
                 {
                     clockRate = (header.nesApuClock & 0x3FFFFFFF);
 
@@ -107,13 +115,13 @@ bool DecodeVGM::Open(Stream& stream)
                     if (!stream.chip.outputKnown()) stream.chip.output(Chip::Output::Mono);
                     stream.chip.count(count);
 
-                    static_cast<SimRP2A03*>(m_chip.get())->ConfigureOutput(outputType);
+                    static_cast<SimRP2A03*>(m_simulator.get())->ConfigureOutput(outputType);
                 }
 
                 stream.info.type("VGM stream");
                 stream.play.frameRate(frameRate);
 
-                m_chip->ConfigureClock(clockRate, stream.chip.clockValue());
+                m_simulator->ConfigureClock(clockRate, stream.chip.clockValue());
                 m_samplesPerFrame = (44100 / frameRate);
                 m_processedSamples = 0;
 
@@ -164,9 +172,7 @@ bool DecodeVGM::Open(Stream& stream)
                             stream.info.type(stream.info.type() + " (" + GD3[4] + ")");
                     }
                 }
-#if DEBUG_OUT
-                debug_out.open(__FILE__".txt");
-#endif
+                DebugOpen();
                 return true;
             }
             else
@@ -182,14 +188,14 @@ bool DecodeVGM::Decode(Frame& frame)
 {
     if (m_processedSamples >= m_samplesPerFrame)
     {
-        m_chip->Simulate(m_samplesPerFrame);
+        m_simulator->Simulate(m_samplesPerFrame);
     }
 
     else while (m_processedSamples < m_samplesPerFrame)
     {
         if (int samples = DecodeBlock())
         {
-            m_chip->Simulate(samples);
+            m_simulator->Simulate(samples);
             m_processedSamples += samples;
         }
         else
@@ -198,12 +204,10 @@ bool DecodeVGM::Decode(Frame& frame)
         }
     }
 
-    m_chip->Convert(frame);
+    m_simulator->Convert(frame);
     m_processedSamples -= m_samplesPerFrame;
 
-#if DEBUG_OUT
-    debug_out << std::endl;
-#endif
+    DebugPrintNewLine();
     return true;
 }
 
@@ -212,9 +216,7 @@ void DecodeVGM::Close(Stream& stream)
     stream.loop.frameId(m_loop);
     delete[] m_data;
 
-#if DEBUG_OUT
-    debug_out.close();
-#endif
+    DebugClose();
 }
 
 /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
@@ -243,14 +245,12 @@ int DecodeVGM::DecodeBlock()
         // AY8910, write value dd to register aa
         else if (m_dataPtr[0] == 0xA0)
         {
-            if (m_chip->type() == ChipSim::Type::AY8910)
+            if (m_simulator->type() == ChipSim::Type::AY8910)
             {
                 uint8_t aa = m_dataPtr[1];
                 uint8_t dd = m_dataPtr[2];
-                m_chip->Write((aa & 0x80) >> 7, aa & 0x7F, dd);
-#if DEBUG_OUT
-                DebugOut(aa, dd);
-#endif
+                m_simulator->Write((aa & 0x80) >> 7, aa & 0x7F, dd);
+                DebugPrintWrite(aa, dd);
             }
             m_dataPtr += 2;
         }
@@ -258,14 +258,12 @@ int DecodeVGM::DecodeBlock()
         // RP2A03, write value dd to register aa
         else if (m_dataPtr[0] == 0xB4)
         {
-            if (m_chip->type() == ChipSim::Type::RP2A03)
+            if (m_simulator->type() == ChipSim::Type::RP2A03)
             {
                 uint8_t aa = m_dataPtr[1];
                 uint8_t dd = m_dataPtr[2];
-                m_chip->Write(0, aa, dd);
-#if DEBUG_OUT
-                DebugOut(aa, dd);
-#endif
+                m_simulator->Write(0, aa, dd);
+                DebugPrintWrite(aa, dd);
             }
             m_dataPtr += 2;
         }

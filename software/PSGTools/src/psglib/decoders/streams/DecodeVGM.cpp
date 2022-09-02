@@ -5,6 +5,8 @@
 #include "decoders/chipsims/SimSN76489.h"
 #include <sstream>
 
+////////////////////////////////////////////////////////////////////////////////
+
 // debug output
 #if DBG_DECODE_VGM
 std::ofstream debug_out;
@@ -24,6 +26,8 @@ std::ofstream debug_out;
 #define DebugPrintNewLine()
 #define DebugClose()
 #endif
+
+////////////////////////////////////////////////////////////////////////////////
 
 namespace
 {
@@ -47,7 +51,7 @@ namespace
     }
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodeVGM::Open(Stream& stream)
 {
@@ -97,8 +101,7 @@ bool DecodeVGM::Open(Stream& stream)
                 else if (m_simulator->type() == ChipSim::Type::RP2A03)
                 {
                     clockRate = (header.nesApuClock & 0x3FFFFFFF);
-
-                    // TODO: detect frame rate
+                    if (clockRate / 1000 == 1662) frameRate = 50;
 
                     auto outputType = SimRP2A03::OutputType::SingleChip;
                     if (stream.chip.model() == Chip::Model::AY8930)
@@ -219,7 +222,7 @@ void DecodeVGM::Close(Stream& stream)
     DebugClose();
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 int DecodeVGM::DecodeBlock()
 {

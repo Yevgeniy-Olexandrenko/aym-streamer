@@ -93,7 +93,6 @@ public:
 
 private:
     int  DecodeBlock();
-   
 
 private:
     uint8_t* m_data;

@@ -240,6 +240,9 @@
     <ClCompile Include="..\src\psglib\compression\zlib\zutil.c">
       <Filter>Sources\psglib\compression\zlib</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesApuNew.cpp">
+      <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\psglib\stream\Chip.h">
@@ -424,6 +427,9 @@
     </ClInclude>
     <ClInclude Include="..\src\psglib\compression\zlib\zutil.h">
       <Filter>Sources\psglib\compression\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesApuNew.h">
+      <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

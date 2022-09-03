@@ -51,7 +51,7 @@ bool DecodePSG::Decode(Frame& frame)
 
                 // setup number of frames to skip
                 m_skip = (v2 * 4 - 1);
-                return true;
+                break;
             }
 
             // read register and value

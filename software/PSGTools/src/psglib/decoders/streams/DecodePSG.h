@@ -20,6 +20,6 @@ public:
 	void Close  (Stream& stream) override;
 
 private:
-	std::ifstream m_fileStream;
-	int m_skipFrames = 0;
+	std::ifstream m_input;
+	int m_skip;
 };

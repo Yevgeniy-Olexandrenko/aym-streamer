@@ -7,16 +7,18 @@ namespace
 
 bool DecodePSG::Open(Stream& stream)
 {
-    m_fileStream.open(stream.file, std::fstream::binary);
-    if (m_fileStream)
+    m_input.open(stream.file, std::fstream::binary);
+    if (m_input)
     {
         Header header;
-        m_fileStream.read((char*)(&header), sizeof(header));
+        m_input.read((char*)(&header), sizeof(header));
 
-        if (m_fileStream && header.m_sig == PSGSignature)
+        if (m_input && header.m_sig == PSGSignature)
         {
             stream.info.type("PSG stream");
             stream.play.frameRate(header.m_fps ? header.m_fps : 50);
+
+            m_skip = 0;
             return true;
         }
     }
@@ -25,40 +27,56 @@ bool DecodePSG::Open(Stream& stream)
 
 bool DecodePSG::Decode(Frame& frame)
 {
-    if (m_skipFrames)
+    if (m_skip) m_skip--;
+    else
     {
-        m_skipFrames--;
-        return true;
-    }
+        // skip frame begin marker 0xFF or
+        // pending argument of 0xFE command
+        if (!m_input.ignore(1)) return false;
 
-    uint8_t data0, data1;
-    while (m_fileStream.get((char&)data0))
-    {
-        // beginning of the next frame
-        if (data0 == 0xFF) return true;
-
-        // next frames are duplicates
-        if (data0 == 0xFE) 
+        // loop through register values
+        // until next frame marker
+        for(uint8_t v1, v2;;)
         {
-            if (m_fileStream.get((char&)data0))
+            if (m_input.peek() == EOF ) break;
+            if (m_input.peek() == 0xFF) break; 
+            if (m_input.peek() == 0xFE)
             {
-                m_skipFrames = 4 * data0 - 1;
+                // skip 0xFE command byte
+                m_input.ignore(1);
+
+                // peek next byte if available
+                if (m_input.peek() == EOF) return false;
+                v2 = uint8_t(m_input.peek());
+
+                // setup number of frames to skip
+                m_skip = (v2 * 4 - 1);
+                return true;
             }
-            return true;
-        }
 
-        // end of stream
-        if (data0 == 0xFD) break;
+            // read register and value
+            m_input.get((char&)v1);
+            if (!m_input.get((char&)v2)) return false;
 
-        if (m_fileStream.get((char&)data1))
-        {
-            frame[0].Update(data0, data1);
+            // update frame state
+            int chip = (v1 >> 7);
+            Register reg = (v1 & 0x7F);
+            frame[chip].Update(reg, v2);
         }
     }
-    return frame.HasChanges();
+    return true;
 }
 
 void DecodePSG::Close(Stream& stream)
 {
-    m_fileStream.close();
+    m_input.close();
+
+    if (stream.IsExpandedModeUsed(0))
+        stream.chip.first.model(Chip::Model::AY8930);
+
+    if (stream.IsExpandedModeUsed(1))
+        stream.chip.second.model(Chip::Model::AY8930);
+
+    if (stream.IsSecondChipUsed())
+        stream.chip.second.model(stream.chip.first.model());
 }

@@ -147,7 +147,7 @@ void PlayInputFiles()
     {
         Stream stream;
 #if 0
-        //stream.chip.first.model(Chip::Model::AY8930);
+        stream.chip.first.model(Chip::Model::AY8930);
         //stream.chip.second.model(Chip::Model::YM2149);
         //stream.chip.output(Chip::Output::Stereo);
         //stream.chip.clockValue(1500000);
@@ -259,6 +259,12 @@ void ConvertInputFiles(const std::filesystem::path& outputPath)
     while (m_filelist->GetNextFile(path))
     {
         Stream stream;
+#if 0
+        stream.chip.first.model(Chip::Model::AY8930);
+        //stream.chip.second.model(Chip::Model::YM2149);
+        //stream.chip.output(Chip::Output::Stereo);
+        //stream.chip.clockValue(1500000);
+#endif
         if (PSG::Decode(path, stream))
         {
             if (PSG::Encode(outputPath, stream))

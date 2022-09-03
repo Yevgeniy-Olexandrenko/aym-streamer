@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include "stream/Stream.h"
 
+////////////////////////////////////////////////////////////////////////////////
+
 class Decoder
 {
 public:
@@ -16,6 +18,8 @@ protected:
 	bool CheckFileExt(const Stream& stream, const std::string& ext) const;
 	std::string ReadString(uint8_t* ptr, uint8_t size) const;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 class ModuleDecoder : public Decoder
 {

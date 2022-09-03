@@ -76,7 +76,7 @@ bool DecodeYM::Open(Stream& stream)
 
                         else if (id == "YM2!" || id == "YM3!" || id == "YM3b")
                         {
-                            stream.play.frameRate(50);
+                            stream.play.frameRate(50); // already set to 50 in stream by default
                             stream.info.type(id.substr(0, 3) + " stream");
 
                             m_offset = id.size();

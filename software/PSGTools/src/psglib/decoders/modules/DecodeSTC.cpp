@@ -19,7 +19,7 @@ namespace
     };
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodeSTC::Open(Stream& stream)
 {
@@ -75,9 +75,7 @@ bool DecodeSTC::Open(Stream& stream)
                         }
                         stream.info.comment(ReadString(header.identifier, length));
                     }
-
                     stream.info.type("Sound Tracker module");
-                    stream.play.frameRate(50);
                 }
             }
             fileStream.close();
@@ -86,7 +84,7 @@ bool DecodeSTC::Open(Stream& stream)
     return isDetected;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodeSTC::Init()
 {
@@ -169,7 +167,7 @@ bool DecodeSTC::Play()
     return isNewLoop;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodeSTC::PatternInterpreter(Channel& chan)
 {

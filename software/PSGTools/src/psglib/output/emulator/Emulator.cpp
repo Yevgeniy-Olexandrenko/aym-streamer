@@ -26,31 +26,53 @@ bool Emulator::InitDstChip(const Chip& srcChip, Chip& dstChip)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
+    // configure first destination chip
 #if AY8930_FORCE_TO_CHOOSE
-    dstChip.model(Chip::Model::AY8930);
+    dstChip.first.model(Chip::Model::AY8930);
 #else
-    switch (srcChip.model())
+    switch (srcChip.first.model())
     {
 #if !AY8930_FORCE_TO_DISCARD
     case Chip::Model::AY8930:
 #endif
     case Chip::Model::YM2149:
-        dstChip.model(srcChip.model());
+        dstChip.first.model(srcChip.first.model());
         break;
     default:
-        dstChip.model(Chip::Model::AY8910);
+        dstChip.first.model(Chip::Model::AY8910);
         break;
     }
 #endif
-    dstChip.count(srcChip.count());
+
+    // configure second destination chip
+    if (srcChip.second.modelKnown())
+    {
+#if AY8930_FORCE_TO_CHOOSE
+        dstChip.second.model(Chip::Model::AY8930);
+#else
+        switch (srcChip.second.model())
+        {
+#if !AY8930_FORCE_TO_DISCARD
+        case Chip::Model::AY8930:
+#endif
+        case Chip::Model::YM2149:
+            dstChip.second.model(srcChip.second.model());
+            break;
+        default:
+            dstChip.second.model(Chip::Model::AY8910);
+            break;
+        }
+#endif
+    }
+
     dstChip.clock(srcChip.clockKnown() ? srcChip.clock() : Chip::Clock::F1750000);
     dstChip.output(srcChip.outputKnown() ? srcChip.output() : Chip::Output::Stereo);
     dstChip.stereo(srcChip.stereoKnown() ? srcChip.stereo() : Chip::Stereo::ABC);
 
-    for (int chip = 0; chip < dstChip.countValue(); ++chip)
+    for (int chip = 0; chip < dstChip.count(); ++chip)
     {
         // create chip emulator
-        switch (dstChip.model())
+        switch (dstChip.model(chip))
         {
         case Chip::Model::AY8910: m_ay[chip].reset(new ChipAY8910(dstChip.clockValue(), k_emulatorSampleRate)); break;
         case Chip::Model::YM2149: m_ay[chip].reset(new ChipYM2149(dstChip.clockValue(), k_emulatorSampleRate)); break;

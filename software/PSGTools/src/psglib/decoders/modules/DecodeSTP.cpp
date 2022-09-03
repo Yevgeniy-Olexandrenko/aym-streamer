@@ -21,7 +21,7 @@ namespace
     const std::string KSASignature = "KSA SOFTWARE COMPILATION OF ";
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodeSTP::Open(Stream& stream)
 {
@@ -62,9 +62,7 @@ bool DecodeSTP::Open(Stream& stream)
                     {
                         stream.info.title(ReadString(&m_data[38], 25));
                     }
-
                     stream.info.type("Sound Tracker Pro module");
-                    stream.play.frameRate(50);
                 }
             }
             fileStream.close();
@@ -73,7 +71,7 @@ bool DecodeSTP::Open(Stream& stream)
     return isDetected;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodeSTP::Init()
 {
@@ -165,7 +163,7 @@ bool DecodeSTP::Play()
     return isNewLoop;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodeSTP::PatternInterpreter(Channel& chan)
 {

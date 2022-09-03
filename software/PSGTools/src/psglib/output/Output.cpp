@@ -37,13 +37,15 @@ bool Output::Init(const Stream& stream)
         if (m_isOpened &= InitDstChip(stream.chip, m_chip))
         {
             // check if the output chip setup is correct
-            assert(m_chip.modelKnown());
             assert(m_chip.clockKnown());
             assert(m_chip.outputKnown());
-            if (m_chip.output() == Chip::Output::Stereo) assert(m_chip.stereoKnown());
+            if (m_chip.output() == Chip::Output::Stereo)
+            {
+                assert(m_chip.stereoKnown());
+            }
 
             // restrict stereo modes available for exp mode
-            if (stream.IsExpModeUsed() && m_chip.output() == Chip::Output::Stereo)
+            if (stream.IsExpandedModeUsed() && m_chip.output() == Chip::Output::Stereo)
             {
                 if (m_chip.stereo() != Chip::Stereo::ABC && m_chip.stereo() != Chip::Stereo::ACB)
                 {
@@ -67,10 +69,10 @@ bool Output::Write(const Frame& frame)
 
         // output to chip(s)
         std::vector<uint8_t> data(64);
-        for (int chip = 0; chip < m_chip.countValue(); ++chip)
+        for (int chip = 0; chip < m_chip.count(); ++chip)
         {
             data.clear();
-            if (m_chip.model() == Chip::Model::AY8930 && pframe.IsExpMode(chip))
+            if (m_chip.model(chip) == Chip::Model::AY8930 && pframe.IsExpMode(chip))
             {
                 bool switchBanks = false;
                 for (Register reg = BankB_Fst; reg < BankB_Lst; ++reg)

@@ -82,42 +82,42 @@ bool DecodeVGM::Open(Stream& stream)
                 {
                     clockRate = (header.ay8910Clock & 0x3FFFFFFF);
                     if (header.ay8910Flags & 0x10) clockRate /= 2;
-
+                    if (!stream.chip.clockKnown()) stream.chip.clockValue(clockRate);
                     // TODO: detect frame rate
 
                     Chip::Model model = Chip::Model::AY8910;
                     if (header.ay8910Type == 0x03) model = Chip::Model::AY8930;
                     if (header.ay8910Type >= 0x10) model = Chip::Model::YM2149;
-
-                    Chip::Count count = (header.ay8910Clock & 0x40000000)
-                        ? Chip::Count::TwoChips
-                        : Chip::Count::OneChip;
-
-                    if (!stream.chip.clockKnown()) stream.chip.clockValue(clockRate);
-                    if (!stream.chip.modelKnown()) stream.chip.model(model);
-                    stream.chip.count(count);
+                    auto twoChips = bool(header.ay8910Clock & 0x40000000);
+          
+                    stream.chip.first.model(model);
+                    if (twoChips) stream.chip.second.model(model);
                 }
 
                 else if (m_simulator->type() == ChipSim::Type::RP2A03)
                 {
                     clockRate = (header.nesApuClock & 0x3FFFFFFF);
+                    if (!stream.chip.clockKnown()) stream.chip.clockValue(clockRate);
                     if (clockRate / 1000 == 1662) frameRate = 50;
 
                     auto outputType = SimRP2A03::OutputType::SingleChip;
-                    if (stream.chip.model() == Chip::Model::AY8930)
-                         outputType = SimRP2A03::OutputType::AY8930Chip;
-                    else if (stream.chip.count() == Chip::Count::TwoChips)
-                         outputType = SimRP2A03::OutputType::DoubleChip;
+                    if (stream.chip.first.model() == Chip::Model::Compatible)
+                    {
+                        stream.chip.first.model(Chip::Model::YM2149);
+                    }
 
-                    Chip::Count count = (outputType == SimRP2A03::OutputType::AY8930Chip)
-                        ? Chip::Count::OneChip
-                        : stream.chip.count();
+                    if (stream.chip.first.model() == Chip::Model::AY8930)
+                    {
+                        outputType = SimRP2A03::OutputType::AY8930Chip;
+                        stream.chip.second.model(Chip::Model::Unknown);
+                    }
+                    else if (stream.chip.count() == 2)
+                    {
+                        outputType = SimRP2A03::OutputType::DoubleChip;
+                        stream.chip.second.model(stream.chip.first.model());
+                    }
 
-                    if (!stream.chip.clockKnown())  stream.chip.clockValue(clockRate);
-                    if (!stream.chip.modelKnown())  stream.chip.model(Chip::Model::YM2149);
                     if (!stream.chip.outputKnown()) stream.chip.output(Chip::Output::Mono);
-                    stream.chip.count(count);
-
                     static_cast<SimRP2A03*>(m_simulator.get())->ConfigureOutput(outputType);
                 }
 

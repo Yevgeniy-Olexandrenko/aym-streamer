@@ -16,12 +16,10 @@ void Processing::Update(const Frame& frame)
 const Frame& FixAY8930Envelope::operator()(const Chip& chip, const Frame& frame)
 {
 #ifdef Enable_FixAY8930Envelope
-    assert(chip.modelKnown());
-
-    if (chip.model() == Chip::Model::AY8930)
+    if (chip.first.model() == Chip::Model::AY8930 || chip.second.model() == Chip::Model::AY8930)
     {
         Update(frame);
-        for (int count = chip.countValue(), chip = 0; chip < count; ++chip)
+        for (int count = chip.count(), chip = 0; chip < count; ++chip)
         {
             for (int chan = 0; chan < 3; ++chan)
             {
@@ -54,10 +52,10 @@ const Frame& FixAY8930Envelope::operator()(const Chip& chip, const Frame& frame)
 const Frame& ConvertExpToComp::operator()(const Chip& chip, const Frame& frame)
 {
 #ifdef Enable_ConvertExpToComp
-    if (chip.model() != Chip::Model::AY8930)
+    if (chip.first.model() != Chip::Model::AY8930 || (chip.second.modelKnown() && chip.second.model() != Chip::Model::AY8930))
     {
         m_frame.ResetChanges();
-        for (int count = chip.countValue(), chip = 0; chip < count; ++chip)
+        for (int count = chip.count(), chip = 0; chip < count; ++chip)
         {
             if (frame.IsExpMode(chip))
             {
@@ -152,7 +150,7 @@ const Frame& SwapChannelsOrder::operator()(const Chip& chip, const Frame& frame)
 
         Update(frame);
         Chip::Stereo stereo{ chip.stereo() };
-        for (int count = chip.countValue(), chip = 0; chip < count; ++chip)
+        for (int count = chip.count(), chip = 0; chip < count; ++chip)
         {
             switch (stereo)
             {

@@ -7,7 +7,7 @@ bool EncodeTXT::Open(const Stream& stream)
         m_output.open(stream.file);
         if (m_output)
         {
-            m_isTS = (stream.chip.count() == Chip::Count::TwoChips);
+            m_isTS = (stream.chip.count() == 2);
             m_loop = stream.loop.frameId();
             m_frameRate = stream.play.frameRate();
             m_displayType = DisplayType::Readable;
@@ -30,7 +30,7 @@ void EncodeTXT::Close(const Stream& stream)
     m_output.close();
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void EncodeTXT::PrintFrameHeader()
 {
@@ -75,7 +75,7 @@ void EncodeTXT::PrintFrameRegisters(FrameId id, const Frame& frame)
     m_output << std::endl;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void EncodeTXT::PrintChipHeader()
 {
@@ -181,7 +181,7 @@ void EncodeTXT::PrintDelimiter()
     m_output << std::string(6 + (m_isTS ? (size * 2 + 1) : size), '-') << std::endl;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void EncodeTXT::PrintNibble(uint8_t nibble)
 {

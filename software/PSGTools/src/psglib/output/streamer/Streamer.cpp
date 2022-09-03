@@ -27,11 +27,10 @@ bool Streamer::OpenDevice()
 bool Streamer::InitDstChip(const Chip& srcChip, Chip& dstChip)
 {
 #if AY8930_FORCE_TO_CHOOSE
-	dstChip.model(Chip::Model::AY8930);
+	dstChip.first.model(Chip::Model::AY8930);
 #else
-	dstChip.model(Chip::Model::Compatible);
+	dstChip.first.model(Chip::Model::Compatible);
 #endif
-	dstChip.count(Chip::Count::OneChip);
 	dstChip.clock(Chip::Clock::F1773400);
 	dstChip.output(Chip::Output::Stereo);
 	dstChip.stereo(srcChip.stereoKnown() ? srcChip.stereo() : Chip::Stereo::ABC);

@@ -18,7 +18,7 @@ namespace
     };
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodeASC::Open(Stream& stream)
 {
@@ -67,9 +67,7 @@ bool DecodeASC::Open(Stream& stream)
                             stream.info.title(ReadString(titleId + 19, 20 + 4 + 20));
                         }
                     }
-
                     stream.info.type("ASC Sound Master module");
-                    stream.play.frameRate(50);
                 }
             }
         }
@@ -77,7 +75,7 @@ bool DecodeASC::Open(Stream& stream)
     return isDetected;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodeASC::Init()
 {
@@ -160,7 +158,7 @@ bool DecodeASC::Play()
     return isNewLoop;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodeASC::PatternInterpreter(Channel& chan)
 {

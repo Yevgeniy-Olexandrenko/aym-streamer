@@ -113,7 +113,7 @@ namespace
     const std::string VTSignature = "Vortex Tracker II";
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodePT3::Open(Stream& stream)
 {
@@ -144,7 +144,6 @@ bool DecodePT3::Open(Stream& stream)
             stream.info.title(ReadString(&m_data[0x1E], 32));
             stream.info.artist(ReadString(&m_data[0x42], 32));
             stream.info.type(ReadString(&m_data[0x00], isVT ? 21 : 14) + " module");
-            stream.play.frameRate(50);
 
             if (m_chip[0].header->tonTableId == 1)
             {
@@ -155,14 +154,17 @@ bool DecodePT3::Open(Stream& stream)
                 stream.chip.clock(Chip::Clock::F1750000);
             }
 
-            if (m_isTS) stream.chip.count(Chip::Count::TwoChips);
+            if (m_isTS && !stream.chip.second.modelKnown())
+            {
+                stream.chip.second.model(stream.chip.first.model());
+            }
         }
         fileStream.close();
     }
 	return isDetected;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodePT3::Init()
 {
@@ -235,7 +237,7 @@ bool DecodePT3::Play()
     return isNewLoop;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodePT3::Play(int chip)
 {

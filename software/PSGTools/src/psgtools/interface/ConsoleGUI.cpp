@@ -410,8 +410,8 @@ namespace gui
         size_t height = m_framesBuffer.h;
         size_t range1 = (height - 2) / 2;
         size_t range2 = (height - 2) - range1;
-        bool isTS = (stream.chip.count() == Chip::Count::TwoChips);
-        bool isExpMode = stream.IsExpModeUsed();
+        bool isTwoChips = stream.IsSecondChipUsed();
+        bool isExpMode  = stream.IsExpandedModeUsed();
 
         // prepare console for drawing
         m_framesBuffer.clear();
@@ -421,10 +421,10 @@ namespace gui
 
         // print header
         int regs_w = isExpMode ? k_headerForExpMode.length() : k_headerForComMode.length();
-        int offset = ((m_framesBuffer.w - 2 - 6) - (isTS ? 2 * regs_w + 1 : regs_w)) / 2;
+        int offset = ((m_framesBuffer.w - 2 - 6) - (isTwoChips ? 2 * regs_w + 1 : regs_w)) / 2;
         m_framesBuffer.position(offset, 0).color(FG_DARK_CYAN).draw("FRAME").move(1, 0);
         printRegistersHeader(isExpMode);
-        if (isTS)
+        if (isTwoChips)
         {
             m_framesBuffer.move(1, 0);
             printRegistersHeader(isExpMode);
@@ -458,7 +458,7 @@ namespace gui
 
             // print frame registers
             printRegistersValues(isExpMode, 0, frame, highlight);
-            if (isTS)
+            if (isTwoChips)
             {
                 m_framesBuffer.draw(' ');
                 printRegistersValues(isExpMode, 1, frame, highlight);

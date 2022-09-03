@@ -15,5 +15,4 @@ private:
 private:
 	std::ofstream m_output;
 	uint16_t m_skip;
-	int m_chipCount;
 };

@@ -19,7 +19,7 @@ namespace
     };
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodePT2::Open(Stream& stream)
 {
@@ -59,7 +59,6 @@ bool DecodePT2::Open(Stream& stream)
 
                     stream.info.title(ReadString(header.musicName, 30));
                     stream.info.type("ProTracker 2.x module");
-                    stream.play.frameRate(50);
                 }
             }
             fileStream.close();
@@ -68,7 +67,7 @@ bool DecodePT2::Open(Stream& stream)
 	return isDetected;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodePT2::Init()
 {
@@ -155,7 +154,7 @@ bool DecodePT2::Play()
     return isNewLoop;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodePT2::PatternInterpreter(Channel& chan)
 {

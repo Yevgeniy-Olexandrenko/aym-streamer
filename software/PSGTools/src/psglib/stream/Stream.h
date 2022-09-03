@@ -23,7 +23,7 @@ class Stream
 
 public:
 
-	/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 	struct Info : public Delegate
 	{
@@ -39,7 +39,7 @@ public:
 		RO_PROP_DEC( bool, commentKnown );
 	};
 
-	/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 	struct Loop : public Delegate
 	{
@@ -55,7 +55,7 @@ public:
 		void UpdateLoopFrameChanges();
 	};
 
-	/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 	struct Play : public Delegate
 	{
@@ -78,7 +78,7 @@ public:
 		void ComputeDuration(size_t frameCount, int& hh, int& mm, int& ss) const;
 	};
 
-	/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 public:
 	enum class Property
@@ -95,7 +95,9 @@ public:
 public:
 	void AddFrame(const Frame& frame);
 	const Frame& GetFrame(FrameId frameId) const;
-	bool IsExpModeUsed() const;
+
+	bool IsSecondChipUsed() const;
+	bool IsExpandedModeUsed() const;
 
 public:
 	File file;
@@ -106,5 +108,6 @@ public:
 
 private:
 	Frames m_frames;
-	bool m_expModeUsed;
+	bool m_isSecondChipUsed;
+	bool m_isExpandedModeUsed;
 };

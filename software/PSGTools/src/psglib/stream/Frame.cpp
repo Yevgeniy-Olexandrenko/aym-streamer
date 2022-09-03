@@ -151,10 +151,7 @@ bool Frame::HasChanges() const
 {
 	for (int chip = 0; chip < 2; ++chip)
 	{
-		for (Register reg = 0; reg < 32; ++reg)
-		{
-			if (IsChanged(chip, reg)) return true;
-		}
+		if (HasChanges(chip)) return true;
 	}
 	return false;
 }
@@ -169,6 +166,15 @@ void Frame::ResetData(int chip)
 void Frame::ResetChanges(int chip, bool val)
 {
 	memset(m_changes[chip], val, sizeof(m_changes[chip]));
+}
+
+bool Frame::HasChanges(int chip) const
+{
+	for (Register reg = 0; reg < 32; ++reg)
+	{
+		if (IsChanged(chip, reg)) return true;
+	}
+	return false;
 }
 
 bool Frame::IsExpMode(int chip) const

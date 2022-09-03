@@ -1,32 +1,32 @@
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
-/// Emulation of the AY-3-8910 / YM2149 sound chip.
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
+// Emulation of the AY-3-8910 / YM2149 sound chip.
+////////////////////////////////////////////////////////////////////////////////
 
-/// Decaps:
-/// AY-3-8914 - http://siliconpr0n.org/map/gi/ay-3-8914/mz_mit20x/
-/// AY-3-8910 - http://privatfrickler.de/blick-auf-den-chip-soundchip-general-instruments-ay-3-8910/
-/// AY-3-8910A - https://seanriddledecap.blogspot.com/2017/01/gi-ay-3-8910-ay-3-8910a-gi-8705-cba.html
+// Decaps:
+// AY-3-8914  - http://siliconpr0n.org/map/gi/ay-3-8914/mz_mit20x/
+// AY-3-8910  - http://privatfrickler.de/blick-auf-den-chip-soundchip-general-instruments-ay-3-8910/
+// AY-3-8910A - https://seanriddledecap.blogspot.com/2017/01/gi-ay-3-8910-ay-3-8910a-gi-8705-cba.html
 
-/// Links:
-/// AY-3-8910 'preliminary' datasheet (which actually describes the AY-3-8914) from 1978:
-///   http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_100.png
-///   http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_101.png
-///   http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_102.png
-///   http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_103.png
-///   http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_104.png
-///   http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_105.png
-/// AY-3-8910/8912 Feb 1979 manual: https://web.archive.org/web/20140217224114/http://dev-docs.atariforge.org/files/GI_AY-3-8910_Feb-1979.pdf
-/// AY-3-8910/8912/8913 post-1983 manual: http://map.grauw.nl/resources/sound/generalinstrument_ay-3-8910.pdf or http://www.ym2149.com/ay8910.pdf
-/// AY-8930 datasheet: http://www.ym2149.com/ay8930.pdf
-/// YM2149 datasheet: http://www.ym2149.com/ym2149.pdf
-/// YM2203 English datasheet: http://www.appleii-box.de/APPLE2/JonasCard/YM2203%20datasheet.pdf
-/// YM2203 Japanese datasheet contents, translated: http://www.larwe.com/technical/chip_ymopn.html
+// Links:
+// AY-3-8910 'preliminary' datasheet (which actually describes the AY-3-8914) from 1978:
+// http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_100.png
+// http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_101.png
+// http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_102.png
+// http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_103.png
+// http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_104.png
+// http://spatula-city.org/~im14u2c/intv/gi_micro_programmable_tv_games/page_7_105.png
+// AY-3-8910/8912 Feb 1979 manual: https://web.archive.org/web/20140217224114/http://dev-docs.atariforge.org/files/GI_AY-3-8910_Feb-1979.pdf
+// AY-3-8910/8912/8913 post-1983 manual: http://map.grauw.nl/resources/sound/generalinstrument_ay-3-8910.pdf or http://www.ym2149.com/ay8910.pdf
+// AY-8930 datasheet: http://www.ym2149.com/ay8930.pdf
+// YM2149 datasheet: http://www.ym2149.com/ym2149.pdf
+// YM2203 English datasheet: http://www.appleii-box.de/APPLE2/JonasCard/YM2203%20datasheet.pdf
+// YM2203 Japanese datasheet contents, translated: http://www.larwe.com/technical/chip_ymopn.html
 
 #include "SoundChip.h"
 #include <string.h>
 #include <math.h>
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 #define BIT(x,n) (((x)>>(n))&1)
 
@@ -127,7 +127,7 @@ namespace
 	};
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 SoundChip::SoundChip(ChipType chipType, PSGType psgType, int clockRate, int sampleRate)
 	: m_chipType(chipType)
@@ -304,13 +304,9 @@ void SoundChip::Process(double& outL, double& outR)
 		uint8_t disableT = BIT(m_regs[AY_ENABLE], 0 + chan);
 		uint8_t disableN = BIT(m_regs[AY_ENABLE], 3 + chan);
 
-#if 0
-		int output = (m_tone[chan].GetOutput() | disableT) & (m_noise.GetOutput() | disableN);
-#else
 		int output = (m_chipType == ChipType::AY8930)
 			? (m_tone[chan].GetOutput() & ~disableT) | (m_noise.GetOutput() & ~disableN)
 			: (m_tone[chan].GetOutput() |  disableT) & (m_noise.GetOutput() |  disableN);
-#endif
 
 		if (output)
 		{
@@ -350,7 +346,7 @@ void SoundChip::Process(double& outL, double& outR)
 	}
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void SoundChip::ToneUnit::Reset()
 {
@@ -417,7 +413,7 @@ int SoundChip::ToneUnit::GetEField(bool isExp, bool isWide) const
 	return (m_volume >> (isExp ? 5 : 4)) & (isWide ? 3 : 1);
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void SoundChip::NoiseUnit::Reset()
 {
@@ -485,7 +481,7 @@ int SoundChip::NoiseUnit::GetOutput() const
 	return m_output;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 namespace
 {
@@ -552,7 +548,7 @@ int SoundChip::EnvelopeUnit::GetVolume() const
 	return m_volume;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void SoundChip::SetPan(int chan, double pan, int is_eqp)
 {

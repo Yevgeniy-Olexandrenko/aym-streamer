@@ -7,55 +7,46 @@ namespace
 }
 
 Chip::Chip()
-	: m_count(Count::OneChip)
-	, m_model(Model::Unknown)
-	, m_clock(Clock::Unknown)
+	: m_clock(Clock::Unknown)
 	, m_output(Output::Unknown)
 	, m_stereo(Stereo::Unknown)
 {
+	first.model(Model::Compatible);
+	second.model(Model::Unknown);
 }
 
 std::string Chip::toString() const
 {
-	auto OutputModel = [](std::ostream& stream, Model type)
+	const auto OutputModel = [](std::ostream& stream, Model type)
 	{
 		switch (type)
 		{
-		case Model::AY8910:
-			stream << "AY-3-8910";
-			break;
-
-		case Model::YM2149:
-			stream << "YM2149F";
-			break;
-
-		case Model::AY8930:
-			stream << "AY8930";
-			break;
-
-		case Model::Compatible:
-			stream << "AY/YM Compatible";
-			break;
+		case Model::AY8910:	    stream << "AY-3-8910";        break;
+		case Model::YM2149:     stream << "YM2149F";          break;
+		case Model::AY8930:     stream << "AY8930";           break;
+		case Model::Compatible: stream << "AY/YM Compatible"; break;
 		}
 	};
 
 	std::stringstream stream;
-	if (count() == Count::TwoChips)
+	if (count() == 2)
 	{
-		if (modelKnown())
+		if (first.model() == second.model())
 		{
 			stream << "2 x ";
-			OutputModel(stream, model());
+			OutputModel(stream, first.model());
 		}
 		else
 		{
-			stream << "Turbo Sound";
+			OutputModel(stream, first.model());
+			stream << " + ";
+			OutputModel(stream, second.model());
 		}
 		stream << ' ';
 	}
-	else if (modelKnown())
+	else
 	{
-		OutputModel(stream, model());
+		OutputModel(stream, first.model());
 		stream << ' ';
 	}
 
@@ -91,9 +82,24 @@ std::string Chip::toString() const
 	return stream.str();
 }
 
-int Chip::countValue() const
+const Chip::Model& Chip::model(int index) const
 {
-	return (count() == Chip::Count::TwoChips ? 2 : 1);
+	return (index ? second.model() : first.model());
+}
+
+void Chip::F::model(const Model& model)
+{
+	m_model = (model == Model::Unknown ? Model::Compatible : model);
+}
+
+bool Chip::S::modelKnown() const
+{
+	return (model() != Model::Unknown);
+}
+
+int Chip::count() const
+{
+	return (second.modelKnown() ? 2 : 1);
 }
 
 void Chip::clockValue(const int& clockValue)
@@ -114,11 +120,6 @@ void Chip::clockValue(const int& clockValue)
 int Chip::clockValue() const
 {
 	return k_clocks[size_t(clock())];
-}
-
-bool Chip::modelKnown() const
-{
-	return (model() != Model::Unknown);
 }
 
 bool Chip::clockKnown() const

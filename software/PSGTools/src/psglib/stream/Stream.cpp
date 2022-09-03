@@ -9,7 +9,7 @@ namespace
 	const int k_maxExtraLoops  = 3;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 Stream::Info::Info(Stream& stream)
 	: Delegate(stream)
@@ -31,7 +31,7 @@ bool Stream::Info::commentKnown() const
 	return !m_comment.empty();
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 Stream::Loop::Loop(Stream& stream)
 	: Delegate(stream)
@@ -109,11 +109,11 @@ void Stream::Loop::UpdateLoopFrameChanges()
 	}
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 Stream::Play::Play(Stream& stream)
 	: Delegate(stream)
-	, m_frameRate(0)
+	, m_frameRate(50)
 {
 }
 
@@ -174,13 +174,14 @@ void Stream::Play::ComputeDuration(size_t frameCount, int& hh, int& mm, int& ss)
 	hh = int(duration);
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 Stream::Stream()
 	: info(*this)
 	, loop(*this)
 	, play(*this)
-	, m_expModeUsed(false)
+	, m_isSecondChipUsed(false)
+	, m_isExpandedModeUsed(false)
 {
 }
 
@@ -256,8 +257,10 @@ void Stream::AddFrame(const Frame& frame)
 		FrameId id = m_frames.size();
 		m_frames.push_back(frame);
 		m_frames.back().SetId(id);
-		m_expModeUsed |= m_frames.back().IsExpMode(0);
-		m_expModeUsed |= m_frames.back().IsExpMode(1);
+
+		m_isSecondChipUsed |= m_frames.back().HasChanges(1);
+		m_isExpandedModeUsed |= m_frames.back().IsExpMode(0);
+		m_isExpandedModeUsed |= m_frames.back().IsExpMode(1);
 	}
 }
 
@@ -266,7 +269,12 @@ const Frame& Stream::GetFrame(FrameId frameId) const
 	return m_frames[frameId];
 }
 
-bool Stream::IsExpModeUsed() const
+bool Stream::IsSecondChipUsed() const
 {
-	return m_expModeUsed;
+	return m_isSecondChipUsed;
+}
+
+bool Stream::IsExpandedModeUsed() const
+{
+	return m_isExpandedModeUsed;
 }

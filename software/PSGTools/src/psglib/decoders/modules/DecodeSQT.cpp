@@ -22,7 +22,7 @@ namespace
 	};
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodeSQT::Open(Stream& stream)
 {
@@ -72,7 +72,6 @@ bool DecodeSQT::Open(Stream& stream)
 
                         stream.info.type("SQ-Tracker module");
                         stream.chip.clock(Chip::Clock::F1773400);
-                        stream.play.frameRate(50);
                     }
                     else delete[] m_data;
                 }
@@ -83,7 +82,7 @@ bool DecodeSQT::Open(Stream& stream)
     return isDetected;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void DecodeSQT::Init()
 {
@@ -161,7 +160,7 @@ bool DecodeSQT::Play()
     return isNewLoop;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool DecodeSQT::PreInit()
 {

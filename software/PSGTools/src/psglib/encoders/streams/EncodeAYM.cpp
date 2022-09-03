@@ -10,7 +10,7 @@ EncodeAYM::Delta::Delta(uint16_t from, uint16_t to)
     else if (m_value <= 2047i16 && m_value >= (-2047i16 - 1)) m_size = 12;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 EncodeAYM::DeltaList::DeltaList()
     : m_list{}
@@ -39,7 +39,7 @@ int8_t EncodeAYM::DeltaList::GetIndex(const Delta& delta)
     return index;
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void EncodeAYM::BitStream::Open(std::ostream& stream)
 {
@@ -81,7 +81,7 @@ void EncodeAYM::BitStream::Close()
     }
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool EncodeAYM::Open(const Stream& stream)
 {
@@ -90,7 +90,7 @@ bool EncodeAYM::Open(const Stream& stream)
         m_output.open(stream.file, std::fstream::binary);
         if (m_output)
         {
-            m_isTS = (stream.chip.count() == Chip::Count::TwoChips);
+            m_isTS = (stream.chip.count() == 2);
 
             m_output << "AYYM";
             m_bitStream.Open(m_output);
@@ -130,7 +130,7 @@ void EncodeAYM::Close(const Stream& stream)
     m_output.close();
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 void EncodeAYM::WriteDelta(const Delta& delta)
 {

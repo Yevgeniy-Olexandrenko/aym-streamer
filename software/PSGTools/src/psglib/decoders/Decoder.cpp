@@ -19,7 +19,7 @@ std::string Decoder::ReadString(uint8_t* ptr, uint8_t size) const
     return std::string(buf);
 }
 
-/// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ///
+////////////////////////////////////////////////////////////////////////////////
 
 bool ModuleDecoder::Decode(Frame& frame)
 {

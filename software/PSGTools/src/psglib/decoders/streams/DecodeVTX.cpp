@@ -24,71 +24,74 @@ bool DecodeVTX::Open(Stream& stream)
 			fileStream.seekg(0, fileStream.beg);
 			fileStream.read((char*)(&hdr), sizeof(hdr));
 
-			Chip::Model chipType(stream.chip.first.model());
+			Chip::Model chipType(Chip::Model::Unknown);
 			if (hdr.signature == AYSignature) chipType = Chip::Model::AY8910;
 			if (hdr.signature == YMSignature) chipType = Chip::Model::YM2149;
-			stream.chip.first.model(chipType);
+			
+			if (chipType != Chip::Model::Unknown)
+			{
+				stream.chip.first.model(chipType);
+				stream.chip.clockValue(hdr.chipFreq);
+				stream.play.frameRate(hdr.frameFreq);
 
-			if (hdr.stereo == Stereo::MONO)
-			{
-				stream.chip.output(Chip::Output::Mono);
-			}
-			else
-			{
-				stream.chip.output(Chip::Output::Stereo);
-				switch (hdr.stereo)
+				if (hdr.stereo == Stereo::MONO)
 				{
-				case Stereo::ABC: stream.chip.stereo(Chip::Stereo::ABC); break;
-				case Stereo::ACB: stream.chip.stereo(Chip::Stereo::ACB); break;
-				case Stereo::BAC: stream.chip.stereo(Chip::Stereo::BAC); break;
-				case Stereo::BCA: stream.chip.stereo(Chip::Stereo::BCA); break;
-				case Stereo::CAB: stream.chip.stereo(Chip::Stereo::CAB); break;
-				case Stereo::CBA: stream.chip.stereo(Chip::Stereo::CBA); break;
+					stream.chip.output(Chip::Output::Mono);
 				}
+				else
+				{
+					stream.chip.output(Chip::Output::Stereo);
+					switch (hdr.stereo)
+					{
+					case Stereo::ABC: stream.chip.stereo(Chip::Stereo::ABC); break;
+					case Stereo::ACB: stream.chip.stereo(Chip::Stereo::ACB); break;
+					case Stereo::BAC: stream.chip.stereo(Chip::Stereo::BAC); break;
+					case Stereo::BCA: stream.chip.stereo(Chip::Stereo::BCA); break;
+					case Stereo::CAB: stream.chip.stereo(Chip::Stereo::CAB); break;
+					case Stereo::CBA: stream.chip.stereo(Chip::Stereo::CBA); break;
+					}
+				}
+
+				auto GetTextProperty = [](std::ifstream& stream)
+				{
+					std::string str;
+					if (stream) std::getline(stream, str, char(0x00));
+					return str;
+				};
+
+				// read all properties to move forward on stream
+				std::string title = GetTextProperty(fileStream);
+				std::string author = GetTextProperty(fileStream);
+				std::string program = GetTextProperty(fileStream); // store in extras
+				std::string tracker = GetTextProperty(fileStream); // store in extras
+				std::string comment = GetTextProperty(fileStream);
+
+				stream.info.title(title);
+				stream.info.artist(author);
+				stream.info.comment(comment);
+				stream.info.type("VTX stream");
+
+				// unpack frames data
+				uint32_t packedSize = fileSize - (uint32_t)fileStream.tellg();
+				uint8_t* packedData = new uint8_t[packedSize];
+
+				if (fileStream.read((char*)packedData, packedSize))
+				{
+					uint32_t depackedSize = hdr.dataSize;
+					m_data = new uint8_t[depackedSize];
+
+					if (lh5_decode(packedData, m_data, depackedSize, packedSize))
+						isDetected = true;
+					else
+						delete[] m_data;
+				}
+				delete[] packedData;
+
+				// prepare information on frames
+				m_frames = (hdr.dataSize / 14);
+				m_loop = hdr.loop;
+				m_frame = 0;
 			}
-
-			stream.chip.clockValue(hdr.chipFreq);
-			stream.play.frameRate(hdr.frameFreq);
-
-			auto GetTextProperty = [](std::ifstream& stream)
-			{
-				std::string str;
-				if (stream) std::getline(stream, str, char(0x00));
-				return str;
-			};
-
-			// read all properties to move forward on stream
-			std::string title = GetTextProperty(fileStream);
-			std::string author = GetTextProperty(fileStream);
-			std::string program = GetTextProperty(fileStream); // store in extras
-			std::string tracker = GetTextProperty(fileStream); // store in extras
-			std::string comment = GetTextProperty(fileStream);
-
-			stream.info.title(title);
-			stream.info.artist(author);
-			stream.info.comment(comment);
-			stream.info.type("VTX stream");
-
-			// unpack frames data
-			uint32_t packedSize = fileSize - (uint32_t)fileStream.tellg();
-			uint8_t* packedData = new uint8_t[packedSize];
-
-			if (fileStream.read((char*)packedData, packedSize))
-			{
-				uint32_t depackedSize = hdr.dataSize;
-				m_data = new uint8_t[depackedSize];
-
-				if (lh5_decode(packedData, m_data, depackedSize, packedSize)) 
-					isDetected = true;
-				else 
-					delete[] m_data;
-			}
-			delete[] packedData;
-
-			// prepare information on frames
-			m_frames = (hdr.dataSize / 14);
-			m_loop   = hdr.loop;
-			m_frame  = 0;
 		}
 		fileStream.close();
 	}

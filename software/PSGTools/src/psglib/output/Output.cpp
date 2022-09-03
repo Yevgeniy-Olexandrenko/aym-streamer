@@ -72,36 +72,36 @@ bool Output::Write(const Frame& frame)
         for (int chip = 0; chip < m_chip.count(); ++chip)
         {
             data.clear();
-            if (m_chip.model(chip) == Chip::Model::AY8930 && pframe.IsExpMode(chip))
+            if (m_chip.hasExpMode(chip) && pframe[chip].IsExpMode())
             {
                 bool switchBanks = false;
                 for (Register reg = BankB_Fst; reg < BankB_Lst; ++reg)
                 {
-                    if (pframe.IsChanged(chip, reg))
+                    if (pframe[chip].IsChanged(reg))
                     {
                         if (!switchBanks)
                         {
                             data.push_back(Mode_Bank);
-                            data.push_back(pframe.data(chip, Mode_Bank) | 0x10);
+                            data.push_back(pframe[chip].GetData(Mode_Bank) | 0x10);
                             switchBanks = true;
                         }
                         data.push_back(reg & 0x0F);
-                        data.push_back(pframe.data(chip, reg));
+                        data.push_back(pframe[chip].GetData(reg));
                     }
                 }
                 if (switchBanks)
                 {
                     data.push_back(Mode_Bank);
-                    data.push_back(pframe.data(chip, Mode_Bank));
+                    data.push_back(pframe[chip].GetData(Mode_Bank));
                 }
             }
 
             for (Register reg = BankA_Fst; reg <= BankA_Lst; ++reg)
             {
-                if (pframe.IsChanged(chip, reg))
+                if (pframe[chip].IsChanged(reg))
                 {
                     data.push_back(reg & 0x0F);
-                    data.push_back(pframe.data(chip, reg));
+                    data.push_back(pframe[chip].GetData(reg));
                 }
             }
 

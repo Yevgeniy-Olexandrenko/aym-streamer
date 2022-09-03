@@ -4,13 +4,13 @@
 
 namespace
 {
-	const Register k_tFine[]   = { A_Fine,    B_Fine,    C_Fine    };
-	const Register k_tCoarse[] = { A_Coarse,  B_Coarse,  C_Coarse  };
-	const Register k_tDuty[]   = { A_Duty,    B_Duty,    C_Duty    };
-	const Register k_volume[]  = { A_Volume,  B_Volume,  C_Volume  };
-	const Register k_eFine[]   = { EA_Fine,   EB_Fine,   EC_Fine   };
-	const Register k_eCoarse[] = { EA_Coarse, EB_Coarse, EC_Coarse };
-	const Register k_eShape[]  = { EA_Shape,  EB_Shape,  EC_Shape  };
+	const Register c_tFine[]   = { A_Fine,    B_Fine,    C_Fine    };
+	const Register c_tCoarse[] = { A_Coarse,  B_Coarse,  C_Coarse  };
+	const Register c_tDuty[]   = { A_Duty,    B_Duty,    C_Duty    };
+	const Register c_volume[]  = { A_Volume,  B_Volume,  C_Volume  };
+	const Register c_eFine[]   = { EA_Fine,   EB_Fine,   EC_Fine   };
+	const Register c_eCoarse[] = { EA_Coarse, EB_Coarse, EC_Coarse };
+	const Register c_eShape[]  = { EA_Shape,  EB_Shape,  EC_Shape  };
 
 	struct RegDefine
 	{
@@ -20,7 +20,7 @@ namespace
 		uint8_t expMask;  // mask for register in expanded mode
 	};
 
-	const RegDefine k_regDefines[] =
+	const RegDefine c_regDefines[] =
 	{
 		// bank A
 		{ 0x00, 0xFF, 0x00, 0xFF },
@@ -60,36 +60,6 @@ namespace
 	};
 }
 
-struct Frame::RegInfo
-{
-	uint8_t flags;
-	uint8_t index;
-	uint8_t mask;
-};
-
-bool Frame::GetRegInfo(int chip, Register reg, RegInfo& info) const
-{
-	if (chip < 2 && reg < 32)
-	{
-		uint8_t index = (IsExpMode(chip)
-			? k_regDefines[reg].expIndex
-			: k_regDefines[reg].comIndex);
-
-		if (index != 0xFF)
-		{
-			info.flags = (index & 0xE0);
-			info.index = (index & 0x1F);
-			info.mask  = (IsExpMode(chip)
-				? k_regDefines[reg].expMask
-				: k_regDefines[reg].comMask);
-			return true;
-		}
-	}
-	return false;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 Frame::Frame()
 	: m_id(0)
 {
@@ -100,8 +70,10 @@ Frame::Frame()
 Frame::Frame(const Frame& other)
 	: m_id(other.m_id)
 {
-	memcpy(m_data, other.m_data, sizeof(m_data));
-	memcpy(m_changes, other.m_changes, sizeof(m_changes));
+	for (int chip = 0; chip < 2; ++chip)
+	{
+		m_regs[chip] = other.m_regs[chip];
+	}
 }
 
 void Frame::SetId(FrameId id)
@@ -124,14 +96,14 @@ Frame& Frame::operator+=(const Frame& other)
 {
 	for (int chip = 0; chip < 2; ++chip)
 	{
-		if (IsExpMode(chip) != other.IsExpMode(chip))
+		if (m_regs[chip].IsExpMode() != other.m_regs[chip].IsExpMode())
 		{
-			SetExpMode(chip, other.IsExpMode(chip));
+			m_regs[chip].SetExpMode(other.m_regs[chip].IsExpMode());
 		}
 
 		for (Register reg = BankA_Fst; reg <= BankB_Lst; ++reg)
 		{
-			Update(chip, reg, other.Read(chip, reg));
+			m_regs[chip].Update(reg, other.m_regs[chip].Read(reg));
 		}
 	}
 	return *this;
@@ -139,161 +111,161 @@ Frame& Frame::operator+=(const Frame& other)
 
 void Frame::ResetData()
 {
-	for (int chip = 0; chip < 2; ++chip) ResetData(chip);
+	for (int chip = 0; chip < 2; ++chip)
+	{
+		m_regs[chip].ResetData();
+	}
 }
 
 void Frame::ResetChanges(bool val)
 {
-	for (int chip = 0; chip < 2; ++chip) ResetChanges(chip, val);
+	for (int chip = 0; chip < 2; ++chip)
+	{
+		m_regs[chip].ResetChanges(val);
+	}
 }
 
 bool Frame::HasChanges() const
 {
 	for (int chip = 0; chip < 2; ++chip)
 	{
-		if (HasChanges(chip)) return true;
+		if (m_regs[chip].HasChanges()) return true;
 	}
 	return false;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-void Frame::ResetData(int chip)
+struct Frame::Registers::Info
 {
-	memset(m_data[chip], 0x00, sizeof(m_data[chip]));
-}
+	uint8_t flags;
+	uint8_t index;
+	uint8_t mask;
+};
 
-void Frame::ResetChanges(int chip, bool val)
+bool Frame::Registers::GetInfo(Register reg, Info& info) const
 {
-	memset(m_changes[chip], val, sizeof(m_changes[chip]));
-}
-
-bool Frame::HasChanges(int chip) const
-{
-	for (Register reg = 0; reg < 32; ++reg)
+	if (reg < 32)
 	{
-		if (IsChanged(chip, reg)) return true;
-	}
-	return false;
-}
+		uint8_t index = (IsExpMode()
+			? c_regDefines[reg].expIndex
+			: c_regDefines[reg].comIndex);
 
-bool Frame::IsExpMode(int chip) const
-{
-	return ((m_data[chip][k_modeBankRegIdx] & 0xE0) == 0xA0);
-}
-
-void Frame::SetExpMode(int chip, bool yes)
-{
-	uint8_t data = (m_data[chip][k_modeBankRegIdx] & 0x0F) | (yes ? 0xA0 : 0x00);
-	Update(chip, Mode_Bank, data);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-uint8_t Frame::Read(int chip, Register reg) const
-{
-	RegInfo info;
-	if (GetRegInfo(chip, reg, info))
-	{
-		if ((info.flags & 0x80) && !m_changes[chip][info.index])
+		if (index != 0xFF)
 		{
-			return k_unchangedShape;
+			info.flags = (index & 0xE0);
+			info.index = (index & 0x1F);
+			info.mask  = (IsExpMode()
+				? c_regDefines[reg].expMask
+				: c_regDefines[reg].comMask);
+			return true;
 		}
-		return m_data[chip][info.index];
+	}
+	return false;
+}
+
+void Frame::Registers::ResetData()
+{
+	memset(m_data, 0x00, sizeof(m_data));
+}
+
+void Frame::Registers::ResetChanges(bool val)
+{
+	memset(m_changes, val, sizeof(m_changes));
+}
+
+bool Frame::Registers::HasChanges() const
+{
+	for (Register reg = BankA_Fst; reg <= BankB_Lst; ++reg)
+	{
+		if (IsChanged(reg)) return true;
+	}
+	return false;
+}
+
+bool Frame::Registers::IsExpMode() const
+{
+	return ((m_data[c_modeBankRegIdx] & 0xE0) == 0xA0);
+}
+
+void Frame::Registers::SetExpMode(bool yes)
+{
+	uint8_t data = (m_data[c_modeBankRegIdx] & 0x0F) | (yes ? 0xA0 : 0x00);
+	Update(Mode_Bank, data);
+}
+
+uint8_t Frame::Registers::Read(Register reg) const
+{
+	Info info;
+	if (GetInfo(reg, info))
+	{
+		if ((info.flags & 0x80) && !m_changes[info.index])
+		{
+			return c_unchangedShape;
+		}
+		return m_data[info.index];
 	}
 	return 0x00;
 }
 
-bool Frame::IsChanged(int chip, Register reg) const
+bool Frame::Registers::IsChanged(Register reg) const
 {
-	RegInfo info;
-	return (GetRegInfo(chip, reg, info) ? m_changes[chip][info.index] : false);
+	Info info;
+	return (GetInfo(reg, info) ? m_changes[info.index] : false);
 }
 
-uint16_t Frame::ReadPeriod(int chip, PeriodRegister preg) const
+uint16_t Frame::Registers::ReadPeriod(PeriodRegister preg) const
 {
 	uint16_t data = 0;
 	switch (preg)
 	{
-	case A_Period:
-	case B_Period:
-	case C_Period:
-	case EA_Period:
-	case EB_Period:
-	case EC_Period:
-		data |= Read(chip, preg + 1) << 8;
+	case A_Period : case B_Period : case C_Period :
+	case EA_Period: case EB_Period: case EC_Period:
+		data |= Read(preg + 1) << 8;
 	case N_Period:
-		data |= Read(chip, preg + 0);
+		data |= Read(preg + 0);
 	}
 	return data;
 }
 
-bool Frame::IsChangedPeriod(int chip, PeriodRegister preg) const
+bool Frame::Registers::IsChangedPeriod(PeriodRegister preg) const
 {
 	bool changed = false;
 	switch (preg)
 	{
-	case A_Period:
-	case B_Period:
-	case C_Period:
-	case EA_Period:
-	case EB_Period:
-	case EC_Period:
-		changed |= IsChanged(chip, preg + 1);
+	case A_Period : case B_Period : case C_Period :
+	case EA_Period: case EB_Period: case EC_Period:
+		changed |= IsChanged(preg + 1);
 	case N_Period:
-		changed |= IsChanged(chip, preg + 0);
+		changed |= IsChanged(preg + 0);
 	}
 	return changed;
 }
 
-uint8_t Frame::Read(Register reg) const
+void Frame::Registers::Update(Register reg, uint8_t data)
 {
-	return Read(0, reg);
-}
-
-bool Frame::IsChanged(Register reg) const
-{
-	return IsChanged(0, reg);
-}
-
-uint16_t Frame::ReadPeriod(PeriodRegister preg) const
-{
-	return ReadPeriod(0, preg);
-}
-
-bool Frame::IsChangedPeriod(PeriodRegister preg) const
-{
-	return IsChangedPeriod(0, preg);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-void Frame::Update(int chip, Register reg, uint8_t data)
-{
-	RegInfo info;
-	if (GetRegInfo(chip, reg, info))
+	Info info;
+	if (GetInfo(reg, info))
 	{
 		// special case for the envelope shape register
 		if ((info.flags & 0x80))
 		{
 			// the envelope shape register can be overwritten with
 			// the same value, which resets the envelope generator
-			if (data != k_unchangedShape)
+			if (data != c_unchangedShape)
 			{
 				data &= info.mask;
-				if (info.index == k_modeBankRegIdx)
+				if (info.index == c_modeBankRegIdx)
 				{
 					// check if mode changed, reset registers
-					if ((m_data[chip][info.index] ^ data) & 0xE0)
+					if ((m_data[info.index] ^ data) & 0xE0)
 					{
-						ResetData(chip);
-						ResetChanges(chip, true);
+						ResetData();
+						ResetChanges(true);
 					}
 				}
 
 				// write new value in register
-				m_data[chip][info.index] = data;
-				m_changes[chip][info.index] = true;
+				m_data[info.index] = data;
+				m_changes[info.index] = true;
 			}
 		}
 		else
@@ -301,138 +273,82 @@ void Frame::Update(int chip, Register reg, uint8_t data)
 			// as for the remaining registers, only updating their
 			// values ​​has an effect on the sound generation
 			data &= info.mask;
-			if (m_data[chip][info.index] != data)
+			if (m_data[info.index] != data)
 			{
-				m_data[chip][info.index] = data;
-				m_changes[chip][info.index] = true;
+				m_data[info.index] = data;
+				m_changes[info.index] = true;
 			}
 		}
 	}
 }
 
-void Frame::UpdatePeriod(int chip, PeriodRegister preg, uint16_t data)
+void Frame::Registers::UpdatePeriod(PeriodRegister preg, uint16_t data)
 {
 	switch (preg)
 	{
-	case A_Period:
-	case B_Period:
-	case C_Period:
-	case EA_Period:
-	case EB_Period:
-	case EC_Period:
-		Update(chip, preg + 1, data >> 8);
+	case A_Period : case B_Period : case C_Period :
+	case EA_Period: case EB_Period: case EC_Period:
+		Update(preg + 1, data >> 8);
 	case N_Period:
-		Update(chip, preg + 0, uint8_t(data));
+		Update(preg + 0, uint8_t(data));
 	}
 }
 
-void Frame::Update(Register reg, uint8_t data)
+uint8_t Frame::Registers::GetData(Register reg) const
 {
-	Update(0, reg, data);
+	Info info;
+	return (GetInfo(reg, info) ? m_data[info.index] : 0x00);
 }
 
-void Frame::UpdatePeriod(PeriodRegister preg, uint16_t data)
+Frame::Channel Frame::Registers::ReadChannel(int chan) const
 {
-	UpdatePeriod(0, preg, data);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-Frame::Channel Frame::ReadChannel(int chip, int chan) const
-{
-	Channel data{};
-	if (chan >= 0 && chan <= 2)
-	{
-		bool isExpMode = IsExpMode(chip);
-		
-		data.tFine   = Read(chip, k_tFine[chan]);
-		data.tCoarse = Read(chip, k_tCoarse[chan]);
-		data.tDuty   = Read(chip, k_tDuty[chan]);
-		data.mixer   = Read(chip, Mixer) >> chan & 0x09;
-		data.volume  = Read(chip, k_volume[chan]);
-		data.eFine   = Read(chip, isExpMode ? k_eFine[chan] : E_Fine);
-		data.eCoarse = Read(chip, isExpMode ? k_eCoarse[chan] : E_Coarse);
-		data.eShape  = Read(chip, isExpMode ? k_eShape[chan] : E_Shape);
-
-		if (data.eShape != k_unchangedShape && isExpMode)
+		Channel data{};
+		if (chan >= 0 && chan <= 2)
 		{
-			data.eShape &= 0x0F;
-			data.eShape |= 0xA0;
-		}
-	}
-	return data;
-}
-
-void Frame::UpdateChannel(int chip, int chan, const Channel& data)
-{
-	if (chan >= 0 && chan <= 2)
-	{
-		bool isExpMode = IsExpMode(chip);
-		auto mixerData = Read(chip, Mixer) & ~(0x09 << chan);
-
-		Update(chip, k_tFine[chan], data.tFine);
-		Update(chip, k_tCoarse[chan], data.tCoarse);
-		Update(chip, k_tDuty[chan], data.tDuty);
-		Update(chip, Mixer, mixerData | data.mixer << chan);
-		Update(chip, k_volume[chan], data.volume);
-		Update(chip, k_eFine[chan], data.eFine);
-		Update(chip, k_eCoarse[chan], data.eCoarse);
-		Update(chip, k_eShape[chan], data.eShape);
-	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-const uint8_t& Frame::data(int chip, Register reg) const
-{
-	RegInfo info;
-	static uint8_t dummy = 0;
-	return (GetRegInfo(chip, reg, info) ? m_data[chip][info.index] : dummy);
-}
-
-uint8_t& Frame::data(int chip, Register reg)
-{
-	RegInfo info;
-	static uint8_t dummy = 0;
-	return (GetRegInfo(chip, reg, info) ? m_data[chip][info.index] : dummy);
-}
-
-bool& Frame::changed(int chip, Register reg)
-{
-	RegInfo info;
-	static bool dummy = 0;
-	return (GetRegInfo(chip, reg, info) ? m_changes[chip][info.index] : dummy);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-std::ostream& operator<<(std::ostream& os, const Frame& frame)
-{
-	Frame::RegInfo info;
-	for (int chip = 0; chip < 2; ++chip)
-	{
-		for (Register reg = BankA_Fst; reg <= BankB_Lst; ++reg)
-		{
-			if (frame.GetRegInfo(chip, reg, info))
+			bool isExpMode = IsExpMode();
+			
+			data.tFine = Read(c_tFine[chan]);
+			data.tCoarse = Read(c_tCoarse[chan]);
+			data.tDuty = Read(c_tDuty[chan]);
+			data.mixer = Read(Mixer) >> chan & 0x09;
+			data.volume = Read(c_volume[chan]);
+			data.eFine = Read(isExpMode ? c_eFine[chan] : E_Fine);
+			data.eCoarse = Read(isExpMode ? c_eCoarse[chan] : E_Coarse);
+			data.eShape = Read(isExpMode ? c_eShape[chan] : E_Shape);
+	
+			if (data.eShape != c_unchangedShape && isExpMode)
 			{
-				if (frame.m_changes[chip][info.index])
-				{
-					os << std::hex << std::setw(2) << std::setfill('0');
-					os << int(reg);
-					os << ':';
-
-					uint8_t data = frame.m_data[chip][info.index];
-					os << std::hex << std::setw(2) << std::setfill('0');
-					os << int(data);
-					os << ' ';
-				}
-				else
-				{
-					os << "--:-- ";
-				}
+				data.eShape &= 0x0F;
+				data.eShape |= 0xA0;
 			}
 		}
-		os << (chip ? "\n" : "| ");
+		return data;
+}
+
+void Frame::Registers::UpdateChannel(int chan, const Channel& data)
+{
+	if (chan >= 0 && chan <= 2)
+	{
+		bool isExpMode = IsExpMode();
+		auto mixerData = Read(Mixer) & ~(0x09 << chan);
+
+		Update(c_tFine[chan], data.tFine);
+		Update(c_tCoarse[chan], data.tCoarse);
+		Update(c_tDuty[chan], data.tDuty);
+		Update(Mixer, mixerData | data.mixer << chan);
+		Update(c_volume[chan], data.volume);
+		Update(c_eFine[chan], data.eFine);
+		Update(c_eCoarse[chan], data.eCoarse);
+		Update(c_eShape[chan], data.eShape);
 	}
-	return os;
+}
+
+const Frame::Registers& Frame::operator[](int chip) const
+{
+	return m_regs[bool(chip)];
+}
+
+Frame::Registers& Frame::operator[](int chip)
+{
+	return m_regs[bool(chip)];
 }

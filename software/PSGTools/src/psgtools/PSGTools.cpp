@@ -44,12 +44,12 @@ bool IsSameFrames(const Frame& f1, const Frame& f2)
     {
         for (Register reg = BankA_Fst; reg <= BankA_Lst; ++reg)
         {
-            if (f1.Read(chip, reg) != f2.Read(chip, reg)) return false;
+            if (f1[chip].Read(reg) != f2[chip].Read(reg)) return false;
         }
 
         for (Register reg = BankB_Fst; reg <= BankB_Lst; ++reg)
         {
-            if (f1.Read(chip, reg) != f2.Read(chip, reg)) return false;
+            if (f1[chip].Read(reg) != f2[chip].Read(reg)) return false;
         }
     }
     return true;

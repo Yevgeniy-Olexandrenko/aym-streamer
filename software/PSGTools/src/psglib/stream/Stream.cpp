@@ -181,7 +181,7 @@ Stream::Stream()
 	, loop(*this)
 	, play(*this)
 	, m_isSecondChipUsed(false)
-	, m_isExpandedModeUsed(false)
+	, m_isExpandedModeUsed{}
 {
 }
 
@@ -258,9 +258,9 @@ void Stream::AddFrame(const Frame& frame)
 		m_frames.push_back(frame);
 		m_frames.back().SetId(id);
 
-		m_isSecondChipUsed |= m_frames.back().HasChanges(1);
-		m_isExpandedModeUsed |= m_frames.back().IsExpMode(0);
-		m_isExpandedModeUsed |= m_frames.back().IsExpMode(1);
+		m_isSecondChipUsed |= m_frames.back()[1].HasChanges();
+		m_isExpandedModeUsed[0] |= m_frames.back()[0].IsExpMode();
+		m_isExpandedModeUsed[1] |= m_frames.back()[1].IsExpMode();
 	}
 }
 
@@ -276,5 +276,10 @@ bool Stream::IsSecondChipUsed() const
 
 bool Stream::IsExpandedModeUsed() const
 {
-	return m_isExpandedModeUsed;
+	return (IsExpandedModeUsed(0) || IsExpandedModeUsed(1));
+}
+
+bool Stream::IsExpandedModeUsed(int chip) const
+{
+	return m_isExpandedModeUsed[bool(chip)];
 }

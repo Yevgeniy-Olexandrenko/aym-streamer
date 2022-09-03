@@ -98,6 +98,7 @@ public:
 
 	bool IsSecondChipUsed() const;
 	bool IsExpandedModeUsed() const;
+	bool IsExpandedModeUsed(int chip) const;
 
 public:
 	File file;
@@ -109,5 +110,5 @@ public:
 private:
 	Frames m_frames;
 	bool m_isSecondChipUsed;
-	bool m_isExpandedModeUsed;
+	bool m_isExpandedModeUsed[2];
 };

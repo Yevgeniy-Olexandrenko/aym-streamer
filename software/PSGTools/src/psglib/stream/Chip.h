@@ -16,10 +16,12 @@ public:
 	Chip();
 	std::string toString() const;
 
-	const Model& model(int index) const;
 	struct F { RO_PROP_DEF(Model, model); WO_PROP_DEC(Model, model) } first;
 	struct S { RW_PROP_DEF(Model, model); RO_PROP_DEC(bool, modelKnown); } second;
 	RO_PROP_DEC( int, count );
+
+	const Model& model(int index) const;
+	bool hasExpMode(int index) const;
 	
 	RW_PROP_DEF( Clock,  clock      );
 	RW_PROP_IMP( int,    clockValue );

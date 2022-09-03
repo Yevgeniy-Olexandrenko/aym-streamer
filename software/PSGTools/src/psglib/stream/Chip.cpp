@@ -87,6 +87,11 @@ const Chip::Model& Chip::model(int index) const
 	return (index ? second.model() : first.model());
 }
 
+bool Chip::hasExpMode(int index) const
+{
+	return (model(index) == Model::AY8930);
+}
+
 void Chip::F::model(const Model& model)
 {
 	m_model = (model == Model::Unknown ? Model::Compatible : model);

@@ -58,21 +58,18 @@ using FrameId = uint32_t;
 using Register = uint8_t;
 using PeriodRegister = uint8_t;
 
-constexpr uint8_t k_modeBankRegIdx = 0x0D;
-constexpr uint8_t k_unchangedShape = 0xFF;
+constexpr uint8_t c_modeBankRegIdx = 0x0D;
+constexpr uint8_t c_unchangedShape = 0xFF;
 
 class Frame
 {
-	struct RegInfo;
-	bool GetRegInfo(int chip, Register reg, RegInfo& info) const;
-
 public:
 	Frame();
 	Frame(const Frame& other);
-
+	
 	void SetId(FrameId id);
 	FrameId GetId() const;
-
+	
 	Frame& operator!();
 	Frame& operator+=(const Frame& other);
 
@@ -81,38 +78,10 @@ public:
 	bool HasChanges() const;
 
 public:
-	void ResetData(int chip);
-	void ResetChanges(int chip, bool val);
-	bool HasChanges(int chip) const;
-
-	bool IsExpMode(int chip) const;
-	void SetExpMode(int chip, bool yes);
-
-public:
-	uint8_t  Read(int chip, Register reg) const;
-	bool     IsChanged(int chip, Register reg) const;
-
-	uint16_t ReadPeriod(int chip, PeriodRegister preg) const;
-	bool     IsChangedPeriod(int chip, PeriodRegister preg) const;
-
-	uint8_t  Read(Register reg) const;
-	bool     IsChanged(Register reg) const;
-
-	uint16_t ReadPeriod(PeriodRegister preg) const;
-	bool     IsChangedPeriod(PeriodRegister preg) const;
-
-public:
-	void Update(int chip, Register reg, uint8_t data);
-	void UpdatePeriod(int chip, PeriodRegister preg, uint16_t data);
-
-	void Update(Register reg, uint8_t data);
-	void UpdatePeriod(PeriodRegister preg, uint16_t data);
-
-public:
 	struct Channel
 	{
 		enum { A = 0, B = 1, C = 2 };
-
+	
 		uint8_t tFine;
 		uint8_t	tCoarse;
 		uint8_t tDuty;   // doesn't matter in comp mode
@@ -123,19 +92,43 @@ public:
 		uint8_t	eShape;  // taken from chan A in comp mode + exp mode flags
 	};
 
-	Channel ReadChannel(int chip, int chan) const;
-	void UpdateChannel(int chip, int chan, const Channel& data);
-	
-public:
-	const uint8_t& data(int chip, Register reg) const;
-	uint8_t& data(int chip, Register reg);
-	bool& changed(int chip, Register reg);
+	class Registers
+	{
+		struct Info;
+		bool GetInfo(Register reg, Info& info) const;
+
+	public:
+		void ResetData();
+		void ResetChanges(bool val);
+		bool HasChanges() const;
+		
+		bool IsExpMode() const;
+		void SetExpMode(bool yes);
+
+	public:
+		uint8_t  Read(Register reg) const;
+		bool     IsChanged(Register reg) const;
+
+		uint16_t ReadPeriod(PeriodRegister preg) const;
+		bool     IsChangedPeriod(PeriodRegister preg) const;
+
+		void     Update(Register reg, uint8_t data);
+		void     UpdatePeriod(PeriodRegister preg, uint16_t data);
+
+	public:
+		uint8_t  GetData(Register reg) const;
+		Channel  ReadChannel(int chan) const;
+		void     UpdateChannel(int chan, const Channel& data);
+
+	private:
+		uint8_t m_data[25];
+		bool m_changes[25];
+	};
+
+	const Registers& operator[](int chip) const;
+	Registers& operator[](int chip);
 
 private:
-	FrameId m_id;
-	uint8_t m_data[2][25];
-	bool m_changes[2][25];
-
-public:
-	friend std::ostream& operator<<(std::ostream& os, const Frame& frame);
+	FrameId   m_id;
+	Registers m_regs[2];
 };

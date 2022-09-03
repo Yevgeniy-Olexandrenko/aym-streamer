@@ -33,10 +33,10 @@ void EncodePSG::Encode(const Frame& frame)
         {
             for (Register reg = BankA_Fst; reg <= BankB_Lst; ++reg)
             {
-                if (frame.IsChanged(chip, reg))
+                if (frame[chip].IsChanged(reg))
                 {
                     uint8_t data0 = (chip << 7 | reg);
-                    uint8_t data1 = frame.Read(reg);
+                    uint8_t data1 = frame[chip].Read(reg);
                     m_output << data0 << data1;
                 }
             }

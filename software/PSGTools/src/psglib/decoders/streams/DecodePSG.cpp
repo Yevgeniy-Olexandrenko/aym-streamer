@@ -52,7 +52,7 @@ bool DecodePSG::Decode(Frame& frame)
 
         if (m_fileStream.get((char&)data1))
         {
-            frame.Update(data0, data1);
+            frame[0].Update(data0, data1);
         }
     }
     return frame.HasChanges();

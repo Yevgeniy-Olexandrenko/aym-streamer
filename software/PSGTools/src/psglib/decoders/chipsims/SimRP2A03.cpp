@@ -114,8 +114,8 @@ void SimRP2A03::ConvertToSingleChip(const State& state, Frame& frame)
         uint8_t  volume = ConvertVolume(state.pulse1_volume);
 
         EnableTone(mixer, Frame::Channel::A);
-        frame.UpdatePeriod(A_Period, period);
-        frame.Update(A_Volume, volume);
+        frame[0].UpdatePeriod(A_Period, period);
+        frame[0].Update(A_Volume, volume);
     }
 
     // Pulse 2 -> Square C
@@ -125,8 +125,8 @@ void SimRP2A03::ConvertToSingleChip(const State& state, Frame& frame)
         uint8_t  volume = ConvertVolume(state.pulse2_volume);
 
         EnableTone(mixer, Frame::Channel::C);
-        frame.UpdatePeriod(C_Period, period);
-        frame.Update(C_Volume, volume);
+        frame[0].UpdatePeriod(C_Period, period);
+        frame[0].Update(C_Volume, volume);
     }
 
     // Triangle -> Envelope B
@@ -134,13 +134,13 @@ void SimRP2A03::ConvertToSingleChip(const State& state, Frame& frame)
     {
         uint16_t period = ConvertPeriod(state.triangle_period >> 3);
 
-        if (frame.data(0, E_Shape) != 0x0A) frame.Update(E_Shape, 0x0A);
-        frame.UpdatePeriod(E_Period, period);
-        frame.Update(B_Volume, 0x10);
+        if (frame[0].GetData(E_Shape) != 0x0A) frame[0].Update(E_Shape, 0x0A);
+        frame[0].UpdatePeriod(E_Period, period);
+        frame[0].Update(B_Volume, 0x10);
     }
     else
     {
-        frame.Update(B_Volume, 0x08);
+        frame[0].Update(B_Volume, 0x08);
     }
     
     // Noise -> automatically chosen channel A or C
@@ -149,20 +149,20 @@ void SimRP2A03::ConvertToSingleChip(const State& state, Frame& frame)
         uint16_t period = ConvertPeriod(state.noise_period >> 7);
 
         int volumeN = ConvertVolume(state.noise_volume);
-        int volumeA = frame.data(0, A_Volume);
-        int volumeC = frame.data(0, C_Volume);
+        int volumeA = frame[0].Read(A_Volume);
+        int volumeC = frame[0].Read(C_Volume);
 
-        frame.UpdatePeriod(N_Period, period);
+        frame[0].UpdatePeriod(N_Period, period);
 
         if (!state.pulse1_enable)
         {
             volumeA = int(0.5f * (volumeN * k_noiseVolumePower));
-            frame.Update(A_Volume, uint8_t(volumeA));
+            frame[0].Update(A_Volume, uint8_t(volumeA));
         }
         if (!state.pulse2_enable)
         {
             volumeC = int(0.5f * (volumeN * k_noiseVolumePower));
-            frame.Update(C_Volume, uint8_t(volumeC));
+            frame[0].Update(C_Volume, uint8_t(volumeC));
         }
 
         if (volumeA + volumeC <= volumeN * k_noiseVolumePower)
@@ -178,7 +178,7 @@ void SimRP2A03::ConvertToSingleChip(const State& state, Frame& frame)
         
     // Mixer
     {
-        frame.Update(Mixer, mixer);
+        frame[0].Update(Mixer, mixer);
     }
 }
 
@@ -198,14 +198,14 @@ void SimRP2A03::ConvertToDoubleChip(const State& state, Frame& frame)
         if (state.pulse1_duty == 1 || state.pulse1_duty == 3) period1 >>= 1;
 
         EnableTone(mixer0, Frame::Channel::A);
-        frame.UpdatePeriod(0, A_Period, period0);
-        frame.Update(0, A_Volume, volume);
+        frame[0].UpdatePeriod(A_Period, period0);
+        frame[0].Update(A_Volume, volume);
         
         if (period1 != period0)
         {
             EnableTone(mixer1, Frame::Channel::A);
-            frame.UpdatePeriod(1, A_Period, period1);
-            frame.Update(1, A_Volume, volume);
+            frame[1].UpdatePeriod(A_Period, period1);
+            frame[1].Update(A_Volume, volume);
         }
     }
 
@@ -220,14 +220,14 @@ void SimRP2A03::ConvertToDoubleChip(const State& state, Frame& frame)
         if (state.pulse2_duty == 1 || state.pulse2_duty == 3) period1 >>= 1;
 
         EnableTone(mixer0, Frame::Channel::C);
-        frame.UpdatePeriod(0, C_Period, period0);
-        frame.Update(0, C_Volume, volume);
+        frame[0].UpdatePeriod(C_Period, period0);
+        frame[0].Update(C_Volume, volume);
 
         if (period1 != period0)
         {
             EnableTone(mixer1, Frame::Channel::C);
-            frame.UpdatePeriod(1, C_Period, period1);
-            frame.Update(1, C_Volume, volume);
+            frame[1].UpdatePeriod(C_Period, period1);
+            frame[1].Update(C_Volume, volume);
         }
     }
 
@@ -236,13 +236,13 @@ void SimRP2A03::ConvertToDoubleChip(const State& state, Frame& frame)
     {
         uint16_t period = ConvertPeriod(state.triangle_period >> 3);
 
-        if (frame.data(0, E_Shape) != 0x0A) frame.Update(0, E_Shape, 0x0A);
-        frame.UpdatePeriod(0, E_Period, period);
-        frame.Update(0, B_Volume, 0x10);
+        if (frame[0].GetData(E_Shape) != 0x0A) frame[0].Update(E_Shape, 0x0A);
+        frame[0].UpdatePeriod(E_Period, period);
+        frame[0].Update(B_Volume, 0x10);
     }
     else
     {
-        frame.Update(0, B_Volume, 0x08);
+        frame[0].Update(B_Volume, 0x08);
     }
     
     // Noise -> Chip 1 Noise in Channel B
@@ -252,14 +252,14 @@ void SimRP2A03::ConvertToDoubleChip(const State& state, Frame& frame)
         uint8_t  volume = ConvertVolume(state.noise_volume);
 
         EnableNoise(mixer1, Frame::Channel::B);
-        frame.UpdatePeriod(1, N_Period, period);
-        frame.Update(1, B_Volume, volume);
+        frame[1].UpdatePeriod(N_Period, period);
+        frame[1].Update(B_Volume, volume);
     }
     
     // Mixers
     {
-        frame.Update(0, Mixer, mixer0);
-        frame.Update(1, Mixer, mixer1);
+        frame[0].Update(Mixer, mixer0);
+        frame[1].Update(Mixer, mixer1);
     }
 }
 
@@ -268,12 +268,12 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
     uint8_t mixer = 0x3F;
 
     // go to expanded mode
-    if (!frame.IsExpMode(0)) frame.SetExpMode(0, true);
+    if (!frame[0].IsExpMode()) frame[0].SetExpMode(true);
 
     // workaround for mixer
     EnableTone(mixer, Frame::Channel::B);
-    frame.UpdatePeriod(B_Period, 0x0000);
-    frame.Update(B_Duty, 0x08);
+    frame[0].UpdatePeriod(B_Period, 0x0000);
+    frame[0].Update(B_Duty, 0x08);
 
     // Pulse 1 -> Square A
     if (state.pulse1_enable)
@@ -283,9 +283,9 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
         uint8_t  duty = 0x02 + state.pulse1_duty;
 
         EnableTone(mixer, Frame::Channel::A);
-        frame.UpdatePeriod(A_Period, period);
-        frame.Update(A_Volume, volume);
-        frame.Update(A_Duty, duty);
+        frame[0].UpdatePeriod(A_Period, period);
+        frame[0].Update(A_Volume, volume);
+        frame[0].Update(A_Duty, duty);
     }
 
     // Pulse 2 -> Square C
@@ -296,9 +296,9 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
         uint8_t  duty = 0x02 + state.pulse2_duty;
 
         EnableTone(mixer, Frame::Channel::C);
-        frame.UpdatePeriod(C_Period, period);
-        frame.Update(C_Volume, volume);
-        frame.Update(C_Duty, duty);
+        frame[0].UpdatePeriod(C_Period, period);
+        frame[0].Update(C_Volume, volume);
+        frame[0].Update(C_Duty, duty);
     }
 
     // Triangle -> Envelope B
@@ -306,13 +306,13 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
     {
         uint16_t period = ConvertPeriod(state.triangle_period >> 3);
 
-        if (frame.data(0, EB_Shape) != 0x0A) frame.Update(EB_Shape, 0x0A);
-        frame.UpdatePeriod(EB_Period, period);
-        frame.Update(B_Volume, 0x20);
+        if (frame[0].GetData(EB_Shape) != 0x0A) frame[0].Update(EB_Shape, 0x0A);
+        frame[0].UpdatePeriod(EB_Period, period);
+        frame[0].Update(B_Volume, 0x20);
     }
     else
     {
-        frame.Update(B_Volume, 0x10);
+        frame[0].Update(B_Volume, 0x10);
     }
 
     // Noise -> automatically chosen channel A or C
@@ -321,22 +321,22 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
         uint16_t period = ConvertPeriod(state.noise_period >> 4);
 
         int volumeN = ConvertVolume(state.noise_volume);
-        int volumeA = frame.data(0, A_Volume);
-        int volumeC = frame.data(0, C_Volume);
+        int volumeA = frame[0].Read(A_Volume);
+        int volumeC = frame[0].Read(C_Volume);
 
-        frame.Update(N_AndMask, 0x0F);
-        frame.Update(N_OrMask,  0x00);
-        frame.UpdatePeriod(N_Period, period);
+        frame[0].Update(N_AndMask, 0x0F);
+        frame[0].Update(N_OrMask,  0x00);
+        frame[0].UpdatePeriod(N_Period, period);
 
         if (!state.pulse1_enable)
         {
             volumeA = int(0.5f * (volumeN * k_noiseVolumePower));
-            frame.Update(A_Volume, uint8_t(volumeA));
+            frame[0].Update(A_Volume, uint8_t(volumeA));
         }
         if (!state.pulse2_enable)
         {
             volumeC = int(0.5f * (volumeN * k_noiseVolumePower));
-            frame.Update(C_Volume, uint8_t(volumeC));
+            frame[0].Update(C_Volume, uint8_t(volumeC));
         }
         
         if (volumeA + volumeC <= volumeN * k_noiseVolumePower)
@@ -352,7 +352,7 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
 
     // Mixers
     {
-        frame.Update(Mixer, mixer);
+        frame[0].Update(Mixer, mixer);
     }
 }
 

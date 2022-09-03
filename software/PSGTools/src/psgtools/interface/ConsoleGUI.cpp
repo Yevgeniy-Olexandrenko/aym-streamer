@@ -207,10 +207,10 @@ namespace gui
 
     void printRegisterValue(int chip, const Frame& frame, int reg, RegColorType regColorType)
     {
-        if (frame.IsChanged(chip, reg) || regColorType == Highlight)
+        if (frame[chip].IsChanged(reg) || regColorType == Highlight)
         {
             m_framesBuffer.color(RegColors[regColorType]);
-            uint8_t data = frame.data(chip, reg);
+            uint8_t data = frame[chip].GetData(reg);
             printNibble(data >> 4);
             printNibble(data);
         }
@@ -223,10 +223,10 @@ namespace gui
 
     void printRegistersValuesForCompatibleMode(int chip, const Frame& frame, bool highlight)
     {
-        uint8_t mixer = frame.Read(chip, Mixer);
-        uint8_t vol_a = frame.Read(chip, A_Volume);
-        uint8_t vol_b = frame.Read(chip, B_Volume);
-        uint8_t vol_c = frame.Read(chip, C_Volume);
+        uint8_t mixer = frame[chip].Read(Mixer);
+        uint8_t vol_a = frame[chip].Read(A_Volume);
+        uint8_t vol_b = frame[chip].Read(B_Volume);
+        uint8_t vol_c = frame[chip].Read(C_Volume);
 
         bool enableAT = !(mixer & 0b00000001);
         bool enableBT = !(mixer & 0b00000010);
@@ -290,10 +290,10 @@ namespace gui
 
     void printRegistersValuesForExpandedMode(int chip, const Frame& frame, bool highlight)
     {
-        uint8_t mixer = frame.Read(chip, Mixer);
-        uint8_t vol_a = frame.Read(chip, A_Volume);
-        uint8_t vol_b = frame.Read(chip, B_Volume);
-        uint8_t vol_c = frame.Read(chip, C_Volume);
+        uint8_t mixer = frame[chip].Read(Mixer);
+        uint8_t vol_a = frame[chip].Read(A_Volume);
+        uint8_t vol_b = frame[chip].Read(B_Volume);
+        uint8_t vol_c = frame[chip].Read(C_Volume);
 
         bool enableAT = !(mixer & 0b00000001);
         bool enableBT = !(mixer & 0b00000010);
@@ -372,7 +372,7 @@ namespace gui
 
     void printRegistersValues(bool isExpMode, int chip, const Frame& frame, bool highlight)
     {
-        if (frame.IsExpMode(chip))
+        if (frame[chip].IsExpMode())
             printRegistersValuesForExpandedMode(chip, frame, highlight);
         else
             printRegistersValuesForCompatibleMode(chip, frame, highlight);
@@ -432,8 +432,8 @@ namespace gui
 
         // prepare fake frame
         Frame fakeFrame;
-        fakeFrame.SetExpMode(0, isExpMode);
-        fakeFrame.SetExpMode(1, isExpMode);
+        fakeFrame[0].SetExpMode(isExpMode);
+        fakeFrame[1].SetExpMode(isExpMode);
         fakeFrame.ResetChanges();
 
         // print frames

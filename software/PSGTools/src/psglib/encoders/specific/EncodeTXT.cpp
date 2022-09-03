@@ -97,81 +97,81 @@ void EncodeTXT::PrintChipHeader()
 
 void EncodeTXT::PrintChipRegisters(const Frame& frame, int chip)
 {
-    switch (m_displayType)
-    {
-    case DisplayType::Dump:
-        m_output << '|';
-        for (uint8_t reg = 0; reg < 14; ++reg)
-        {
-            PrintChipRegister(frame, chip, reg);
-            if (reg < 13) m_output << ' ';
-        }
-        m_output << '|';
-        break;
+    //switch (m_displayType)
+    //{
+    //case DisplayType::Dump:
+    //    m_output << '|';
+    //    for (uint8_t reg = 0; reg < 14; ++reg)
+    //    {
+    //        PrintChipRegister(frame, chip, reg);
+    //        if (reg < 13) m_output << ' ';
+    //    }
+    //    m_output << '|';
+    //    break;
 
-    case DisplayType::Grouped:
-        m_output << '|';
-        PrintChipRegister(frame, chip, Mixer);
-        m_output << '|';
-        PrintChipRegister(frame, chip, A_Coarse);
-        PrintChipRegister(frame, chip, A_Fine);
-        m_output << ' ';
-        PrintChipRegister(frame, chip, A_Volume);
-        m_output << '|';
-        PrintChipRegister(frame, chip, B_Coarse);
-        PrintChipRegister(frame, chip, B_Fine);
-        m_output << ' ';
-        PrintChipRegister(frame, chip, B_Volume);
-        m_output << '|';
-        PrintChipRegister(frame, chip, C_Coarse);
-        PrintChipRegister(frame, chip, C_Fine);
-        m_output << ' ';
-        PrintChipRegister(frame, chip, C_Volume);
-        m_output << '|';
-        PrintChipRegister(frame, chip, E_Coarse);
-        PrintChipRegister(frame, chip, E_Fine);
-        m_output << ' ';
-        PrintChipRegister(frame, chip, E_Shape);
-        m_output << '|';
-        PrintChipRegister(frame, chip, N_Period);
-        m_output << "|";
-        break;
+    //case DisplayType::Grouped:
+    //    m_output << '|';
+    //    PrintChipRegister(frame, chip, Mixer);
+    //    m_output << '|';
+    //    PrintChipRegister(frame, chip, A_Coarse);
+    //    PrintChipRegister(frame, chip, A_Fine);
+    //    m_output << ' ';
+    //    PrintChipRegister(frame, chip, A_Volume);
+    //    m_output << '|';
+    //    PrintChipRegister(frame, chip, B_Coarse);
+    //    PrintChipRegister(frame, chip, B_Fine);
+    //    m_output << ' ';
+    //    PrintChipRegister(frame, chip, B_Volume);
+    //    m_output << '|';
+    //    PrintChipRegister(frame, chip, C_Coarse);
+    //    PrintChipRegister(frame, chip, C_Fine);
+    //    m_output << ' ';
+    //    PrintChipRegister(frame, chip, C_Volume);
+    //    m_output << '|';
+    //    PrintChipRegister(frame, chip, E_Coarse);
+    //    PrintChipRegister(frame, chip, E_Fine);
+    //    m_output << ' ';
+    //    PrintChipRegister(frame, chip, E_Shape);
+    //    m_output << '|';
+    //    PrintChipRegister(frame, chip, N_Period);
+    //    m_output << "|";
+    //    break;
 
-    case DisplayType::Readable:
-        m_output << '|';
-        PrintChipRegisterDelta(frame, chip, N_Period, 5);
-        m_output << '|';
-        PrintChipRegisterDelta(frame, chip, E_Fine, 16);
-        m_output << ' ';
-        if (frame.IsChanged(chip, E_Shape))
-            PrintNibble(frame.Read(chip, E_Shape));
-        else
-            m_output << '.';
+    //case DisplayType::Readable:
+    //    m_output << '|';
+    //    PrintChipRegisterDelta(frame, chip, N_Period, 5);
+    //    m_output << '|';
+    //    PrintChipRegisterDelta(frame, chip, E_Fine, 16);
+    //    m_output << ' ';
+    //    if (frame.IsChanged(chip, E_Shape))
+    //        PrintNibble(frame.Read(chip, E_Shape));
+    //    else
+    //        m_output << '.';
 
-        m_output << '|';
-        PrintChannelMixer(frame, chip, 0);
-        m_output << ' ';
-        PrintChipRegisterDelta(frame, chip, A_Fine, 12);
-        m_output << ' ';
-        PrintChipRegisterDelta(frame, chip, A_Volume, 4);
+    //    m_output << '|';
+    //    PrintChannelMixer(frame, chip, 0);
+    //    m_output << ' ';
+    //    PrintChipRegisterDelta(frame, chip, A_Fine, 12);
+    //    m_output << ' ';
+    //    PrintChipRegisterDelta(frame, chip, A_Volume, 4);
 
-        m_output << '|';
-        PrintChannelMixer(frame, chip, 1);
-        m_output << ' ';
-        PrintChipRegisterDelta(frame, chip, B_Fine, 12);
-        m_output << ' ';
-        PrintChipRegisterDelta(frame, chip, B_Volume, 4);
+    //    m_output << '|';
+    //    PrintChannelMixer(frame, chip, 1);
+    //    m_output << ' ';
+    //    PrintChipRegisterDelta(frame, chip, B_Fine, 12);
+    //    m_output << ' ';
+    //    PrintChipRegisterDelta(frame, chip, B_Volume, 4);
 
-        m_output << '|';
-        PrintChannelMixer(frame, chip, 2);
-        m_output << ' ';
-        PrintChipRegisterDelta(frame, chip, C_Fine, 12);
-        m_output << ' ';
-        PrintChipRegisterDelta(frame, chip, C_Volume, 4);
+    //    m_output << '|';
+    //    PrintChannelMixer(frame, chip, 2);
+    //    m_output << ' ';
+    //    PrintChipRegisterDelta(frame, chip, C_Fine, 12);
+    //    m_output << ' ';
+    //    PrintChipRegisterDelta(frame, chip, C_Volume, 4);
 
-        m_output << '|';
-        break;
-    }
+    //    m_output << '|';
+    //    break;
+    //}
 }
 
 void EncodeTXT::PrintDelimiter()
@@ -191,66 +191,66 @@ void EncodeTXT::PrintNibble(uint8_t nibble)
 
 void EncodeTXT::PrintChipRegister(const Frame& frame, int chip, int reg)
 {
-    if (frame.IsChanged(chip, reg))
-    {
-        uint8_t data = frame.Read(chip, reg);
-        PrintNibble(data >> 4);
-        PrintNibble(data);
-    }
-    else
-    {
-        m_output << "..";
-    }
+    //if (frame.IsChanged(chip, reg))
+    //{
+    //    uint8_t data = frame.Read(chip, reg);
+    //    PrintNibble(data >> 4);
+    //    PrintNibble(data);
+    //}
+    //else
+    //{
+    //    m_output << "..";
+    //}
 }
 
 void EncodeTXT::PrintChipRegisterDelta(const Frame& frame, int chip, int reg, int bits)
 {
-    if (frame.IsChanged(chip, reg))
-    {
-        int mask = (1 << bits) - 1;
+    //if (frame.IsChanged(chip, reg))
+    //{
+    //    int mask = (1 << bits) - 1;
 
-        int old_v = m_prevFrame.Read(chip, reg);
-        if (bits > 8) old_v |= m_prevFrame.Read(chip, reg + 1) << 8;
-        old_v &= mask;
-       
-        int new_v = frame.Read(chip, reg);
-        if (bits > 8) new_v |= frame.Read(chip, reg + 1) << 8;
-        new_v &= mask;
+    //    int old_v = m_prevFrame.Read(chip, reg);
+    //    if (bits > 8) old_v |= m_prevFrame.Read(chip, reg + 1) << 8;
+    //    old_v &= mask;
+    //   
+    //    int new_v = frame.Read(chip, reg);
+    //    if (bits > 8) new_v |= frame.Read(chip, reg + 1) << 8;
+    //    new_v &= mask;
 
-        int delta = new_v - old_v;
-        if (delta < 0)
-        {
-            m_output << '-';
-            delta = -delta;
-        }
-        else
-        {
-            m_output << '+';
-        }
+    //    int delta = new_v - old_v;
+    //    if (delta < 0)
+    //    {
+    //        m_output << '-';
+    //        delta = -delta;
+    //    }
+    //    else
+    //    {
+    //        m_output << '+';
+    //    }
 
-        if (bits > 12) PrintNibble(delta >> 12);
-        if (bits >  8) PrintNibble(delta >>  8);
-        if (bits >  4) PrintNibble(delta >>  4);
-        PrintNibble(delta);
-    }
-    else
-    {
-        m_output << std::string((bits + 3) / 4 + 1, '.');
-    }
+    //    if (bits > 12) PrintNibble(delta >> 12);
+    //    if (bits >  8) PrintNibble(delta >>  8);
+    //    if (bits >  4) PrintNibble(delta >>  4);
+    //    PrintNibble(delta);
+    //}
+    //else
+    //{
+    //    m_output << std::string((bits + 3) / 4 + 1, '.');
+    //}
 }
 
 void EncodeTXT::PrintChannelMixer(const Frame& frame, int chip, int chan)
 {
-    uint8_t old_mixer = m_prevFrame.Read(chip, Mixer) >> chan;
-    uint8_t old_vol_e = m_prevFrame.Read(chip, A_Volume + chan);
-    uint8_t new_mixer = frame.Read(chip, Mixer) >> chan;
-    uint8_t new_vol_e = frame.Read(chip, A_Volume + chan);
+    //uint8_t old_mixer = m_prevFrame.Read(chip, Mixer) >> chan;
+    //uint8_t old_vol_e = m_prevFrame.Read(chip, A_Volume + chan);
+    //uint8_t new_mixer = frame.Read(chip, Mixer) >> chan;
+    //uint8_t new_vol_e = frame.Read(chip, A_Volume + chan);
 
-    bool changeT = ((new_mixer ^ old_mixer) & 0x01);
-    bool changeN = ((new_mixer ^ old_mixer) & 0x08);
-    bool changeE = ((new_vol_e ^ old_vol_e) & 0x10);
+    //bool changeT = ((new_mixer ^ old_mixer) & 0x01);
+    //bool changeN = ((new_mixer ^ old_mixer) & 0x08);
+    //bool changeE = ((new_vol_e ^ old_vol_e) & 0x10);
 
-    m_output << (changeT ? (new_mixer & 0x01 ? 't' : 'T') : '.');
-    m_output << (changeN ? (new_mixer & 0x08 ? 'n' : 'N') : '.');
-    m_output << (changeE ? (new_vol_e & 0x10 ? 'E' : 'e') : '.');
+    //m_output << (changeT ? (new_mixer & 0x01 ? 't' : 'T') : '.');
+    //m_output << (changeN ? (new_mixer & 0x08 ? 'n' : 'N') : '.');
+    //m_output << (changeE ? (new_vol_e & 0x10 ? 'E' : 'e') : '.');
 }

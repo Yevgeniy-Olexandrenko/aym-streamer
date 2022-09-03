@@ -113,7 +113,7 @@ bool DecodeYM::Decode(Frame& frame)
 
     for (uint8_t reg = 0; reg < 14; reg++)
     {
-        frame.Update(reg, *dataPtr);
+        frame[0].Update(reg, *dataPtr);
         dataPtr += valueSize;
     }
 

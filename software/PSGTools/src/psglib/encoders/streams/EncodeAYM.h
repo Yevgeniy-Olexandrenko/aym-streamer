@@ -1,8 +1,11 @@
 #pragma once
 
-#include <iostream>
+#include <sstream>
 #include "Property.h"
 #include "encoders/Encoder.h"
+#include "encoders/BitStream.h"
+
+#define DBG_ENCODE_AYM 1
 
 class EncodeAYM : public Encoder
 {
@@ -26,17 +29,19 @@ class EncodeAYM : public Encoder
 		uint8_t m_index;
 	};
 
-	class BitStream
+	class Chunk
 	{
 	public:
-		void Open(std::ostream& stream);
-		void Write(uint16_t data, uint8_t size);
-		void Close();
+		void Start();
+		void Stop();
+
+		BitStream& GetStream();
+		const uint8_t* GetData() const;
+		const size_t GetSize() const;
 
 	private:
-		std::ostream* m_stream;
-		uint8_t m_buffer;
-		uint8_t m_count;
+		BitStream m_stream;
+		std::string m_data;
 	};
 
 public:
@@ -45,18 +50,18 @@ public:
 	void Close(const Stream& stream) override;
 
 private:
-	void WriteDelta(const Delta& delta);
-	void WriteChipDelta(const Frame& frame, int chip, bool isLast);
-	void WriteRDelta (const Frame& frame, int chip, Register r);
-	void WritePDelta (const Frame& frame, int chip, PeriodRegister p);
-	void WriteStepDelta();
+	void WriteDelta(const Delta& delta, BitStream& stream);
+	void WriteChipData(const Frame& frame, int chip, bool isLast, BitStream& stream);
+	void WriteFrameChunk(const Frame& frame);
+	void WriteStepChunk();
+	void WriteChunk(const Chunk& chunk);
 
 private:
 	std::ofstream m_output;
 	DeltaList m_deltaList;
-	BitStream m_bitStream;
 	uint16_t m_oldStep = 1;
 	uint16_t m_newStep = 1;
 	Frame m_frame;
 	bool m_isTS;
 };
+

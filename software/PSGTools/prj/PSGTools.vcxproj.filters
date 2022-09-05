@@ -243,6 +243,12 @@
     <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesApuNew.cpp">
       <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\streams\EncodeTST.cpp">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\encoders\BitStream.cpp">
+      <Filter>Sources\psglib\encoders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\psglib\stream\Chip.h">
@@ -430,6 +436,12 @@
     </ClInclude>
     <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesApuNew.h">
       <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\streams\EncodeTST.h">
+      <Filter>Sources\psglib\encoders\streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\encoders\BitStream.h">
+      <Filter>Sources\psglib\encoders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

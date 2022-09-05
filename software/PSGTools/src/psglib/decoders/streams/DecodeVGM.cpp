@@ -12,7 +12,7 @@
 std::ofstream debug_out;
 #define DebugOpen() \
     debug_out.open("dbg_decode_vgm.txt");
-#define DebugPrintWrite(aa, bb) \
+#define DebugPrintWrite(aa, dd) \
     debug_out << 'r' << std::hex << std::setw(2) << std::setfill('0') << int(aa); \
     debug_out << ':' << std::hex << std::setw(2) << std::setfill('0') << int(dd); \
     debug_out << ' ';

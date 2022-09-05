@@ -1,6 +1,30 @@
 #include "EncodeAYM.h"
 #include <cassert>
 
+////////////////////////////////////////////////////////////////////////////////
+
+// debug output
+#if DBG_ENCODE_AYM
+std::ofstream debug_out;
+#define DebugOpen() \
+    debug_out.open("dbg_encode_aym.txt");
+#define DebugPrintByteValue(dd) \
+    debug_out << std::hex << std::setw(2) << std::setfill('0') << int(dd); \
+    debug_out << ' ';
+#define DebugPrintMessage(msg) \
+    debug_out << msg; \
+    debug_out << ' ';
+#define DebugPrintNewLine() \
+    debug_out << std::endl;
+#define DebugClose() \
+    debug_out.close();
+#else
+#define DebugOpen()
+#define DebugPrintWrite(aa, bb)
+#define DebugPrintNewLine()
+#define DebugClose()
+#endif
+
 EncodeAYM::Delta::Delta(uint16_t from, uint16_t to)
     : m_value(to - from)
     , m_size(16)
@@ -41,48 +65,6 @@ int8_t EncodeAYM::DeltaList::GetIndex(const Delta& delta)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void EncodeAYM::BitStream::Open(std::ostream& stream)
-{
-    m_stream = &stream;
-    m_buffer = m_count = 0;
-}
-
-void EncodeAYM::BitStream::Write(uint16_t data, uint8_t size)
-{
-    if (m_stream)
-    {
-        auto maxSize = uint8_t(sizeof(data) * 8);
-        size = std::min(size, maxSize);
-        data <<= (maxSize - size);
-
-        for (int i = 0; i < size; ++i)
-        {
-            m_buffer <<= 1;
-            m_buffer |= (data >> (maxSize - 1) & 1);
-            data <<= 1;
-            m_count++;
-
-            if (m_count == 8)
-            {
-                (*m_stream) << m_buffer;
-                m_buffer = m_count = 0;
-            }
-        }
-    }
-}
-
-void EncodeAYM::BitStream::Close()
-{
-    if (m_stream && m_count)
-    {
-        m_buffer <<= (8 - m_count);
-        (*m_stream) << m_buffer;
-        m_buffer = m_count = 0;
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 bool EncodeAYM::Open(const Stream& stream)
 {
     if (CheckFileExt(stream, "aym"))
@@ -93,10 +75,10 @@ bool EncodeAYM::Open(const Stream& stream)
             m_isTS = (stream.chip.count() == 2);
 
             m_output << "AYYM";
-            m_bitStream.Open(m_output);
 
             // TODO
 
+            DebugOpen();
             return true;
         }
     }
@@ -107,14 +89,8 @@ void EncodeAYM::Encode(const Frame& frame)
 {
     if (frame.HasChanges())
     {
-        WriteStepDelta();
-        if (m_isTS)
-        {
-            WriteChipDelta(frame, 0, false);
-            WriteChipDelta(frame, 1, true);
-        }
-        else
-            WriteChipDelta(frame, 0, true);
+        WriteStepChunk();
+        WriteFrameChunk(frame);
     }
     else
     {
@@ -125,14 +101,33 @@ void EncodeAYM::Encode(const Frame& frame)
 
 void EncodeAYM::Close(const Stream& stream)
 {
-    WriteStepDelta();
-    m_bitStream.Close();
+    WriteStepChunk();
     m_output.close();
+    DebugClose();
+}
+
+void EncodeAYM::WriteFrameChunk(const Frame& frame)
+{
+    Chunk chunk;
+    chunk.Start();
+
+    if (m_isTS)
+    {
+        WriteChipData(frame, 0, false, chunk.GetStream());
+        WriteChipData(frame, 1, true, chunk.GetStream());
+    }
+    else
+    {
+        WriteChipData(frame, 0, true, chunk.GetStream());
+    }
+
+    chunk.Stop();
+    WriteChunk(chunk);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void EncodeAYM::WriteDelta(const Delta& delta)
+void EncodeAYM::WriteDelta(const Delta& delta, BitStream& stream)
 {
     auto index = m_deltaList.GetIndex(delta);
     if (index < 0)
@@ -140,23 +135,33 @@ void EncodeAYM::WriteDelta(const Delta& delta)
         switch (delta.value())
         {
         default:
-            m_bitStream.Write(delta.size() / 4 - 1, 3);
-            m_bitStream.Write(delta.value(), delta.size());
+            stream.Write<3>(delta.size() / 4 - 1);
+            stream.Write(delta.value(), delta.size());
             break;
 
-        case  0: m_bitStream.Write(0b100, 3); break;
-        case +1: m_bitStream.Write(0b101, 3); break;
-        case -1: m_bitStream.Write(0b110, 3); break;
+        case  0: stream.Write<3>(0b100); break;
+        case +1: stream.Write<3>(0b101); break;
+        case -1: stream.Write<3>(0b110); break;
         }
     }
     else
     {
-        m_bitStream.Write(0b11100000 | index, 8);
+        stream.Write<8>(0b11100000 | index);
     }
 }
 
-void EncodeAYM::WriteChipDelta(const Frame& frame, int chip, bool isLast)
+void EncodeAYM::WriteChipData(const Frame& frame, int chip, bool isLast, BitStream& stream)
 {
+    const auto WriteRDelta = [&](Register r)
+    {
+        WriteDelta({ m_frame[chip].Read(r), frame[chip].Read(r) }, stream);
+    };
+
+    const auto WritePDelta = [&](PeriodRegister p)
+    {
+        WriteDelta({ m_frame[chip].ReadPeriod(p), frame[chip].ReadPeriod(p) }, stream);
+    };
+
     uint8_t loMask = 0;
     uint8_t hiMask = 0;
 
@@ -174,39 +179,87 @@ void EncodeAYM::WriteChipDelta(const Frame& frame, int chip, bool isLast)
     if (!isLast) hiMask |= (1 << 3);
     if (hiMask ) loMask |= (1 << 7);
 
-    m_bitStream.Write(loMask, 8);
-    if (loMask & (1 << 7)) m_bitStream.Write(hiMask, 4);
+    stream.Write<8>(loMask);
+    if (loMask & (1 << 7)) stream.Write<4>(hiMask);
 
-    if (loMask & (1 << 0)) WriteRDelta(frame, chip, Mixer);
-    if (loMask & (1 << 1)) WritePDelta(frame, chip, A_Period);
-    if (loMask & (1 << 2)) WriteRDelta(frame, chip, A_Volume);
-    if (loMask & (1 << 3)) WritePDelta(frame, chip, B_Period);
-    if (loMask & (1 << 4)) WriteRDelta(frame, chip, B_Volume);
-    if (loMask & (1 << 5)) WritePDelta(frame, chip, C_Period);
-    if (loMask & (1 << 6)) WriteRDelta(frame, chip, C_Volume);
-    if (hiMask & (1 << 0)) WritePDelta(frame, chip, N_Period);
-    if (hiMask & (1 << 1)) WritePDelta(frame, chip, E_Period);
-    if (hiMask & (1 << 2)) WriteRDelta(frame, chip, E_Shape);
+    if (loMask & (1 << 0)) WriteRDelta(Mixer);
+    if (loMask & (1 << 1)) WritePDelta(A_Period);
+    if (loMask & (1 << 2)) WriteRDelta(A_Volume);
+    if (loMask & (1 << 3)) WritePDelta(B_Period);
+    if (loMask & (1 << 4)) WriteRDelta(B_Volume);
+    if (loMask & (1 << 5)) WritePDelta(C_Period);
+    if (loMask & (1 << 6)) WriteRDelta(C_Volume);
+    if (hiMask & (1 << 0)) WritePDelta(N_Period);
+    if (hiMask & (1 << 1)) WritePDelta(E_Period);
+    if (hiMask & (1 << 2)) WriteRDelta(E_Shape);
 }
 
-void EncodeAYM::WriteStepDelta()
+void EncodeAYM::WriteStepChunk()
 {
     if (m_newStep != m_oldStep)
     {
-        m_bitStream.Write(0x00, 8);
-        WriteDelta({ m_oldStep, m_newStep });
+        Chunk chunk;
+        chunk.Start();
+
+        chunk.GetStream().Write<8>(0x00);
+        WriteDelta({ m_oldStep, m_newStep }, chunk.GetStream());
+
+        chunk.Stop();
+        WriteChunk(chunk);
 
         m_oldStep = m_newStep;
         m_newStep = 1;
     }
 }
 
-void EncodeAYM::WriteRDelta(const Frame& frame, int chip, Register r)
+void EncodeAYM::WriteChunk(const Chunk& chunk)
 {
-    WriteDelta({ m_frame[chip].Read(r), frame[chip].Read(r) });
+    auto data = chunk.GetData();
+    auto size = chunk.GetSize();
+    m_output.write(reinterpret_cast<const char*>(data), size);
+
+#if DBG_ENCODE_AYM
+    for (size_t i = 0; i < size; ++i)
+    {
+        uint8_t dd = data[i];
+        if (i == 0)
+        {
+            if (dd) { DebugPrintMessage("regs:"); }
+            else    { DebugPrintMessage("skip:"); }
+        }
+        DebugPrintByteValue(dd);
+    }
+    DebugPrintNewLine();
+#endif
 }
 
-void EncodeAYM::WritePDelta(const Frame& frame, int chip, PeriodRegister p)
+////////////////////////////////////////////////////////////////////////////////
+
+void EncodeAYM::Chunk::Start()
 {
-    WriteDelta({ m_frame[chip].ReadPeriod(p), frame[chip].ReadPeriod(p) });
+    auto stream = new std::ostringstream();
+    m_stream.Open(*stream);
+}
+
+void EncodeAYM::Chunk::Stop()
+{
+    auto stream = static_cast<std::ostringstream*>(m_stream.GetOStream());
+    m_stream.Close();
+    m_data = stream->str();
+    delete stream;
+}
+
+BitStream& EncodeAYM::Chunk::GetStream()
+{
+    return m_stream;
+}
+
+const uint8_t* EncodeAYM::Chunk::GetData() const
+{
+    return reinterpret_cast<const uint8_t*>(m_data.data());
+}
+
+const size_t EncodeAYM::Chunk::GetSize() const
+{
+    return m_data.size();
 }

@@ -51,11 +51,13 @@
     <ClCompile Include="..\src\psglib\decoders\streams\DecodeVGM.cpp" />
     <ClCompile Include="..\src\psglib\decoders\streams\DecodeVTX.cpp" />
     <ClCompile Include="..\src\psglib\decoders\streams\DecodeYM.cpp" />
+    <ClCompile Include="..\src\psglib\encoders\BitStream.cpp" />
     <ClCompile Include="..\src\psglib\encoders\Encoder.cpp" />
     <ClCompile Include="..\src\psglib\encoders\specific\EncodeTXT.cpp" />
     <ClCompile Include="..\src\psglib\encoders\specific\EncodeWAV.cpp" />
     <ClCompile Include="..\src\psglib\encoders\streams\EncodeAYM.cpp" />
     <ClCompile Include="..\src\psglib\encoders\streams\EncodePSG.cpp" />
+    <ClCompile Include="..\src\psglib\encoders\streams\EncodeTST.cpp" />
     <ClCompile Include="..\src\psglib\encoders\streams\EncodeVGM.cpp" />
     <ClCompile Include="..\src\psglib\encoders\streams\EncodeVTX.cpp" />
     <ClCompile Include="..\src\psglib\encoders\streams\EncodeYM.cpp" />
@@ -111,11 +113,13 @@
     <ClInclude Include="..\src\psglib\decoders\streams\DecodeVGM.h" />
     <ClInclude Include="..\src\psglib\decoders\streams\DecodeVTX.h" />
     <ClInclude Include="..\src\psglib\decoders\streams\DecodeYM.h" />
+    <ClInclude Include="..\src\psglib\encoders\BitStream.h" />
     <ClInclude Include="..\src\psglib\encoders\Encoder.h" />
     <ClInclude Include="..\src\psglib\encoders\specific\EncodeTXT.h" />
     <ClInclude Include="..\src\psglib\encoders\specific\EncodeWAV.h" />
     <ClInclude Include="..\src\psglib\encoders\streams\EncodeAYM.h" />
     <ClInclude Include="..\src\psglib\encoders\streams\EncodePSG.h" />
+    <ClInclude Include="..\src\psglib\encoders\streams\EncodeTST.h" />
     <ClInclude Include="..\src\psglib\encoders\streams\EncodeVGM.h" />
     <ClInclude Include="..\src\psglib\encoders\streams\EncodeVTX.h" />
     <ClInclude Include="..\src\psglib\encoders\streams\EncodeYM.h" />

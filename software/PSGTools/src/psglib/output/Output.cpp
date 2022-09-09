@@ -49,6 +49,7 @@ bool Output::Init(const Stream& stream)
             }
 
             // init post-processing
+            m_processingChain.clear();
             m_processingChain.push_back(std::make_unique<AY8930EnvelopeFix>(m_dchip));
             m_processingChain.push_back(std::make_unique<ChannelsLayoutChange>(m_dchip));
             m_processingChain.push_back(std::make_unique<ChannelsOutputDisable>(m_dchip));

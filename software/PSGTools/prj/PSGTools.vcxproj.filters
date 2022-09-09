@@ -67,6 +67,9 @@
     <Filter Include="Sources\psglib\compression\zlib">
       <UniqueIdentifier>{521e54e2-ef25-481d-9be9-d3ed605e4a5c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\psglib\processing">
+      <UniqueIdentifier>{dce4e53e-a839-44c2-9245-e2a50ee7ad8c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\psglib\stream\Chip.cpp">
@@ -198,9 +201,6 @@
     <ClCompile Include="..\src\psglib\decoders\chipsims\nes\NesCpu.cpp">
       <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\psglib\output\Processing.cpp">
-      <Filter>Sources\psglib\output</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\psglib\compression\lha\lh5_decode.cpp">
       <Filter>Sources\psglib\compression\lha</Filter>
     </ClCompile>
@@ -248,6 +248,9 @@
     </ClCompile>
     <ClCompile Include="..\src\psglib\encoders\BitStream.cpp">
       <Filter>Sources\psglib\encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psglib\processing\Processing.cpp">
+      <Filter>Sources\psglib\processing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -395,9 +398,6 @@
     <ClInclude Include="..\src\psglib\decoders\chipsims\nes\NesCpu.h">
       <Filter>Sources\psglib\decoders\chipsims\nes</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\psglib\output\Processing.h">
-      <Filter>Sources\psglib\output</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\psglib\compression\lha\lh5_decode.h">
       <Filter>Sources\psglib\compression\lha</Filter>
     </ClInclude>
@@ -442,6 +442,21 @@
     </ClInclude>
     <ClInclude Include="..\src\psglib\encoders\BitStream.h">
       <Filter>Sources\psglib\encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\processing\AY8930EnvelopeFix.h">
+      <Filter>Sources\psglib\processing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\processing\ChannelsLayoutChange.h">
+      <Filter>Sources\psglib\processing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\processing\ChannelsOutputDisable.h">
+      <Filter>Sources\psglib\processing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\processing\ChipClockRateConvert.h">
+      <Filter>Sources\psglib\processing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\psglib\processing\Processing.h">
+      <Filter>Sources\psglib\processing</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

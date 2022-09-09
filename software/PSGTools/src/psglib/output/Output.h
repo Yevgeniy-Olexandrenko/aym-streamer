@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "Processing.h"
+#include "processing/Processing.h"
 
 #define AY8930_FORCE_TO_CHOOSE  0
 #define AY8930_FORCE_TO_DISCARD 0
@@ -34,15 +34,11 @@ protected:
 
 private:
 	void Reset() override;
-	const Frame& operator()(const Chip& chip, const Frame& frame) override;
+	const Frame& operator()(const Frame& frame) override;
 
 private:
 	bool m_isOpened;
 	Chip m_chip;
 
-	FixAY8930Envelope m_fixAY8930Envelope;
-	ConvertExpToComp  m_convertExpToComp;
-	ConvertToNewClock m_convertToNewClock;
-	SwapChannelsOrder m_swapChannelsOrder;
-	DisableChannels   m_disableChannels;
+	ProcessingChain m_processingChain;
 };

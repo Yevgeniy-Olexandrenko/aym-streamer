@@ -1,6 +1,11 @@
 #include "Output.h"
-#include "stream/Stream.h"
+
 #include <cassert>
+#include "stream/Stream.h"
+#include "processing/AY8930EnvelopeFix.h"
+#include "processing/ChannelsLayoutChange.h"
+#include "processing/ChannelsOutputDisable.h"
+#include "processing/ChipClockRateConvert.h"
 
 #define DEBUG_OUT 0
 
@@ -53,8 +58,11 @@ bool Output::Init(const Stream& stream)
                 }
             }
 
-            // reset post-processing
-            static_cast<Processing&>(*this).Reset();
+            // init post-processing
+            m_processingChain.push_back(std::make_unique<AY8930EnvelopeFix>(m_chip));
+            m_processingChain.push_back(std::make_unique<ChannelsLayoutChange>(m_chip));
+            m_processingChain.push_back(std::make_unique<ChannelsOutputDisable>(m_chip));
+            m_processingChain.push_back(std::make_unique<ChipClockRateConvert>(stream.chip, m_chip));
         }
     }
     return m_isOpened;
@@ -65,7 +73,7 @@ bool Output::Write(const Frame& frame)
     if (m_isOpened)
     {
         // processing before output
-        const Frame& pframe = static_cast<Processing&>(*this)(m_chip, frame);
+        const Frame& pframe = static_cast<Processing&>(*this)(frame);
 
         // output to chip(s)
         Data data(32);
@@ -125,22 +133,20 @@ std::string Output::toString() const
 
 void Output::Reset()
 {
-    m_fixAY8930Envelope.Reset();
-    m_convertExpToComp.Reset();
-    m_convertToNewClock.Reset();
-    m_swapChannelsOrder.Reset();
-    m_disableChannels.Reset();
+    for (auto& processing : m_processingChain)
+    {
+        processing->Reset();
+    }
     Processing::Reset();
 }
 
-const Frame& Output::operator()(const Chip& chip, const Frame& frame)
+const Frame& Output::operator()(const Frame& frame)
 {
     const Frame* processed = &frame;
-    processed = &m_fixAY8930Envelope (chip, *processed);
-    processed = &m_convertExpToComp  (chip, *processed);
-    processed = &m_convertToNewClock(chip,  *processed);
-    processed = &m_swapChannelsOrder (chip, *processed);
-    processed = &m_disableChannels   (chip, *processed);
+    for (auto& processing : m_processingChain)
+    {
+        processed = &(*processing)(*processed);
+    }
     Update(*processed);
 
 #if DEBUG_OUT

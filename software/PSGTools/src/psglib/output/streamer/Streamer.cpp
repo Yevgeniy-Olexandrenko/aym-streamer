@@ -12,6 +12,11 @@ Streamer::~Streamer()
 	CloseDevice();
 }
 
+const std::string Streamer::GetDeviceName() const
+{
+	return "Streamer";
+}
+
 bool Streamer::OpenDevice()
 {
 	m_port.Open(m_portIndex);
@@ -37,17 +42,24 @@ bool Streamer::InitDstChip(const Chip& srcChip, Chip& dstChip)
 	return true;
 }
 
-bool Streamer::WriteToChip(int chip, const std::vector<uint8_t>& data)
+bool Streamer::WriteToChip(int chip, const Data& data)
 {
-	auto dataSize = (int)data.size();
-	auto dataBuff = (const char*)data.data();
+	// prepare
+	std::vector<uint8_t> binary(64);
+	for (const auto& pair : data)
+	{
+		const uint8_t& reg = pair.first;
+		const uint8_t& val = pair.second;
+		binary.push_back(reg);
+		binary.push_back(val);
+	}
+	binary.push_back(0xFF);
+
+	// send
+	auto dataSize = (int)binary.size();
+	auto dataBuff = (const char*)binary.data();
 	auto sentSize = m_port.SendBinary(dataBuff, dataSize);
 	return (sentSize == dataSize);
-}
-
-const std::string Streamer::GetDeviceName() const
-{
-	return "Streamer";
 }
 
 void Streamer::CloseDevice()

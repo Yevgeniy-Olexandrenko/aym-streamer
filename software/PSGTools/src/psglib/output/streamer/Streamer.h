@@ -10,10 +10,11 @@ public:
 	virtual ~Streamer();
 
 protected:
+	const std::string GetDeviceName() const override;
+
 	bool OpenDevice() override;
 	bool InitDstChip(const Chip& srcChip, Chip& dstChip) override;
-	bool WriteToChip(int chip, const std::vector<uint8_t>& data) override;
-	const std::string GetDeviceName() const override;
+	bool WriteToChip(int chip, const Data& data) override;
 	void CloseDevice() override;
 
 private:

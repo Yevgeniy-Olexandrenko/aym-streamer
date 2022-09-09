@@ -11,6 +11,11 @@ Emulator::~Emulator()
     CloseDevice();
 }
 
+const std::string Emulator::GetDeviceName() const
+{
+    return "Emulator";
+}
+
 bool Emulator::OpenDevice()
 {
     if (WaveAudio::Open(k_emulatorSampleRate, 100, 2, 2))
@@ -98,14 +103,12 @@ bool Emulator::InitDstChip(const Chip& srcChip, Chip& dstChip)
     return true;
 }
 
-bool Emulator::WriteToChip(int chip, const std::vector<uint8_t>& data)
+bool Emulator::WriteToChip(int chip, const Data& data)
 {
-    uint8_t reg, val;
-    const uint8_t* dataPtr = data.data();
-
-    while ((reg = *dataPtr++) != 0xFF)
+    for (const auto& pair : data)
     {
-        val = *dataPtr++;
+        const uint8_t& reg = pair.first;
+        const uint8_t& val = pair.second;
         m_ay[chip]->Write(reg, val);
     }
     return true;
@@ -156,11 +159,6 @@ void Emulator::FillBuffer(unsigned char* buffer, unsigned long size)
             }
         }
     }
-}
-
-const std::string Emulator::GetDeviceName() const
-{
-    return "Emulator";
 }
 
 void Emulator::CloseDevice()

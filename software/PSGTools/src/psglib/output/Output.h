@@ -24,10 +24,12 @@ public:
 	std::string toString() const;
 
 protected:
+	using Data = std::vector<std::pair<uint8_t, uint8_t>>;
+	virtual const std::string GetDeviceName() const = 0;
+
 	virtual bool OpenDevice() = 0;
 	virtual bool InitDstChip(const Chip& srcChip, Chip& dstChip) = 0;
-	virtual bool WriteToChip(int chip, const std::vector<uint8_t>& data) = 0;
-	virtual const std::string GetDeviceName() const = 0;
+	virtual bool WriteToChip(int chip, const Data& data) = 0;
 	virtual void CloseDevice() = 0;
 
 private:

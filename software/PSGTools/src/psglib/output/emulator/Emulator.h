@@ -13,11 +13,12 @@ public:
 	virtual ~Emulator();
 
 protected:
+	const std::string GetDeviceName() const override;
+
 	bool OpenDevice() override;
 	bool InitDstChip(const Chip& srcChip, Chip& dstChip) override;
-	bool WriteToChip(int chip, const std::vector<uint8_t>& data) override;
+	bool WriteToChip(int chip, const Data& data) override;
 	void FillBuffer(unsigned char* buffer, unsigned long size) override;
-	const std::string GetDeviceName() const override;
 	void CloseDevice() override;
 
 private:

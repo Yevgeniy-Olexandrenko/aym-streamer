@@ -68,7 +68,7 @@ bool Output::Write(const Frame& frame)
         const Frame& pframe = static_cast<Processing&>(*this)(m_chip, frame);
 
         // output to chip(s)
-        std::vector<uint8_t> data(64);
+        Data data(32);
         for (int chip = 0; chip < m_chip.count(); ++chip)
         {
             data.clear();
@@ -81,18 +81,15 @@ bool Output::Write(const Frame& frame)
                     {
                         if (!switchBanks)
                         {
-                            data.push_back(Mode_Bank);
-                            data.push_back(pframe[chip].GetData(Mode_Bank) | 0x10);
+                            data.emplace_back(Mode_Bank, pframe[chip].GetData(Mode_Bank) | 0x10);
                             switchBanks = true;
                         }
-                        data.push_back(reg & 0x0F);
-                        data.push_back(pframe[chip].GetData(reg));
+                        data.emplace_back(reg & 0x0F, pframe[chip].GetData(reg));
                     }
                 }
                 if (switchBanks)
                 {
-                    data.push_back(Mode_Bank);
-                    data.push_back(pframe[chip].GetData(Mode_Bank));
+                    data.emplace_back(Mode_Bank, pframe[chip].GetData(Mode_Bank));
                 }
             }
 
@@ -100,12 +97,10 @@ bool Output::Write(const Frame& frame)
             {
                 if (pframe[chip].IsChanged(reg))
                 {
-                    data.push_back(reg & 0x0F);
-                    data.push_back(pframe[chip].GetData(reg));
+                    data.emplace_back(reg & 0x0F, pframe[chip].GetData(reg));
                 }
             }
 
-            data.push_back(0xFF);
             if (!(m_isOpened &= WriteToChip(chip, data))) break;
         }
     }

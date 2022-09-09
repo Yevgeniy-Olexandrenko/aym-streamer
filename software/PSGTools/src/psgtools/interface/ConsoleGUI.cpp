@@ -196,8 +196,8 @@ namespace gui
     const std::string k_headerForExpMode = "|07|0100 0816 0C0B 0D|0302 0917 1110 14|0504 0A18 1312 15|191A06|";
     const std::string k_headerForComMode = "|R7|R1R0 R8|R3R2 R9|R5R4 RA|RCRB RD|R6|";
 
-    enum RegColorType { Highlight, Changed, WithNoise, WithEnvelope, Hidden, Unchanged };
-    SHORT RegColors[] { BG_DARK_MAGENTA | FG_WHITE, FG_GREEN, FG_CYAN, FG_YELLOW, FG_RED, FG_DARK_GREY };
+    enum RegColorType { Highlight, Changed, WithNoise, WithEnvelope, Unchanged };
+    SHORT RegColors[] { BG_DARK_MAGENTA | FG_WHITE, FG_GREEN, FG_CYAN, FG_YELLOW, FG_DARK_GREY };
 
     void printNibble(uint8_t nibble)
     {
@@ -237,54 +237,46 @@ namespace gui
         bool enableAE = (vol_a & 0x10);
         bool enableBE = (vol_b & 0x10);
         bool enableCE = (vol_c & 0x10);
-        bool enableAM = ((enableAT || enableAN) && (enableAE || vol_a));
-        bool enableBM = ((enableBT || enableBN) && (enableBE || vol_b));
-        bool enableCM = ((enableCT || enableCN) && (enableCE || vol_c));
+        bool enableE  = (enableAE || enableBE || enableCE);
+        bool enableN  = (enableAN || enableBN || enableCN);
 
-        bool enableM = (enableAM || enableBM || enableCM);
-        bool enableA = (enableAT || enableAN || enableAE);
-        bool enableB = (enableBT || enableBN || enableBE);
-        bool enableC = (enableCT || enableCN || enableCE);
-        bool enableE = (enableAE || enableBE || enableCE);
-        bool enableN = (enableAN || enableBN || enableCN);
-
-        RegColorType mixerColorType = (highlight ? Highlight : (enableM ? Changed : Hidden));
-        RegColorType channelAColorType = (highlight ? Highlight : (enableA ? (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)) : Hidden));
-        RegColorType channelBColorType = (highlight ? Highlight : (enableB ? (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)) : Hidden));
-        RegColorType channelCColorType = (highlight ? Highlight : (enableC ? (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)) : Hidden));
-        RegColorType envelopeColorType = (highlight ? Highlight : (enableE ? Changed : Hidden));
-        RegColorType noiseColorType = (highlight ? Highlight : (enableN ? Changed : Hidden));
+        RegColorType colorMM = (highlight ? Highlight : (enableN  ? WithNoise    : Changed));
+        RegColorType colorAT = (highlight ? Highlight : (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)));
+        RegColorType colorBT = (highlight ? Highlight : (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)));
+        RegColorType colorCT = (highlight ? Highlight : (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)));
+        RegColorType colorEE = (highlight ? Highlight : (enableE  ? WithEnvelope : Changed));
+        RegColorType colorNN = (highlight ? Highlight : (enableN  ? WithNoise    : Changed));
 
         uint16_t color = (highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, Mixer, mixerColorType);
+        printRegisterValue(chip, frame, Mixer, colorMM);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, A_Coarse, channelAColorType);
-        printRegisterValue(chip, frame, A_Fine, channelAColorType);
+        printRegisterValue(chip, frame, A_Coarse, colorAT);
+        printRegisterValue(chip, frame, A_Fine,   colorAT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, A_Volume, channelAColorType);
+        printRegisterValue(chip, frame, A_Volume, colorAT);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, B_Coarse, channelBColorType);
-        printRegisterValue(chip, frame, B_Fine, channelBColorType);
+        printRegisterValue(chip, frame, B_Coarse, colorBT);
+        printRegisterValue(chip, frame, B_Fine,   colorBT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, B_Volume, channelBColorType);
+        printRegisterValue(chip, frame, B_Volume, colorBT);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, C_Coarse, channelCColorType);
-        printRegisterValue(chip, frame, C_Fine, channelCColorType);
+        printRegisterValue(chip, frame, C_Coarse, colorCT);
+        printRegisterValue(chip, frame, C_Fine,   colorCT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, C_Volume, channelCColorType);
+        printRegisterValue(chip, frame, C_Volume, colorCT);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, E_Coarse, envelopeColorType);
-        printRegisterValue(chip, frame, E_Fine, envelopeColorType);
+        printRegisterValue(chip, frame, E_Coarse, colorEE);
+        printRegisterValue(chip, frame, E_Fine,   colorEE);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, E_Shape, envelopeColorType);
+        printRegisterValue(chip, frame, E_Shape,  colorEE);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, N_Period, noiseColorType);
+        printRegisterValue(chip, frame, N_Period, colorNN);
         m_framesBuffer.color(color).draw('|');
     }
 
@@ -304,69 +296,61 @@ namespace gui
         bool enableAE = (vol_a & 0x20);
         bool enableBE = (vol_b & 0x20);
         bool enableCE = (vol_c & 0x20);
-        bool enableAM = ((enableAT || enableAN) && (enableAE || vol_a));
-        bool enableBM = ((enableBT || enableBN) && (enableBE || vol_b));
-        bool enableCM = ((enableCT || enableCN) && (enableCE || vol_c));
+        bool enableN  = (enableAN || enableBN || enableCN);
 
-        bool enableM = (enableAM || enableBM || enableCM);
-        bool enableA = (enableAT || enableAN || enableAE);
-        bool enableB = (enableBT || enableBN || enableBE);
-        bool enableC = (enableCT || enableCN || enableCE);
-        bool enableN = (enableAN || enableBN || enableCN);
-
-        RegColorType mixerColorType = (highlight ? Highlight : (enableM ? Changed : Hidden));
-        RegColorType channelAColorType = (highlight ? Highlight : (enableA ? (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)) : Hidden));
-        RegColorType channelBColorType = (highlight ? Highlight : (enableB ? (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)) : Hidden));
-        RegColorType channelCColorType = (highlight ? Highlight : (enableC ? (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)) : Hidden));
-        RegColorType envelopeAColorType = (highlight ? Highlight : (enableAE ? Changed : Hidden));
-        RegColorType envelopeBColorType = (highlight ? Highlight : (enableBE ? Changed : Hidden));
-        RegColorType envelopeCColorType = (highlight ? Highlight : (enableCE ? Changed : Hidden));
-        RegColorType noiseColorType = (highlight ? Highlight : (enableN ? Changed : Hidden));
+        RegColorType colorMM = (highlight ? Highlight : (enableN  ? WithNoise    : Changed));
+        RegColorType colorAT = (highlight ? Highlight : (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)));
+        RegColorType colorBT = (highlight ? Highlight : (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)));
+        RegColorType colorCT = (highlight ? Highlight : (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)));
+        RegColorType colorAE = (highlight ? Highlight : (enableAE ? WithEnvelope : Changed));
+        RegColorType colorBE = (highlight ? Highlight : (enableBE ? WithEnvelope : Changed));
+        RegColorType colorCE = (highlight ? Highlight : (enableCE ? WithEnvelope : Changed));
+        RegColorType colorNN = (highlight ? Highlight : (enableN  ? WithNoise    : Changed));
 
         uint16_t color = (highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, Mixer, mixerColorType);
+        printRegisterValue(chip, frame, Mixer, colorMM);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, A_Coarse, channelAColorType);
-        printRegisterValue(chip, frame, A_Fine, channelAColorType);
+        printRegisterValue(chip, frame, A_Coarse,  colorAT);
+        printRegisterValue(chip, frame, A_Fine,    colorAT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, A_Volume, channelAColorType);
-        printRegisterValue(chip, frame, A_Duty, channelAColorType);
+        printRegisterValue(chip, frame, A_Volume,  colorAT);
+        printRegisterValue(chip, frame, A_Duty,    colorAT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EA_Coarse, envelopeAColorType);
-        printRegisterValue(chip, frame, EA_Fine, envelopeAColorType);
+        printRegisterValue(chip, frame, EA_Coarse, colorAE);
+        printRegisterValue(chip, frame, EA_Fine,   colorAE);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EA_Shape, envelopeAColorType);
+        printRegisterValue(chip, frame, EA_Shape,  colorAE);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, B_Coarse, channelBColorType);
-        printRegisterValue(chip, frame, B_Fine, channelBColorType);
+        printRegisterValue(chip, frame, B_Coarse,  colorBT);
+        printRegisterValue(chip, frame, B_Fine,    colorBT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, B_Volume, channelBColorType);
-        printRegisterValue(chip, frame, B_Duty, channelBColorType);
+        printRegisterValue(chip, frame, B_Volume,  colorBT);
+        printRegisterValue(chip, frame, B_Duty,    colorBT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EB_Coarse, envelopeBColorType);
-        printRegisterValue(chip, frame, EB_Fine, envelopeBColorType);
+        printRegisterValue(chip, frame, EB_Coarse, colorBE);
+        printRegisterValue(chip, frame, EB_Fine,   colorBE);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EB_Shape, envelopeBColorType);
+        printRegisterValue(chip, frame, EB_Shape,  colorBE);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, C_Coarse, channelCColorType);
-        printRegisterValue(chip, frame, C_Fine, channelCColorType);
+        printRegisterValue(chip, frame, C_Coarse,  colorCT);
+        printRegisterValue(chip, frame, C_Fine,    colorCT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, C_Volume, channelCColorType);
-        printRegisterValue(chip, frame, C_Duty, channelCColorType);
+        printRegisterValue(chip, frame, C_Volume,  colorCT);
+        printRegisterValue(chip, frame, C_Duty,    colorCT);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EC_Coarse, envelopeCColorType);
-        printRegisterValue(chip, frame, EC_Fine, envelopeCColorType);
+        printRegisterValue(chip, frame, EC_Coarse, colorCE);
+        printRegisterValue(chip, frame, EC_Fine,   colorCE);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EC_Shape, envelopeCColorType);
+        printRegisterValue(chip, frame, EC_Shape,  colorCE);
         m_framesBuffer.color(color).draw('|');
 
-        printRegisterValue(chip, frame, N_AndMask, noiseColorType);
-        printRegisterValue(chip, frame, N_OrMask, noiseColorType);
-        printRegisterValue(chip, frame, N_Period, noiseColorType);       
+        printRegisterValue(chip, frame, N_AndMask, colorNN);
+        printRegisterValue(chip, frame, N_OrMask,  colorNN);
+        printRegisterValue(chip, frame, N_Period,  colorNN);       
         m_framesBuffer.color(color).draw('|');
     }
 

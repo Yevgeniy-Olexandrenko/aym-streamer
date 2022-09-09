@@ -3,9 +3,6 @@
 #include <vector>
 #include "processing/Processing.h"
 
-#define AY8930_FORCE_TO_CHOOSE  0
-#define AY8930_FORCE_TO_DISCARD 0
-
 class Stream;
 class Frame;
 
@@ -28,7 +25,7 @@ protected:
 	virtual const std::string GetDeviceName() const = 0;
 
 	virtual bool OpenDevice() = 0;
-	virtual bool InitDstChip(const Chip& srcChip, Chip& dstChip) = 0;
+	virtual bool ConfigureChip(const Chip& schip, Chip& dchip) = 0;
 	virtual bool WriteToChip(int chip, const Data& data) = 0;
 	virtual void CloseDevice() = 0;
 
@@ -38,7 +35,7 @@ private:
 
 private:
 	bool m_isOpened;
-	Chip m_chip;
-
+	Chip m_schip;
+	Chip m_dchip;
 	ProcessingChain m_processingChain;
 };

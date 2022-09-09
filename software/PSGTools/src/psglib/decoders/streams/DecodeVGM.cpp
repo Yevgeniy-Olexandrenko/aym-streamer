@@ -82,49 +82,62 @@ bool DecodeVGM::Open(Stream& stream)
                 {
                     clockRate = (header.ay8910Clock & 0x3FFFFFFF);
                     if (header.ay8910Flags & 0x10) clockRate /= 2;
-                    if (!stream.chip.clockKnown()) stream.chip.clockValue(clockRate);
                     // TODO: detect frame rate
 
+                    // detect chip model and count
                     Chip::Model model = Chip::Model::AY8910;
                     if (header.ay8910Type == 0x03) model = Chip::Model::AY8930;
                     if (header.ay8910Type >= 0x10) model = Chip::Model::YM2149;
                     auto twoChips = bool(header.ay8910Clock & 0x40000000);
           
-                    stream.chip.first.model(model);
-                    if (twoChips) stream.chip.second.model(model);
+                    // setup chip model, clock rate and 2nd chip if needed
+                    stream.schip.first.model(model);
+                    stream.schip.clockValue(clockRate);
+                    if (twoChips) stream.schip.second.model(model);
                 }
 
                 else if (m_simulator->type() == ChipSim::Type::RP2A03)
                 {
                     clockRate = (header.nesApuClock & 0x3FFFFFFF);
-                    if (!stream.chip.clockKnown()) stream.chip.clockValue(clockRate);
                     if (clockRate / 1000 == 1662) frameRate = 50;
 
-                    auto outputType = SimRP2A03::OutputType::SingleChip;
-                    if (stream.chip.first.model() == Chip::Model::Compatible)
-                    {
-                        stream.chip.first.model(Chip::Model::YM2149);
-                    }
+                    // setup chip clock rate
+                    if (stream.dchip.clockKnown())
+                        stream.schip.clock(stream.dchip.clock());
+                    else
+                        stream.schip.clockValue(clockRate);
 
-                    if (stream.chip.first.model() == Chip::Model::AY8930)
+                    // setup first chip (YM2149 used by default)
+                    if (stream.dchip.first.model() != Chip::Model::Compatible)
+                        stream.schip.first.model(stream.dchip.first.model());
+                    else
+                        stream.schip.first.model(Chip::Model::YM2149);
+
+                    // setup output Strereo or Mono (Mono used by default)
+                    if (stream.dchip.outputKnown())
+                        stream.schip.output(stream.dchip.output());
+                    else
+                        stream.schip.output(Chip::Output::Mono);
+
+                    // configure simulator output type and update chip if required
+                    auto outputType = SimRP2A03::OutputType::SingleChip;
+                    if (stream.dchip.first.model() == Chip::Model::AY8930)
                     {
                         outputType = SimRP2A03::OutputType::AY8930Chip;
-                        stream.chip.second.model(Chip::Model::Unknown);
+                        stream.schip.first.model(Chip::Model::AY8930);
                     }
-                    else if (stream.chip.count() == 2)
+                    else if (stream.dchip.count() == 2)
                     {
                         outputType = SimRP2A03::OutputType::DoubleChip;
-                        stream.chip.second.model(stream.chip.first.model());
+                        stream.schip.second.model(stream.schip.first.model());
                     }
-
-                    if (!stream.chip.outputKnown()) stream.chip.output(Chip::Output::Mono);
                     static_cast<SimRP2A03*>(m_simulator.get())->ConfigureOutput(outputType);
                 }
 
                 stream.info.type("VGM stream");
                 stream.play.frameRate(frameRate);
 
-                m_simulator->ConfigureClock(clockRate, stream.chip.clockValue());
+                m_simulator->ConfigureClock(clockRate, stream.schip.clockValue());
                 m_samplesPerFrame = (44100 / frameRate);
                 m_processedSamples = 0;
 

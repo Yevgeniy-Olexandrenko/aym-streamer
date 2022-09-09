@@ -72,8 +72,7 @@ bool EncodeAYM::Open(const Stream& stream)
         m_output.open(stream.file, std::fstream::binary);
         if (m_output)
         {
-            m_isTS = (stream.chip.count() == 2);
-
+            m_isTS = stream.IsSecondChipUsed();
             m_output << "AYYM";
 
             // TODO

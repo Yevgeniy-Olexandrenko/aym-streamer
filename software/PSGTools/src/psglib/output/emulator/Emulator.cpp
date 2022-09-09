@@ -27,67 +27,67 @@ bool Emulator::OpenDevice()
     return false;
 }
 
-bool Emulator::InitDstChip(const Chip& srcChip, Chip& dstChip)
+bool Emulator::ConfigureChip(const Chip& schip, Chip& dchip)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    // configure first destination chip
-#if AY8930_FORCE_TO_CHOOSE
-    dstChip.first.model(Chip::Model::AY8930);
-#else
-    switch (srcChip.first.model())
+    // configure model of the 1st destination chip
+    if (dchip.first.model() == Chip::Model::Compatible)
     {
-#if !AY8930_FORCE_TO_DISCARD
-    case Chip::Model::AY8930:
-#endif
-    case Chip::Model::YM2149:
-        dstChip.first.model(srcChip.first.model());
-        break;
-    default:
-        dstChip.first.model(Chip::Model::AY8910);
-        break;
-    }
-#endif
-
-    // configure second destination chip
-    if (srcChip.second.modelKnown())
-    {
-#if AY8930_FORCE_TO_CHOOSE
-        dstChip.second.model(Chip::Model::AY8930);
-#else
-        switch (srcChip.second.model())
+        switch (schip.first.model())
         {
-#if !AY8930_FORCE_TO_DISCARD
         case Chip::Model::AY8930:
-#endif
         case Chip::Model::YM2149:
-            dstChip.second.model(srcChip.second.model());
+            dchip.first.model(schip.first.model());
             break;
         default:
-            dstChip.second.model(Chip::Model::AY8910);
+            dchip.first.model(Chip::Model::AY8910);
             break;
         }
-#endif
     }
 
-    dstChip.clock(srcChip.clockKnown() ? srcChip.clock() : Chip::Clock::F1750000);
-    dstChip.output(srcChip.outputKnown() ? srcChip.output() : Chip::Output::Stereo);
-    dstChip.stereo(srcChip.stereoKnown() ? srcChip.stereo() : Chip::Stereo::ABC);
-
-    for (int chip = 0; chip < dstChip.count(); ++chip)
+    // configure model of the 2nd destination chip
+    if (schip.second.modelKnown())
     {
-        // create chip emulator
-        switch (dstChip.model(chip))
+        if (!dchip.second.modelKnown() || dchip.second.model() == Chip::Model::Compatible)
         {
-        case Chip::Model::AY8910: m_ay[chip].reset(new ChipAY8910(dstChip.clockValue(), k_emulatorSampleRate)); break;
-        case Chip::Model::YM2149: m_ay[chip].reset(new ChipYM2149(dstChip.clockValue(), k_emulatorSampleRate)); break;
-        case Chip::Model::AY8930: m_ay[chip].reset(new ChipAY8930(dstChip.clockValue(), k_emulatorSampleRate)); break;
+            switch (schip.second.model())
+            {
+            case Chip::Model::AY8930:
+            case Chip::Model::YM2149:
+                dchip.second.model(schip.second.model());
+                break;
+            default:
+                dchip.second.model(Chip::Model::AY8910);
+                break;
+            }
+        }
+    }
+    else
+    {
+        dchip.second.model(Chip::Model::Unknown);
+    }
+
+    // configure clock rate, output type and stereo type of destination chip
+    if (!dchip.clockKnown ()) dchip.clock (schip.clockKnown () ? schip.clock () : Chip::Clock::F1750000);
+    if (!dchip.outputKnown()) dchip.output(schip.outputKnown() ? schip.output() : Chip::Output::Stereo);
+    if (!dchip.stereoKnown()) dchip.stereo(schip.stereoKnown() ? schip.stereo() : Chip::Stereo::ABC);
+
+    // create sound chip emulator instances
+    for (int chip = 0; chip < dchip.count(); ++chip)
+    {
+        // create sound chip emulator by model
+        switch (dchip.model(chip))
+        {
+        case Chip::Model::AY8910: m_ay[chip].reset(new ChipAY8910(dchip.clockValue(), k_emulatorSampleRate)); break;
+        case Chip::Model::YM2149: m_ay[chip].reset(new ChipYM2149(dchip.clockValue(), k_emulatorSampleRate)); break;
+        case Chip::Model::AY8930: m_ay[chip].reset(new ChipAY8930(dchip.clockValue(), k_emulatorSampleRate)); break;
         }
         if (!m_ay[chip]) return false;
         
-        // initialize chip emulator
+        // initialize sound chip emulator
         m_ay[chip]->Reset();
-        if (dstChip.output() == Chip::Output::Mono)
+        if (dchip.output() == Chip::Output::Mono)
         {
             m_ay[chip]->SetPan(0, 0.5, false);
             m_ay[chip]->SetPan(1, 0.5, false);

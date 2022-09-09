@@ -147,16 +147,16 @@ bool DecodePT3::Open(Stream& stream)
 
             if (m_chip[0].header->tonTableId == 1)
             {
-                stream.chip.clock(Chip::Clock::F1773400);
+                stream.schip.clock(Chip::Clock::F1773400);
             }
             else if (m_chip[0].header->tonTableId == 2 && m_ver > 3)
             {
-                stream.chip.clock(Chip::Clock::F1750000);
+                stream.schip.clock(Chip::Clock::F1750000);
             }
 
-            if (m_isTS && !stream.chip.second.modelKnown())
+            if (m_isTS)
             {
-                stream.chip.second.model(stream.chip.first.model());
+                stream.schip.second.model(stream.schip.first.model());
             }
         }
         fileStream.close();

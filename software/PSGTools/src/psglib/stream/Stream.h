@@ -22,9 +22,6 @@ class Stream
 	using Frames = std::vector<Frame>;
 
 public:
-
-////////////////////////////////////////////////////////////////////////////////
-
 	struct Info : public Delegate
 	{
 		Info(Stream& stream);
@@ -39,8 +36,6 @@ public:
 		RO_PROP_DEC( bool, commentKnown );
 	};
 
-////////////////////////////////////////////////////////////////////////////////
-
 	struct Loop : public Delegate
 	{
 		Loop(Stream& stream);
@@ -54,8 +49,6 @@ public:
 		void ComputeExtraLoops();
 		void UpdateLoopFrameChanges();
 	};
-
-////////////////////////////////////////////////////////////////////////////////
 
 	struct Play : public Delegate
 	{
@@ -77,8 +70,6 @@ public:
 		void ComputeDuration(size_t frameCount, int& hh, int& mm, int& ss, int& ms) const;
 		void ComputeDuration(size_t frameCount, int& hh, int& mm, int& ss) const;
 	};
-
-////////////////////////////////////////////////////////////////////////////////
 
 public:
 	enum class Property
@@ -103,9 +94,11 @@ public:
 public:
 	File file;
 	Info info;
-	Chip chip;
 	Loop loop;
 	Play play;
+
+	Chip schip; // source chip configuration defined by stream
+	Chip dchip; // destination chip configuration defined by user
 
 private:
 	Frames m_frames;

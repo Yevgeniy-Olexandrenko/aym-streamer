@@ -13,7 +13,7 @@ protected:
 	const std::string GetDeviceName() const override;
 
 	bool OpenDevice() override;
-	bool InitDstChip(const Chip& srcChip, Chip& dstChip) override;
+	bool ConfigureChip(const Chip& schip, Chip& dchip) override;
 	bool WriteToChip(int chip, const Data& data) override;
 	void CloseDevice() override;
 

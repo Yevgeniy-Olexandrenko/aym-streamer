@@ -30,25 +30,25 @@ bool DecodeVTX::Open(Stream& stream)
 			
 			if (chipType != Chip::Model::Unknown)
 			{
-				stream.chip.first.model(chipType);
-				stream.chip.clockValue(hdr.chipFreq);
+				stream.schip.first.model(chipType);
+				stream.schip.clockValue(hdr.chipFreq);
 				stream.play.frameRate(hdr.frameFreq);
 
 				if (hdr.stereo == Stereo::MONO)
 				{
-					stream.chip.output(Chip::Output::Mono);
+					stream.schip.output(Chip::Output::Mono);
 				}
 				else
 				{
-					stream.chip.output(Chip::Output::Stereo);
+					stream.schip.output(Chip::Output::Stereo);
 					switch (hdr.stereo)
 					{
-					case Stereo::ABC: stream.chip.stereo(Chip::Stereo::ABC); break;
-					case Stereo::ACB: stream.chip.stereo(Chip::Stereo::ACB); break;
-					case Stereo::BAC: stream.chip.stereo(Chip::Stereo::BAC); break;
-					case Stereo::BCA: stream.chip.stereo(Chip::Stereo::BCA); break;
-					case Stereo::CAB: stream.chip.stereo(Chip::Stereo::CAB); break;
-					case Stereo::CBA: stream.chip.stereo(Chip::Stereo::CBA); break;
+					case Stereo::ABC: stream.schip.stereo(Chip::Stereo::ABC); break;
+					case Stereo::ACB: stream.schip.stereo(Chip::Stereo::ACB); break;
+					case Stereo::BAC: stream.schip.stereo(Chip::Stereo::BAC); break;
+					case Stereo::BCA: stream.schip.stereo(Chip::Stereo::BCA); break;
+					case Stereo::CAB: stream.schip.stereo(Chip::Stereo::CAB); break;
+					case Stereo::CBA: stream.schip.stereo(Chip::Stereo::CBA); break;
 					}
 				}
 
@@ -60,8 +60,8 @@ bool DecodeVTX::Open(Stream& stream)
 				};
 
 				// read all properties to move forward on stream
-				std::string title = GetTextProperty(fileStream);
-				std::string author = GetTextProperty(fileStream);
+				std::string title   = GetTextProperty(fileStream);
+				std::string author  = GetTextProperty(fileStream);
 				std::string program = GetTextProperty(fileStream); // store in extras
 				std::string tracker = GetTextProperty(fileStream); // store in extras
 				std::string comment = GetTextProperty(fileStream);
@@ -100,10 +100,10 @@ bool DecodeVTX::Open(Stream& stream)
 
 bool DecodeVTX::Decode(Frame& frame)
 {
-	uint8_t* dataPtr = m_data + m_frame;
+	uint8_t* dataPtr = (m_data + m_frame);
 	m_frame++;
 
-	for (uint8_t reg = 0; reg < 14; reg++)
+	for (Register reg = BankA_Fst; reg <= BankA_Lst; reg++)
 	{
 		frame[0].Update(reg, *dataPtr);
 		dataPtr += m_frames;

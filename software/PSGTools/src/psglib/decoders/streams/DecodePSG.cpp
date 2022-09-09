@@ -72,11 +72,11 @@ void DecodePSG::Close(Stream& stream)
     m_input.close();
 
     if (stream.IsExpandedModeUsed(0))
-        stream.chip.first.model(Chip::Model::AY8930);
+        stream.schip.first.model(Chip::Model::AY8930);
 
     if (stream.IsExpandedModeUsed(1))
-        stream.chip.second.model(Chip::Model::AY8930);
+        stream.schip.second.model(Chip::Model::AY8930);
 
-    if (stream.IsSecondChipUsed())
-        stream.chip.second.model(stream.chip.first.model());
+    if (stream.IsSecondChipUsed() && !stream.schip.second.modelKnown())
+        stream.schip.second.model(stream.schip.first.model());
 }

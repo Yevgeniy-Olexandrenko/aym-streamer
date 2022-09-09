@@ -29,22 +29,25 @@ bool Streamer::OpenDevice()
 	return false;
 }
 
-bool Streamer::InitDstChip(const Chip& srcChip, Chip& dstChip)
+bool Streamer::ConfigureChip(const Chip& schip, Chip& dchip)
 {
-#if AY8930_FORCE_TO_CHOOSE
-	dstChip.first.model(Chip::Model::AY8930);
-#else
-	dstChip.first.model(Chip::Model::Compatible);
-#endif
-	dstChip.clock(Chip::Clock::F1773400);
-	dstChip.output(Chip::Output::Stereo);
-	dstChip.stereo(srcChip.stereoKnown() ? srcChip.stereo() : Chip::Stereo::ABC);
+	dchip.first.model(Chip::Model::Compatible);
+	dchip.second.model(Chip::Model::Unknown);
+
+	dchip.clock(Chip::Clock::F1773400);
+	dchip.output(Chip::Output::Stereo);
+
+	if (!dchip.stereoKnown())
+	{
+		dchip.stereo(schip.stereoKnown() ? schip.stereo() : Chip::Stereo::ABC);
+	}
+
 	return true;
 }
 
 bool Streamer::WriteToChip(int chip, const Data& data)
 {
-	// prepare
+	// prepare packet
 	std::vector<uint8_t> binary(64);
 	for (const auto& pair : data)
 	{
@@ -55,7 +58,7 @@ bool Streamer::WriteToChip(int chip, const Data& data)
 	}
 	binary.push_back(0xFF);
 
-	// send
+	// send packet
 	auto dataSize = (int)binary.size();
 	auto dataBuff = (const char*)binary.data();
 	auto sentSize = m_port.SendBinary(dataBuff, dataSize);

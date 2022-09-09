@@ -207,7 +207,7 @@ std::string Stream::ToString(Property property) const
 		break;;
 
 	case Property::Chip:
-		return chip.toString();
+		return schip.toString();
 
 	case Property::Frames:
 		stream << framesCount();

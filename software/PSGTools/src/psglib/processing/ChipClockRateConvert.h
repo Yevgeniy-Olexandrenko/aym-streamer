@@ -8,16 +8,18 @@ class ChipClockRateConvert : public Processing
     int m_dstClockRate;
 
 public:
-    ChipClockRateConvert(const Chip& srcChip, const Chip& dstChip)
-        : m_srcClockRate(srcChip.clockValue())
-        , m_dstClockRate(dstChip.clockValue())
+    ChipClockRateConvert(const Chip& schip, const Chip& dchip)
+        : m_srcClockRate(schip.clockValue())
+        , m_dstClockRate(dchip.clockValue())
     {}
 
 #ifdef Enable_ChipClockRateConvert
 	const Frame& operator()(const Frame& frame) override
     {
-        // TODO
-
+        if (m_dstClockRate != m_srcClockRate)
+        {
+            // TODO
+        }
         return frame;
     }
 #endif

@@ -53,12 +53,13 @@ bool Emulator::ConfigureChip(const Chip& schip, Chip& dchip)
         {
             switch (schip.second.model())
             {
+            case Chip::Model::AY8910:
             case Chip::Model::AY8930:
             case Chip::Model::YM2149:
                 dchip.second.model(schip.second.model());
                 break;
             default:
-                dchip.second.model(Chip::Model::AY8910);
+                dchip.second.model(dchip.first.model());
                 break;
             }
         }

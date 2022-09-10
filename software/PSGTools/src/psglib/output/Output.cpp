@@ -2,10 +2,10 @@
 
 #include <cassert>
 #include "stream/Stream.h"
-#include "processing/AY8930EnvelopeFix.h"
-#include "processing/ChannelsLayoutChange.h"
-#include "processing/ChannelsOutputDisable.h"
+#include "processing/ChannelsOutputEnable.h"
 #include "processing/ChipClockRateConvert.h"
+#include "processing/ChannelsLayoutChange.h"
+#include "processing/AY8930EnvelopeFix.h"
 
 Output::Output()
     : m_isOpened(false)
@@ -50,10 +50,10 @@ bool Output::Init(const Stream& stream)
 
             // init post-processing
             m_procChain.clear();
-            m_procChain.emplace(new AY8930EnvelopeFix(m_dchip));
-            m_procChain.emplace(new ChannelsLayoutChange(m_dchip));
-            m_procChain.emplace(new ChannelsOutputDisable(m_dchip));
-            m_procChain.emplace(new ChipClockRateConvert(m_schip, m_dchip));
+            m_procChain.emplace_back(new ChannelsOutputEnable(m_dchip));
+            m_procChain.emplace_back(new ChipClockRateConvert(m_schip, m_dchip));
+            m_procChain.emplace_back(new ChannelsLayoutChange(m_dchip));
+            m_procChain.emplace_back(new AY8930EnvelopeFix(m_dchip));
             Reset();
         }
     }
@@ -107,6 +107,12 @@ void Output::Close()
 {
     CloseDevice();
     m_isOpened = false;
+}
+
+void Output::SetEnables(const Enables& enables)
+{
+    auto& processing = static_cast<ChannelsOutputEnable&>(*m_procChain.front());
+    processing.SetEnables(enables);
 }
 
 const Frame& Output::GetFrame() const

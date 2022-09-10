@@ -3,10 +3,10 @@
 #include "stream/Chip.h"
 #include "stream/Frame.h"
 
-#define Enable_AY8930EnvelopeFix
-#define Enable_ChannelsLayoutChange
-#define Enable_ChannelsOutputDisable
+#define Enable_ChannelsOutputEnable
 #define Enable_ChipClockRateConvert
+#define Enable_ChannelsLayoutChange
+#define Enable_AY8930EnvelopeFix
 
 class Processing
 {

@@ -2,9 +2,8 @@
 
 #include "terminal.hpp"
 #include "KeyboardInput.h"
-
-class Stream;
-class Output;
+#include "stream/Stream.h"
+#include "output/Output.h"
 
 namespace gui
 {
@@ -20,6 +19,6 @@ namespace gui
 
 	size_t PrintInputFile(const Stream& stream, int index, int amount, bool isFavorite);
 	size_t PrintStreamInfo(const Stream& stream, const Output& output);
-	size_t PrintStreamFrames(const Stream& stream, int frameId);
+	size_t PrintStreamFrames(const Stream& stream, int frameId, const Output::Enables& enables);
 	size_t PrintPlaybackProgress(const Stream& stream, int frameId);
 }

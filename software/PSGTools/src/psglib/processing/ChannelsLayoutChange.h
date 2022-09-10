@@ -20,7 +20,7 @@ public:
 
         if (m_chip.output() == Chip::Output::Stereo && m_chip.stereo() != Chip::Stereo::ABC)
         {
-            auto SwapChannels = [&](int chip, int L, int R)
+            const auto SwapChannels = [&](int chip, int L, int R)
             {
                 Frame::Channel chL = m_frame[chip].ReadChannel(L);
                 Frame::Channel chR = m_frame[chip].ReadChannel(R);
@@ -29,7 +29,7 @@ public:
                 m_frame[chip].UpdateChannel(R, chL);
             };
 
-            Update(frame); // TODO: there may be redundant changes
+            Update(frame);
             for (int chip = 0; chip < m_chip.count(); ++chip)
             {
                 switch (m_chip.stereo())

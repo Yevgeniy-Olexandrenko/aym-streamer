@@ -1,6 +1,6 @@
 #pragma once
 
-#include <unordered_set>
+#include <vector>
 #include "processing/Processing.h"
 
 class Stream;
@@ -8,7 +8,7 @@ class Frame;
 
 class Output : private Processing
 {
-	using ProcChain = std::unordered_set<std::unique_ptr<Processing>>;
+	using ProcChain = std::vector<std::unique_ptr<Processing>>;
 
 public:
 	Output();
@@ -18,6 +18,9 @@ public:
 	bool Init(const Stream& stream);
 	bool Write(const Frame& frame);
 	void Close();
+
+	using Enables = std::array<bool, 5>;
+	void SetEnables(const Enables& enables);
 
 	const Frame& GetFrame() const;
 	std::string toString() const;

@@ -106,6 +106,12 @@ public:
 		void SetExpMode(bool yes);
 
 	public:
+		const uint8_t tmask() const; // for channel A
+		const uint8_t nmask() const; // for channel A
+		const uint8_t emask() const; // depends on exp mode
+		const uint8_t vmask() const; // depends on exp mode
+
+	public:
 		uint8_t  Read(Register reg) const;
 		bool     IsChanged(Register reg) const;
 

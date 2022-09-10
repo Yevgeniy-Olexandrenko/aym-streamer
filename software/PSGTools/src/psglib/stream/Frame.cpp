@@ -192,6 +192,26 @@ void Frame::Registers::SetExpMode(bool yes)
 	Update(Mode_Bank, data);
 }
 
+const uint8_t Frame::Registers::tmask() const
+{
+	return 0x01;
+}
+
+const uint8_t Frame::Registers::nmask() const
+{
+	return 0x08;
+}
+
+const uint8_t Frame::Registers::emask() const
+{
+	return (IsExpMode() ? 0x20 : 0x10);
+}
+
+const uint8_t Frame::Registers::vmask() const
+{
+	return (IsExpMode() ? 0x1F : 0x0F);
+}
+
 uint8_t Frame::Registers::Read(Register reg) const
 {
 	Info info;

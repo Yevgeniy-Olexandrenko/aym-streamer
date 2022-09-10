@@ -131,7 +131,7 @@
     <ClInclude Include="..\src\psglib\output\streamer\Streamer.h" />
     <ClInclude Include="..\src\psglib\processing\AY8930EnvelopeFix.h" />
     <ClInclude Include="..\src\psglib\processing\ChannelsLayoutChange.h" />
-    <ClInclude Include="..\src\psglib\processing\ChannelsOutputDisable.h" />
+    <ClInclude Include="..\src\psglib\processing\ChannelsOutputEnable.h" />
     <ClInclude Include="..\src\psglib\processing\ChipClockRateConvert.h" />
     <ClInclude Include="..\src\psglib\processing\Processing.h" />
     <ClInclude Include="..\src\psglib\Property.h" />

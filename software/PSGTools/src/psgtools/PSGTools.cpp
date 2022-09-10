@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <sstream>
 #include <fstream>
+#include <array>
 
 #undef max
 
@@ -18,6 +19,8 @@ std::shared_ptr<Filelist> m_favorites;
 
 std::shared_ptr<Output>   m_output;
 std::shared_ptr<Player>   m_player;
+
+Output::Enables m_enables;
 
 static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 {
@@ -142,6 +145,7 @@ void PlayInputFiles()
 
     bool goToPrev = false;
     std::filesystem::path path;
+    for (auto& enable : m_enables) enable = true;
 
     while (goToPrev ? m_filelist->GetPrevFile(path) : m_filelist->GetNextFile(path))
     {
@@ -193,7 +197,7 @@ void PlayInputFiles()
                             printStatic = false;
                         }
 
-                        dynamicHeight += gui::PrintStreamFrames(stream, frameId);
+                        dynamicHeight += gui::PrintStreamFrames(stream, frameId, m_enables);
                         dynamicHeight += gui::PrintPlaybackProgress(stream, frameId);
                     }
 
@@ -235,6 +239,15 @@ void PlayInputFiles()
                             printStatic = true;   
                         }
                     }
+
+                    for (int key = '1'; key <= '5'; ++key)
+                    {
+                        if (gui::GetKeyState(key).pressed)
+                        {
+                            m_enables[key - '1'] ^= true;
+                        }
+                    }
+                    m_output->SetEnables(m_enables);
 
                     Sleep(1);
                 }

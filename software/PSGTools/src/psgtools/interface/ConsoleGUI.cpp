@@ -1,8 +1,6 @@
 #include <iomanip>
 #include <sstream>
-
-#include "stream/Stream.h"
-#include "output/Output.h"
+#include <array>
 
 #include "ConsoleGUI.h"
 #include "PrintBuffer.h"
@@ -221,7 +219,7 @@ namespace gui
         }
     }
 
-    void printRegistersValuesForCompatibleMode(int chip, const Frame& frame, bool highlight)
+    void printRegistersValuesForCompatibleMode(int chip, const Frame& frame, bool highlight, const Output::Enables& enables)
     {
         uint8_t mixer = frame[chip].Read(Mixer);
         uint8_t vol_a = frame[chip].Read(A_Volume);
@@ -237,15 +235,16 @@ namespace gui
         bool enableAE = (vol_a & 0x10);
         bool enableBE = (vol_b & 0x10);
         bool enableCE = (vol_c & 0x10);
-        bool enableE  = (enableAE || enableBE || enableCE);
+        bool enableM  = (enables[0] || enables[1] || enables[2] || enables[3]);
         bool enableN  = (enableAN || enableBN || enableCN);
+        bool enableE  = (enableAE || enableBE || enableCE);
 
-        RegColorType colorMM = (highlight ? Highlight : (enableN  ? WithNoise    : Changed));
-        RegColorType colorAT = (highlight ? Highlight : (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)));
-        RegColorType colorBT = (highlight ? Highlight : (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)));
-        RegColorType colorCT = (highlight ? Highlight : (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)));
-        RegColorType colorEE = (highlight ? Highlight : (enableE  ? WithEnvelope : Changed));
-        RegColorType colorNN = (highlight ? Highlight : (enableN  ? WithNoise    : Changed));
+        auto colorMM = (highlight ? Highlight : (enableM    ? (enableN  ? WithNoise    : Changed)  : Unchanged));
+        auto colorAT = (highlight ? Highlight : (enables[0] ? (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)) : Unchanged));
+        auto colorBT = (highlight ? Highlight : (enables[1] ? (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)) : Unchanged));
+        auto colorCT = (highlight ? Highlight : (enables[2] ? (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)) : Unchanged));
+        auto colorNN = (highlight ? Highlight : (enables[3] ? (enableN  ? WithNoise    : Changed)  : Unchanged));
+        auto colorEE = (highlight ? Highlight : (enables[4] ? (enableE  ? WithEnvelope : Changed)  : Unchanged));
 
         uint16_t color = (highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
         m_framesBuffer.color(color).draw('|');
@@ -280,7 +279,7 @@ namespace gui
         m_framesBuffer.color(color).draw('|');
     }
 
-    void printRegistersValuesForExpandedMode(int chip, const Frame& frame, bool highlight)
+    void printRegistersValuesForExpandedMode(int chip, const Frame& frame, bool highlight, const Output::Enables& enables)
     {
         uint8_t mixer = frame[chip].Read(Mixer);
         uint8_t vol_a = frame[chip].Read(A_Volume);
@@ -296,17 +295,18 @@ namespace gui
         bool enableAE = (vol_a & 0x20);
         bool enableBE = (vol_b & 0x20);
         bool enableCE = (vol_c & 0x20);
+        bool enableM  = (enables[0] || enables[1] || enables[2] || enables[3]);
         bool enableN  = (enableAN || enableBN || enableCN);
 
-        RegColorType colorMM = (highlight ? Highlight : (enableN  ? WithNoise    : Changed));
-        RegColorType colorAT = (highlight ? Highlight : (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)));
-        RegColorType colorBT = (highlight ? Highlight : (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)));
-        RegColorType colorCT = (highlight ? Highlight : (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)));
-        RegColorType colorAE = (highlight ? Highlight : (enableAE ? WithEnvelope : Changed));
-        RegColorType colorBE = (highlight ? Highlight : (enableBE ? WithEnvelope : Changed));
-        RegColorType colorCE = (highlight ? Highlight : (enableCE ? WithEnvelope : Changed));
-        RegColorType colorNN = (highlight ? Highlight : (enableN  ? WithNoise    : Changed));
-
+        auto colorMM = (highlight ? Highlight : (enableM    ? (enableN  ? WithNoise    : Changed)  : Unchanged));
+        auto colorAT = (highlight ? Highlight : (enables[0] ? (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)) : Unchanged));
+        auto colorBT = (highlight ? Highlight : (enables[0] ? (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)) : Unchanged));
+        auto colorCT = (highlight ? Highlight : (enables[0] ? (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)) : Unchanged));
+        auto colorNN = (highlight ? Highlight : (enables[0] ? (enableN  ? WithNoise    : Changed)  : Unchanged));
+        auto colorAE = (highlight ? Highlight : (enables[0] ? (enableAE ? WithEnvelope : Changed)  : Unchanged));
+        auto colorBE = (highlight ? Highlight : (enables[0] ? (enableBE ? WithEnvelope : Changed)  : Unchanged));
+        auto colorCE = (highlight ? Highlight : (enables[0] ? (enableCE ? WithEnvelope : Changed)  : Unchanged));
+        
         uint16_t color = (highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
         m_framesBuffer.color(color).draw('|');
         printRegisterValue(chip, frame, Mixer, colorMM);
@@ -354,12 +354,12 @@ namespace gui
         m_framesBuffer.color(color).draw('|');
     }
 
-    void printRegistersValues(bool isExpMode, int chip, const Frame& frame, bool highlight)
+    void printRegistersValues(int chip, const Frame& frame, bool highlight, const Output::Enables& enables)
     {
         if (frame[chip].IsExpMode())
-            printRegistersValuesForExpandedMode(chip, frame, highlight);
+            printRegistersValuesForExpandedMode(chip, frame, highlight, enables);
         else
-            printRegistersValuesForCompatibleMode(chip, frame, highlight);
+            printRegistersValuesForCompatibleMode(chip, frame, highlight, enables);
     }
 
     void printRegistersHeaderForMode(const std::string& str)
@@ -389,7 +389,7 @@ namespace gui
             printRegistersHeaderForMode(k_headerForComMode);
     }
 
-	size_t PrintStreamFrames(const Stream& stream, int frameId)
+	size_t PrintStreamFrames(const Stream& stream, int frameId, const Output::Enables& enables)
 	{
         size_t height = m_framesBuffer.h;
         size_t range1 = (height - 2) / 2;
@@ -441,11 +441,11 @@ namespace gui
             m_framesBuffer.draw(' ');
 
             // print frame registers
-            printRegistersValues(isExpMode, 0, frame, highlight);
+            printRegistersValues(0, frame, highlight, enables);
             if (isTwoChips)
             {
                 m_framesBuffer.draw(' ');
-                printRegistersValues(isExpMode, 1, frame, highlight);
+                printRegistersValues(1, frame, highlight, enables);
             }
         }
         m_framesBuffer.render();

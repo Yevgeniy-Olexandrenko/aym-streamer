@@ -449,7 +449,7 @@
     <ClInclude Include="..\src\psglib\processing\ChannelsLayoutChange.h">
       <Filter>Sources\psglib\processing</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\psglib\processing\ChannelsOutputDisable.h">
+    <ClInclude Include="..\src\psglib\processing\ChannelsOutputEnable.h">
       <Filter>Sources\psglib\processing</Filter>
     </ClInclude>
     <ClInclude Include="..\src\psglib\processing\ChipClockRateConvert.h">

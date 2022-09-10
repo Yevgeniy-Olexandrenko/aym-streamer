@@ -150,9 +150,9 @@ void PlayInputFiles()
     while (goToPrev ? m_filelist->GetPrevFile(path) : m_filelist->GetNextFile(path))
     {
         Stream stream;
-#if 1
-        //stream.dchip.first.model(Chip::Model::AY8930);
-        //stream.dchip.second.model(Chip::Model::YM2149);
+#if 0
+        stream.dchip.first.model(Chip::Model::AY8930);
+        stream.dchip.second.model(Chip::Model::YM2149);
         //stream.dchip.output(Chip::Output::Stereo);
         //stream.dchip.stereo(Chip::Stereo::CAB);
         //stream.dchip.clockValue(1000000);
@@ -175,7 +175,9 @@ void PlayInputFiles()
                 m_player->Play();
                 while (m_player->IsPlaying())
                 {
+                    m_output->SetEnables(m_enables);
                     gui::Update();
+
                     if (m_player->GetFrameId() != frameId)
                     {
                         frameId = m_player->GetFrameId();
@@ -247,7 +249,6 @@ void PlayInputFiles()
                             m_enables[key - '1'] ^= true;
                         }
                     }
-                    m_output->SetEnables(m_enables);
 
                     Sleep(1);
                 }

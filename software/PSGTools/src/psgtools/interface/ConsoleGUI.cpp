@@ -194,8 +194,37 @@ namespace gui
     const std::string k_headerForExpMode = "|07|0100 0816 0C0B 0D|0302 0917 1110 14|0504 0A18 1312 15|191A06|";
     const std::string k_headerForComMode = "|R7|R1R0 R8|R3R2 R9|R5R4 RA|RCRB RD|R6|";
 
-    enum RegColorType { Highlight, Changed, WithNoise, WithEnvelope, Unchanged };
-    SHORT RegColors[] { BG_DARK_MAGENTA | FG_WHITE, FG_GREEN, FG_CYAN, FG_YELLOW, FG_DARK_GREY };
+    class Coloring
+    {
+        SHORT m_color0;
+        SHORT m_color1;
+        bool m_playing;
+
+    public:
+        Coloring(bool playing, bool enabled, bool withEnvelope, bool withNoise, bool withAccent)
+            : m_color0(FG_DARK_GREY)
+            , m_color1(FG_DARK_GREY)
+            , m_playing(playing)
+        {
+            if (playing)
+            {
+                if (enabled) m_color1 = FG_WHITE;
+                m_color1 |= BG_DARK_MAGENTA;
+            }
+            else if (enabled)
+            {
+                m_color1 = (withEnvelope ? FG_YELLOW : (withNoise ? FG_CYAN : FG_GREEN));
+                if (withAccent)
+                {
+                    m_color0 |= BG_DARK_BLUE;
+                    m_color1 |= BG_DARK_BLUE;
+                }
+            }
+        }
+
+        bool IsPlaying() const { return m_playing; }
+        SHORT GetColor(bool isChanged) const { return (isChanged ? m_color1 : m_color0); }
+    };
 
     void printNibble(uint8_t nibble)
     {
@@ -203,163 +232,250 @@ namespace gui
         m_framesBuffer.draw(char((nibble >= 0x0A ? 'A' - 0x0A : '0') + nibble));
     };
 
-    void printRegisterValue(int chip, const Frame& frame, int reg, RegColorType regColorType)
+    void printRegisterValue(int chip, const Frame& frame, Register reg, const Coloring& coloring)
     {
-        if (frame[chip].IsChanged(reg) || regColorType == Highlight)
+        if (frame[chip].IsChanged(reg) || coloring.IsPlaying())
         {
-            m_framesBuffer.color(RegColors[regColorType]);
+            m_framesBuffer.color(coloring.GetColor(true));
             uint8_t data = frame[chip].GetData(reg);
             printNibble(data >> 4);
             printNibble(data);
         }
         else
         {
-            m_framesBuffer.color(RegColors[Unchanged]);
+            m_framesBuffer.color(coloring.GetColor(false));
             m_framesBuffer.draw("..");
         }
     }
 
-    void printRegistersValuesForCompatibleMode(int chip, const Frame& frame, bool highlight, const Output::Enables& enables)
+    void printRegistersValuesForCompatibleMode(int chip, const Frame& frame, bool playing, const Output::Enables& enables)
     {
         uint8_t mixer = frame[chip].Read(Mixer);
         uint8_t vol_a = frame[chip].Read(A_Volume);
         uint8_t vol_b = frame[chip].Read(B_Volume);
         uint8_t vol_c = frame[chip].Read(C_Volume);
 
-        bool enableAT = !(mixer & 0b00000001);
-        bool enableBT = !(mixer & 0b00000010);
-        bool enableCT = !(mixer & 0b00000100);
-        bool enableAN = !(mixer & 0b00001000);
-        bool enableBN = !(mixer & 0b00010000);
-        bool enableCN = !(mixer & 0b00100000);
-        bool enableAE = (vol_a & 0x10);
-        bool enableBE = (vol_b & 0x10);
-        bool enableCE = (vol_c & 0x10);
-        bool enableM  = (enables[0] || enables[1] || enables[2] || enables[3]);
-        bool enableN  = (enableAN || enableBN || enableCN);
-        bool enableE  = (enableAE || enableBE || enableCE);
+        bool enableNA = !(mixer & 0b00001000);
+        bool enableNB = !(mixer & 0b00010000);
+        bool enableNC = !(mixer & 0b00100000);
+        bool enableEA = (vol_a & 0x10);
+        bool enableEB = (vol_b & 0x10);
+        bool enableEC = (vol_c & 0x10);
 
-        auto colorMM = (highlight ? Highlight : (enableM    ? (enableN  ? WithNoise    : Changed)  : Unchanged));
-        auto colorAT = (highlight ? Highlight : (enables[0] ? (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)) : Unchanged));
-        auto colorBT = (highlight ? Highlight : (enables[1] ? (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)) : Unchanged));
-        auto colorCT = (highlight ? Highlight : (enables[2] ? (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)) : Unchanged));
-        auto colorNN = (highlight ? Highlight : (enables[3] ? (enableN  ? WithNoise    : Changed)  : Unchanged));
-        auto colorEE = (highlight ? Highlight : (enables[4] ? (enableE  ? WithEnvelope : Changed)  : Unchanged));
+        Coloring coloringM
+        {
+            playing,
+            (enables[0] || enables[1] || enables[2] || enables[3]),
+            false,
+            enables[3] && (enableNA || enableNB || enableNC),
+            false
+        };
+        Coloring coloringA
+        {
+            playing,
+            enables[0],
+            enables[4] && enableEA,
+            enables[3] && enableNA,
+            frame[chip].IsChangedPeriod(A_Period) && frame[chip].IsChanged(A_Volume)
+        };
+        Coloring coloringB
+        { 
+            playing,
+            enables[1],
+            enables[4] && enableEB,
+            enables[3] && enableNB,
+            frame[chip].IsChangedPeriod(B_Period) && frame[chip].IsChanged(B_Volume)
+        };
+        Coloring coloringC
+        { 
+            playing,
+            enables[2],
+            enables[4] && enableEC,
+            enables[3] && enableNC,
+            frame[chip].IsChangedPeriod(C_Period) && frame[chip].IsChanged(C_Volume)
+        };
+        Coloring coloringN
+        { 
+            playing,
+            enables[3],
+            false, 
+            (enableNA || enableNB || enableNC),
+            false 
+        };
+        Coloring coloringE
+        { 
+            playing,
+            enables[4],
+            (enableEA || enableEB || enableEC),
+            false, 
+            frame[chip].IsChangedPeriod(E_Period) && frame[chip].IsChanged(E_Shape)
+        };
 
-        uint16_t color = (highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
+        uint16_t color = (playing ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, Mixer, colorMM);
+        printRegisterValue(chip, frame, Mixer, coloringM);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, A_Coarse, colorAT);
-        printRegisterValue(chip, frame, A_Fine,   colorAT);
+        printRegisterValue(chip, frame, A_Coarse, coloringA);
+        printRegisterValue(chip, frame, A_Fine,   coloringA);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, A_Volume, colorAT);
+        printRegisterValue(chip, frame, A_Volume, coloringA);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, B_Coarse, colorBT);
-        printRegisterValue(chip, frame, B_Fine,   colorBT);
+        printRegisterValue(chip, frame, B_Coarse, coloringB);
+        printRegisterValue(chip, frame, B_Fine,   coloringB);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, B_Volume, colorBT);
+        printRegisterValue(chip, frame, B_Volume, coloringB);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, C_Coarse, colorCT);
-        printRegisterValue(chip, frame, C_Fine,   colorCT);
+        printRegisterValue(chip, frame, C_Coarse, coloringC);
+        printRegisterValue(chip, frame, C_Fine,   coloringC);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, C_Volume, colorCT);
+        printRegisterValue(chip, frame, C_Volume, coloringC);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, E_Coarse, colorEE);
-        printRegisterValue(chip, frame, E_Fine,   colorEE);
+        printRegisterValue(chip, frame, E_Coarse, coloringE);
+        printRegisterValue(chip, frame, E_Fine,   coloringE);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, E_Shape,  colorEE);
+        printRegisterValue(chip, frame, E_Shape,  coloringE);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, N_Period, colorNN);
+        printRegisterValue(chip, frame, N_Period, coloringN);
         m_framesBuffer.color(color).draw('|');
     }
 
-    void printRegistersValuesForExpandedMode(int chip, const Frame& frame, bool highlight, const Output::Enables& enables)
+    void printRegistersValuesForExpandedMode(int chip, const Frame& frame, bool playing, const Output::Enables& enables)
     {
         uint8_t mixer = frame[chip].Read(Mixer);
         uint8_t vol_a = frame[chip].Read(A_Volume);
         uint8_t vol_b = frame[chip].Read(B_Volume);
         uint8_t vol_c = frame[chip].Read(C_Volume);
 
-        bool enableAT = !(mixer & 0b00000001);
-        bool enableBT = !(mixer & 0b00000010);
-        bool enableCT = !(mixer & 0b00000100);
-        bool enableAN = !(mixer & 0b00001000);
-        bool enableBN = !(mixer & 0b00010000);
-        bool enableCN = !(mixer & 0b00100000);
-        bool enableAE = (vol_a & 0x20);
-        bool enableBE = (vol_b & 0x20);
-        bool enableCE = (vol_c & 0x20);
-        bool enableM  = (enables[0] || enables[1] || enables[2] || enables[3]);
-        bool enableN  = (enableAN || enableBN || enableCN);
+        bool enableNA = !(mixer & 0b00001000);
+        bool enableNB = !(mixer & 0b00010000);
+        bool enableNC = !(mixer & 0b00100000);
+        bool enableEA = (vol_a & 0x20);
+        bool enableEB = (vol_b & 0x20);
+        bool enableEC = (vol_c & 0x20);
 
-        auto colorMM = (highlight ? Highlight : (enableM    ? (enableN  ? WithNoise    : Changed)  : Unchanged));
-        auto colorAT = (highlight ? Highlight : (enables[0] ? (enableAE ? WithEnvelope : (enableAN ? WithNoise : Changed)) : Unchanged));
-        auto colorBT = (highlight ? Highlight : (enables[0] ? (enableBE ? WithEnvelope : (enableBN ? WithNoise : Changed)) : Unchanged));
-        auto colorCT = (highlight ? Highlight : (enables[0] ? (enableCE ? WithEnvelope : (enableCN ? WithNoise : Changed)) : Unchanged));
-        auto colorNN = (highlight ? Highlight : (enables[0] ? (enableN  ? WithNoise    : Changed)  : Unchanged));
-        auto colorAE = (highlight ? Highlight : (enables[0] ? (enableAE ? WithEnvelope : Changed)  : Unchanged));
-        auto colorBE = (highlight ? Highlight : (enables[0] ? (enableBE ? WithEnvelope : Changed)  : Unchanged));
-        auto colorCE = (highlight ? Highlight : (enables[0] ? (enableCE ? WithEnvelope : Changed)  : Unchanged));
-        
-        uint16_t color = (highlight ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
+        Coloring coloringM
+        {
+            playing,
+            (enables[0] || enables[1] || enables[2] || enables[3]),
+            false,
+            enables[3] && (enableNA || enableNB || enableNC),
+            false
+        };
+        Coloring coloringA
+        {
+            playing,
+            enables[0],
+            enables[4] && enableEA,
+            enables[3] && enableNA,
+            frame[chip].IsChangedPeriod(A_Period) && frame[chip].IsChanged(A_Volume)
+        };
+        Coloring coloringB
+        {
+            playing,
+            enables[1],
+            enables[4] && enableEB,
+            enables[3] && enableNB,
+            frame[chip].IsChangedPeriod(B_Period) && frame[chip].IsChanged(B_Volume)
+        };
+        Coloring coloringC
+        {
+            playing,
+            enables[2],
+            enables[4] && enableEC,
+            enables[3] && enableNC,
+            frame[chip].IsChangedPeriod(C_Period) && frame[chip].IsChanged(C_Volume)
+        };
+        Coloring coloringN
+        {
+            playing,
+            enables[3],
+            false,
+            (enableNA || enableNB || enableNC),
+            false
+        };
+        Coloring coloringEA
+        {
+            playing,
+            enables[4],
+            enableEA,
+            false,
+            frame[chip].IsChangedPeriod(EA_Period) && frame[chip].IsChanged(EA_Shape)
+        };
+        Coloring coloringEB
+        {
+            playing,
+            enables[4],
+            enableEB,
+            false,
+            frame[chip].IsChangedPeriod(EB_Period) && frame[chip].IsChanged(EB_Shape)
+        };
+        Coloring coloringEC
+        {
+            playing,
+            enables[4],
+            enableEC,
+            false,
+            frame[chip].IsChangedPeriod(EC_Period) && frame[chip].IsChanged(EC_Shape)
+        };
+       
+        uint16_t color = (playing ? BG_DARK_MAGENTA | FG_CYAN : FG_CYAN);
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, Mixer, colorMM);
+        printRegisterValue(chip, frame, Mixer, coloringM);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, A_Coarse,  colorAT);
-        printRegisterValue(chip, frame, A_Fine,    colorAT);
+        printRegisterValue(chip, frame, A_Coarse,  coloringA);
+        printRegisterValue(chip, frame, A_Fine,    coloringA);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, A_Volume,  colorAT);
-        printRegisterValue(chip, frame, A_Duty,    colorAT);
+        printRegisterValue(chip, frame, A_Volume,  coloringA);
+        printRegisterValue(chip, frame, A_Duty,    coloringA);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EA_Coarse, colorAE);
-        printRegisterValue(chip, frame, EA_Fine,   colorAE);
+        printRegisterValue(chip, frame, EA_Coarse, coloringEA);
+        printRegisterValue(chip, frame, EA_Fine,   coloringEA);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EA_Shape,  colorAE);
+        printRegisterValue(chip, frame, EA_Shape,  coloringEA);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, B_Coarse,  colorBT);
-        printRegisterValue(chip, frame, B_Fine,    colorBT);
+        printRegisterValue(chip, frame, B_Coarse,  coloringB);
+        printRegisterValue(chip, frame, B_Fine,    coloringB);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, B_Volume,  colorBT);
-        printRegisterValue(chip, frame, B_Duty,    colorBT);
+        printRegisterValue(chip, frame, B_Volume,  coloringB);
+        printRegisterValue(chip, frame, B_Duty,    coloringB);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EB_Coarse, colorBE);
-        printRegisterValue(chip, frame, EB_Fine,   colorBE);
+        printRegisterValue(chip, frame, EB_Coarse, coloringEB);
+        printRegisterValue(chip, frame, EB_Fine,   coloringEB);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EB_Shape,  colorBE);
+        printRegisterValue(chip, frame, EB_Shape,  coloringEB);
 
         m_framesBuffer.color(color).draw('|');
-        printRegisterValue(chip, frame, C_Coarse,  colorCT);
-        printRegisterValue(chip, frame, C_Fine,    colorCT);
+        printRegisterValue(chip, frame, C_Coarse,  coloringC);
+        printRegisterValue(chip, frame, C_Fine,    coloringC);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, C_Volume,  colorCT);
-        printRegisterValue(chip, frame, C_Duty,    colorCT);
+        printRegisterValue(chip, frame, C_Volume,  coloringC);
+        printRegisterValue(chip, frame, C_Duty,    coloringC);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EC_Coarse, colorCE);
-        printRegisterValue(chip, frame, EC_Fine,   colorCE);
+        printRegisterValue(chip, frame, EC_Coarse, coloringEC);
+        printRegisterValue(chip, frame, EC_Fine,   coloringEC);
         m_framesBuffer.draw(' ');
-        printRegisterValue(chip, frame, EC_Shape,  colorCE);
+        printRegisterValue(chip, frame, EC_Shape,  coloringEC);
         m_framesBuffer.color(color).draw('|');
 
-        printRegisterValue(chip, frame, N_AndMask, colorNN);
-        printRegisterValue(chip, frame, N_OrMask,  colorNN);
-        printRegisterValue(chip, frame, N_Period,  colorNN);       
+        printRegisterValue(chip, frame, N_AndMask, coloringN);
+        printRegisterValue(chip, frame, N_OrMask,  coloringN);
+        printRegisterValue(chip, frame, N_Period,  coloringN);
         m_framesBuffer.color(color).draw('|');
     }
 
-    void printRegistersValues(int chip, const Frame& frame, bool highlight, const Output::Enables& enables)
+    void printRegistersValues(int chip, const Frame& frame, bool playing, const Output::Enables& enables)
     {
         if (frame[chip].IsExpMode())
-            printRegistersValuesForExpandedMode(chip, frame, highlight, enables);
+            printRegistersValuesForExpandedMode(chip, frame, playing, enables);
         else
-            printRegistersValuesForCompatibleMode(chip, frame, highlight, enables);
+            printRegistersValuesForCompatibleMode(chip, frame, playing, enables);
     }
 
     void printRegistersHeaderForMode(const std::string& str)

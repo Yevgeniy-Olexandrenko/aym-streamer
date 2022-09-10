@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <unordered_set>
 #include "processing/Processing.h"
 
 class Stream;
@@ -8,6 +8,8 @@ class Frame;
 
 class Output : private Processing
 {
+	using ProcChain = std::unordered_set<std::unique_ptr<Processing>>;
+
 public:
 	Output();
 	virtual ~Output();
@@ -37,5 +39,5 @@ private:
 	bool m_isOpened;
 	Chip m_schip;
 	Chip m_dchip;
-	ProcessingChain m_processingChain;
+	ProcChain m_procChain;
 };

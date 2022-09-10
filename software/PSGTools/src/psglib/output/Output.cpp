@@ -49,11 +49,12 @@ bool Output::Init(const Stream& stream)
             }
 
             // init post-processing
-            m_processingChain.clear();
-            m_processingChain.push_back(std::make_unique<AY8930EnvelopeFix>(m_dchip));
-            m_processingChain.push_back(std::make_unique<ChannelsLayoutChange>(m_dchip));
-            m_processingChain.push_back(std::make_unique<ChannelsOutputDisable>(m_dchip));
-            m_processingChain.push_back(std::make_unique<ChipClockRateConvert>(m_schip, m_dchip));
+            m_procChain.clear();
+            m_procChain.emplace(new AY8930EnvelopeFix(m_dchip));
+            m_procChain.emplace(new ChannelsLayoutChange(m_dchip));
+            m_procChain.emplace(new ChannelsOutputDisable(m_dchip));
+            m_procChain.emplace(new ChipClockRateConvert(m_schip, m_dchip));
+            Reset();
         }
     }
     return m_isOpened;
@@ -120,20 +121,20 @@ std::string Output::toString() const
 
 void Output::Reset()
 {
-    for (auto& processing : m_processingChain)
+    for (const auto& procStep : m_procChain)
     {
-        processing->Reset();
+        procStep->Reset();
     }
     Processing::Reset();
 }
 
 const Frame& Output::operator()(const Frame& frame)
 {
-    const Frame* processed = &frame;
-    for (auto& processing : m_processingChain)
+    const Frame* pframe = &frame;
+    for (const auto& procStep : m_procChain)
     {
-        processed = &(*processing)(*processed);
+        pframe = &(*procStep)(*pframe);
     }
-    Update(*processed);
+    Processing::Update(*pframe);
     return m_frame;
 }

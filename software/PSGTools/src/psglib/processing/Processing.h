@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include "stream/Chip.h"
 #include "stream/Frame.h"
 
@@ -12,12 +11,10 @@
 class Processing
 {
 public:
-	virtual void Reset();
-	virtual void Update(const Frame& frame);
+	virtual void  Reset();
+	virtual void  Update(const Frame& frame);
 	virtual const Frame& operator()(const Frame& frame);
 
 protected:
 	Frame m_frame;
 };
-
-using ProcessingChain = std::vector<std::unique_ptr<Processing>>;

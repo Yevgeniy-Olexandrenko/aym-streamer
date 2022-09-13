@@ -34,14 +34,7 @@ private:
     void ConvertToSingleChip(const State& state, Frame& frame);
     void ConvertToDoubleChip(const State& state, Frame& frame);
     void ConvertToAY8930Chip(const State& state, Frame& frame);
-
-    uint16_t ConvertPeriod(uint16_t period) const;
-    uint8_t  ConvertVolume(uint8_t  volume) const;
-
-    void EnableTone(uint8_t& mixer, int chan) const;
-    void EnableNoise(uint8_t& mixer, int chan) const;
-    void DisableTone(uint8_t& mixer, int chan) const;
-    void DisableNoise(uint8_t& mixer, int chan) const;
+    uint8_t ConvertVolume(uint8_t  volume) const;
 
 private:
     OutputType m_outputType;

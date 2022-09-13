@@ -356,35 +356,9 @@ void SimRP2A03::ConvertToAY8930Chip(const State& state, Frame& frame)
     }
 }
 
-uint16_t SimRP2A03::ConvertPeriod(uint16_t period) const
-{
-    auto converted = double(period) * m_dstClock / m_srcClock;
-    return uint16_t(converted + 0.5f);
-}
-
 uint8_t SimRP2A03::ConvertVolume(uint8_t volume) const
 {
     auto signal = std::min(std::sqrt(float(volume) * k_gainDefaultValue / 15.f), 1.f);
     auto maxVol = (m_outputType == OutputType::AY8930Chip ? 31.f : 15.f);
     return uint8_t(maxVol * signal + 0.5f);
-}
-
-void SimRP2A03::EnableTone(uint8_t& mixer, int chan) const
-{
-    mixer &= ~(1 << chan);
-}
-
-void SimRP2A03::EnableNoise(uint8_t& mixer, int chan) const
-{
-    mixer &= ~(1 << (3 + chan));
-}
-
-void SimRP2A03::DisableTone(uint8_t& mixer, int chan) const
-{
-    mixer |= (1 << chan);
-}
-
-void SimRP2A03::DisableNoise(uint8_t& mixer, int chan) const
-{
-    mixer |= (1 << (3 + chan));
 }

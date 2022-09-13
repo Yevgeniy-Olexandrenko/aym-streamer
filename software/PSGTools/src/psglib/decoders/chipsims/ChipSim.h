@@ -10,11 +10,9 @@ public:
 	ChipSim(Type type) : m_type(type) {}
 	Type type() const { return m_type; }
 
-public:
 	virtual void ConfigureClock(int srcClock, int dstClock)
 	{
-		m_srcClock = srcClock;
-		m_dstClock = dstClock;
+		m_clockRatio = float(dstClock) / float(srcClock);
 	}
 
 public:
@@ -24,7 +22,23 @@ public:
 	virtual void Convert(Frame& frame) = 0;
 
 protected:
-	Type m_type;
-	int  m_srcClock;
-	int  m_dstClock;
+	uint16_t ConvertPeriod(uint16_t period) const
+	{
+		auto converted = period * m_clockRatio;
+		return uint16_t(converted + 0.5f);
+	}
+
+	void EnableTone(uint8_t& mixer, int chan) const
+	{
+		mixer &= ~(1 << chan);
+	}
+
+	void EnableNoise(uint8_t& mixer, int chan) const
+	{
+		mixer &= ~(1 << (3 + chan));
+	}
+
+protected:
+	Type  m_type;
+	float m_clockRatio;
 };

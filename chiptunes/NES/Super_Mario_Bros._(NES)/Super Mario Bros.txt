@@ -1,0 +1,61 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Super Mario Bros. /
+                     Super Mario Bros. 2 (J)
+System:              Nintendo Entertainment
+                     System / Famicom /
+                     Nintendo Vs. Unisystem
+Music hardware:      NES APU (N2A03)
+
+Music author:        Koji Kondo
+Game developer:      Nintendo EAD
+Game publisher:      Nintendo
+Game release date:   1985-10-18 (U) /
+                     1987-05-15 (E) /
+                     1987 (AU) /
+                     1985-09-13 (J) /
+                     1986-04 (W, Arcade) /
+                     1986-02-21 (SMB FDS) /
+                     1986-06-03 (SMB2)
+
+Package created by:  Sonic of 8!
+Package version:     1.10
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Running About                    1:29   1:26
+02 Underground                      0:13   0:13
+03 Swimming Around                  0:26   0:26
+04 Bowser's Castle                  0:09   0:08
+05 Invincible                       0:04   0:03
+06 Level Complete                   0:06   -
+07 Bowser's Castle Complete         0:07   -
+08 Miss                             0:04   -
+09 Game Over                        0:05   -
+10 Into the Pipe                    0:04   -
+11 Saved the Princess               0:07   0:06
+12 Running About (Hurry!)           1:01   0:58
+13 Underground (Hurry!)             0:11   0:08
+14 Swimming Around (Hurry!)         0:23   0:19
+15 Bowser's Castle (Hurry!)         0:09   0:06
+16 Invincible (Hurry!)              0:04   0:02
+17 Into the Pipe (Hurry!)           0:05   -
+18 Saved the Princess               0:37   -
+19 Name Entry                       0:07   0:07
+20 Saved the Princess               1:01   -
+21 Unused                           0:04   -
+
+Total Length                        6:37  10:39
+
+
+Notes:
+-
+
+
+Package history:
+1.00 2013-05-30 Sonic of 8!: Initial release.
+1.10 2020-09-27 Valley Bell: Added FDS ending
+ track and SMB2 screenshot. Thanks Sonic of 8!

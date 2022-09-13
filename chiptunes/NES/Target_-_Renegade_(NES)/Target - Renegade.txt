@@ -1,0 +1,47 @@
+***********************************************
+* VGM music package                           *
+* http://vgmrips.net/                         *
+***********************************************
+Game name:           Target: Renegade
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        Tim Follin
+Game developer:      Software Creations
+Game publisher:      Taito
+Game release date:   1989
+
+Package created by:  Gnome
+Package version:     1.06
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Taito Logo                       0:05   -
+02 Title Screen                     1:53   -
+03 Cutscene (Ready to Rumble!)      0:40   -
+04 Parking Garage (Stage 1-3)       1:25   1:20
+05 Downtown (Stage 4, 6)            1:35   1:22
+06 The Park (Stage 5)               1:22   1:15
+07 The Pig Pen (Stage 7)            1:33   1:18
+08 Stage Clear                      0:03   -
+09 Name Entry                       0:49   -
+10 Unknown Track                    0:13   -
+
+Total Length                        9:39  14:54
+
+
+Notes:
+Special thanks to Valley Bell for giving advice
+on logging track 05.
+
+This pack was made using
+NEZplug Version 0.9.4.8 + 2 + 19.20 VGM mod.
+
+
+Package history:
+1.00 2017-03-26 Gnome: Initial release.
+1.05 2017-04-02 Gnome: Patched out FDS tag.
+1.06 2017-04-03 Gnome: Retagged tracks with the
+ correct game name and release date.

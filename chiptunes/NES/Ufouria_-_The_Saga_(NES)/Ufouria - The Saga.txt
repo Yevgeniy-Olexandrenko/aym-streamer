@@ -1,0 +1,52 @@
+***********************************************
+* VGM music package                           *
+* http://vgm.mdscene.net/                     *
+***********************************************
+Game name:           Ufouria: The Saga (E, A) /
+                     Hebereke (J)
+System:              Nintendo Entertainment
+                     System / Family Computer
+Music hardware:      NES APU (N2A03)
+
+Music author:        Naoki Kodaka,
+                     Seya Shinichi,
+                     Nobuyuki Hara
+Game developer:      Sunsoft
+Game publisher:      Sunsoft
+Game release date:   1992-11-19 (E, A) /
+                     1991-09-20 (J)
+
+Package created by:  2ch-H
+Package version:     1.00
+
+Song list, in approximate game order:
+Song name                           Length:
+                                    Total  Loop
+01 Hebereke! (Title)                0:55   -
+02 Hebe's Adventure                 1:01   0:54
+03 Decisive Battle (Boss)           0:25   0:19
+04 Hehenda (Clear)                  0:10   -
+05 Hebe in the Cold Area            0:55   0:55
+06 Hebe Underground                 0:54   0:53
+07 Hebe in the Sky                  0:58   0:57
+08 Hebe in the Parallel Area        0:25   -
+09 Muu Cat Brothers (Mid Boss)      0:16   0:11
+10 Here Comes Unyohn (Final Boss)   0:30   0:27
+11 Glorious Hebe (Ending)           0:56   -
+12 Continue (Password, Credit Roll) 0:37   0:37
+13 Degyopii (Game Over)             0:09   -
+
+Total Length                        8:09  13:23
+
+
+Notes:
+Track Names are used in Takusan Hebereke.
+
+This pack was made using MESS0148 VGM mod.
+
+Size reduction (vgm_cmp):
+    1.29 MB -> 638 KB (47.9 %)
+
+
+Package history:
+1.00 2013-05-29 2ch-H: Initial release.

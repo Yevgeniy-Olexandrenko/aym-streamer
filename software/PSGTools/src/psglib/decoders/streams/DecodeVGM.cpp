@@ -58,6 +58,7 @@ bool DecodeVGM::Open(Stream& stream)
     Header header;
     if (ReadFile(stream.file.string().c_str(), (uint8_t*)(&header), sizeof(header)))
     {
+        if (header.sn76489Clock) m_simulator.reset(new SimSN76489());
         if (header.version >= 0x151 && header.ay8910Clock) m_simulator.reset(new SimAY8910());
         if (header.version >= 0x161 && header.nesApuClock) m_simulator.reset(new SimRP2A03());
 
@@ -77,8 +78,22 @@ bool DecodeVGM::Open(Stream& stream)
 
                 int clockRate = 0;
                 int frameRate = 60;
+
+                if (m_simulator->type() == ChipSim::Type::SN76489)
+                {
+                    clockRate = (header.sn76489Clock & 0x3FFFFFFF);
+                    auto twoChips = bool(header.sn76489Clock & 0x40000000);
+
+                    Chip::Model model = Chip::Model::AY8910;
+                    stream.schip.first.model(model);
+                    stream.schip.clockValue(clockRate / 2);
+                    if (twoChips) stream.schip.second.model(model);
+                    //stream.schip.output(Chip::Output::Mono);
+
+                    // TODO
+                }
                 
-                if (m_simulator->type() == ChipSim::Type::AY8910)
+                else if (m_simulator->type() == ChipSim::Type::AY8910)
                 {
                     clockRate = (header.ay8910Clock & 0x3FFFFFFF);
                     if (header.ay8910Flags & 0x10) clockRate /= 2;
@@ -255,6 +270,17 @@ int DecodeVGM::DecodeBlock()
             // L1/L2/L3 enable channel 1/2/3 on left speaker
             // R1/R2/R3 enable channel 1/2/3 on right speaker
 
+            m_dataPtr += 1;
+        }
+
+        // SN76489, write value dd
+        else if (m_dataPtr[0] == 0x50)
+        {
+            if (m_simulator->type() == ChipSim::Type::SN76489)
+            {
+                uint8_t dd = m_dataPtr[1];
+                m_simulator->Write(0, 0, dd);
+            }
             m_dataPtr += 1;
         }
 

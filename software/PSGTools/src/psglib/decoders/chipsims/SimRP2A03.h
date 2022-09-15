@@ -34,7 +34,11 @@ private:
     void ConvertToSingleChip(const State& state, Frame& frame);
     void ConvertToDoubleChip(const State& state, Frame& frame);
     void ConvertToAY8930Chip(const State& state, Frame& frame);
-    uint8_t ConvertVolume(uint8_t  volume) const;
+    void DistributeNoiseBetweenChannels(const State& state, Frame& frame, uint8_t& mixer);
+
+    float   VolumeToLevel(uint8_t volume) const;
+    uint8_t LevelToVolume(float   level ) const;
+    uint8_t ConvertVolume(uint8_t volume) const;
 
 private:
     OutputType m_outputType;

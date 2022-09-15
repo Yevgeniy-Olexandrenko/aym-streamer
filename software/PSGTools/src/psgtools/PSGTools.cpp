@@ -153,7 +153,7 @@ void PlayInputFiles()
 #if 1
         stream.dchip.first.model(Chip::Model::AY8930);
         //stream.dchip.second.model(Chip::Model::AY8910);
-        stream.dchip.output(Chip::Output::Stereo);
+        //stream.dchip.output(Chip::Output::Stereo);
         //stream.dchip.stereo(Chip::Stereo::CAB);
         //stream.dchip.clockValue(1000000);
 #endif

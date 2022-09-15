@@ -31,9 +31,7 @@ bool Streamer::OpenDevice()
 
 bool Streamer::ConfigureChip(const Chip& schip, Chip& dchip)
 {
-	dchip.first.model(Chip::Model::Compatible);
 	dchip.second.model(Chip::Model::Unknown);
-
 	dchip.clock(Chip::Clock::F1773400);
 	dchip.output(Chip::Output::Stereo);
 
@@ -48,7 +46,7 @@ bool Streamer::ConfigureChip(const Chip& schip, Chip& dchip)
 bool Streamer::WriteToChip(int chip, const Data& data)
 {
 	// prepare packet
-	std::vector<uint8_t> binary(64);
+	std::vector<uint8_t> binary;
 	for (const auto& pair : data)
 	{
 		const uint8_t& reg = pair.first;
@@ -57,10 +55,10 @@ bool Streamer::WriteToChip(int chip, const Data& data)
 		binary.push_back(val);
 	}
 	binary.push_back(0xFF);
-
+	
 	// send packet
-	auto dataSize = (int)binary.size();
-	auto dataBuff = (const char*)binary.data();
+	auto dataSize = int(binary.size());
+	auto dataBuff = reinterpret_cast<const char*>(binary.data());
 	auto sentSize = m_port.SendBinary(dataBuff, dataSize);
 	return (sentSize == dataSize);
 }

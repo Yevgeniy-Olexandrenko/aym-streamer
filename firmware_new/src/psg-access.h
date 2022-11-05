@@ -34,31 +34,52 @@
 #define CLK_DDR  DDRD
 #define CLK_PIN  PD3    // Arduino pin D3
 
+namespace PSG
+{
 // -----------------------------------------------------------------------------
 // PSG Definitions
 // -----------------------------------------------------------------------------
 
-enum psg_clk
-{
-    PSG_CLK_1_00_MHZ = 0x10,
-    PSG_CLK_1_77_MHZ = 0x09,
-    PSG_CLK_2_00_MHZ = 0x08,
-};
+    enum CLK
+    {
+        CLK_1_00_MHZ = 0x10,
+        CLK_1_77_MHZ = 0x09,
+        CLK_2_00_MHZ = 0x08,
+    };
+
+    enum
+    {
+        A_Fine   = 0x00,
+        A_Coarse = 0x01,
+        B_Fine   = 0x02,
+        B_Coarse = 0x03,
+        C_Fine   = 0x04,
+        C_Coarse = 0x05,
+        N_Period = 0x06,
+        Mixer    = 0x07,
+        A_Volume = 0x08,
+        B_Volume = 0x09,
+        C_Volume = 0x0A,
+        E_Fine   = 0x0B,
+        E_Coarse = 0x0C,
+        E_Shape  = 0x0D
+    };
 
 // -----------------------------------------------------------------------------
 // Low Level Access
 // -----------------------------------------------------------------------------
 
-void PSG_Address(uint8_t reg);
-void PSG_Write(uint8_t data);
-void PSG_Read(uint8_t& data);
+    void Address(uint8_t reg);
+    void Write(uint8_t data);
+    void Read(uint8_t& data);
 
 // -----------------------------------------------------------------------------
 // High Level Access
 // -----------------------------------------------------------------------------
 
-void PSG_Init();
-void PSG_Reset();
-void PSG_Clock(psg_clk clk);
-void PSG_Send(uint8_t reg, uint8_t data);
-uint8_t PSG_Receive(uint8_t reg);
+    void Init();
+    void Reset();
+    void Clock(CLK clock);
+    void Send(uint8_t reg, uint8_t data);
+    uint8_t Receive(uint8_t reg);
+}

@@ -3,8 +3,9 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#define PSG_UART_DEBUG
+
 #include <stdint.h>
+#include "psg-config.h"
 
 class PSG
 {
@@ -48,15 +49,6 @@ public:
         E_Coarse  = EA_Coarse,
         E_Shape   = EA_Shape,
         Mode_Bank = EA_Shape,
-
-        A_Period  = A_Fine,
-        B_Period  = B_Fine,
-        C_Period  = C_Fine,
-        E_Period  = E_Fine,
-        EA_Period = EA_Fine,
-        EB_Period = EB_Fine,
-        EC_Period = EC_Fine,
-
         BankA_Fst = 0x00,
         BankA_Lst = 0x0D,
         BankB_Fst = 0x10,
@@ -84,25 +76,29 @@ public:
         F2_00MHZ = 2000000,
     };
 
+    PSG();
+
 // -----------------------------------------------------------------------------
-// Low Level Access
+// Low Level Interface
 // -----------------------------------------------------------------------------
 public:
+    void Init();
+    void SetClock(uint32_t clock);
+
+    void Reset();
     void Address(uint8_t data);
     void Write(uint8_t data);
     void Read(uint8_t& data);
 
 // -----------------------------------------------------------------------------
-// High Level Access
+// High Level Interface
 // -----------------------------------------------------------------------------
 public:
-    PSG();
-    void Init();
-    void Reset();
-    void SetClock(uint32_t clock);
     Type GetType() const;
+    bool IsReady() const;
     void SetRegister(uint8_t reg, uint8_t data);
     void GetRegister(uint8_t reg, uint8_t& data) const;
+    void Update();
 
 // -----------------------------------------------------------------------------
 // Privates
@@ -114,8 +110,52 @@ private:
     void do_test_wr_rd_regs(uint8_t offset);
     void do_test_wr_rd_latch(uint8_t offset);
     void do_test_wr_rd_extmode(uint8_t mode_bank);
+    void process_clock_conversion();
+    void process_ay8930_envelope_fix();
+    void write_state_to_chip();
 
 private:
+#ifdef PSG_PROCESSING
+    union Period
+    {
+        uint16_t full;
+        struct { uint8_t fine, coarse; };
+    };
+
+    struct Channel
+    {
+        Period  t_period;
+        uint8_t t_volume;
+        uint8_t t_duty;
+        Period  e_period;
+        uint8_t e_shape;
+    };
+
+    struct Commons
+    {
+        uint8_t n_period;
+        uint8_t n_and_mask;
+        uint8_t n_or_mask;
+        uint8_t mixer;
+    };
+
+    struct Status
+    {
+        uint32_t changed;
+        uint8_t exp_mode;
+    };
+
+    struct State
+    {
+        Channel channels[3];
+        Commons commons;
+        Status  status;
+    };
+
+    State m_states[2];
+    uint8_t m_sindex;
+#endif
+
     uint32_t m_hash;
     uint32_t m_vclock;
     uint32_t m_rclock;

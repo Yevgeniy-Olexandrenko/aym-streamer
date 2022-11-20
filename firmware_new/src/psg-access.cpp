@@ -2,41 +2,17 @@
 // PSG Access via PIO
 // -----------------------------------------------------------------------------
 
-#include "psg-access.h"
+#include <string.h>
 #include <avr/io.h>
 #include <util/delay.h>
+#include "psg-access.h"
+#include "psg-wiring.h"
 
-#ifdef  PSG_UART_DEBUG
+// debug output via UART
+#if defined(PSG_UART_DEBUG)
 #define UART_DEBUG
 #endif
 #include "uart-debug.h"
-
-// data bus bits D0-D3 (Arduino pins A0-A3)
-#define LSB_DDR  DDRC
-#define LSB_PORT PORTC
-#define LSB_PIN  PINC
-#define LSB_MASK 0x0F
-
-// data bus bits D4-D7 (Arduino pins D4-D7)
-#define MSB_DDR  DDRD
-#define MSB_PORT PORTD
-#define MSB_PIN  PIND
-#define MSB_MASK 0xF0
-
-// control bus BC1 and BDIR signals
-#define BUS_PORT PORTB
-#define BUS_DDR  DDRB
-#define BC1_PIN  PB0    // Arduino pin D8
-#define BDIR_PIN PB1    // Arduino pin D9
-
-// RESET signal
-#define RES_PORT PORTD
-#define RES_DDR  DDRD
-#define RES_PIN  PD2    // Arduino pin D2
-
-// CLOCK signal
-#define CLK_DDR  DDRD
-#define CLK_PIN  PD3    // Arduino pin D3
 
 // timing delays (nano seconds)
 #define tAS 800 // min 400 ns by datasheet
@@ -48,9 +24,9 @@
 #define tRW 500 // min 500 ns by datasheet
 #define tRB 100 // min 100 ns bt datasheet
 
-// Helpers
-#define set_bit(reg, bit ) reg |=  (1 << (bit))
-#define res_bit(reg, bit ) reg &= ~(1 << (bit))
+// helpers
+#define set_bit(reg, bit) reg |=  (1 << (bit))
+#define res_bit(reg, bit) reg &= ~(1 << (bit))
 #define set_bits(reg, bits) reg |=  (bits)
 #define res_bits(reg, bits) reg &= ~(bits)
 #define control_bus_delay(ns) _delay_us(0.001f * (ns))
@@ -65,6 +41,11 @@ enum Hash
     YM2149F      = 0x1D750557,
     AVRAY_FW26   = 0x11111111,
 };
+
+PSG::PSG()
+    : m_hash(Hash::NotFound)
+{
+}
 
 // -----------------------------------------------------------------------------
 // Control Bus and Data Bus handling
@@ -104,46 +85,8 @@ static inline void set_control_bus_read()  { set_bits(BUS_PORT, 1 << BC1_PIN ); 
 static inline void set_control_bus_inact() { res_bits(BUS_PORT, 1 << BDIR_PIN | 1 << BC1_PIN); }
 
 // -----------------------------------------------------------------------------
-// Low Level Access
+// Low Level Interface
 // -----------------------------------------------------------------------------
-
-void PSG::Address(uint8_t reg)
-{
-    set_data_bus(reg);
-    set_control_bus_addr();
-    control_bus_delay(tAS);
-    set_control_bus_inact();
-    control_bus_delay(tAH);
-    release_data_bus();
-}
-
-void PSG::Write(uint8_t data)
-{
-    set_data_bus(data);
-    set_control_bus_write();
-    control_bus_delay(tDW);
-    set_control_bus_inact();
-    control_bus_delay(tDH);
-    release_data_bus();
-}
-
-void PSG::Read(uint8_t& data)
-{
-    set_control_bus_read();
-    control_bus_delay(tDA);
-    get_data_bus(data);
-    set_control_bus_inact();
-    control_bus_delay(tTS);
-}
-
-// -----------------------------------------------------------------------------
-// High Level Access
-// -----------------------------------------------------------------------------
-
-PSG::PSG()
-    : m_hash(Hash::NotFound)
-{
-}
 
 void PSG::Init()
 {
@@ -177,14 +120,6 @@ void PSG::Init()
     dbg_close();
 }
 
-void PSG::Reset()
-{
-    res_bit(RES_PORT, RES_PIN);
-    control_bus_delay(tRW);
-    set_bit(RES_PORT, RES_PIN);
-    control_bus_delay(tRB);
-}
-
 void PSG::SetClock(uint32_t clock)
 {
     if (clock >= F1_00MHZ && clock <= F2_00MHZ)
@@ -194,13 +129,54 @@ void PSG::SetClock(uint32_t clock)
         m_rclock = (F_CPU / divider);
         m_vclock = clock;
 
-        // configure Timer2
+        // configure Timer2 as clock source
         TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
         TCCR2B = (1 << WGM22 ) | (1 << CS20 );
         OCR2A  = (divider - 1);
         OCR2B  = (divider / 2);
     }
 }
+
+void PSG::Reset()
+{
+    res_bit(RES_PORT, RES_PIN);
+    control_bus_delay(tRW);
+    set_bit(RES_PORT, RES_PIN);
+    control_bus_delay(tRB);
+}
+
+void PSG::Address(uint8_t reg)
+{
+    set_data_bus(reg);
+    set_control_bus_addr();
+    control_bus_delay(tAS);
+    set_control_bus_inact();
+    control_bus_delay(tAH);
+    release_data_bus();
+}
+
+void PSG::Write(uint8_t data)
+{
+    set_data_bus(data);
+    set_control_bus_write();
+    control_bus_delay(tDW);
+    set_control_bus_inact();
+    control_bus_delay(tDH);
+    release_data_bus();
+}
+
+void PSG::Read(uint8_t& data)
+{
+    set_control_bus_read();
+    control_bus_delay(tDA);
+    get_data_bus(data);
+    set_control_bus_inact();
+    control_bus_delay(tTS);
+}
+
+// -----------------------------------------------------------------------------
+// High Level Interface
+// -----------------------------------------------------------------------------
 
 PSG::Type PSG::GetType() const
 {
@@ -217,16 +193,142 @@ PSG::Type PSG::GetType() const
     return Type::BadOrUnknown;
 }
 
+bool PSG::IsReady() const
+{
+    Type type = GetType();
+    return (type != Type::NotFound && type != Type::BadOrUnknown);
+}
+
 void PSG::SetRegister(uint8_t reg, uint8_t data)
 {
+#ifdef PSG_PROCESSING
+    State& state = m_states[m_sindex];
+    if ((reg & 0x0F) == Mode_Bank)
+    {
+        // preserve expanded mode and bank of registers
+        // separately from shape of channel A envelope
+        state.status.exp_mode = (data & 0xF0);
+        data &= 0x0F; reg = Mode_Bank;
+    }
+
+    if (reg < BankB_Fst && reg != Mode_Bank && state.status.exp_mode == 0xB0)
+    {
+        // redirect access to registers of bank B if 
+        // expanded mode is active and bank B is selected
+        reg += BankB_Fst;
+    }
+
+    switch(reg)
+    {
+        // bank A
+        case A_Fine:    state.channels[0].t_period.fine = data; break;
+        case A_Coarse:  state.channels[0].t_period.coarse = data; break;
+        case B_Fine:    state.channels[1].t_period.fine = data; break;
+        case B_Coarse:  state.channels[1].t_period.coarse = data; break;
+        case C_Fine:    state.channels[2].t_period.fine = data; break;
+        case C_Coarse:  state.channels[2].t_period.coarse = data; break;
+        case N_Period:  state.commons.n_period = data; break;
+        case Mixer:     state.commons.mixer = data; break;
+        case A_Volume:  state.channels[0].t_volume = data; break;
+        case B_Volume:  state.channels[1].t_volume = data; break;
+        case C_Volume:  state.channels[2].t_volume = data; break;
+        case EA_Fine:   state.channels[0].e_period.fine = data; break;
+        case EA_Coarse: state.channels[0].e_period.coarse = data; break;
+        case EA_Shape:  state.channels[0].e_shape = data; break;
+
+        // bank B
+        case EB_Fine:   state.channels[1].e_period.fine = data; break;
+        case EB_Coarse: state.channels[1].e_period.coarse = data; break;
+        case EC_Fine:   state.channels[2].e_period.fine = data; break;
+        case EC_Coarse: state.channels[2].e_period.coarse = data; break;
+        case EB_Shape:  state.channels[1].e_shape = data; break;
+        case EC_Shape:  state.channels[2].e_shape = data; break;
+        case A_Duty:    state.channels[0].t_duty = data; break;
+        case B_Duty:    state.channels[1].t_duty = data; break;
+        case C_Duty:    state.channels[2].t_duty = data; break;
+        case N_AndMask: state.commons.n_and_mask = data; break;
+        case N_OrMask:  state.commons.n_or_mask = data; break;
+    }
+
+    // mark register as changed
+    state.status.changed |= (1 << reg);
+#else
     Address(reg);
     Write(data);
+#endif
 }
 
 void PSG::GetRegister(uint8_t reg, uint8_t& data) const
 {
+#ifdef PSG_PROCESSING
+    const State& state = m_states[m_sindex];
+    if (reg < BankB_Fst && reg != Mode_Bank && state.status.exp_mode == 0xB0)
+    {
+        // redirect access to registers of bank B if 
+        // expanded mode is active and bank B is selected
+        reg += BankB_Fst;
+    }
+
+    switch(reg)
+    {
+        // bank A
+        case A_Fine:    data = state.channels[0].t_period.fine; break;
+        case A_Coarse:  data = state.channels[0].t_period.coarse; break;
+        case B_Fine:    data = state.channels[1].t_period.fine; break;
+        case B_Coarse:  data = state.channels[1].t_period.coarse; break;
+        case C_Fine:    data = state.channels[2].t_period.fine; break;
+        case C_Coarse:  data = state.channels[2].t_period.coarse; break;
+        case N_Period:  data = state.commons.n_period; break;
+        case Mixer:     data = state.commons.mixer; break;
+        case A_Volume:  data = state.channels[0].t_volume; break;
+        case B_Volume:  data = state.channels[1].t_volume; break;
+        case C_Volume:  data = state.channels[2].t_volume; break;
+        case EA_Fine:   data = state.channels[0].e_period.fine; break;
+        case EA_Coarse: data = state.channels[0].e_period.coarse; break;
+        case EA_Shape:  data = state.channels[0].e_shape; break;
+
+        // bank B
+        case EB_Fine:   data = state.channels[1].e_period.fine; break;
+        case EB_Coarse: data = state.channels[1].e_period.coarse; break;
+        case EC_Fine:   data = state.channels[2].e_period.fine; break;
+        case EC_Coarse: data = state.channels[2].e_period.coarse; break;
+        case EB_Shape:  data = state.channels[1].e_shape; break;
+        case EC_Shape:  data = state.channels[2].e_shape; break;
+        case A_Duty:    data = state.channels[0].t_duty; break;
+        case B_Duty:    data = state.channels[1].t_duty; break;
+        case C_Duty:    data = state.channels[2].t_duty; break;
+        case N_AndMask: data = state.commons.n_and_mask; break;
+        case N_OrMask:  data = state.commons.n_or_mask; break;
+    }
+
+    if ((reg & 0x0F) == Mode_Bank)
+    {
+        // combine current PSG mode and bank
+        // with shape of channel A envelope
+        data |= state.status.exp_mode;
+    }
+#else
     Address(reg);
     Read(data);
+#endif
+}
+
+void PSG::Update()
+{
+#if defined(PSG_PROCESSING)
+    if (IsReady() && m_states[0].status.changed)
+    {
+        m_states[1] = m_states[0];
+        m_sindex = 1;
+
+        process_clock_conversion();
+        process_ay8930_envelope_fix();
+        write_state_to_chip();
+
+        m_states[0].status.changed = 0;
+        m_sindex = 0;
+    }
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -322,4 +424,122 @@ void PSG::do_test_wr_rd_extmode(uint8_t mode_bank)
         dbg_print_sp();
     }
     dbg_print_ln();
+}
+
+void PSG::process_clock_conversion()
+{
+#if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
+    if (m_rclock != m_vclock)
+    {
+        State& state = m_states[m_sindex];
+        uint16_t period;
+
+        for (int i = 0; i < 3; ++i)
+        {
+            // convert tone period
+            period = state.channels[i].t_period.full;
+            period = uint16_t((period * (m_rclock >> 8) / (m_vclock >> 9) + 1) >> 1);
+            state.channels[i].t_period.full = period;
+
+            // convert envelope period
+            period = state.channels[i].e_period.full;
+            period = uint16_t((period * (m_rclock >> 8) / (m_vclock >> 9) + 1) >> 1);
+            state.channels[i].e_period.full = period;
+        }
+
+        // convert noise period
+        period = state.commons.n_period;
+        period = uint16_t((period * (m_rclock >> 8) / (m_vclock >> 9) + 1) >> 1);
+        state.commons.n_period = period;
+
+        // set period registers as changed
+        state.status.changed |= (
+            1 << A_Fine  | 1 << A_Coarse  | 1 << B_Fine  | 1 << B_Coarse  | 1 << C_Fine  | 1 << C_Coarse  |
+            1 << EA_Fine | 1 << EA_Coarse | 1 << EB_Fine | 1 << EB_Coarse | 1 << EC_Fine | 1 << EC_Coarse |
+            1 << N_Period
+        );
+    }
+#endif
+}
+
+void PSG::process_ay8930_envelope_fix()
+{
+#if defined(PSG_PROCESSING) && defined(PSG_AY8930_ENVELOPE_FIX)
+    if (GetType() == Type::AY8930)
+    {
+        State& state = m_states[m_sindex];
+        for (int i = 0; i < 3; ++i)
+        {
+            uint8_t volume = state.channels[i].t_volume;
+            if (state.status.exp_mode) volume >>= 1;
+
+            // get tone, noise and envelope enable flags
+            bool t_disable = (state.commons.mixer & (0x01 << i));
+            bool n_disable = (state.commons.mixer & (0x08 << i));
+            bool e_enable  = (volume & 0x10);
+
+            // special case - pure envelope
+            if (e_enable && t_disable && n_disable)
+            {
+                // fix by enabling inaudible tone
+                state.channels[i].t_period.full = 0;
+                state.channels[i].t_duty = 0x08;
+                state.commons.mixer &= ~(0x01 << i);
+
+                // set registers changes
+                state.status.changed |= (
+                    1 << (A_Fine + 2 * i) | 1 << (A_Coarse + 2 * i) |
+                    1 << (A_Duty + i) | 1 << Mixer
+                );
+            }
+        }
+    }
+#endif
+}
+
+void PSG::write_state_to_chip()
+{
+#if defined(PSG_PROCESSING)
+    State& state = m_states[m_sindex];
+    uint8_t data;
+
+    if (GetType() == Type::AY8930 && state.status.exp_mode)
+    {
+        bool switch_banks = false;
+        for (uint8_t reg = BankB_Fst; reg < BankB_Lst; ++reg)
+        {
+            if (state.status.changed & (1 << reg))
+            {
+                if (!switch_banks)
+                {
+                    switch_banks = true;
+                    GetRegister(Mode_Bank, data);
+                    Address(Mode_Bank); 
+                    Write(0xB0 | data);
+                }
+
+                GetRegister(reg, data);
+                Address(reg & 0x0F);
+                Write(data);
+            }
+        }
+
+        if (switch_banks)
+        {
+            GetRegister(Mode_Bank, data);
+            Address(Mode_Bank);
+            Write(0xA0 | data);
+        }
+    }
+
+    for (uint8_t reg = BankA_Fst; reg <= BankA_Lst; ++reg)
+    {
+        if (state.status.changed & (1 << reg))
+        {
+            GetRegister(reg, data);
+            Address(reg & 0x0F);
+            Write(data);
+        }
+    }
+#endif
 }

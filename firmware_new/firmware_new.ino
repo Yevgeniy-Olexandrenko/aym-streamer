@@ -2,10 +2,15 @@
 
 PSG psg;
 
-#if 0
+#if 1
 void setup()
 {
+    uint8_t data = 0;
+   
     psg.Init();
+    psg.SetRegister(0, data);
+    psg.GetRegister(0, data);
+    psg.Update();
 }
 
 void loop()

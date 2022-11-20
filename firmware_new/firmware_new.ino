@@ -1,16 +1,27 @@
 #include "src/psg-access.h"
-#include "src/psg-detect.h"
-#include "src/play-pt2.h"
-#include "src/demo-music4.h"
+
+PSG psg;
+
+#if 0
+void setup()
+{
+    psg.Init();
+}
+
+void loop()
+{
+    //
+}
+#else
+#include "src/research/play-pt2.h"
+#include "src/research/demo-music4.h"
 
 uint8_t* m_data = demo_music;
 uint8_t  m_regs[14];
 
 void setup()
 {
-    PSG::Init();
-    PSG::Detect();
-    PSG::Reset();
+    psg.Init();
 
     // TODO
 }
@@ -27,8 +38,9 @@ void loop()
         for (uint8_t reg = 0; reg < 14; ++reg)
         {
             if (reg == PSG::E_Shape && m_regs[reg] == 0xFF) continue;
-            PSG::Send(reg, m_regs[reg]);
+            psg.SetRegister(reg, m_regs[reg]);
         }
         _delay_ms(20);
     }
 }
+#endif

@@ -1,5 +1,5 @@
-
 #include "uart.h"
+#include <stdlib.h>
 
 void UART_Open(uint32_t baud)
 {
@@ -85,6 +85,13 @@ void UART_PutSP()
 void UART_PutLN()
 {
     UART_PutByte('\n');
+}
+
+void UART_PutNumber(int32_t data)
+{
+    char s[12];
+    ultoa(data, s, 10);
+    UART_PutString(s);
 }
 
 void UART_PutString(const char* str)

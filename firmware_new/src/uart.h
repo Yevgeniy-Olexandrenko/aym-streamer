@@ -29,6 +29,7 @@ void UART_PutDWordHex(uint32_t data);
 // write chars and strings
 void UART_PutSP();
 void UART_PutLN();
+void UART_PutNumber(int32_t data);
 void UART_PutString(const char* str);
 void UART_PutString(const __FlashStringHelper* str);
 void UART_GetString(char* str, uint8_t len);

@@ -1,5 +1,5 @@
 #include "play-pt2.h"
-#include "psg-access.h"
+#include "../psg-access.h"
 
 #include <stdlib.h>
 #include <string.h>

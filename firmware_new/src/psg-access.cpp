@@ -2,7 +2,6 @@
 // PSG Access via PIO
 // -----------------------------------------------------------------------------
 
-#include <string.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include "psg-access.h"
@@ -29,6 +28,8 @@
 #define res_bit(reg, bit) reg &= ~(1 << (bit))
 #define set_bits(reg, bits) reg |=  (bits)
 #define res_bits(reg, bits) reg &= ~(bits)
+#define isb_set(reg, bit) bool((reg) & (1 << (bit)))
+#define isb_res(reg, bit) !bool((reg) & (1 << (bit)))
 #define control_bus_delay(ns) _delay_us(0.001f * (ns))
 
 enum Hash
@@ -36,10 +37,11 @@ enum Hash
     NotFound     = 0x67E019C7,
     Compatible   = 0xF56B7047,
     AY8910A      = 0x2CFF954F,
-    AY8912A      = 0x00000000,
+    AY8912A      = 0x11111111, // TODO: not implemented
+    AY8913A      = 0x22222222, // TODO: not implemented
     AY8930       = 0x4EFE6E06,
     YM2149F      = 0x1D750557,
-    AVRAY_FW26   = 0x11111111,
+    AVRAY_FW26   = 0x33333333  // TODO: not implemented
 };
 
 PSG::PSG()
@@ -186,6 +188,7 @@ PSG::Type PSG::GetType() const
     case Hash::Compatible: return Type::Compatible;
     case Hash::AY8910A:    return Type::AY8910A;
     case Hash::AY8912A:    return Type::AY8912A;
+    case Hash::AY8913A:    return Type::AY8913A;
     case Hash::AY8930:     return Type::AY8930;
     case Hash::YM2149F:    return Type::YM2149F;
     case Hash::AVRAY_FW26: return Type::AVRAY_FW26;
@@ -251,7 +254,7 @@ void PSG::SetRegister(uint8_t reg, uint8_t data)
     }
 
     // mark register as changed
-    state.status.changed |= (1 << reg);
+    set_bit(state.status.changed, reg);
 #else
     Address(reg);
     Write(data);
@@ -322,6 +325,7 @@ void PSG::Update()
         m_sindex = 1;
 
         process_clock_conversion();
+        process_channels_remapping();
         process_ay8930_envelope_fix();
         write_state_to_chip();
 
@@ -360,9 +364,10 @@ void PSG::detect()
     case Type::Compatible: dbg_print_str(F("AY/YM Compatible\n")); break;
     case Type::AY8910A:    dbg_print_str(F("AY-3-8910A\n")); break;
     case Type::AY8912A:    dbg_print_str(F("AY-3-8912A\n")); break;
-    case Type::AY8930:     dbg_print_str(F("AY8930\n")); break;
-    case Type::YM2149F:    dbg_print_str(F("YM2149F\n")); break;
-    case Type::AVRAY_FW26: dbg_print_str(F("AVR-AY (FW:26)\n")); break;
+    case Type::AY8913A:    dbg_print_str(F("AY-3-8913A\n")); break;
+    case Type::AY8930:     dbg_print_str(F("Microchip AY8930\n")); break;
+    case Type::YM2149F:    dbg_print_str(F("Yamaha YM2149F\n")); break;
+    case Type::AVRAY_FW26: dbg_print_str(F("Emulator AVR-AY (FW:26)\n")); break;
     default: dbg_print_str(F("Bad or Unknown!\n")); break;
     }
     dbg_print_ln();
@@ -453,12 +458,18 @@ void PSG::process_clock_conversion()
         state.commons.n_period = period;
 
         // set period registers as changed
-        state.status.changed |= (
+        set_bits(state.status.changed,
             1 << A_Fine  | 1 << A_Coarse  | 1 << B_Fine  | 1 << B_Coarse  | 1 << C_Fine  | 1 << C_Coarse  |
             1 << EA_Fine | 1 << EA_Coarse | 1 << EB_Fine | 1 << EB_Coarse | 1 << EC_Fine | 1 << EC_Coarse |
-            1 << N_Period
-        );
+            1 << N_Period);
     }
+#endif
+}
+
+void PSG::process_channels_remapping()
+{
+#if defined(PSG_PROCESSING) && defined(PSG_CHANNELS_REMAPPING)
+    // TODO
 #endif
 }
 
@@ -474,9 +485,9 @@ void PSG::process_ay8930_envelope_fix()
             if (state.status.exp_mode) volume >>= 1;
 
             // get tone, noise and envelope enable flags
-            bool t_disable = (state.commons.mixer & (0x01 << i));
-            bool n_disable = (state.commons.mixer & (0x08 << i));
-            bool e_enable  = (volume & 0x10);
+            bool t_disable = isb_set(state.commons.mixer, 0 + i);
+            bool n_disable = isb_set(state.commons.mixer, 3 + i);
+            bool e_enable  = isb_set(volume, 4);
 
             // special case - pure envelope
             if (e_enable && t_disable && n_disable)
@@ -484,13 +495,12 @@ void PSG::process_ay8930_envelope_fix()
                 // fix by enabling inaudible tone
                 state.channels[i].t_period.full = 0;
                 state.channels[i].t_duty = 0x08;
-                state.commons.mixer &= ~(0x01 << i);
+                res_bit(state.commons.mixer, 0 + i);
 
                 // set registers changes
-                state.status.changed |= (
+                set_bits(state.status.changed,
                     1 << (A_Fine + 2 * i) | 1 << (A_Coarse + 2 * i) |
-                    1 << (A_Duty + i) | 1 << Mixer
-                );
+                    1 << (A_Duty + i) | 1 << Mixer);
             }
         }
     }
@@ -508,7 +518,7 @@ void PSG::write_state_to_chip()
         bool switch_banks = false;
         for (uint8_t reg = BankB_Fst; reg < BankB_Lst; ++reg)
         {
-            if (state.status.changed & (1 << reg))
+            if (isb_set(state.status.changed, reg))
             {
                 if (!switch_banks)
                 {
@@ -534,7 +544,7 @@ void PSG::write_state_to_chip()
 
     for (uint8_t reg = BankA_Fst; reg <= BankA_Lst; ++reg)
     {
-        if (state.status.changed & (1 << reg))
+        if (isb_set(state.status.changed, reg))
         {
             GetRegister(reg, data);
             Address(reg & 0x0F);

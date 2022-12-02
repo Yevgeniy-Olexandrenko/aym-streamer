@@ -90,12 +90,14 @@ static inline void set_control_bus_inact() { res_bits(BUS_PORT, 1 << BDIR_PIN | 
 // Low Level Interface
 // -----------------------------------------------------------------------------
 
-void PSG::Init()
+void PSG::Init(uint8_t id)
 {
+    // start debug output
     dbg_open(9600);
 
-    // setup reset
-    set_bit(RES_DDR,  RES_PIN);
+    // setup id and reset
+    m_id = (id << 5);
+    set_bit(RES_DDR, RES_PIN);
     Reset();
 
     // setup control and data bus
@@ -107,36 +109,23 @@ void PSG::Init()
 
     // setup clock and reset
     set_bit(CLK_DDR, CLK_PIN);
-    SetClock(F1_77MHZ);
+    if (!s_rclock) SetClock(F1_77MHZ);
     Reset();
 
     // print clock configuration
+#if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
     dbg_print_str(F("PSG chip clock:\n"));
-    dbg_print_str(F("virt: "));
-    dbg_print_num(m_vclock);
-    dbg_print_str(F("\nreal: "));
-    dbg_print_num(m_rclock);
+    dbg_print_str(F("virt: ")); dbg_print_num(s_vclock); dbg_print_ln();
+    dbg_print_str(F("real: ")); dbg_print_num(s_rclock); dbg_print_ln();
+#else
+    dbg_print_str(F("PSG chip clock:\n"));
+    dbg_print_num(s_rclock);
     dbg_print_ln();
+#endif
 
+    // stop debug output
     dbg_print_ln();
     dbg_close();
-}
-
-void PSG::SetClock(uint32_t clock)
-{
-    if (clock >= F1_00MHZ && clock <= F2_00MHZ)
-    {
-        // compute real and virtual clock
-        uint8_t divider = (F_CPU / clock);
-        m_rclock = (F_CPU / divider);
-        m_vclock = clock;
-
-        // configure Timer2 as clock source
-        TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
-        TCCR2B = (1 << WGM22 ) | (1 << CS20 );
-        OCR2A  = (divider - 1);
-        OCR2B  = (divider / 2);
-    }
 }
 
 void PSG::Reset()
@@ -149,6 +138,8 @@ void PSG::Reset()
 
 void PSG::Address(uint8_t reg)
 {
+    reg &= 0x1F; // register range 0x00-0x1F
+    reg |= m_id; // chip idx range 0x00-0xE0
     set_data_bus(reg);
     set_control_bus_addr();
     control_bus_delay(tAS);
@@ -174,6 +165,34 @@ void PSG::Read(uint8_t& data)
     get_data_bus(data);
     set_control_bus_inact();
     control_bus_delay(tTS);
+}
+
+void PSG::SetClock(Clock clock)
+{
+    if (clock >= F1_00MHZ && clock <= F2_00MHZ)
+    {
+#if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
+        s_vclock = clock;
+#endif
+        // compute divider and real clock rate
+        uint8_t divider = (F_CPU / clock);
+        s_rclock = (F_CPU / divider);
+
+        // configure Timer2 as a clock source
+        TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
+        TCCR2B = (1 << WGM22 ) | (1 << CS20 );
+        OCR2A  = (divider - 1);
+        OCR2B  = (divider / 2);
+    }
+}
+
+Clock PSG::GetClock()
+{
+#if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
+    return s_vclock;
+#else
+    return s_rclock;
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -204,7 +223,7 @@ bool PSG::IsReady() const
 
 void PSG::SetRegister(uint8_t reg, uint8_t data)
 {
-#ifdef PSG_PROCESSING
+#if defined(PSG_PROCESSING)
     State& state = m_states[m_sindex];
     if ((reg & 0x0F) == Mode_Bank)
     {
@@ -256,14 +275,14 @@ void PSG::SetRegister(uint8_t reg, uint8_t data)
     // mark register as changed
     set_bit(state.status.changed, reg);
 #else
-    Address(reg);
+    Address(reg & 0x0F);
     Write(data);
 #endif
 }
 
 void PSG::GetRegister(uint8_t reg, uint8_t& data) const
 {
-#ifdef PSG_PROCESSING
+#if defined(PSG_PROCESSING)
     const State& state = m_states[m_sindex];
     if (reg < BankB_Fst && reg != Mode_Bank && state.status.exp_mode == 0xB0)
     {
@@ -311,14 +330,27 @@ void PSG::GetRegister(uint8_t reg, uint8_t& data) const
         data |= state.status.exp_mode;
     }
 #else
-    Address(reg);
+    Address(reg & 0x0F);
     Read(data);
 #endif
 }
 
+#if defined(PSG_PROCESSING)
+void PSG::SetStereo(Stereo stereo)
+{
+#if defined(PSG_CHANNELS_REMAPPING)
+    m_sstereo = stereo;
+    m_dstereo = stereo;
+#endif
+}
+
+Stereo PSG::GetStereo() const
+{
+    return m_dstereo;
+}
+
 void PSG::Update()
 {
-#if defined(PSG_PROCESSING)
     if (IsReady() && m_states[0].status.changed)
     {
         m_states[1] = m_states[0];
@@ -332,16 +364,16 @@ void PSG::Update()
         m_states[0].status.changed = 0;
         m_sindex = 0;
     }
-#endif
 }
+#endif
 
 // -----------------------------------------------------------------------------
-// Privates
+// Privates - Chip Detection
 // -----------------------------------------------------------------------------
 
 void PSG::detect()
 {
-    // perform detection by a series of tests
+    // detect chip using a series of tests
     dbg_print_str(F("Testing result dump:\n"));
     reset_hash();
     do_test_wr_rd_regs(0x00);
@@ -368,7 +400,7 @@ void PSG::detect()
     case Type::AY8930:     dbg_print_str(F("Microchip AY8930\n")); break;
     case Type::YM2149F:    dbg_print_str(F("Yamaha YM2149F\n")); break;
     case Type::AVRAY_FW26: dbg_print_str(F("Emulator AVR-AY (FW:26)\n")); break;
-    default: dbg_print_str(F("Bad or Unknown!\n")); break;
+    default:               dbg_print_str(F("Bad or Unknown!\n")); break;
     }
     dbg_print_ln();
 }
@@ -431,31 +463,40 @@ void PSG::do_test_wr_rd_extmode(uint8_t mode_bank)
     dbg_print_ln();
 }
 
+// -----------------------------------------------------------------------------
+// Privates - Chip Data Processing
+// -----------------------------------------------------------------------------
+#if defined(PSG_PROCESSING)
+
+const uint8_t e_fine  [] PROGMEM = { EA_Fine, EB_Fine, EC_Fine };
+const uint8_t e_coarse[] PROGMEM = { EA_Coarse, EB_Coarse, EC_Coarse };
+const uint8_t e_shape [] PROGMEM = { EA_Shape, EB_Shape, EC_Shape };
+
 void PSG::process_clock_conversion()
 {
-#if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
-    if (m_rclock != m_vclock)
+#if defined(PSG_CLOCK_CONVERSION)
+    if (s_rclock != s_vclock)
     {
         State& state = m_states[m_sindex];
-        uint16_t period;
+        uint16_t t_bound = (state.status.exp_mode ? 0xFFFF : 0x0FFF);
+        uint16_t n_bound = (state.status.exp_mode ? 0x00FF : 0x001F);
 
+        // safe period conversion based on clock ratio
+        const auto convert_period = [&](uint16_t& period, uint16_t bound)
+        {
+            uint32_t converted = ((period * (s_rclock >> 8) / (s_vclock >> 9) + 1) >> 1);
+            period = uint16_t(converted > bound ? bound : converted);
+        };
+
+        // convert tone and envelope periods
         for (int i = 0; i < 3; ++i)
         {
-            // convert tone period
-            period = state.channels[i].t_period.full;
-            period = uint16_t((period * (m_rclock >> 8) / (m_vclock >> 9) + 1) >> 1);
-            state.channels[i].t_period.full = period;
-
-            // convert envelope period
-            period = state.channels[i].e_period.full;
-            period = uint16_t((period * (m_rclock >> 8) / (m_vclock >> 9) + 1) >> 1);
-            state.channels[i].e_period.full = period;
+            convert_period(state.channels[i].t_period.full, t_bound);
+            convert_period(state.channels[i].e_period.full, 0xFFFF);
         }
 
         // convert noise period
-        period = state.commons.n_period;
-        period = uint16_t((period * (m_rclock >> 8) / (m_vclock >> 9) + 1) >> 1);
-        state.commons.n_period = period;
+        convert_period(state.commons.n_period, n_bound);
 
         // set period registers as changed
         set_bits(state.status.changed,
@@ -468,14 +509,94 @@ void PSG::process_clock_conversion()
 
 void PSG::process_channels_remapping()
 {
-#if defined(PSG_PROCESSING) && defined(PSG_CHANNELS_REMAPPING)
-    // TODO
+#if defined(PSG_CHANNELS_REMAPPING)
+    State& state = m_states[m_sindex];
+
+    // restrict stereo modes available for exp mode
+    m_dstereo = (state.status.exp_mode && m_sstereo != Stereo::ABC && m_sstereo != Stereo::ACB)
+        ? Stereo::ABC
+        : m_sstereo;
+
+    if (m_dstereo != Stereo::ABC)
+    {
+        const auto swap_register = [&](uint8_t reg_l, uint8_t reg_r)
+        {
+            uint8_t data_l, data_r;
+            GetRegister(reg_l, data_l);
+            GetRegister(reg_r, data_r);
+            SetRegister(reg_l, data_r);
+            SetRegister(reg_r, data_l);
+        };
+
+        const auto swap_channels = [&](uint8_t l, uint8_t r)
+        {
+            // swap tone period and tone volume/envelope enable
+            swap_register(A_Fine   + 2 * l, A_Fine   + 2 * r);
+            swap_register(A_Coarse + 2 * l, A_Coarse + 2 * r);
+            swap_register(A_Volume + l, A_Volume + r);
+
+            if (state.status.exp_mode)
+            {
+                // swap tone duty cycle and envelope period
+                swap_register(A_Duty + l, A_Duty + r);
+                swap_register(pgm_read_byte(e_fine + l), pgm_read_byte(e_fine + r));
+                swap_register(pgm_read_byte(e_coarse + l), pgm_read_byte(e_coarse + r));
+
+                // swap envelope shape
+                uint8_t shape_l = pgm_read_byte(e_shape + l);
+                uint8_t shape_r = pgm_read_byte(e_shape + r);
+                bool schanged_l = isb_set(state.status.changed, shape_l);
+                bool schanged_r = isb_set(state.status.changed, shape_r);
+                swap_register(shape_l, shape_r);
+                if (schanged_l) set_bit(state.status.changed, shape_r); 
+                else res_bit(state.status.changed, shape_r);
+                if (schanged_r) set_bit(state.status.changed, shape_l); 
+                else res_bit(state.status.changed, shape_l);
+            }
+
+            // swap bits in mixer register
+            uint8_t msk_l = (0b00001001 << l);
+            uint8_t msk_r = (0b00001001 << r);
+            uint8_t mix_l = ((state.commons.mixer & msk_l) >> l);
+            uint8_t mix_r = ((state.commons.mixer & msk_r) >> r);
+            res_bits(state.commons.mixer, msk_l | msk_r);
+            set_bits(state.commons.mixer, mix_l << r);
+            set_bits(state.commons.mixer, mix_r << l);
+            set_bit(state.status.changed, Mixer);
+        };
+
+        // swap channels in pairs
+        switch(m_dstereo)
+        {
+        case Stereo::ACB:
+            swap_channels(1, 2); // B <-> C
+            break;
+
+        case Stereo::BAC:
+            swap_channels(0, 1); // A <-> B
+            break;
+
+        case Stereo::BCA:
+            swap_channels(0, 1); // A <-> B
+            swap_channels(1, 2); // B <-> C
+            break;
+
+        case Stereo::CAB:
+            swap_channels(1, 2); // B <-> C
+            swap_channels(0, 1); // A <-> B
+            break;
+
+        case Stereo::CBA:
+            swap_channels(0, 2); // A <-> C
+            break;
+        }
+    }
 #endif
 }
 
 void PSG::process_ay8930_envelope_fix()
 {
-#if defined(PSG_PROCESSING) && defined(PSG_AY8930_ENVELOPE_FIX)
+#if defined(PSG_AY8930_ENVELOPE_FIX)
     if (GetType() == Type::AY8930)
     {
         State& state = m_states[m_sindex];
@@ -509,7 +630,6 @@ void PSG::process_ay8930_envelope_fix()
 
 void PSG::write_state_to_chip()
 {
-#if defined(PSG_PROCESSING)
     State& state = m_states[m_sindex];
     uint8_t data;
 
@@ -551,5 +671,6 @@ void PSG::write_state_to_chip()
             Write(data);
         }
     }
-#endif
 }
+
+#endif

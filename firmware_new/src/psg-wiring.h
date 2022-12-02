@@ -28,13 +28,13 @@
 #define LSB_DDR  DDRC
 #define LSB_PORT PORTC
 #define LSB_PIN  PINC
-#define LSB_MASK 0x0F
+#define LSB_MASK 0b00001111
 
 // data bus bits DA4-DA7 (Arduino pins D4-D7)
 #define MSB_DDR  DDRD
 #define MSB_PORT PORTD
 #define MSB_PIN  PIND
-#define MSB_MASK 0xF0
+#define MSB_MASK 0b11110000
 
 // control bus BC1 and BDIR signals
 #define BUS_PORT PORTB

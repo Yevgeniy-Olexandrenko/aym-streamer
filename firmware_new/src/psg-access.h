@@ -68,7 +68,7 @@ public:
         BadOrUnknown = 0xFF  // broken chip or unknown model
     };
 
-    enum
+    enum Clock
     {
         F1_00MHZ = 1000000, // Amstrad CPC
         F1_50MHZ = 1500000, // Vetrex console
@@ -77,19 +77,23 @@ public:
         F2_00MHZ = 2000000  // Atari ST
     };
 
+    enum class Stereo { ABC, ACB, BAC, BCA, CAB, CBA };
+
     PSG();
 
 // -----------------------------------------------------------------------------
 // Low Level Interface
 // -----------------------------------------------------------------------------
 public:
-    void Init();
-    void SetClock(uint32_t clock);
-
+    void Init(uint8_t id = 0);
     void Reset();
     void Address(uint8_t data);
     void Write(uint8_t data);
     void Read(uint8_t& data);
+
+    // all PSGs share the same clock rate
+    static void  SetClock(Clock clock);
+    static Clock GetClock();
 
 // -----------------------------------------------------------------------------
 // High Level Interface
@@ -97,9 +101,14 @@ public:
 public:
     Type GetType() const;
     bool IsReady() const;
-    void SetRegister(uint8_t reg, uint8_t data);
+    void SetRegister(uint8_t reg, uint8_t  data);
     void GetRegister(uint8_t reg, uint8_t& data) const;
-    void Update();
+
+#if defined(PSG_PROCESSING)
+    void   SetStereo(Stereo stereo);
+    Stereo GetStereo() const;
+    void   Update();
+#endif  
 
 // -----------------------------------------------------------------------------
 // Privates
@@ -111,13 +120,19 @@ private:
     void do_test_wr_rd_regs(uint8_t offset);
     void do_test_wr_rd_latch(uint8_t offset);
     void do_test_wr_rd_extmode(uint8_t mode_bank);
+
+    uint8_t  m_id;
+    uint32_t m_hash;
+
+    // all PSGs share the same clock rate
+    static uint32_t s_rclock = 0;
+
+#if defined(PSG_PROCESSING)
     void process_clock_conversion();
     void process_channels_remapping();
     void process_ay8930_envelope_fix();
     void write_state_to_chip();
 
-private:
-#ifdef PSG_PROCESSING
     union Period
     {
         uint16_t full;
@@ -154,11 +169,12 @@ private:
         Status  status;
     };
 
-    State m_states[2];
-    uint8_t m_sindex;
-#endif
+    // all PSGs share the same clock rate
+    static uint32_t s_vclock = 0;
 
-    uint32_t m_hash;
-    uint32_t m_vclock;
-    uint32_t m_rclock;
+    Stereo   m_sstereo = Stereo::ABC;
+    Stereo   m_dstereo = Stereo::ABC;
+    State    m_states[2];
+    uint8_t  m_sindex;
+#endif
 };

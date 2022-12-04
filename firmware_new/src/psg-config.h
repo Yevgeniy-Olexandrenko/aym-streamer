@@ -4,7 +4,7 @@
 
 // features
 #define PSG_UART_DEBUG
-#define PSG_PROCESSING
+//#define PSG_PROCESSING
 
 // processing
 #define PSG_CLOCK_CONVERSION

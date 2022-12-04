@@ -49,6 +49,8 @@ PSG::PSG()
 {
 }
 
+uint32_t PSG::s_rclock = 0;
+
 // -----------------------------------------------------------------------------
 // Control Bus and Data Bus handling
 // -----------------------------------------------------------------------------
@@ -90,13 +92,12 @@ static inline void set_control_bus_inact() { res_bits(BUS_PORT, 1 << BDIR_PIN | 
 // Low Level Interface
 // -----------------------------------------------------------------------------
 
-void PSG::Init(uint8_t id)
+void PSG::Init()
 {
     // start debug output
     dbg_open(9600);
 
-    // setup id and reset
-    m_id = (id << 5);
+    // setup reset
     set_bit(RES_DDR, RES_PIN);
     Reset();
 
@@ -138,8 +139,6 @@ void PSG::Reset()
 
 void PSG::Address(uint8_t reg)
 {
-    reg &= 0x1F; // register range 0x00-0x1F
-    reg |= m_id; // chip idx range 0x00-0xE0
     set_data_bus(reg);
     set_control_bus_addr();
     control_bus_delay(tAS);
@@ -167,7 +166,7 @@ void PSG::Read(uint8_t& data)
     control_bus_delay(tTS);
 }
 
-void PSG::SetClock(Clock clock)
+void PSG::SetClock(uint32_t clock)
 {
     if (clock >= F1_00MHZ && clock <= F2_00MHZ)
     {
@@ -186,7 +185,7 @@ void PSG::SetClock(Clock clock)
     }
 }
 
-Clock PSG::GetClock()
+uint32_t PSG::GetClock()
 {
 #if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
     return s_vclock;
@@ -344,7 +343,7 @@ void PSG::SetStereo(Stereo stereo)
 #endif
 }
 
-Stereo PSG::GetStereo() const
+PSG::Stereo PSG::GetStereo() const
 {
     return m_dstereo;
 }
@@ -468,9 +467,11 @@ void PSG::do_test_wr_rd_extmode(uint8_t mode_bank)
 // -----------------------------------------------------------------------------
 #if defined(PSG_PROCESSING)
 
-const uint8_t e_fine  [] PROGMEM = { EA_Fine, EB_Fine, EC_Fine };
-const uint8_t e_coarse[] PROGMEM = { EA_Coarse, EB_Coarse, EC_Coarse };
-const uint8_t e_shape [] PROGMEM = { EA_Shape, EB_Shape, EC_Shape };
+static const uint8_t e_fine  [] PROGMEM = { PSG::EA_Fine,   PSG::EB_Fine,   PSG::EC_Fine   };
+static const uint8_t e_coarse[] PROGMEM = { PSG::EA_Coarse, PSG::EB_Coarse, PSG::EC_Coarse };
+static const uint8_t e_shape [] PROGMEM = { PSG::EA_Shape,  PSG::EB_Shape,  PSG::EC_Shape  };
+
+uint32_t PSG::s_vclock = 0;
 
 void PSG::process_clock_conversion()
 {
@@ -496,7 +497,9 @@ void PSG::process_clock_conversion()
         }
 
         // convert noise period
-        convert_period(state.commons.n_period, n_bound);
+        uint16_t period = state.commons.n_period;
+        convert_period(period, n_bound);
+        state.commons.n_period = uint8_t(period);
 
         // set period registers as changed
         set_bits(state.status.changed,

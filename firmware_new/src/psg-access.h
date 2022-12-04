@@ -68,7 +68,7 @@ public:
         BadOrUnknown = 0xFF  // broken chip or unknown model
     };
 
-    enum Clock
+    enum
     {
         F1_00MHZ = 1000000, // Amstrad CPC
         F1_50MHZ = 1500000, // Vetrex console
@@ -85,15 +85,15 @@ public:
 // Low Level Interface
 // -----------------------------------------------------------------------------
 public:
-    void Init(uint8_t id = 0);
+    void Init();
     void Reset();
     void Address(uint8_t data);
     void Write(uint8_t data);
     void Read(uint8_t& data);
 
     // all PSGs share the same clock rate
-    static void  SetClock(Clock clock);
-    static Clock GetClock();
+    static void SetClock(uint32_t clock);
+    static uint32_t GetClock();
 
 // -----------------------------------------------------------------------------
 // High Level Interface
@@ -121,11 +121,10 @@ private:
     void do_test_wr_rd_latch(uint8_t offset);
     void do_test_wr_rd_extmode(uint8_t mode_bank);
 
-    uint8_t  m_id;
     uint32_t m_hash;
 
     // all PSGs share the same clock rate
-    static uint32_t s_rclock = 0;
+    static uint32_t s_rclock;
 
 #if defined(PSG_PROCESSING)
     void process_clock_conversion();
@@ -170,7 +169,7 @@ private:
     };
 
     // all PSGs share the same clock rate
-    static uint32_t s_vclock = 0;
+    static uint32_t s_vclock;
 
     Stereo   m_sstereo = Stereo::ABC;
     Stereo   m_dstereo = Stereo::ABC;

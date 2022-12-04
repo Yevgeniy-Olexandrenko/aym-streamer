@@ -1,22 +1,52 @@
 #include "src/psg-access.h"
-
-PSG psg;
+#include "src/uart.h"
 
 #if 1
+volatile PSG psg;
+volatile uint8_t reg;
+
 void setup()
 {
-    uint8_t data = 0;
-   
+    PSG::SetClock(PSG::F1_75MHZ);
     psg.Init();
-    psg.SetRegister(0, data);
-    psg.GetRegister(0, data);
-    psg.Update();
+    //psg.SetStereo(PSG::Stereo::ACB);
+    
+    reg = 0xFF;
+    UART_Open(57000);
+    UART_EnableRXInt(true);
+    sei();
 }
 
 void loop()
 {
     //
 }
+
+ISR(USART_RX_vect)
+{
+    uint8_t data = UDR0;
+    if (bit_is_clear(UCSR0A, FE0))
+    {
+        if (reg < 0x10)
+        {
+            // received data for register
+            psg.SetRegister(reg, data);
+            reg = 0xFF;
+        }
+        else if (data < 0x10)
+        {
+            // received register number
+            reg = data;
+        }
+        else if (data == 0xFF)
+        {
+            // expected register number, but
+            // received end-of-frame marker
+            psg.Update();
+        }
+    }
+}
+
 #else
 #include "src/research/play-pt2.h"
 #include "src/research/demo-music4.h"

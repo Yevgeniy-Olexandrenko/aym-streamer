@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <util/delay.h>
 #include "psg-access.h"
 #include "psg-wiring.h"

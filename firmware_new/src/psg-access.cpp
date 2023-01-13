@@ -5,6 +5,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <util/delay.h>
+#include <string.h>
 #include "psg-access.h"
 #include "psg-wiring.h"
 
@@ -51,6 +52,7 @@ PSG::PSG()
 }
 
 uint32_t PSG::s_rclock = 0;
+uint32_t PSG::s_vclock = 0;
 
 // -----------------------------------------------------------------------------
 // Control Bus and Data Bus handling
@@ -136,6 +138,7 @@ void PSG::Reset()
     control_bus_delay(tRW);
     set_bit(RES_PORT, RES_PIN);
     control_bus_delay(tRB);
+    reset_input_state();
 }
 
 void PSG::Address(uint8_t reg)
@@ -171,12 +174,10 @@ void PSG::SetClock(uint32_t clock)
 {
     if (clock >= F1_00MHZ && clock <= F2_00MHZ)
     {
-#if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
-        s_vclock = clock;
-#endif
         // compute divider and real clock rate
         uint8_t divider = (F_CPU / clock);
         s_rclock = (F_CPU / divider);
+        s_vclock = clock;
 
         // configure Timer2 as a clock source
         TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
@@ -198,6 +199,8 @@ uint32_t PSG::GetClock()
 // -----------------------------------------------------------------------------
 // High Level Interface
 // -----------------------------------------------------------------------------
+
+enum { INPUT = 0, OUTPUT = 1 };
 
 PSG::Type PSG::GetType() const
 {
@@ -221,124 +224,9 @@ bool PSG::IsReady() const
     return (type != Type::NotFound && type != Type::BadOrUnknown);
 }
 
-void PSG::SetRegister(uint8_t reg, uint8_t data)
-{
-#if defined(PSG_PROCESSING)
-    State& state = m_states[m_sindex];
-    if ((reg & 0x0F) == Mode_Bank)
-    {
-        // preserve expanded mode and bank of registers
-        // separately from shape of channel A envelope
-        state.status.exp_mode = (data & 0xF0);
-        data &= 0x0F; reg = Mode_Bank;
-    }
-
-    if (reg < BankB_Fst && reg != Mode_Bank && state.status.exp_mode == 0xB0)
-    {
-        // redirect access to registers of bank B if 
-        // expanded mode is active and bank B is selected
-        reg += BankB_Fst;
-    }
-
-    switch(reg)
-    {
-        // bank A
-        case A_Fine:    state.channels[0].t_period.fine = data; break;
-        case A_Coarse:  state.channels[0].t_period.coarse = data; break;
-        case B_Fine:    state.channels[1].t_period.fine = data; break;
-        case B_Coarse:  state.channels[1].t_period.coarse = data; break;
-        case C_Fine:    state.channels[2].t_period.fine = data; break;
-        case C_Coarse:  state.channels[2].t_period.coarse = data; break;
-        case N_Period:  state.commons.n_period = data; break;
-        case Mixer:     state.commons.mixer = data; break;
-        case A_Volume:  state.channels[0].t_volume = data; break;
-        case B_Volume:  state.channels[1].t_volume = data; break;
-        case C_Volume:  state.channels[2].t_volume = data; break;
-        case EA_Fine:   state.channels[0].e_period.fine = data; break;
-        case EA_Coarse: state.channels[0].e_period.coarse = data; break;
-        case EA_Shape:  state.channels[0].e_shape = data; break;
-
-        // bank B
-        case EB_Fine:   state.channels[1].e_period.fine = data; break;
-        case EB_Coarse: state.channels[1].e_period.coarse = data; break;
-        case EC_Fine:   state.channels[2].e_period.fine = data; break;
-        case EC_Coarse: state.channels[2].e_period.coarse = data; break;
-        case EB_Shape:  state.channels[1].e_shape = data; break;
-        case EC_Shape:  state.channels[2].e_shape = data; break;
-        case A_Duty:    state.channels[0].t_duty = data; break;
-        case B_Duty:    state.channels[1].t_duty = data; break;
-        case C_Duty:    state.channels[2].t_duty = data; break;
-        case N_AndMask: state.commons.n_and_mask = data; break;
-        case N_OrMask:  state.commons.n_or_mask = data; break;
-    }
-
-    // mark register as changed
-    set_bit(state.status.changed, reg);
-#else
-    Address(reg & 0x0F);
-    Write(data);
-#endif
-}
-
-void PSG::GetRegister(uint8_t reg, uint8_t& data) const
-{
-#if defined(PSG_PROCESSING)
-    const State& state = m_states[m_sindex];
-    if (reg < BankB_Fst && reg != Mode_Bank && state.status.exp_mode == 0xB0)
-    {
-        // redirect access to registers of bank B if 
-        // expanded mode is active and bank B is selected
-        reg += BankB_Fst;
-    }
-
-    switch(reg)
-    {
-        // bank A
-        case A_Fine:    data = state.channels[0].t_period.fine; break;
-        case A_Coarse:  data = state.channels[0].t_period.coarse; break;
-        case B_Fine:    data = state.channels[1].t_period.fine; break;
-        case B_Coarse:  data = state.channels[1].t_period.coarse; break;
-        case C_Fine:    data = state.channels[2].t_period.fine; break;
-        case C_Coarse:  data = state.channels[2].t_period.coarse; break;
-        case N_Period:  data = state.commons.n_period; break;
-        case Mixer:     data = state.commons.mixer; break;
-        case A_Volume:  data = state.channels[0].t_volume; break;
-        case B_Volume:  data = state.channels[1].t_volume; break;
-        case C_Volume:  data = state.channels[2].t_volume; break;
-        case EA_Fine:   data = state.channels[0].e_period.fine; break;
-        case EA_Coarse: data = state.channels[0].e_period.coarse; break;
-        case EA_Shape:  data = state.channels[0].e_shape; break;
-
-        // bank B
-        case EB_Fine:   data = state.channels[1].e_period.fine; break;
-        case EB_Coarse: data = state.channels[1].e_period.coarse; break;
-        case EC_Fine:   data = state.channels[2].e_period.fine; break;
-        case EC_Coarse: data = state.channels[2].e_period.coarse; break;
-        case EB_Shape:  data = state.channels[1].e_shape; break;
-        case EC_Shape:  data = state.channels[2].e_shape; break;
-        case A_Duty:    data = state.channels[0].t_duty; break;
-        case B_Duty:    data = state.channels[1].t_duty; break;
-        case C_Duty:    data = state.channels[2].t_duty; break;
-        case N_AndMask: data = state.commons.n_and_mask; break;
-        case N_OrMask:  data = state.commons.n_or_mask; break;
-    }
-
-    if ((reg & 0x0F) == Mode_Bank)
-    {
-        // combine current PSG mode and bank
-        // with shape of channel A envelope
-        data |= state.status.exp_mode;
-    }
-#else
-    Address(reg & 0x0F);
-    Read(data);
-#endif
-}
-
-#if defined(PSG_PROCESSING)
 void PSG::SetStereo(Stereo stereo)
 {
-#if defined(PSG_CHANNELS_REMAPPING)
+#if defined(PSG_PROCESSING) && defined(PSG_CHANNELS_REMAPPING)
     m_sstereo = stereo;
     m_dstereo = stereo;
 #endif
@@ -349,23 +237,154 @@ PSG::Stereo PSG::GetStereo() const
     return m_dstereo;
 }
 
+// set register data indirectly via bank switching
+void PSG::SetRegister(uint8_t reg, uint8_t data)
+{
+    State& state = m_states[m_sindex];
+
+    // register number must be in range 0x00-0x0F
+    if (reg < 0x10)
+    {
+        // redirect access to registers of bank B if
+        // exp mode is active and bank B is selected
+        if (state.status.exp_mode == 0xB0)
+        {
+            reg += BankB_Fst;
+        }
+        SetRegister(Reg(reg), data);
+    }
+}
+
+// get register data indirectly via bank switching
+void PSG::GetRegister(uint8_t reg, uint8_t& data) const
+{
+    const State& state = m_states[m_sindex];
+
+    // register number must be in range 0x00-0x0F
+    if (reg < 0x10)
+    {
+        // redirect access to registers of bank B if
+        // exp mode is active and bank B is selected
+        if (state.status.exp_mode == 0xB0)
+        {
+            reg += BankB_Fst;
+        }
+        GetRegister(Reg(reg), data);
+    }
+}
+
+// set register data directly
+void PSG::SetRegister(Reg reg, uint8_t  data)
+{
+    State& state = m_states[m_sindex];
+
+    // preserve the state of exp mode and bank of regs
+    // separately from the shape of channel A envelope
+    if ((uint8_t(reg) & 0x0F) == Mode_Bank)
+    {
+        state.status.exp_mode = (data & 0xF0);
+        data &= 0x0F; reg = Reg::Mode_Bank;
+    }
+
+    // map register to corresponding field of state
+    switch(reg)
+    {
+        // bank A
+        case Reg::A_Fine:    state.channels[0].t_period.fine = data; break;
+        case Reg::A_Coarse:  state.channels[0].t_period.coarse = data; break;
+        case Reg::B_Fine:    state.channels[1].t_period.fine = data; break;
+        case Reg::B_Coarse:  state.channels[1].t_period.coarse = data; break;
+        case Reg::C_Fine:    state.channels[2].t_period.fine = data; break;
+        case Reg::C_Coarse:  state.channels[2].t_period.coarse = data; break;
+        case Reg::N_Period:  state.commons.n_period = data; break;
+        case Reg::Mixer:     state.commons.mixer = data; break;
+        case Reg::A_Volume:  state.channels[0].t_volume = data; break;
+        case Reg::B_Volume:  state.channels[1].t_volume = data; break;
+        case Reg::C_Volume:  state.channels[2].t_volume = data; break;
+        case Reg::EA_Fine:   state.channels[0].e_period.fine = data; break;
+        case Reg::EA_Coarse: state.channels[0].e_period.coarse = data; break;
+        case Reg::EA_Shape:  state.channels[0].e_shape = data; break;
+
+        // bank B
+        case Reg::EB_Fine:   state.channels[1].e_period.fine = data; break;
+        case Reg::EB_Coarse: state.channels[1].e_period.coarse = data; break;
+        case Reg::EC_Fine:   state.channels[2].e_period.fine = data; break;
+        case Reg::EC_Coarse: state.channels[2].e_period.coarse = data; break;
+        case Reg::EB_Shape:  state.channels[1].e_shape = data; break;
+        case Reg::EC_Shape:  state.channels[2].e_shape = data; break;
+        case Reg::A_Duty:    state.channels[0].t_duty = data; break;
+        case Reg::B_Duty:    state.channels[1].t_duty = data; break;
+        case Reg::C_Duty:    state.channels[2].t_duty = data; break;
+        case Reg::N_AndMask: state.commons.n_and_mask = data; break;
+        case Reg::N_OrMask:  state.commons.n_or_mask = data; break;
+    }
+
+    // mark register as changed
+    set_bit(state.status.changed, uint8_t(reg));
+}
+
+// get register data directly
+void PSG::GetRegister(Reg reg, uint8_t& data) const
+{
+    const State& state = m_states[m_sindex];
+
+    // map register to corresponding field of state
+    switch(reg)
+    {
+        // bank A
+        case Reg::A_Fine:    data = state.channels[0].t_period.fine; break;
+        case Reg::A_Coarse:  data = state.channels[0].t_period.coarse; break;
+        case Reg::B_Fine:    data = state.channels[1].t_period.fine; break;
+        case Reg::B_Coarse:  data = state.channels[1].t_period.coarse; break;
+        case Reg::C_Fine:    data = state.channels[2].t_period.fine; break;
+        case Reg::C_Coarse:  data = state.channels[2].t_period.coarse; break;
+        case Reg::N_Period:  data = state.commons.n_period; break;
+        case Reg::Mixer:     data = state.commons.mixer; break;
+        case Reg::A_Volume:  data = state.channels[0].t_volume; break;
+        case Reg::B_Volume:  data = state.channels[1].t_volume; break;
+        case Reg::C_Volume:  data = state.channels[2].t_volume; break;
+        case Reg::EA_Fine:   data = state.channels[0].e_period.fine; break;
+        case Reg::EA_Coarse: data = state.channels[0].e_period.coarse; break;
+        case Reg::EA_Shape:  data = state.channels[0].e_shape; break;
+
+        // bank B
+        case Reg::EB_Fine:   data = state.channels[1].e_period.fine; break;
+        case Reg::EB_Coarse: data = state.channels[1].e_period.coarse; break;
+        case Reg::EC_Fine:   data = state.channels[2].e_period.fine; break;
+        case Reg::EC_Coarse: data = state.channels[2].e_period.coarse; break;
+        case Reg::EB_Shape:  data = state.channels[1].e_shape; break;
+        case Reg::EC_Shape:  data = state.channels[2].e_shape; break;
+        case Reg::A_Duty:    data = state.channels[0].t_duty; break;
+        case Reg::B_Duty:    data = state.channels[1].t_duty; break;
+        case Reg::C_Duty:    data = state.channels[2].t_duty; break;
+        case Reg::N_AndMask: data = state.commons.n_and_mask; break;
+        case Reg::N_OrMask:  data = state.commons.n_or_mask; break;
+    }
+
+    // combine the current state of exp mode and bank
+    // of regs with the shape of channel A envelope
+    if ((uint8_t(reg) & 0x0F) == Mode_Bank)
+    {
+        data |= state.status.exp_mode;
+    }
+}
+
 void PSG::Update()
 {
-    if (IsReady() && m_states[0].status.changed)
+    if (IsReady() && m_states[INPUT].status.changed)
     {
-        m_states[1] = m_states[0];
-        m_sindex = 1;
+        m_states[OUTPUT] = m_states[INPUT];
+        m_sindex = OUTPUT;
 
         process_clock_conversion();
         process_channels_remapping();
         process_ay8930_envelope_fix();
-        write_state_to_chip();
+        write_output_state();
 
-        m_states[0].status.changed = 0;
-        m_sindex = 0;
+        m_states[INPUT].status.changed = 0;
+        m_sindex = INPUT;
     }
 }
-#endif
 
 // -----------------------------------------------------------------------------
 // Privates - Chip Detection
@@ -412,14 +431,14 @@ void PSG::do_test_wr_rd_regs(uint8_t offset)
 {
     for (uint8_t data, reg = offset; reg < (offset + 16); ++reg)
     {
-        data = (reg == Mixer ? 0x3F : (reg == Mode_Bank ? 0x0F : 0xFF));
-        Address(reg);
-        Write(data);
+        data = 0xFF;
+        if (Reg(reg) == Reg::Mixer) data = 0x3F;
+        if (Reg(reg) == Reg::Mode_Bank) data = 0x0F;
+        Address(reg); Write(data);
     }
     for (uint8_t data, reg = offset; reg < (offset + 16); ++reg)
     {
-        Address(reg);
-        Read(data);
+        Address(reg); Read(data);
         update_hash(data);
         dbg_print_byte(data);
         dbg_print_sp();
@@ -431,10 +450,10 @@ void PSG::do_test_wr_rd_latch(uint8_t offset)
 {
     for (uint8_t data, reg = offset; reg < (offset + 16); ++reg)
     {
-        data = (reg == Mixer ? 0x3F : (reg == Mode_Bank ? 0x0F : 0xFF));
-        Address(reg);
-        Write(data);
-        Read(data);
+        data = 0xFF;
+        if (Reg(reg) == Reg::Mixer) data = 0x3F;
+        if (Reg(reg) == Reg::Mode_Bank) data = 0x0F;
+        Address(reg); Write(data); Read(data);
         update_hash(data);
         dbg_print_byte(data);
         dbg_print_sp();
@@ -444,18 +463,15 @@ void PSG::do_test_wr_rd_latch(uint8_t offset)
 
 void PSG::do_test_wr_rd_extmode(uint8_t mode_bank)
 {
-    Address(Mode_Bank);
-    Write(mode_bank | 0x0F);
+    Address(Mode_Bank); Write(mode_bank | 0x0F);
     for (uint8_t reg = 0; reg < 16 - 2; ++reg)
     {
         if (reg == Mode_Bank) continue;
-        Address(reg);
-        Write(0xFF);
+        Address(reg); Write(0xFF);
     }
     for (uint8_t data, reg = 0; reg < 16 - 2; ++reg)
     {
-        Address(reg);
-        Read(data);
+        Address(reg); Read(data);
         update_hash(data);
         dbg_print_byte(data);
         dbg_print_sp();
@@ -464,15 +480,16 @@ void PSG::do_test_wr_rd_extmode(uint8_t mode_bank)
 }
 
 // -----------------------------------------------------------------------------
-// Privates - Chip Data Processing
+// Privates - Processing output state
 // -----------------------------------------------------------------------------
+
 #if defined(PSG_PROCESSING)
 
+#if defined(PSG_CHANNELS_REMAPPING)
 static const uint8_t e_fine  [] PROGMEM = { PSG::EA_Fine,   PSG::EB_Fine,   PSG::EC_Fine   };
 static const uint8_t e_coarse[] PROGMEM = { PSG::EA_Coarse, PSG::EB_Coarse, PSG::EC_Coarse };
 static const uint8_t e_shape [] PROGMEM = { PSG::EA_Shape,  PSG::EB_Shape,  PSG::EC_Shape  };
-
-uint32_t PSG::s_vclock = 0;
+#endif
 
 void PSG::process_clock_conversion()
 {
@@ -631,50 +648,67 @@ void PSG::process_ay8930_envelope_fix()
     }
 #endif
 }
+#endif
 
-void PSG::write_state_to_chip()
+// -----------------------------------------------------------------------------
+// Privates - Handling input/output states
+// -----------------------------------------------------------------------------
+
+void PSG::reset_input_state()
 {
-    State& state = m_states[m_sindex];
-    uint8_t data;
+    memset(&m_states[0], 0, sizeof(State));
+}
+
+void PSG::write_output_state()
+{
+    const State& state = m_states[m_sindex];
+    bool switch_banks = false; uint8_t data;
 
     if (GetType() == Type::AY8930 && state.status.exp_mode)
     {
-        bool switch_banks = false;
+        // check for changes in registers of bank B
         for (uint8_t reg = BankB_Fst; reg < BankB_Lst; ++reg)
         {
-            if (isb_set(state.status.changed, reg))
+            //if (isb_set(state.status.changed, reg))
             {
+                // we have changes, so first
+                // of all we switch to bank B
                 if (!switch_banks)
                 {
                     switch_banks = true;
-                    GetRegister(Mode_Bank, data);
-                    Address(Mode_Bank); 
-                    Write(0xB0 | data);
+                    GetRegister(Reg::Mode_Bank, data);
+                    data &= 0x0F; data |= 0xB0;
+                    Address(Mode_Bank); Write(data);
                 }
 
-                GetRegister(reg, data);
-                Address(reg & 0x0F);
-                Write(data);
+                // send register data to chip (within bank B)
+                GetRegister(Reg(reg), data);
+                Address(reg & 0x0F); Write(data);
             }
         }
 
         if (switch_banks)
         {
-            GetRegister(Mode_Bank, data);
-            Address(Mode_Bank);
-            Write(0xA0 | data);
+            // we wrote something to bank B,
+            // so we switch back to bank A
+            GetRegister(Reg::Mode_Bank, data);
+            data &= 0x0F; data |= 0xA0;
+            Address(Mode_Bank); Write(data);
         }
     }
 
+    // check for changes in registers of bank A
     for (uint8_t reg = BankA_Fst; reg <= BankA_Lst; ++reg)
     {
         if (isb_set(state.status.changed, reg))
         {
-            GetRegister(reg, data);
-            Address(reg & 0x0F);
-            Write(data);
+            // skip the 'mode/bank' register if 
+            // we've done a bank switch before
+            if (switch_banks && reg == Mode_Bank) continue;
+
+            // send register data to chip (within bank A)
+            GetRegister(Reg(reg), data);
+            Address(reg & 0x0F); Write(data);
         }
     }
 }
-
-#endif

@@ -37,15 +37,13 @@ ISR(USART_RX_vect)
         {
             // received register number
             reg = data;
-        }
-#if defined(PSG_PROCESSING)        
+        }        
         else if (data == 0xFF)
         {
             // expected register number, but
             // received end-of-frame marker
             psg.Update();
         }
-#endif
     }
 }
 

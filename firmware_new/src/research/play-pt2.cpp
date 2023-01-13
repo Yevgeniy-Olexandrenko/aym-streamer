@@ -101,16 +101,16 @@ namespace PT2
         GetRegisters(m_ch[1], mixer);
         GetRegisters(m_ch[2], mixer);
 
-        m_regs[PSG::Mixer   ] = mixer;
-        m_regs[PSG::A_Fine  ] = m_ch[0].ton & 0xff;
-        m_regs[PSG::A_Coarse] = (m_ch[0].ton >> 8) & 0xf;
-        m_regs[PSG::B_Fine  ] = m_ch[1].ton & 0xff;
-        m_regs[PSG::B_Coarse] = (m_ch[1].ton >> 8) & 0xf;
-        m_regs[PSG::C_Fine  ] = m_ch[2].ton & 0xff;
-        m_regs[PSG::C_Coarse] = (m_ch[2].ton >> 8) & 0xf;
-        m_regs[PSG::A_Volume] = m_ch[0].amplitude;
-        m_regs[PSG::B_Volume] = m_ch[1].amplitude;
-        m_regs[PSG::C_Volume] = m_ch[2].amplitude;
+        // m_regs[PSG::Mixer   ] = mixer;
+        // m_regs[PSG::A_Fine  ] = m_ch[0].ton & 0xff;
+        // m_regs[PSG::A_Coarse] = (m_ch[0].ton >> 8) & 0xf;
+        // m_regs[PSG::B_Fine  ] = m_ch[1].ton & 0xff;
+        // m_regs[PSG::B_Coarse] = (m_ch[1].ton >> 8) & 0xf;
+        // m_regs[PSG::C_Fine  ] = m_ch[2].ton & 0xff;
+        // m_regs[PSG::C_Coarse] = (m_ch[2].ton >> 8) & 0xf;
+        // m_regs[PSG::A_Volume] = m_ch[0].amplitude;
+        // m_regs[PSG::B_Volume] = m_ch[1].amplitude;
+        // m_regs[PSG::C_Volume] = m_ch[2].amplitude;
     }
 
     static void PatternInterpreter(Channel& chan)
@@ -163,9 +163,9 @@ namespace PT2
             else if (val >= 0x71 && val <= 0x7e)
             {
                 chan.envelopeEnabled = true;
-                m_regs[PSG::E_Shape] = val - 0x70;
-                m_regs[PSG::E_Fine] = m_data[++chan.addressInPattern];
-                m_regs[PSG::E_Coarse] = m_data[++chan.addressInPattern];
+                // m_regs[PSG::E_Shape] = val - 0x70;
+                // m_regs[PSG::E_Fine] = m_data[++chan.addressInPattern];
+                // m_regs[PSG::E_Coarse] = m_data[++chan.addressInPattern];
             }
             else if (val == 0x70)
             {
@@ -266,7 +266,7 @@ namespace PT2
             if ((b0 & 1) != 0)
                 mixer |= 64;
             else
-                m_regs[PSG::N_Period] = ((b0 >> 3) + chan.additionToNoise) & 0x1f;
+                // m_regs[PSG::N_Period] = ((b0 >> 3) + chan.additionToNoise) & 0x1f;
 
             if ((b0 & 2) != 0)
                 mixer |= 8;

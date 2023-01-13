@@ -13,9 +13,9 @@ class PSG
 // PSG Definitions
 // -----------------------------------------------------------------------------
 public:
-    enum
+    enum class Reg
     {
-        // bank A
+        // bank A registers
         A_Fine    = 0x00, // Tone A period (fine tune)
         A_Coarse  = 0x01, // Tone A period (coarse tune)
         B_Fine    = 0x02, // Tone B period (fine tune)
@@ -31,7 +31,7 @@ public:
         EA_Coarse = 0x0C, // Envelope/AY8930 Envelope A period (coarse tune)
         EA_Shape  = 0x0D, // Envelope/AY8930 Envelope A shape + AY8930 mode/bank
 
-        // bank B
+        // bank B registers
         EB_Fine   = 0x10, // AY8930 Envelope B period (fine tune)
         EB_Coarse = 0x11, // AY8930 Envelope B period (coarse tune)
         EC_Fine   = 0x12, // AY8930 Envelope C period (fine tune)
@@ -45,17 +45,22 @@ public:
         N_OrMask  = 0x1A, // AY8930 Noise "OR" mask
 
         // aliases
-        E_Fine    = EA_Fine,
-        E_Coarse  = EA_Coarse,
-        E_Shape   = EA_Shape,
-        Mode_Bank = EA_Shape,
-        BankA_Fst = A_Fine,
-        BankA_Lst = EA_Shape,
-        BankB_Fst = EB_Fine,
-        BankB_Lst = N_OrMask
+        E_Fine    = EA_Fine,   // comp mode alias for Envelope period (fine tune) 
+        E_Coarse  = EA_Coarse, // comp mode alias for Envelope period (coarse tune) 
+        E_Shape   = EA_Shape,  // comp mode alias for Envelope shape
+        Mode_Bank = EA_Shape,  // alias for AY8930 mode/bank register
     };
 
-    enum Type
+    enum
+    {
+        Mode_Bank = uint8_t(Reg::EA_Shape), // numeric value of the AY8930 mode/bank register
+        BankA_Fst = uint8_t(Reg::A_Fine),   // numeric value of the first register in bank A
+        BankA_Lst = uint8_t(Reg::EA_Shape), // numeric value of the last register in bank A
+        BankB_Fst = uint8_t(Reg::EB_Fine),  // numeric value of the first register in bank B
+        BankB_Lst = uint8_t(Reg::N_OrMask)  // numeric value of the last register in bank B
+    };
+
+    enum class Type
     {
         NotFound     = 0x00, // chip not found
         Compatible   = 0x01, // Variants: WF19054, JFC95101, KC89C72 etc
@@ -101,14 +106,15 @@ public:
 public:
     Type GetType() const;
     bool IsReady() const;
-    void SetRegister(uint8_t reg, uint8_t  data);
-    void GetRegister(uint8_t reg, uint8_t& data) const;
 
-#if defined(PSG_PROCESSING)
     void   SetStereo(Stereo stereo);
     Stereo GetStereo() const;
-    void   Update();
-#endif  
+
+    void SetRegister(uint8_t reg, uint8_t  data);
+    void GetRegister(uint8_t reg, uint8_t& data) const;
+    void SetRegister(Reg reg, uint8_t  data);
+    void GetRegister(Reg reg, uint8_t& data) const;
+    void Update();
 
 // -----------------------------------------------------------------------------
 // Privates
@@ -120,17 +126,21 @@ private:
     void do_test_wr_rd_regs(uint8_t offset);
     void do_test_wr_rd_latch(uint8_t offset);
     void do_test_wr_rd_extmode(uint8_t mode_bank);
+    void process_clock_conversion();
+    void process_channels_remapping();
+    void process_ay8930_envelope_fix();
+    void reset_input_state();
+    void write_output_state();
 
     uint32_t m_hash;
 
     // all PSGs share the same clock rate
     static uint32_t s_rclock;
+    static uint32_t s_vclock;
 
-#if defined(PSG_PROCESSING)
-    void process_clock_conversion();
-    void process_channels_remapping();
-    void process_ay8930_envelope_fix();
-    void write_state_to_chip();
+    // by default source/destination mode is ABC
+    Stereo m_sstereo = Stereo::ABC;
+    Stereo m_dstereo = Stereo::ABC;
 
     union Period
     {
@@ -168,12 +178,6 @@ private:
         Status  status;
     };
 
-    // all PSGs share the same clock rate
-    static uint32_t s_vclock;
-
-    Stereo   m_sstereo = Stereo::ABC;
-    Stereo   m_dstereo = Stereo::ABC;
-    State    m_states[2];
-    uint8_t  m_sindex;
-#endif
+    State   m_states[2];
+    uint8_t m_sindex;
 };

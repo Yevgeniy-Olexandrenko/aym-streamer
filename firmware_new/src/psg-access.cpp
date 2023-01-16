@@ -200,7 +200,9 @@ uint32_t PSG::GetClock()
 // High Level Interface
 // -----------------------------------------------------------------------------
 
-enum { INPUT = 0, OUTPUT = 1 };
+#define INPUT  0
+#define OUTPUT 1
+#define reg_mask(reg) (UINT32_C(1) << uint8_t(reg))
 
 PSG::Type PSG::GetType() const
 {
@@ -320,7 +322,7 @@ void PSG::SetRegister(Reg reg, uint8_t  data)
     }
 
     // mark register as changed
-    set_bit(state.status.changed, uint8_t(reg));
+    state.status.changed |= reg_mask(reg);
 }
 
 // get register data directly
@@ -667,9 +669,9 @@ void PSG::write_output_state()
     if (GetType() == Type::AY8930 && state.status.exp_mode)
     {
         // check for changes in registers of bank B
-        for (uint8_t reg = BankB_Fst; reg < BankB_Lst; ++reg)
+        for (uint8_t reg = BankB_Fst; reg <= BankB_Lst; ++reg)
         {
-            //if (isb_set(state.status.changed, reg))
+            if (state.status.changed & reg_mask(reg))
             {
                 // we have changes, so first
                 // of all we switch to bank B
@@ -700,7 +702,7 @@ void PSG::write_output_state()
     // check for changes in registers of bank A
     for (uint8_t reg = BankA_Fst; reg <= BankA_Lst; ++reg)
     {
-        if (isb_set(state.status.changed, reg))
+        if (state.status.changed & reg_mask(reg))
         {
             // skip the 'mode/bank' register if 
             // we've done a bank switch before

@@ -125,10 +125,10 @@ private:
     void update_hash(uint8_t data);
     void do_test_wr_rd_regs(uint8_t offset);
     void do_test_wr_rd_latch(uint8_t offset);
-    void do_test_wr_rd_extmode(uint8_t mode_bank);
+    void do_test_wr_rd_exp_mode(uint8_t mode_bank);
     void process_clock_conversion();
     void process_channels_remapping();
-    void process_ay8930_envelope_fix();
+    void process_compat_mode_fix();
     void reset_input_state();
     void write_output_state();
 
@@ -179,5 +179,5 @@ private:
     };
 
     State   m_states[2];
-    uint8_t m_sindex;
+    uint8_t m_current;
 };

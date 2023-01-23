@@ -7,9 +7,9 @@ volatile uint8_t reg;
 
 void setup()
 {
-    PSG::SetClock(PSG::F1_75MHZ);
     psg.Init();
-    //psg.SetStereo(PSG::Stereo::ACB);
+    //psg.SetClock(PSG::F1_75MHZ);
+    //psg.SetStereo(PSG::Stereo::ABC);
     
     reg = 0xFF;
     UART_Open(57000);

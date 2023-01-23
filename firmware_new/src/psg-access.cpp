@@ -26,12 +26,11 @@
 #define tRB 100 // min 100 ns bt datasheet
 
 // helpers
-#define set_bit(reg, bit) reg |=  (1 << (bit))
-#define res_bit(reg, bit) reg &= ~(1 << (bit))
 #define set_bits(reg, bits) reg |=  (bits)
 #define res_bits(reg, bits) reg &= ~(bits)
+#define set_bit(reg, bit) reg |=  (1 << (bit))
+#define res_bit(reg, bit) reg &= ~(1 << (bit))
 #define isb_set(reg, bit) bool((reg) & (1 << (bit)))
-#define isb_res(reg, bit) !bool((reg) & (1 << (bit)))
 #define control_bus_delay(ns) _delay_us(0.001f * (ns))
 
 enum Hash
@@ -55,8 +54,25 @@ uint32_t PSG::s_rclock = 0;
 uint32_t PSG::s_vclock = 0;
 
 // -----------------------------------------------------------------------------
-// Control Bus and Data Bus handling
+// Hardware Level Signals Handling
 // -----------------------------------------------------------------------------
+
+static inline void res_chip()
+{
+    res_bit(RES_PORT, RES_PIN);
+    control_bus_delay(tRW);
+    set_bit(RES_PORT, RES_PIN);
+    control_bus_delay(tRB);
+}
+
+static inline void set_timer(uint8_t divider)
+{
+    // configure Timer2 as a clock source
+    TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
+    TCCR2B = (1 << WGM22 ) | (1 << CS20 );
+    OCR2A  = (divider - 1);
+    OCR2B  = (divider / 2);
+}
 
 static inline void get_data_bus(uint8_t& data)
 {
@@ -100,20 +116,21 @@ void PSG::Init()
     // start debug output
     dbg_open(9600);
 
-    // setup reset
-    set_bit(RES_DDR, RES_PIN);
-    Reset();
-
-    // setup control and data bus
-    set_bit(BUS_DDR, BDIR_PIN);
-    set_bit(BUS_DDR, BC1_PIN);
+    // setup hardware pins
+    set_bit(BUS_DDR, BDIR_PIN); // output
+    set_bit(BUS_DDR, BC1_PIN ); // output
+    set_bit(RES_DDR, RES_PIN ); // output
+    set_bit(CLK_DDR, CLK_PIN ); // output
     set_control_bus_inact();
     release_data_bus();
+
+    // chip type detection
+    set_timer(0xFF);
+    res_chip();
     detect();
 
-    // setup clock and reset
-    set_bit(CLK_DDR, CLK_PIN);
-    if (!s_rclock) SetClock(F1_77MHZ);
+    // set default clock and reset
+    SetClock(F1_77MHZ);
     Reset();
 
     // print clock configuration
@@ -134,10 +151,7 @@ void PSG::Init()
 
 void PSG::Reset()
 {
-    res_bit(RES_PORT, RES_PIN);
-    control_bus_delay(tRW);
-    set_bit(RES_PORT, RES_PIN);
-    control_bus_delay(tRB);
+    res_chip();
     reset_input_state();
 }
 
@@ -174,16 +188,11 @@ void PSG::SetClock(uint32_t clock)
 {
     if (clock >= F1_00MHZ && clock <= F2_00MHZ)
     {
-        // compute divider and real clock rate
         uint8_t divider = (F_CPU / clock);
+        set_timer(divider);
+
         s_rclock = (F_CPU / divider);
         s_vclock = clock;
-
-        // configure Timer2 as a clock source
-        TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
-        TCCR2B = (1 << WGM22 ) | (1 << CS20 );
-        OCR2A  = (divider - 1);
-        OCR2B  = (divider / 2);
     }
 }
 
@@ -200,9 +209,19 @@ uint32_t PSG::GetClock()
 // High Level Interface
 // -----------------------------------------------------------------------------
 
-#define INPUT  0
-#define OUTPUT 1
-#define reg_mask(reg) (UINT32_C(1) << uint8_t(reg))
+enum { INPUT, OUTPUT };
+
+template<class Reg, typename Off> 
+constexpr uint32_t to_mask(const Reg& reg, const Off& off)
+{
+    return (UINT32_C(1) << (uint8_t(reg) + uint8_t(off)));
+}
+
+template<class Reg> 
+constexpr uint32_t to_mask(const Reg& reg)
+{
+    return to_mask(reg, 0);
+}
 
 PSG::Type PSG::GetType() const
 {
@@ -242,7 +261,7 @@ PSG::Stereo PSG::GetStereo() const
 // set register data indirectly via bank switching
 void PSG::SetRegister(uint8_t reg, uint8_t data)
 {
-    State& state = m_states[m_sindex];
+    State& state = m_states[m_current];
 
     // register number must be in range 0x00-0x0F
     if (reg < 0x10)
@@ -260,7 +279,7 @@ void PSG::SetRegister(uint8_t reg, uint8_t data)
 // get register data indirectly via bank switching
 void PSG::GetRegister(uint8_t reg, uint8_t& data) const
 {
-    const State& state = m_states[m_sindex];
+    const State& state = m_states[m_current];
 
     // register number must be in range 0x00-0x0F
     if (reg < 0x10)
@@ -278,7 +297,7 @@ void PSG::GetRegister(uint8_t reg, uint8_t& data) const
 // set register data directly
 void PSG::SetRegister(Reg reg, uint8_t  data)
 {
-    State& state = m_states[m_sindex];
+    State& state = m_states[m_current];
 
     // preserve the state of exp mode and bank of regs
     // separately from the shape of channel A envelope
@@ -322,13 +341,13 @@ void PSG::SetRegister(Reg reg, uint8_t  data)
     }
 
     // mark register as changed
-    state.status.changed |= reg_mask(reg);
+    state.status.changed |= to_mask(reg);
 }
 
 // get register data directly
 void PSG::GetRegister(Reg reg, uint8_t& data) const
 {
-    const State& state = m_states[m_sindex];
+    const State& state = m_states[m_current];
 
     // map register to corresponding field of state
     switch(reg)
@@ -376,15 +395,15 @@ void PSG::Update()
     if (IsReady() && m_states[INPUT].status.changed)
     {
         m_states[OUTPUT] = m_states[INPUT];
-        m_sindex = OUTPUT;
+        m_current = OUTPUT;
 
         process_clock_conversion();
         process_channels_remapping();
-        process_ay8930_envelope_fix();
+        process_compat_mode_fix();
         write_output_state();
 
         m_states[INPUT].status.changed = 0;
-        m_sindex = INPUT;
+        m_current = INPUT;
     }
 }
 
@@ -401,8 +420,8 @@ void PSG::detect()
     do_test_wr_rd_regs(0x10);
     do_test_wr_rd_latch(0x00);
     do_test_wr_rd_latch(0x10);
-    do_test_wr_rd_extmode(0xA0);
-    do_test_wr_rd_extmode(0xB0);
+    do_test_wr_rd_exp_mode(0xA0);
+    do_test_wr_rd_exp_mode(0xB0);
 
     // print result hash
     dbg_print_str(F("\nTesting result hash:\n"));
@@ -463,7 +482,7 @@ void PSG::do_test_wr_rd_latch(uint8_t offset)
     dbg_print_ln();
 }
 
-void PSG::do_test_wr_rd_extmode(uint8_t mode_bank)
+void PSG::do_test_wr_rd_exp_mode(uint8_t mode_bank)
 {
     Address(Mode_Bank); Write(mode_bank | 0x0F);
     for (uint8_t reg = 0; reg < 16 - 2; ++reg)
@@ -617,12 +636,12 @@ void PSG::process_channels_remapping()
 #endif
 }
 
-void PSG::process_ay8930_envelope_fix()
+void PSG::process_compat_mode_fix()
 {
-#if defined(PSG_AY8930_ENVELOPE_FIX)
+#if defined(PSG_COMPAT_MODE_FIX)
     if (GetType() == Type::AY8930)
     {
-        State& state = m_states[m_sindex];
+        State& state = m_states[m_current];
         for (int i = 0; i < 3; ++i)
         {
             uint8_t volume = state.channels[i].t_volume;
@@ -643,8 +662,10 @@ void PSG::process_ay8930_envelope_fix()
 
                 // set registers changes
                 set_bits(state.status.changed,
-                    1 << (A_Fine + 2 * i) | 1 << (A_Coarse + 2 * i) |
-                    1 << (A_Duty + i) | 1 << Mixer);
+                    to_mask(Reg::A_Fine, 2 * i) | 
+                    to_mask(Reg::A_Coarse, 2 * i) |
+                    to_mask(Reg::A_Duty, i) | 
+                    to_mask(Reg::Mixer));
             }
         }
     }
@@ -658,12 +679,12 @@ void PSG::process_ay8930_envelope_fix()
 
 void PSG::reset_input_state()
 {
-    memset(&m_states[0], 0, sizeof(State));
+    memset(&m_states[INPUT], 0, sizeof(State));
 }
 
 void PSG::write_output_state()
 {
-    const State& state = m_states[m_sindex];
+    const State& state = m_states[m_current];
     bool switch_banks = false; uint8_t data;
 
     if (GetType() == Type::AY8930 && state.status.exp_mode)
@@ -671,7 +692,7 @@ void PSG::write_output_state()
         // check for changes in registers of bank B
         for (uint8_t reg = BankB_Fst; reg <= BankB_Lst; ++reg)
         {
-            if (state.status.changed & reg_mask(reg))
+            if (state.status.changed & to_mask(reg))
             {
                 // we have changes, so first
                 // of all we switch to bank B
@@ -702,7 +723,7 @@ void PSG::write_output_state()
     // check for changes in registers of bank A
     for (uint8_t reg = BankA_Fst; reg <= BankA_Lst; ++reg)
     {
-        if (state.status.changed & reg_mask(reg))
+        if (state.status.changed & to_mask(reg))
         {
             // skip the 'mode/bank' register if 
             // we've done a bank switch before

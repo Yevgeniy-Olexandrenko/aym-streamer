@@ -5,13 +5,25 @@
 #pragma once
 
 #include <stdint.h>
-#include "psg-config.h"
 
-class PSG
+// -----------------------------------------------------------------------------
+// Hardware Level Interface
+// -----------------------------------------------------------------------------
+namespace PSG
 {
+    void Init();
+    void Reset();
+    void SetClock(uint32_t clock);
+    void Address(uint8_t reg);
+    void Write(uint8_t data);
+    void Read(uint8_t& data);
+}
+
 // -----------------------------------------------------------------------------
-// PSG Definitions
+// High Level Interface
 // -----------------------------------------------------------------------------
+class SoundChip
+{
 public:
     enum class Reg
     {
@@ -73,7 +85,7 @@ public:
         BadOrUnknown = 0xFF  // broken chip or unknown model
     };
 
-    enum
+    enum Clock
     {
         F1_00MHZ = 1000000, // Amstrad CPC
         F1_50MHZ = 1500000, // Vetrex console
@@ -82,32 +94,22 @@ public:
         F2_00MHZ = 2000000  // Atari ST
     };
 
-    enum class Stereo { ABC, ACB, BAC, BCA, CAB, CBA };
+    enum class Stereo 
+    { 
+        ABC, ACB, BAC, BCA, CAB, CBA 
+    };
 
-    PSG();
-
-// -----------------------------------------------------------------------------
-// Low Level Interface
 // -----------------------------------------------------------------------------
 public:
     void Init();
     void Reset();
-    void Address(uint8_t data);
-    void Write(uint8_t data);
-    void Read(uint8_t& data);
-
-    // all PSGs share the same clock rate
-    static void SetClock(uint32_t clock);
-    static uint32_t GetClock();
-
-// -----------------------------------------------------------------------------
-// High Level Interface
-// -----------------------------------------------------------------------------
-public:
-    Type GetType() const;
     bool IsReady() const;
+    Type GetType() const;
 
-    void   SetStereo(Stereo stereo);
+    void SetClock(Clock clock);
+    Clock GetClock() const;
+
+    void SetStereo(Stereo stereo);
     Stereo GetStereo() const;
 
     void SetRegister(uint8_t reg, uint8_t  data);
@@ -117,30 +119,26 @@ public:
     void Update();
 
 // -----------------------------------------------------------------------------
-// Privates
-// -----------------------------------------------------------------------------
 private:
-    void detect();
-    void reset_hash();
+    void detect_type();
     void update_hash(uint8_t data);
     void do_test_wr_rd_regs(uint8_t offset);
     void do_test_wr_rd_latch(uint8_t offset);
     void do_test_wr_rd_exp_mode(uint8_t mode_bank);
+
     void process_clock_conversion();
     void process_channels_remapping();
     void process_compat_mode_fix();
     void reset_input_state();
     void write_output_state();
 
-    uint32_t m_hash;
-
-    // all PSGs share the same clock rate
-    static uint32_t s_rclock;
-    static uint32_t s_vclock;
-
-    // by default source/destination mode is ABC
-    Stereo m_sstereo = Stereo::ABC;
-    Stereo m_dstereo = Stereo::ABC;
+// -----------------------------------------------------------------------------
+private:
+    uint32_t m_hash = Hash::NotFound;
+    uint32_t m_rclock  = 0;
+    uint32_t m_vclock  = 0;
+    Stereo   m_sstereo = Stereo::ABC;
+    Stereo   m_dstereo = Stereo::ABC;
 
     union Period
     {

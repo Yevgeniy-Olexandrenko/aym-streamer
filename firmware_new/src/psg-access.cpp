@@ -9,29 +9,142 @@
 #include "psg-access.h"
 #include "psg-wiring.h"
 
-// debug output via UART
-#if defined(PSG_UART_DEBUG)
-#define UART_DEBUG
-#endif
-#include "uart-debug.h"
-
-// timing delays (nano seconds)
-#define tAS 800 // min 400 ns by datasheet
-#define tAH 100 // min 100 ns by datasheet
-#define tDW 500 // min 500 ns by datasheet
-#define tDH 100 // min 100 ns by datasheet
-#define tDA 500 // max 500 ns by datasheet
-#define tTS 100 // max 200 ns by datasheet
-#define tRW 500 // min 500 ns by datasheet
-#define tRB 100 // min 100 ns bt datasheet
-
 // helpers
 #define set_bits(reg, bits) reg |=  (bits)
 #define res_bits(reg, bits) reg &= ~(bits)
 #define set_bit(reg, bit) reg |=  (1 << (bit))
 #define res_bit(reg, bit) reg &= ~(1 << (bit))
 #define isb_set(reg, bit) bool((reg) & (1 << (bit)))
-#define control_bus_delay(ns) _delay_us(0.001f * (ns))
+
+// -----------------------------------------------------------------------------
+// Hardware Level Interface
+// -----------------------------------------------------------------------------
+
+namespace PSG
+{
+    enum // timing delays (nano seconds)
+    {
+        tAS = 800,
+        tAH = 100,
+        tDW = 500,
+        tDH = 100,
+        tDA = 500,
+        tTS = 100,
+        tRW = 500,
+        tRB = 100
+    }
+
+// -----------------------------------------------------------------------------
+
+    inline void get_data_bus(uint8_t& data)
+    {
+        // get bata bits from input ports
+        data = (LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
+    }
+
+    inline void set_data_bus(uint8_t data)
+    {
+        // set ports to output
+        set_bits(LSB_DDR, LSB_MASK);
+        set_bits(MSB_DDR, MSB_MASK);
+
+        // set data bits to output ports
+        LSB_PORT = (LSB_PORT & ~LSB_MASK) | (data & LSB_MASK);
+        MSB_PORT = (MSB_PORT & ~MSB_MASK) | (data & MSB_MASK);
+    }
+
+    inline void release_data_bus()
+    {
+        // setup ports to input
+        res_bits(LSB_DDR, LSB_MASK);
+        res_bits(MSB_DDR, MSB_MASK);
+
+        // enable pull-up resistors
+        set_bits(LSB_PORT, LSB_MASK);
+        set_bits(MSB_PORT, MSB_MASK);
+    }
+
+    inline void set_control_bus_addr()  { set_bits(BUS_PORT, 1 << BDIR_PIN | 1 << BC1_PIN); }
+    inline void set_control_bus_write() { set_bits(BUS_PORT, 1 << BDIR_PIN);                }
+    inline void set_control_bus_read()  { set_bits(BUS_PORT, 1 << BC1_PIN );                }
+    inline void set_control_bus_inact() { res_bits(BUS_PORT, 1 << BDIR_PIN | 1 << BC1_PIN); }
+    inline void set_control_bus_delay(int ns) { _delay_us(0.001f * ns); }
+
+    // -----------------------------------------------------------------------------
+
+    void Init()
+    {
+        static bool hw_init = false;
+        if (!hw_init)
+        {
+            // init hardware only once
+            hw_init = true;
+
+            // setup hardware pins
+            set_bit(BUS_DDR, BDIR_PIN); // output
+            set_bit(BUS_DDR, BC1_PIN ); // output
+            set_bit(RES_DDR, RES_PIN ); // output
+            set_bit(CLK_DDR, CLK_PIN ); // output
+            set_control_bus_inact();
+            release_data_bus();
+
+            // setup default clock and reset
+            SetClock(1777777); // devider is 0x09
+            Reset();
+        }
+    }
+
+    void Reset()
+    {
+        res_bit(RES_PORT, RES_PIN);
+        set_control_bus_delay(tRW);
+        set_bit(RES_PORT, RES_PIN);
+        set_control_bus_delay(tRB);
+    }
+
+    void SetClock(uint32_t clock)
+    {
+        // configure Timer2 as a clock source
+        uint8_t divider = (F_CPU / clock);
+        TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
+        TCCR2B = (1 << WGM22 ) | (1 << CS20 );
+        OCR2A  = (divider - 1);
+        OCR2B  = (divider / 2);
+    }
+
+    void Address(uint8_t reg)
+    {
+        set_data_bus(reg);
+        set_control_bus_addr();
+        set_control_bus_delay(tAS);
+        set_control_bus_inact();
+        set_control_bus_delay(tAH);
+        release_data_bus();
+    }
+
+    void Write(uint8_t data)
+    {
+        set_data_bus(data);
+        set_control_bus_write();
+        set_control_bus_delay(tDW);
+        set_control_bus_inact();
+        set_control_bus_delay(tDH);
+        release_data_bus();
+    }
+
+    void Read(uint8_t& data)
+    {
+        set_control_bus_read();
+        set_control_bus_delay(tDA);
+        get_data_bus(data);
+        set_control_bus_inact();
+        set_control_bus_delay(tTS);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// High Level Interface
+// -----------------------------------------------------------------------------
 
 enum Hash
 {
@@ -44,170 +157,6 @@ enum Hash
     YM2149F      = 0x1D750557,
     AVRAY_FW26   = 0x33333333  // TODO: not implemented
 };
-
-PSG::PSG()
-    : m_hash(Hash::NotFound)
-{
-}
-
-uint32_t PSG::s_rclock = 0;
-uint32_t PSG::s_vclock = 0;
-
-// -----------------------------------------------------------------------------
-// Hardware Level Signals Handling
-// -----------------------------------------------------------------------------
-
-static inline void res_chip()
-{
-    res_bit(RES_PORT, RES_PIN);
-    control_bus_delay(tRW);
-    set_bit(RES_PORT, RES_PIN);
-    control_bus_delay(tRB);
-}
-
-static inline void set_timer(uint8_t divider)
-{
-    // configure Timer2 as a clock source
-    TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
-    TCCR2B = (1 << WGM22 ) | (1 << CS20 );
-    OCR2A  = (divider - 1);
-    OCR2B  = (divider / 2);
-}
-
-static inline void get_data_bus(uint8_t& data)
-{
-    // get bata bits from input ports
-    data = (LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
-}
-
-static inline void set_data_bus(uint8_t data)
-{
-    // set ports to output
-    set_bits(LSB_DDR, LSB_MASK);
-    set_bits(MSB_DDR, MSB_MASK);
-
-    // set data bits to output ports
-    LSB_PORT = (LSB_PORT & ~LSB_MASK) | (data & LSB_MASK);
-    MSB_PORT = (MSB_PORT & ~MSB_MASK) | (data & MSB_MASK);
-}
-
-static inline void release_data_bus()
-{
-    // setup ports to input
-    res_bits(LSB_DDR, LSB_MASK);
-    res_bits(MSB_DDR, MSB_MASK);
-
-    // enable pull-up resistors
-    set_bits(LSB_PORT, LSB_MASK);
-    set_bits(MSB_PORT, MSB_MASK);
-}
-
-static inline void set_control_bus_addr()  { set_bits(BUS_PORT, 1 << BDIR_PIN | 1 << BC1_PIN); }
-static inline void set_control_bus_write() { set_bits(BUS_PORT, 1 << BDIR_PIN);                }
-static inline void set_control_bus_read()  { set_bits(BUS_PORT, 1 << BC1_PIN );                }
-static inline void set_control_bus_inact() { res_bits(BUS_PORT, 1 << BDIR_PIN | 1 << BC1_PIN); }
-
-// -----------------------------------------------------------------------------
-// Low Level Interface
-// -----------------------------------------------------------------------------
-
-void PSG::Init()
-{
-    // start debug output
-    dbg_open(9600);
-
-    // setup hardware pins
-    set_bit(BUS_DDR, BDIR_PIN); // output
-    set_bit(BUS_DDR, BC1_PIN ); // output
-    set_bit(RES_DDR, RES_PIN ); // output
-    set_bit(CLK_DDR, CLK_PIN ); // output
-    set_control_bus_inact();
-    release_data_bus();
-
-    // chip type detection
-    set_timer(0xFF);
-    res_chip();
-    detect();
-
-    // set default clock and reset
-    SetClock(F1_77MHZ);
-    Reset();
-
-    // print clock configuration
-#if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
-    dbg_print_str(F("PSG chip clock:\n"));
-    dbg_print_str(F("virt: ")); dbg_print_num(s_vclock); dbg_print_ln();
-    dbg_print_str(F("real: ")); dbg_print_num(s_rclock); dbg_print_ln();
-#else
-    dbg_print_str(F("PSG chip clock:\n"));
-    dbg_print_num(s_rclock);
-    dbg_print_ln();
-#endif
-
-    // stop debug output
-    dbg_print_ln();
-    dbg_close();
-}
-
-void PSG::Reset()
-{
-    res_chip();
-    reset_input_state();
-}
-
-void PSG::Address(uint8_t reg)
-{
-    set_data_bus(reg);
-    set_control_bus_addr();
-    control_bus_delay(tAS);
-    set_control_bus_inact();
-    control_bus_delay(tAH);
-    release_data_bus();
-}
-
-void PSG::Write(uint8_t data)
-{
-    set_data_bus(data);
-    set_control_bus_write();
-    control_bus_delay(tDW);
-    set_control_bus_inact();
-    control_bus_delay(tDH);
-    release_data_bus();
-}
-
-void PSG::Read(uint8_t& data)
-{
-    set_control_bus_read();
-    control_bus_delay(tDA);
-    get_data_bus(data);
-    set_control_bus_inact();
-    control_bus_delay(tTS);
-}
-
-void PSG::SetClock(uint32_t clock)
-{
-    if (clock >= F1_00MHZ && clock <= F2_00MHZ)
-    {
-        uint8_t divider = (F_CPU / clock);
-        set_timer(divider);
-
-        s_rclock = (F_CPU / divider);
-        s_vclock = clock;
-    }
-}
-
-uint32_t PSG::GetClock()
-{
-#if defined(PSG_PROCESSING) && defined(PSG_CLOCK_CONVERSION)
-    return s_vclock;
-#else
-    return s_rclock;
-#endif
-}
-
-// -----------------------------------------------------------------------------
-// High Level Interface
-// -----------------------------------------------------------------------------
 
 enum { INPUT, OUTPUT };
 
@@ -223,7 +172,32 @@ constexpr uint32_t to_mask(const Reg& reg)
     return to_mask(reg, 0);
 }
 
-PSG::Type PSG::GetType() const
+// -----------------------------------------------------------------------------
+
+void SoundChip::Init()
+{
+    // init hardware and detect chip type
+    PSG::Init();
+    detect_type();
+
+    // set default clock and reset
+    SetClock(F1_77MHZ);
+    Reset();
+}
+
+void SoundChip::Reset()
+{
+    PSG::Reset();
+    memset(&m_states[INPUT], 0, sizeof(State));
+}
+
+bool SoundChip::IsReady() const
+{
+    Type type = GetType();
+    return (type != Type::NotFound && type != Type::BadOrUnknown);
+}
+
+SoundChip::Type SoundChip::GetType() const
 {
     switch (m_hash)
     {
@@ -239,27 +213,35 @@ PSG::Type PSG::GetType() const
     return Type::BadOrUnknown;
 }
 
-bool PSG::IsReady() const
+void SoundChip::SetClock(Clock clock)
 {
-    Type type = GetType();
-    return (type != Type::NotFound && type != Type::BadOrUnknown);
+    if (clock >= F1_00MHZ && clock <= F2_00MHZ)
+    {
+        uint8_t divider = (F_CPU / clock);
+        m_rclock = (F_CPU / divider);
+        m_vclock = clock;
+        PSG::SetClock(m_rclock);
+    }
 }
 
-void PSG::SetStereo(Stereo stereo)
+Clock SoundChip::GetClock() const
 {
-#if defined(PSG_PROCESSING) && defined(PSG_CHANNELS_REMAPPING)
+    return m_vclock;
+}
+
+void SoundChip::SetStereo(Stereo stereo)
+{
     m_sstereo = stereo;
     m_dstereo = stereo;
-#endif
 }
 
-PSG::Stereo PSG::GetStereo() const
+SoundChip::Stereo SoundChip::GetStereo() const
 {
     return m_dstereo;
 }
 
 // set register data indirectly via bank switching
-void PSG::SetRegister(uint8_t reg, uint8_t data)
+void SoundChip::SetRegister(uint8_t reg, uint8_t data)
 {
     State& state = m_states[m_current];
 
@@ -277,7 +259,7 @@ void PSG::SetRegister(uint8_t reg, uint8_t data)
 }
 
 // get register data indirectly via bank switching
-void PSG::GetRegister(uint8_t reg, uint8_t& data) const
+void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
 {
     const State& state = m_states[m_current];
 
@@ -295,7 +277,7 @@ void PSG::GetRegister(uint8_t reg, uint8_t& data) const
 }
 
 // set register data directly
-void PSG::SetRegister(Reg reg, uint8_t  data)
+void SoundChip::SetRegister(Reg reg, uint8_t  data)
 {
     State& state = m_states[m_current];
 
@@ -345,7 +327,7 @@ void PSG::SetRegister(Reg reg, uint8_t  data)
 }
 
 // get register data directly
-void PSG::GetRegister(Reg reg, uint8_t& data) const
+void SoundChip::GetRegister(Reg reg, uint8_t& data) const
 {
     const State& state = m_states[m_current];
 
@@ -390,7 +372,7 @@ void PSG::GetRegister(Reg reg, uint8_t& data) const
     }
 }
 
-void PSG::Update()
+void SoundChip::Update()
 {
     if (IsReady() && m_states[INPUT].status.changed)
     {
@@ -408,111 +390,81 @@ void PSG::Update()
 }
 
 // -----------------------------------------------------------------------------
-// Privates - Chip Detection
-// -----------------------------------------------------------------------------
 
-void PSG::detect()
+void SoundChip::detect_type()
 {
-    // detect chip using a series of tests
-    dbg_print_str(F("Testing result dump:\n"));
-    reset_hash();
+    m_hash = 7; // reset hash
     do_test_wr_rd_regs(0x00);
     do_test_wr_rd_regs(0x10);
     do_test_wr_rd_latch(0x00);
     do_test_wr_rd_latch(0x10);
     do_test_wr_rd_exp_mode(0xA0);
     do_test_wr_rd_exp_mode(0xB0);
-
-    // print result hash
-    dbg_print_str(F("\nTesting result hash:\n"));
-    dbg_print_dwrd(m_hash);
-    dbg_print_ln();
-
-    // print a type of the chip
-    dbg_print_str(F("\nPSG chip type:\n"));
-    switch (GetType())
-    {
-    case Type::NotFound:   dbg_print_str(F("Not Found!\n")); break;
-    case Type::Compatible: dbg_print_str(F("AY/YM Compatible\n")); break;
-    case Type::AY8910A:    dbg_print_str(F("AY-3-8910A\n")); break;
-    case Type::AY8912A:    dbg_print_str(F("AY-3-8912A\n")); break;
-    case Type::AY8913A:    dbg_print_str(F("AY-3-8913A\n")); break;
-    case Type::AY8930:     dbg_print_str(F("Microchip AY8930\n")); break;
-    case Type::YM2149F:    dbg_print_str(F("Yamaha YM2149F\n")); break;
-    case Type::AVRAY_FW26: dbg_print_str(F("Emulator AVR-AY (FW:26)\n")); break;
-    default:               dbg_print_str(F("Bad or Unknown!\n")); break;
-    }
-    dbg_print_ln();
 }
 
-void PSG::reset_hash() { m_hash = 7; }
-void PSG::update_hash(uint8_t data) { m_hash = 31 * m_hash + uint32_t(data); }
+void SoundChip::update_hash(uint8_t data)
+{
+     m_hash = (31 * m_hash + uint32_t(data)); 
+}
 
-void PSG::do_test_wr_rd_regs(uint8_t offset)
+void SoundChip::do_test_wr_rd_regs(uint8_t offset)
 {
     for (uint8_t data, reg = offset; reg < (offset + 16); ++reg)
     {
         data = 0xFF;
         if (Reg(reg) == Reg::Mixer) data = 0x3F;
         if (Reg(reg) == Reg::Mode_Bank) data = 0x0F;
-        Address(reg); Write(data);
+        PSG::Address(reg);
+        PSG::Write(data);
     }
     for (uint8_t data, reg = offset; reg < (offset + 16); ++reg)
     {
-        Address(reg); Read(data);
+        PSG::Address(reg);
+        PSG::Read(data);
         update_hash(data);
-        dbg_print_byte(data);
-        dbg_print_sp();
     }
-    dbg_print_ln();
 }
 
-void PSG::do_test_wr_rd_latch(uint8_t offset)
+void SoundChip::do_test_wr_rd_latch(uint8_t offset)
 {
     for (uint8_t data, reg = offset; reg < (offset + 16); ++reg)
     {
         data = 0xFF;
         if (Reg(reg) == Reg::Mixer) data = 0x3F;
         if (Reg(reg) == Reg::Mode_Bank) data = 0x0F;
-        Address(reg); Write(data); Read(data);
+        PSG::Address(reg); 
+        PSG::Write(data);
+        PSG::Read(data);
         update_hash(data);
-        dbg_print_byte(data);
-        dbg_print_sp();
     }
-    dbg_print_ln();
 }
 
-void PSG::do_test_wr_rd_exp_mode(uint8_t mode_bank)
+void SoundChip::do_test_wr_rd_exp_mode(uint8_t mode_bank)
 {
     Address(Mode_Bank); Write(mode_bank | 0x0F);
     for (uint8_t reg = 0; reg < 16 - 2; ++reg)
     {
         if (reg == Mode_Bank) continue;
-        Address(reg); Write(0xFF);
+        PSG::Address(reg);
+        PSG::Write(0xFF);
     }
     for (uint8_t data, reg = 0; reg < 16 - 2; ++reg)
     {
-        Address(reg); Read(data);
+        PSG::Address(reg);
+        PSG::Read(data);
         update_hash(data);
-        dbg_print_byte(data);
-        dbg_print_sp();
     }
-    dbg_print_ln();
 }
 
 // -----------------------------------------------------------------------------
-// Privates - Processing output state
-// -----------------------------------------------------------------------------
-
-#if defined(PSG_PROCESSING)
 
 #if defined(PSG_CHANNELS_REMAPPING)
-static const uint8_t e_fine  [] PROGMEM = { PSG::EA_Fine,   PSG::EB_Fine,   PSG::EC_Fine   };
-static const uint8_t e_coarse[] PROGMEM = { PSG::EA_Coarse, PSG::EB_Coarse, PSG::EC_Coarse };
-static const uint8_t e_shape [] PROGMEM = { PSG::EA_Shape,  PSG::EB_Shape,  PSG::EC_Shape  };
+static const uint8_t e_fine  [] PROGMEM = { SoundChip::EA_Fine,   SoundChip::EB_Fine,   SoundChip::EC_Fine   };
+static const uint8_t e_coarse[] PROGMEM = { SoundChip::EA_Coarse, SoundChip::EB_Coarse, SoundChip::EC_Coarse };
+static const uint8_t e_shape [] PROGMEM = { SoundChip::EA_Shape,  SoundChip::EB_Shape,  SoundChip::EC_Shape  };
 #endif
 
-void PSG::process_clock_conversion()
+void SoundChip::process_clock_conversion()
 {
 #if defined(PSG_CLOCK_CONVERSION)
     if (s_rclock != s_vclock)
@@ -549,7 +501,7 @@ void PSG::process_clock_conversion()
 #endif
 }
 
-void PSG::process_channels_remapping()
+void SoundChip::process_channels_remapping()
 {
 #if defined(PSG_CHANNELS_REMAPPING)
     State& state = m_states[m_sindex];
@@ -636,9 +588,8 @@ void PSG::process_channels_remapping()
 #endif
 }
 
-void PSG::process_compat_mode_fix()
+void SoundChip::process_compat_mode_fix()
 {
-#if defined(PSG_COMPAT_MODE_FIX)
     if (GetType() == Type::AY8930)
     {
         State& state = m_states[m_current];
@@ -669,20 +620,11 @@ void PSG::process_compat_mode_fix()
             }
         }
     }
-#endif
-}
-#endif
-
-// -----------------------------------------------------------------------------
-// Privates - Handling input/output states
-// -----------------------------------------------------------------------------
-
-void PSG::reset_input_state()
-{
-    memset(&m_states[INPUT], 0, sizeof(State));
 }
 
-void PSG::write_output_state()
+// -----------------------------------------------------------------------------
+
+void SoundChip::write_output_state()
 {
     const State& state = m_states[m_current];
     bool switch_banks = false; uint8_t data;
@@ -701,12 +643,14 @@ void PSG::write_output_state()
                     switch_banks = true;
                     GetRegister(Reg::Mode_Bank, data);
                     data &= 0x0F; data |= 0xB0;
-                    Address(Mode_Bank); Write(data);
+                    PSG::Address(Mode_Bank);
+                    PSG::Write(data);
                 }
 
                 // send register data to chip (within bank B)
                 GetRegister(Reg(reg), data);
-                Address(reg & 0x0F); Write(data);
+                PSG::Address(reg & 0x0F);
+                PSG::Write(data);
             }
         }
 
@@ -716,7 +660,8 @@ void PSG::write_output_state()
             // so we switch back to bank A
             GetRegister(Reg::Mode_Bank, data);
             data &= 0x0F; data |= 0xA0;
-            Address(Mode_Bank); Write(data);
+            PSG::Address(Mode_Bank);
+            PSG::Write(data);
         }
     }
 
@@ -731,7 +676,8 @@ void PSG::write_output_state()
 
             // send register data to chip (within bank A)
             GetRegister(Reg(reg), data);
-            Address(reg & 0x0F); Write(data);
+            PSG::Address(reg & 0x0F);
+            PSG::Write(data);
         }
     }
 }

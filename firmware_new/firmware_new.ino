@@ -7,11 +7,12 @@ volatile uint8_t reg;
 void setup()
 {
     psg.Init();
-    //psg.SetClock(PSG::F1_75MHZ);
-    //psg.SetStereo(PSG::Stereo::ABC);
+    // psg.SetClock(SoundChip::Clock::F1_75MHZ);
+    // psg.SetStereo(SoundChip::Stereo::ABC);
+    // PSG::Init();
     
     reg = 0xFF;
-    UART_Open(57000);
+    UART_Open(57600);
     UART_EnableRXInt(true);
     sei();
 }
@@ -43,5 +44,17 @@ ISR(USART_RX_vect)
             // received end-of-frame marker
             psg.Update();
         }
+        // if (reg < 0x10)
+        // {
+        //     // received data for register
+        //     PSG::Address(reg);
+        //     PSG::Write(data);
+        //     reg = 0xFF;
+        // }
+        // else if (data < 0x10)
+        // {
+        //     // received register number
+        //     reg = data;
+        // }
     }
 }

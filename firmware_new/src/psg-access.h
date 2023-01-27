@@ -25,7 +25,7 @@ namespace PSG
 class SoundChip
 {
 public:
-    enum class Reg
+    enum class Reg : uint8_t
     {
         // bank A registers
         A_Fine    = 0x00, // Tone A period (fine tune)
@@ -72,17 +72,16 @@ public:
         BankB_Lst = uint8_t(Reg::N_OrMask)  // numeric value of the last register in bank B
     };
 
-    enum class Type
+    enum class Type : uint32_t
     {
-        NotFound     = 0x00, // chip not found
-        Compatible   = 0x01, // Variants: WF19054, JFC95101, KC89C72 etc
-        AY8910A      = 0x02, // GI AY-3-8910A, Microchip AY38910A/P
-        AY8912A      = 0x03, // TODO: not implemented
-        AY8913A      = 0x04, // TODO: not implemented
-        AY8930       = 0x05, // Microchip AY8930
-        YM2149F      = 0x06, // Yamaha YM2149F
-        AVRAY_FW26   = 0x07, // Emulator (https://www.avray.ru)
-        BadOrUnknown = 0xFF  // broken chip or unknown model
+        NotFound   = 0x67E019C7, // chip not found
+        Compatible = 0xF56B7047, // Variants: WF19054, JFC95101, KC89C72 etc
+        AY8910A    = 0x2CFF954F, // GI AY-3-8910A, Microchip AY38910A/P
+        AY8912A    = 0x11111111, // TODO: not implemented
+        AY8913A    = 0x22222222, // TODO: not implemented
+        AY8930     = 0x4EFE6E06, // Microchip AY8930
+        YM2149F    = 0x1D750557, // Yamaha YM2149F
+        AVRAY_FW26 = 0x33333333  // TODO: Emulator (https://www.avray.ru)
     };
 
     enum Clock
@@ -94,7 +93,7 @@ public:
         F2_00MHZ = 2000000  // Atari ST
     };
 
-    enum class Stereo 
+    enum class Stereo : uint8_t
     { 
         ABC, ACB, BAC, BCA, CAB, CBA 
     };
@@ -103,7 +102,6 @@ public:
 public:
     void Init();
     void Reset();
-    bool IsReady() const;
     Type GetType() const;
 
     void SetClock(Clock clock);
@@ -134,11 +132,11 @@ private:
 
 // -----------------------------------------------------------------------------
 private:
-    uint32_t m_hash = Hash::NotFound;
-    uint32_t m_rclock  = 0;
-    uint32_t m_vclock  = 0;
-    Stereo   m_sstereo = Stereo::ABC;
-    Stereo   m_dstereo = Stereo::ABC;
+    uint32_t m_typehash = uint32_t(Type::NotFound);
+    uint32_t m_rclock   = 0;
+    uint32_t m_vclock   = 0;
+    Stereo   m_sstereo  = Stereo::ABC;
+    Stereo   m_dstereo  = Stereo::ABC;
 
     union Period
     {

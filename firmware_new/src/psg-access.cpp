@@ -32,15 +32,11 @@ namespace PSG
         tTS = 100,
         tRW = 500,
         tRB = 100
-    }
+    };
+
+    #define wait_for_delay(ns) { _delay_us(0.001f * (ns)); }
 
 // -----------------------------------------------------------------------------
-
-    inline void get_data_bus(uint8_t& data)
-    {
-        // get bata bits from input ports
-        data = (LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
-    }
 
     inline void set_data_bus(uint8_t data)
     {
@@ -51,6 +47,12 @@ namespace PSG
         // set data bits to output ports
         LSB_PORT = (LSB_PORT & ~LSB_MASK) | (data & LSB_MASK);
         MSB_PORT = (MSB_PORT & ~MSB_MASK) | (data & MSB_MASK);
+    }
+
+    inline void get_data_bus(uint8_t& data)
+    {
+        // get bata bits from input ports
+        data = (LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
     }
 
     inline void release_data_bus()
@@ -64,11 +66,10 @@ namespace PSG
         set_bits(MSB_PORT, MSB_MASK);
     }
 
-    inline void set_control_bus_addr()  { set_bits(BUS_PORT, 1 << BDIR_PIN | 1 << BC1_PIN); }
-    inline void set_control_bus_write() { set_bits(BUS_PORT, 1 << BDIR_PIN);                }
-    inline void set_control_bus_read()  { set_bits(BUS_PORT, 1 << BC1_PIN );                }
-    inline void set_control_bus_inact() { res_bits(BUS_PORT, 1 << BDIR_PIN | 1 << BC1_PIN); }
-    inline void set_control_bus_delay(int ns) { _delay_us(0.001f * ns); }
+    inline void set_ctrl_bus_addr()  { set_bit(BUS_PORT, BDIR_PIN); set_bit(BUS_PORT, BC1_PIN); }
+    inline void set_ctrl_bus_write() { set_bit(BUS_PORT, BDIR_PIN); res_bit(BUS_PORT, BC1_PIN); }
+    inline void set_ctrl_bus_read()  { res_bit(BUS_PORT, BDIR_PIN); set_bit(BUS_PORT, BC1_PIN); }
+    inline void set_ctrl_bus_inact() { res_bit(BUS_PORT, BDIR_PIN); res_bit(BUS_PORT, BC1_PIN); }
 
     // -----------------------------------------------------------------------------
 
@@ -85,7 +86,7 @@ namespace PSG
             set_bit(BUS_DDR, BC1_PIN ); // output
             set_bit(RES_DDR, RES_PIN ); // output
             set_bit(CLK_DDR, CLK_PIN ); // output
-            set_control_bus_inact();
+            set_ctrl_bus_inact();
             release_data_bus();
 
             // setup default clock and reset
@@ -97,9 +98,9 @@ namespace PSG
     void Reset()
     {
         res_bit(RES_PORT, RES_PIN);
-        set_control_bus_delay(tRW);
+        wait_for_delay(tRW);
         set_bit(RES_PORT, RES_PIN);
-        set_control_bus_delay(tRB);
+        wait_for_delay(tRB);
     }
 
     void SetClock(uint32_t clock)
@@ -115,48 +116,36 @@ namespace PSG
     void Address(uint8_t reg)
     {
         set_data_bus(reg);
-        set_control_bus_addr();
-        set_control_bus_delay(tAS);
-        set_control_bus_inact();
-        set_control_bus_delay(tAH);
+        set_ctrl_bus_addr();
+        wait_for_delay(tAS);
+        set_ctrl_bus_inact();
+        wait_for_delay(tAH);
         release_data_bus();
     }
 
     void Write(uint8_t data)
     {
         set_data_bus(data);
-        set_control_bus_write();
-        set_control_bus_delay(tDW);
-        set_control_bus_inact();
-        set_control_bus_delay(tDH);
+        set_ctrl_bus_write();
+        wait_for_delay(tDW);
+        set_ctrl_bus_inact();
+        wait_for_delay(tDH);
         release_data_bus();
     }
 
     void Read(uint8_t& data)
     {
-        set_control_bus_read();
-        set_control_bus_delay(tDA);
+        set_ctrl_bus_read();
+        wait_for_delay(tDA);
         get_data_bus(data);
-        set_control_bus_inact();
-        set_control_bus_delay(tTS);
+        set_ctrl_bus_inact();
+        wait_for_delay(tTS);
     }
 }
 
 // -----------------------------------------------------------------------------
 // High Level Interface
 // -----------------------------------------------------------------------------
-
-enum Hash
-{
-    NotFound     = 0x67E019C7,
-    Compatible   = 0xF56B7047,
-    AY8910A      = 0x2CFF954F,
-    AY8912A      = 0x11111111, // TODO: not implemented
-    AY8913A      = 0x22222222, // TODO: not implemented
-    AY8930       = 0x4EFE6E06,
-    YM2149F      = 0x1D750557,
-    AVRAY_FW26   = 0x33333333  // TODO: not implemented
-};
 
 enum { INPUT, OUTPUT };
 
@@ -191,26 +180,9 @@ void SoundChip::Reset()
     memset(&m_states[INPUT], 0, sizeof(State));
 }
 
-bool SoundChip::IsReady() const
-{
-    Type type = GetType();
-    return (type != Type::NotFound && type != Type::BadOrUnknown);
-}
-
 SoundChip::Type SoundChip::GetType() const
 {
-    switch (m_hash)
-    {
-    case Hash::NotFound:   return Type::NotFound;
-    case Hash::Compatible: return Type::Compatible;
-    case Hash::AY8910A:    return Type::AY8910A;
-    case Hash::AY8912A:    return Type::AY8912A;
-    case Hash::AY8913A:    return Type::AY8913A;
-    case Hash::AY8930:     return Type::AY8930;
-    case Hash::YM2149F:    return Type::YM2149F;
-    case Hash::AVRAY_FW26: return Type::AVRAY_FW26;
-    }
-    return Type::BadOrUnknown;
+    return Type(m_typehash);
 }
 
 void SoundChip::SetClock(Clock clock)
@@ -224,7 +196,7 @@ void SoundChip::SetClock(Clock clock)
     }
 }
 
-Clock SoundChip::GetClock() const
+SoundChip::Clock SoundChip::GetClock() const
 {
     return m_vclock;
 }
@@ -374,7 +346,7 @@ void SoundChip::GetRegister(Reg reg, uint8_t& data) const
 
 void SoundChip::Update()
 {
-    if (IsReady() && m_states[INPUT].status.changed)
+    if (m_states[INPUT].status.changed)
     {
         m_states[OUTPUT] = m_states[INPUT];
         m_current = OUTPUT;
@@ -393,7 +365,7 @@ void SoundChip::Update()
 
 void SoundChip::detect_type()
 {
-    m_hash = 7; // reset hash
+    m_typehash = 0x00000007;
     do_test_wr_rd_regs(0x00);
     do_test_wr_rd_regs(0x10);
     do_test_wr_rd_latch(0x00);
@@ -404,7 +376,7 @@ void SoundChip::detect_type()
 
 void SoundChip::update_hash(uint8_t data)
 {
-     m_hash = (31 * m_hash + uint32_t(data)); 
+    m_typehash = (31 * m_typehash + uint32_t(data)); 
 }
 
 void SoundChip::do_test_wr_rd_regs(uint8_t offset)
@@ -441,7 +413,8 @@ void SoundChip::do_test_wr_rd_latch(uint8_t offset)
 
 void SoundChip::do_test_wr_rd_exp_mode(uint8_t mode_bank)
 {
-    Address(Mode_Bank); Write(mode_bank | 0x0F);
+    PSG::Address(Mode_Bank);
+    PSG::Write(mode_bank | 0x0F);
     for (uint8_t reg = 0; reg < 16 - 2; ++reg)
     {
         if (reg == Mode_Bank) continue;

@@ -10,8 +10,8 @@
 #include "psg-wiring.h"
 
 // processors
-//#define PROCESS_CLOCK_CONVERSION
-//#define PROCESS_CHANNELS_REMAPPING
+#define PROCESS_CLOCK_CONVERSION
+#define PROCESS_CHANNELS_REMAPPING
 #define PROCESS_COMPAT_MODE_FIX
 
 // helpers
@@ -81,24 +81,17 @@ namespace PSG
 
     void Init()
     {
-        static bool hw_init = false;
-        if (!hw_init)
-        {
-            // init hardware only once
-            hw_init = true;
+        // setup hardware pins
+        set_bit(BUS_DDR, BUS_BDIR); // output
+        set_bit(BUS_DDR, BUS_BC1 ); // output
+        set_bit(SIG_DDR, SIG_RES ); // output
+        set_bit(SIG_DDR, SIG_CLK ); // output
+        set_ctrl_bus_inact();
+        release_data_bus();
 
-            // setup hardware pins
-            set_bit(BUS_DDR, BUS_BDIR); // output
-            set_bit(BUS_DDR, BUS_BC1 ); // output
-            set_bit(SIG_DDR, SIG_RES ); // output
-            set_bit(SIG_DDR, SIG_CLK ); // output
-            set_ctrl_bus_inact();
-            release_data_bus();
-
-            // setup default clock and reset
-            SetClock(1777777); // devider is 0x09
-            Reset();
-        }
+        // setup default clock and reset
+        SetClock(1777777); // devider is 0x09
+        Reset();
     }
 
     void Reset()

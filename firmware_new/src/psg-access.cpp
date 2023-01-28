@@ -219,7 +219,7 @@ SoundChip::Stereo SoundChip::GetStereo() const
 // set register data indirectly via bank switching
 void SoundChip::SetRegister(uint8_t reg, uint8_t data)
 {
-    State& state = m_states[m_current];
+    State& state = m_states[INPUT];
 
     // register number must be in range 0x00-0x0F
     if (reg < 0x10)
@@ -237,7 +237,7 @@ void SoundChip::SetRegister(uint8_t reg, uint8_t data)
 // get register data indirectly via bank switching
 void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
 {
-    const State& state = m_states[m_current];
+    const State& state = m_states[INPUT];
 
     // register number must be in range 0x00-0x0F
     if (reg < 0x10)
@@ -255,97 +255,15 @@ void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
 // set register data directly
 void SoundChip::SetRegister(Reg reg, uint8_t  data)
 {
-    State& state = m_states[m_current];
-
-    // preserve the state of exp mode and bank of regs
-    // separately from the shape of channel A envelope
-    if ((uint8_t(reg) & 0x0F) == Mode_Bank)
-    {
-        state.status.exp_mode = (data & 0xF0);
-        data &= 0x0F; reg = Reg::Mode_Bank;
-    }
-
-    // map register to corresponding field of state
-    switch(reg)
-    {
-        // bank A
-        case Reg::A_Fine:    state.channels[0].t_period.fine = data; break;
-        case Reg::A_Coarse:  state.channels[0].t_period.coarse = data; break;
-        case Reg::B_Fine:    state.channels[1].t_period.fine = data; break;
-        case Reg::B_Coarse:  state.channels[1].t_period.coarse = data; break;
-        case Reg::C_Fine:    state.channels[2].t_period.fine = data; break;
-        case Reg::C_Coarse:  state.channels[2].t_period.coarse = data; break;
-        case Reg::N_Period:  state.commons.n_period = data; break;
-        case Reg::Mixer:     state.commons.mixer = data; break;
-        case Reg::A_Volume:  state.channels[0].t_volume = data; break;
-        case Reg::B_Volume:  state.channels[1].t_volume = data; break;
-        case Reg::C_Volume:  state.channels[2].t_volume = data; break;
-        case Reg::EA_Fine:   state.channels[0].e_period.fine = data; break;
-        case Reg::EA_Coarse: state.channels[0].e_period.coarse = data; break;
-        case Reg::EA_Shape:  state.channels[0].e_shape = data; break;
-
-        // bank B
-        case Reg::EB_Fine:   state.channels[1].e_period.fine = data; break;
-        case Reg::EB_Coarse: state.channels[1].e_period.coarse = data; break;
-        case Reg::EC_Fine:   state.channels[2].e_period.fine = data; break;
-        case Reg::EC_Coarse: state.channels[2].e_period.coarse = data; break;
-        case Reg::EB_Shape:  state.channels[1].e_shape = data; break;
-        case Reg::EC_Shape:  state.channels[2].e_shape = data; break;
-        case Reg::A_Duty:    state.channels[0].t_duty = data; break;
-        case Reg::B_Duty:    state.channels[1].t_duty = data; break;
-        case Reg::C_Duty:    state.channels[2].t_duty = data; break;
-        case Reg::N_AndMask: state.commons.n_and_mask = data; break;
-        case Reg::N_OrMask:  state.commons.n_or_mask = data; break;
-    }
-
-    // mark register as changed
-    state.status.changed |= to_mask(reg);
+    State& state = m_states[INPUT];
+    set_register(state, reg, data);
 }
 
 // get register data directly
 void SoundChip::GetRegister(Reg reg, uint8_t& data) const
 {
-    const State& state = m_states[m_current];
-
-    // map register to corresponding field of state
-    switch(reg)
-    {
-        // bank A
-        case Reg::A_Fine:    data = state.channels[0].t_period.fine; break;
-        case Reg::A_Coarse:  data = state.channels[0].t_period.coarse; break;
-        case Reg::B_Fine:    data = state.channels[1].t_period.fine; break;
-        case Reg::B_Coarse:  data = state.channels[1].t_period.coarse; break;
-        case Reg::C_Fine:    data = state.channels[2].t_period.fine; break;
-        case Reg::C_Coarse:  data = state.channels[2].t_period.coarse; break;
-        case Reg::N_Period:  data = state.commons.n_period; break;
-        case Reg::Mixer:     data = state.commons.mixer; break;
-        case Reg::A_Volume:  data = state.channels[0].t_volume; break;
-        case Reg::B_Volume:  data = state.channels[1].t_volume; break;
-        case Reg::C_Volume:  data = state.channels[2].t_volume; break;
-        case Reg::EA_Fine:   data = state.channels[0].e_period.fine; break;
-        case Reg::EA_Coarse: data = state.channels[0].e_period.coarse; break;
-        case Reg::EA_Shape:  data = state.channels[0].e_shape; break;
-
-        // bank B
-        case Reg::EB_Fine:   data = state.channels[1].e_period.fine; break;
-        case Reg::EB_Coarse: data = state.channels[1].e_period.coarse; break;
-        case Reg::EC_Fine:   data = state.channels[2].e_period.fine; break;
-        case Reg::EC_Coarse: data = state.channels[2].e_period.coarse; break;
-        case Reg::EB_Shape:  data = state.channels[1].e_shape; break;
-        case Reg::EC_Shape:  data = state.channels[2].e_shape; break;
-        case Reg::A_Duty:    data = state.channels[0].t_duty; break;
-        case Reg::B_Duty:    data = state.channels[1].t_duty; break;
-        case Reg::C_Duty:    data = state.channels[2].t_duty; break;
-        case Reg::N_AndMask: data = state.commons.n_and_mask; break;
-        case Reg::N_OrMask:  data = state.commons.n_or_mask; break;
-    }
-
-    // combine the current state of exp mode and bank
-    // of regs with the shape of channel A envelope
-    if ((uint8_t(reg) & 0x0F) == Mode_Bank)
-    {
-        data |= state.status.exp_mode;
-    }
+    const State& state = m_states[INPUT];
+    get_register(state, reg, data);
 }
 
 void SoundChip::Update()
@@ -353,7 +271,6 @@ void SoundChip::Update()
     if (m_states[INPUT].status.changed)
     {
         m_states[OUTPUT] = m_states[INPUT];
-        m_current = OUTPUT;
 
         process_clock_conversion();
         process_channels_remapping();
@@ -361,7 +278,6 @@ void SoundChip::Update()
         write_output_state();
 
         m_states[INPUT].status.changed = 0;
-        m_current = INPUT;
     }
 }
 
@@ -435,6 +351,98 @@ void SoundChip::do_test_wr_rd_exp_mode(uint8_t mode_bank)
 
 // -----------------------------------------------------------------------------
 
+void SoundChip::set_register(State& state, Reg reg, uint8_t data)
+{
+    // preserve the state of exp mode and bank of regs
+    // separately from the shape of channel A envelope
+    if ((uint8_t(reg) & 0x0F) == Mode_Bank)
+    {
+        state.status.exp_mode = (data & 0xF0);
+        data &= 0x0F; reg = Reg::Mode_Bank;
+    }
+
+    // map register to corresponding field of state
+    switch(reg)
+    {
+        // bank A
+        case Reg::A_Fine:    state.channels[0].t_period.fine = data; break;
+        case Reg::A_Coarse:  state.channels[0].t_period.coarse = data; break;
+        case Reg::B_Fine:    state.channels[1].t_period.fine = data; break;
+        case Reg::B_Coarse:  state.channels[1].t_period.coarse = data; break;
+        case Reg::C_Fine:    state.channels[2].t_period.fine = data; break;
+        case Reg::C_Coarse:  state.channels[2].t_period.coarse = data; break;
+        case Reg::N_Period:  state.commons.n_period = data; break;
+        case Reg::Mixer:     state.commons.mixer = data; break;
+        case Reg::A_Volume:  state.channels[0].t_volume = data; break;
+        case Reg::B_Volume:  state.channels[1].t_volume = data; break;
+        case Reg::C_Volume:  state.channels[2].t_volume = data; break;
+        case Reg::EA_Fine:   state.channels[0].e_period.fine = data; break;
+        case Reg::EA_Coarse: state.channels[0].e_period.coarse = data; break;
+        case Reg::EA_Shape:  state.channels[0].e_shape = data; break;
+
+        // bank B
+        case Reg::EB_Fine:   state.channels[1].e_period.fine = data; break;
+        case Reg::EB_Coarse: state.channels[1].e_period.coarse = data; break;
+        case Reg::EC_Fine:   state.channels[2].e_period.fine = data; break;
+        case Reg::EC_Coarse: state.channels[2].e_period.coarse = data; break;
+        case Reg::EB_Shape:  state.channels[1].e_shape = data; break;
+        case Reg::EC_Shape:  state.channels[2].e_shape = data; break;
+        case Reg::A_Duty:    state.channels[0].t_duty = data; break;
+        case Reg::B_Duty:    state.channels[1].t_duty = data; break;
+        case Reg::C_Duty:    state.channels[2].t_duty = data; break;
+        case Reg::N_AndMask: state.commons.n_and_mask = data; break;
+        case Reg::N_OrMask:  state.commons.n_or_mask = data; break;
+    }
+
+    // mark register as changed
+    state.status.changed |= to_mask(reg);
+}
+
+void SoundChip::get_register(const State& state, Reg reg, uint8_t& data) const
+{
+    // map register to corresponding field of state
+    switch(reg)
+    {
+        // bank A
+        case Reg::A_Fine:    data = state.channels[0].t_period.fine; break;
+        case Reg::A_Coarse:  data = state.channels[0].t_period.coarse; break;
+        case Reg::B_Fine:    data = state.channels[1].t_period.fine; break;
+        case Reg::B_Coarse:  data = state.channels[1].t_period.coarse; break;
+        case Reg::C_Fine:    data = state.channels[2].t_period.fine; break;
+        case Reg::C_Coarse:  data = state.channels[2].t_period.coarse; break;
+        case Reg::N_Period:  data = state.commons.n_period; break;
+        case Reg::Mixer:     data = state.commons.mixer; break;
+        case Reg::A_Volume:  data = state.channels[0].t_volume; break;
+        case Reg::B_Volume:  data = state.channels[1].t_volume; break;
+        case Reg::C_Volume:  data = state.channels[2].t_volume; break;
+        case Reg::EA_Fine:   data = state.channels[0].e_period.fine; break;
+        case Reg::EA_Coarse: data = state.channels[0].e_period.coarse; break;
+        case Reg::EA_Shape:  data = state.channels[0].e_shape; break;
+
+        // bank B
+        case Reg::EB_Fine:   data = state.channels[1].e_period.fine; break;
+        case Reg::EB_Coarse: data = state.channels[1].e_period.coarse; break;
+        case Reg::EC_Fine:   data = state.channels[2].e_period.fine; break;
+        case Reg::EC_Coarse: data = state.channels[2].e_period.coarse; break;
+        case Reg::EB_Shape:  data = state.channels[1].e_shape; break;
+        case Reg::EC_Shape:  data = state.channels[2].e_shape; break;
+        case Reg::A_Duty:    data = state.channels[0].t_duty; break;
+        case Reg::B_Duty:    data = state.channels[1].t_duty; break;
+        case Reg::C_Duty:    data = state.channels[2].t_duty; break;
+        case Reg::N_AndMask: data = state.commons.n_and_mask; break;
+        case Reg::N_OrMask:  data = state.commons.n_or_mask; break;
+    }
+
+    // combine the current state of exp mode and bank
+    // of regs with the shape of channel A envelope
+    if ((uint8_t(reg) & 0x0F) == Mode_Bank)
+    {
+        data |= state.status.exp_mode;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 #if defined(PSG_CHANNELS_REMAPPING)
 static const uint8_t e_fine  [] PROGMEM = { SoundChip::EA_Fine,   SoundChip::EB_Fine,   SoundChip::EC_Fine   };
 static const uint8_t e_coarse[] PROGMEM = { SoundChip::EA_Coarse, SoundChip::EB_Coarse, SoundChip::EC_Coarse };
@@ -445,7 +453,7 @@ void SoundChip::process_clock_conversion()
 {
     if (m_rclock != m_vclock)
     {
-        State& state = m_states[m_current];
+        State& state = m_states[OUTPUT];
         uint16_t t_bound = (state.status.exp_mode ? 0xFFFF : 0x0FFF);
         uint16_t n_bound = (state.status.exp_mode ? 0x00FF : 0x001F);
 
@@ -569,7 +577,7 @@ void SoundChip::process_compat_mode_fix()
 {
     if (GetType() == Type::AY8930)
     {
-        State& state = m_states[m_current];
+        State& state = m_states[OUTPUT];
         for (int i = 0; i < 3; ++i)
         {
             uint8_t volume = state.channels[i].t_volume;
@@ -603,7 +611,7 @@ void SoundChip::process_compat_mode_fix()
 
 void SoundChip::write_output_state()
 {
-    const State& state = m_states[m_current];
+    const State& state = m_states[OUTPUT];
     bool switch_banks = false; uint8_t data;
 
     if (GetType() == Type::AY8930 && state.status.exp_mode)
@@ -618,14 +626,14 @@ void SoundChip::write_output_state()
                 if (!switch_banks)
                 {
                     switch_banks = true;
-                    GetRegister(Reg::Mode_Bank, data);
+                    get_register(state, Reg::Mode_Bank, data);
                     data &= 0x0F; data |= 0xB0;
                     PSG::Address(Mode_Bank);
                     PSG::Write(data);
                 }
 
                 // send register data to chip (within bank B)
-                GetRegister(Reg(reg), data);
+                get_register(state, Reg(reg), data);
                 PSG::Address(reg & 0x0F);
                 PSG::Write(data);
             }
@@ -635,7 +643,7 @@ void SoundChip::write_output_state()
         {
             // we wrote something to bank B,
             // so we switch back to bank A
-            GetRegister(Reg::Mode_Bank, data);
+            get_register(state, Reg::Mode_Bank, data);
             data &= 0x0F; data |= 0xA0;
             PSG::Address(Mode_Bank);
             PSG::Write(data);
@@ -652,7 +660,7 @@ void SoundChip::write_output_state()
             if (switch_banks && reg == Mode_Bank) continue;
 
             // send register data to chip (within bank A)
-            GetRegister(Reg(reg), data);
+            get_register(state, Reg(reg), data);
             PSG::Address(reg & 0x0F);
             PSG::Write(data);
         }

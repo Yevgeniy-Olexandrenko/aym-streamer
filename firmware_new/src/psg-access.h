@@ -9,6 +9,7 @@
 // -----------------------------------------------------------------------------
 // Hardware Level Interface
 // -----------------------------------------------------------------------------
+
 namespace PSG
 {
     void Init();
@@ -22,8 +23,47 @@ namespace PSG
 // -----------------------------------------------------------------------------
 // High Level Interface
 // -----------------------------------------------------------------------------
+
 class SoundChip
 {
+    union Period
+    {
+        uint16_t full;
+        struct { uint8_t fine, coarse; };
+    };
+
+    struct Channel
+    {
+        Period  t_period;
+        uint8_t t_volume;
+        uint8_t t_duty;
+        Period  e_period;
+        uint8_t e_shape;
+    };
+
+    struct Commons
+    {
+        uint8_t n_period;
+        uint8_t n_and_mask;
+        uint8_t n_or_mask;
+        uint8_t mixer;
+    };
+
+    struct Status
+    {
+        uint32_t changed;
+        uint8_t  exp_mode;
+    };
+
+    struct State
+    {
+        Channel channels[3];
+        Commons commons;
+        Status  status;
+    };
+
+// -----------------------------------------------------------------------------
+
 public:
     enum class Reg : uint8_t
     {
@@ -99,6 +139,7 @@ public:
     };
 
 // -----------------------------------------------------------------------------
+
 public:
     void Init();
     void Reset();
@@ -110,19 +151,23 @@ public:
     void SetStereo(Stereo stereo);
     Stereo GetStereo() const;
 
-    void SetRegister(uint8_t reg, uint8_t  data);
+    void SetRegister(uint8_t reg, uint8_t data);
     void GetRegister(uint8_t reg, uint8_t& data) const;
-    void SetRegister(Reg reg, uint8_t  data);
+    void SetRegister(Reg reg, uint8_t data);
     void GetRegister(Reg reg, uint8_t& data) const;
     void Update();
 
 // -----------------------------------------------------------------------------
+
 private:
     void detect_type();
     void update_hash(uint8_t data);
     void do_test_wr_rd_regs(uint8_t offset);
     void do_test_wr_rd_latch(uint8_t offset);
     void do_test_wr_rd_exp_mode(uint8_t mode_bank);
+
+    void set_register(State& state, Reg reg, uint8_t data);
+    void get_register(const State& state, Reg reg, uint8_t& data) const;
 
     void process_clock_conversion();
     void process_channels_remapping();
@@ -131,49 +176,12 @@ private:
     void write_output_state();
 
 // -----------------------------------------------------------------------------
+
 private:
     uint32_t m_typehash = uint32_t(Type::NotFound);
     uint32_t m_rclock   = 0;
     uint32_t m_vclock   = 0;
     Stereo   m_sstereo  = Stereo::ABC;
     Stereo   m_dstereo  = Stereo::ABC;
-
-    union Period
-    {
-        uint16_t full;
-        struct { uint8_t fine, coarse; };
-    };
-
-    struct Channel
-    {
-        Period  t_period;
-        uint8_t t_volume;
-        uint8_t t_duty;
-        Period  e_period;
-        uint8_t e_shape;
-    };
-
-    struct Commons
-    {
-        uint8_t n_period;
-        uint8_t n_and_mask;
-        uint8_t n_or_mask;
-        uint8_t mixer;
-    };
-
-    struct Status
-    {
-        uint32_t changed;
-        uint8_t  exp_mode;
-    };
-
-    struct State
-    {
-        Channel channels[3];
-        Commons commons;
-        Status  status;
-    };
-
-    State   m_states[2];
-    uint8_t m_current;
+    State    m_states[2];
 };

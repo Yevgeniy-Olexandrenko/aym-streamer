@@ -443,17 +443,16 @@ static const uint8_t e_shape [] PROGMEM = { SoundChip::EA_Shape,  SoundChip::EB_
 
 void SoundChip::process_clock_conversion()
 {
-#if defined(PSG_CLOCK_CONVERSION)
-    if (s_rclock != s_vclock)
+    if (m_rclock != m_vclock)
     {
-        State& state = m_states[m_sindex];
+        State& state = m_states[m_current];
         uint16_t t_bound = (state.status.exp_mode ? 0xFFFF : 0x0FFF);
         uint16_t n_bound = (state.status.exp_mode ? 0x00FF : 0x001F);
 
         // safe period conversion based on clock ratio
         const auto convert_period = [&](uint16_t& period, uint16_t bound)
         {
-            uint32_t converted = ((period * (s_rclock >> 8) / (s_vclock >> 9) + 1) >> 1);
+            uint32_t converted = ((period * (m_rclock >> 8) / (m_vclock >> 9) + 1) >> 1);
             period = uint16_t(converted > bound ? bound : converted);
         };
 
@@ -471,11 +470,12 @@ void SoundChip::process_clock_conversion()
 
         // set period registers as changed
         set_bits(state.status.changed,
-            1 << A_Fine  | 1 << A_Coarse  | 1 << B_Fine  | 1 << B_Coarse  | 1 << C_Fine  | 1 << C_Coarse  |
-            1 << EA_Fine | 1 << EA_Coarse | 1 << EB_Fine | 1 << EB_Coarse | 1 << EC_Fine | 1 << EC_Coarse |
-            1 << N_Period);
+            to_mask(Reg::A_Fine)    | to_mask(Reg::B_Fine)    | to_mask(Reg::C_Fine)    |
+            to_mask(Reg::A_Coarse)  | to_mask(Reg::B_Coarse)  | to_mask(Reg::C_Coarse)  |
+            to_mask(Reg::EA_Fine)   | to_mask(Reg::EB_Fine)   | to_mask(Reg::EC_Fine)   |
+            to_mask(Reg::EA_Coarse) | to_mask(Reg::EB_Coarse) | to_mask(Reg::EC_Coarse) |
+            to_mask(Reg::N_Period));
     }
-#endif
 }
 
 void SoundChip::process_channels_remapping()

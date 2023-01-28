@@ -7,8 +7,8 @@ volatile uint8_t reg;
 void setup()
 {
     psg.Init();
-    // psg.SetClock(SoundChip::Clock::F1_75MHZ);
-    // psg.SetStereo(SoundChip::Stereo::ABC);
+    psg.SetClock(SoundChip::Clock::F1_75MHZ);
+    psg.SetStereo(SoundChip::Stereo::ABC);
     // PSG::Init();
     
     reg = 0xFF;

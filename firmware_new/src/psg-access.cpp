@@ -258,6 +258,7 @@ void SoundChip::GetRegister(Reg reg, uint8_t& data) const
     get_register(m_input, reg, data);
 }
 
+// process state and write to PSG
 void SoundChip::Update()
 {
     if (m_input.status.changed)
@@ -266,6 +267,7 @@ void SoundChip::Update()
         process_clock_conversion();
         process_channels_remapping();
         process_compat_mode_fix();
+        update_output_changes();
         write_output_state();
         m_input.status.changed = 0;
     }
@@ -464,14 +466,6 @@ void SoundChip::process_clock_conversion()
         uint16_t period = m_output.commons.n_period;
         convert_period(period, n_bound);
         m_output.commons.n_period = uint8_t(period);
-
-        // set period registers as changed
-        set_bits(m_output.status.changed,
-            to_mask(Reg::A_Fine)    | to_mask(Reg::B_Fine)    | to_mask(Reg::C_Fine)    |
-            to_mask(Reg::A_Coarse)  | to_mask(Reg::B_Coarse)  | to_mask(Reg::C_Coarse)  |
-            to_mask(Reg::EA_Fine)   | to_mask(Reg::EB_Fine)   | to_mask(Reg::EC_Fine)   |
-            to_mask(Reg::EA_Coarse) | to_mask(Reg::EB_Coarse) | to_mask(Reg::EC_Coarse) |
-            to_mask(Reg::N_Period));
     }
 }
 
@@ -583,13 +577,6 @@ void SoundChip::process_compat_mode_fix()
                 m_output.channels[i].t_period.full = 0;
                 m_output.channels[i].t_duty = 0x08;
                 res_bit(m_output.commons.mixer, 0 + i);
-
-                // set registers changes
-                set_bits(m_output.status.changed,
-                    to_mask(Reg::A_Fine, 2 * i) | 
-                    to_mask(Reg::A_Coarse, 2 * i) |
-                    to_mask(Reg::A_Duty, i) | 
-                    to_mask(Reg::Mixer));
             }
         }
     }
@@ -597,6 +584,21 @@ void SoundChip::process_compat_mode_fix()
 
 // -----------------------------------------------------------------------------
 
+// apply changes in registers made by processing
+void SoundChip::update_output_changes()
+{
+    uint8_t idata, odata;
+    for (uint8_t reg = BankA_Fst; reg <= BankB_Lst; ++reg)
+    {
+        get_register(m_input,  Reg(reg), idata);
+        get_register(m_output, Reg(reg), odata);
+
+        if (idata != odata)
+            m_output.status.changed |= to_mask(reg);
+    }
+}
+
+// write changes in output state to the PSG
 void SoundChip::write_output_state()
 {
     uint8_t data;

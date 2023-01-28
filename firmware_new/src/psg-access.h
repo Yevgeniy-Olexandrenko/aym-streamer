@@ -172,7 +172,8 @@ private:
     void process_clock_conversion();
     void process_channels_remapping();
     void process_compat_mode_fix();
-    void reset_input_state();
+
+    void update_output_changes();
     void write_output_state();
 
 // -----------------------------------------------------------------------------

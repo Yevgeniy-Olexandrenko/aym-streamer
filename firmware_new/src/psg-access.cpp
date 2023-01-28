@@ -151,8 +151,6 @@ namespace PSG
 // High Level Interface
 // -----------------------------------------------------------------------------
 
-enum { INPUT, OUTPUT };
-
 template<class Reg, typename Off> 
 constexpr uint32_t to_mask(const Reg& reg, const Off& off)
 {
@@ -181,7 +179,7 @@ void SoundChip::Init()
 void SoundChip::Reset()
 {
     PSG::Reset();
-    memset(&m_states[INPUT], 0, sizeof(State));
+    memset(&m_input, 0, sizeof(State));
 }
 
 SoundChip::Type SoundChip::GetType() const
@@ -219,14 +217,12 @@ SoundChip::Stereo SoundChip::GetStereo() const
 // set register data indirectly via bank switching
 void SoundChip::SetRegister(uint8_t reg, uint8_t data)
 {
-    State& state = m_states[INPUT];
-
     // register number must be in range 0x00-0x0F
     if (reg < 0x10)
     {
         // redirect access to registers of bank B if
         // exp mode is active and bank B is selected
-        if (state.status.exp_mode == 0xB0)
+        if (m_input.status.exp_mode == 0xB0)
         {
             reg += BankB_Fst;
         }
@@ -237,14 +233,12 @@ void SoundChip::SetRegister(uint8_t reg, uint8_t data)
 // get register data indirectly via bank switching
 void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
 {
-    const State& state = m_states[INPUT];
-
     // register number must be in range 0x00-0x0F
     if (reg < 0x10)
     {
         // redirect access to registers of bank B if
         // exp mode is active and bank B is selected
-        if (state.status.exp_mode == 0xB0)
+        if (m_input.status.exp_mode == 0xB0)
         {
             reg += BankB_Fst;
         }
@@ -255,29 +249,25 @@ void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
 // set register data directly
 void SoundChip::SetRegister(Reg reg, uint8_t  data)
 {
-    State& state = m_states[INPUT];
-    set_register(state, reg, data);
+    set_register(m_input, reg, data);
 }
 
 // get register data directly
 void SoundChip::GetRegister(Reg reg, uint8_t& data) const
 {
-    const State& state = m_states[INPUT];
-    get_register(state, reg, data);
+    get_register(m_input, reg, data);
 }
 
 void SoundChip::Update()
 {
-    if (m_states[INPUT].status.changed)
+    if (m_input.status.changed)
     {
-        m_states[OUTPUT] = m_states[INPUT];
-
+        m_output = m_input;
         process_clock_conversion();
         process_channels_remapping();
         process_compat_mode_fix();
         write_output_state();
-
-        m_states[INPUT].status.changed = 0;
+        m_input.status.changed = 0;
     }
 }
 
@@ -453,9 +443,8 @@ void SoundChip::process_clock_conversion()
 {
     if (m_rclock != m_vclock)
     {
-        State& state = m_states[OUTPUT];
-        uint16_t t_bound = (state.status.exp_mode ? 0xFFFF : 0x0FFF);
-        uint16_t n_bound = (state.status.exp_mode ? 0x00FF : 0x001F);
+        uint16_t t_bound = (m_output.status.exp_mode ? 0xFFFF : 0x0FFF);
+        uint16_t n_bound = (m_output.status.exp_mode ? 0x00FF : 0x001F);
 
         // safe period conversion based on clock ratio
         const auto convert_period = [&](uint16_t& period, uint16_t bound)
@@ -467,17 +456,17 @@ void SoundChip::process_clock_conversion()
         // convert tone and envelope periods
         for (int i = 0; i < 3; ++i)
         {
-            convert_period(state.channels[i].t_period.full, t_bound);
-            convert_period(state.channels[i].e_period.full, 0xFFFF);
+            convert_period(m_output.channels[i].t_period.full, t_bound);
+            convert_period(m_output.channels[i].e_period.full, 0xFFFF);
         }
 
         // convert noise period
-        uint16_t period = state.commons.n_period;
+        uint16_t period = m_output.commons.n_period;
         convert_period(period, n_bound);
-        state.commons.n_period = uint8_t(period);
+        m_output.commons.n_period = uint8_t(period);
 
         // set period registers as changed
-        set_bits(state.status.changed,
+        set_bits(m_output.status.changed,
             to_mask(Reg::A_Fine)    | to_mask(Reg::B_Fine)    | to_mask(Reg::C_Fine)    |
             to_mask(Reg::A_Coarse)  | to_mask(Reg::B_Coarse)  | to_mask(Reg::C_Coarse)  |
             to_mask(Reg::EA_Fine)   | to_mask(Reg::EB_Fine)   | to_mask(Reg::EC_Fine)   |
@@ -577,27 +566,26 @@ void SoundChip::process_compat_mode_fix()
 {
     if (GetType() == Type::AY8930)
     {
-        State& state = m_states[OUTPUT];
         for (int i = 0; i < 3; ++i)
         {
-            uint8_t volume = state.channels[i].t_volume;
-            if (state.status.exp_mode) volume >>= 1;
+            uint8_t volume = m_output.channels[i].t_volume;
+            if (m_output.status.exp_mode) volume >>= 1;
 
             // get tone, noise and envelope enable flags
-            bool t_disable = isb_set(state.commons.mixer, 0 + i);
-            bool n_disable = isb_set(state.commons.mixer, 3 + i);
+            bool t_disable = isb_set(m_output.commons.mixer, 0 + i);
+            bool n_disable = isb_set(m_output.commons.mixer, 3 + i);
             bool e_enable  = isb_set(volume, 4);
 
             // special case - pure envelope
             if (e_enable && t_disable && n_disable)
             {
                 // fix by enabling inaudible tone
-                state.channels[i].t_period.full = 0;
-                state.channels[i].t_duty = 0x08;
-                res_bit(state.commons.mixer, 0 + i);
+                m_output.channels[i].t_period.full = 0;
+                m_output.channels[i].t_duty = 0x08;
+                res_bit(m_output.commons.mixer, 0 + i);
 
                 // set registers changes
-                set_bits(state.status.changed,
+                set_bits(m_output.status.changed,
                     to_mask(Reg::A_Fine, 2 * i) | 
                     to_mask(Reg::A_Coarse, 2 * i) |
                     to_mask(Reg::A_Duty, i) | 
@@ -611,29 +599,29 @@ void SoundChip::process_compat_mode_fix()
 
 void SoundChip::write_output_state()
 {
-    const State& state = m_states[OUTPUT];
-    bool switch_banks = false; uint8_t data;
+    uint8_t data;
+    bool switch_banks = false;
 
-    if (GetType() == Type::AY8930 && state.status.exp_mode)
+    if (GetType() == Type::AY8930 && m_output.status.exp_mode)
     {
         // check for changes in registers of bank B
         for (uint8_t reg = BankB_Fst; reg <= BankB_Lst; ++reg)
         {
-            if (state.status.changed & to_mask(reg))
+            if (m_output.status.changed & to_mask(reg))
             {
                 // we have changes, so first
                 // of all we switch to bank B
                 if (!switch_banks)
                 {
                     switch_banks = true;
-                    get_register(state, Reg::Mode_Bank, data);
+                    get_register(m_output, Reg::Mode_Bank, data);
                     data &= 0x0F; data |= 0xB0;
                     PSG::Address(Mode_Bank);
                     PSG::Write(data);
                 }
 
                 // send register data to chip (within bank B)
-                get_register(state, Reg(reg), data);
+                get_register(m_output, Reg(reg), data);
                 PSG::Address(reg & 0x0F);
                 PSG::Write(data);
             }
@@ -643,7 +631,7 @@ void SoundChip::write_output_state()
         {
             // we wrote something to bank B,
             // so we switch back to bank A
-            get_register(state, Reg::Mode_Bank, data);
+            get_register(m_output, Reg::Mode_Bank, data);
             data &= 0x0F; data |= 0xA0;
             PSG::Address(Mode_Bank);
             PSG::Write(data);
@@ -653,14 +641,14 @@ void SoundChip::write_output_state()
     // check for changes in registers of bank A
     for (uint8_t reg = BankA_Fst; reg <= BankA_Lst; ++reg)
     {
-        if (state.status.changed & to_mask(reg))
+        if (m_output.status.changed & to_mask(reg))
         {
             // skip the 'mode/bank' register if 
             // we've done a bank switch before
             if (switch_banks && reg == Mode_Bank) continue;
 
             // send register data to chip (within bank A)
-            get_register(state, Reg(reg), data);
+            get_register(m_output, Reg(reg), data);
             PSG::Address(reg & 0x0F);
             PSG::Write(data);
         }

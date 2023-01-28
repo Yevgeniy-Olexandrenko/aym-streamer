@@ -183,5 +183,5 @@ private:
     uint32_t m_vclock   = 0;
     Stereo   m_sstereo  = Stereo::ABC;
     Stereo   m_dstereo  = Stereo::ABC;
-    State    m_states[2];
+    State    m_input, m_output;
 };

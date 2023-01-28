@@ -8,7 +8,7 @@ void setup()
 {
     psg.Init();
     psg.SetClock(SoundChip::Clock::F1_75MHZ);
-    psg.SetStereo(SoundChip::Stereo::ABC);
+    psg.SetStereo(SoundChip::Stereo::CBA);
     // PSG::Init();
     
     reg = 0xFF;

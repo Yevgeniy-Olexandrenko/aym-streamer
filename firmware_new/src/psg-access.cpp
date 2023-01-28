@@ -9,6 +9,11 @@
 #include "psg-access.h"
 #include "psg-wiring.h"
 
+// processors
+//#define PROCESS_CLOCK_CONVERSION
+//#define PROCESS_CHANNELS_REMAPPING
+#define PROCESS_COMPAT_MODE_FIX
+
 // helpers
 #define set_bits(reg, bits) reg |=  (bits)
 #define res_bits(reg, bits) reg &= ~(bits)
@@ -226,7 +231,7 @@ void SoundChip::SetRegister(uint8_t reg, uint8_t data)
         {
             reg += BankB_Fst;
         }
-        SetRegister(Reg(reg), data);
+        set_register(m_input, Reg(reg), data);
     }
 }
 
@@ -242,7 +247,7 @@ void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
         {
             reg += BankB_Fst;
         }
-        GetRegister(Reg(reg), data);
+        get_register(m_input, Reg(reg), data);
     }
 }
 
@@ -341,8 +346,6 @@ void SoundChip::do_test_wr_rd_exp_mode(uint8_t mode_bank)
     }
 }
 
-// -----------------------------------------------------------------------------
-
 void SoundChip::set_register(State& state, Reg reg, uint8_t data)
 {
     // preserve the state of exp mode and bank of regs
@@ -433,16 +436,24 @@ void SoundChip::get_register(const State& state, Reg reg, uint8_t& data) const
     }
 }
 
-// -----------------------------------------------------------------------------
+static const uint8_t e_fine[] PROGMEM = {
+    uint8_t(SoundChip::Reg::EA_Fine),
+    uint8_t(SoundChip::Reg::EB_Fine),
+    uint8_t(SoundChip::Reg::EC_Fine)};
 
-#if defined(PSG_CHANNELS_REMAPPING)
-static const uint8_t e_fine  [] PROGMEM = { SoundChip::EA_Fine,   SoundChip::EB_Fine,   SoundChip::EC_Fine   };
-static const uint8_t e_coarse[] PROGMEM = { SoundChip::EA_Coarse, SoundChip::EB_Coarse, SoundChip::EC_Coarse };
-static const uint8_t e_shape [] PROGMEM = { SoundChip::EA_Shape,  SoundChip::EB_Shape,  SoundChip::EC_Shape  };
-#endif
+static const uint8_t e_coarse[] PROGMEM = {
+    uint8_t(SoundChip::Reg::EA_Coarse),
+    uint8_t(SoundChip::Reg::EB_Coarse),
+    uint8_t(SoundChip::Reg::EC_Coarse)};
+
+static const uint8_t e_shape[] PROGMEM = {
+    uint8_t(SoundChip::Reg::EA_Shape),
+    uint8_t(SoundChip::Reg::EB_Shape),
+    uint8_t(SoundChip::Reg::EC_Shape)};
 
 void SoundChip::process_clock_conversion()
 {
+#if defined(PROCESS_CLOCK_CONVERSION)
     if (m_rclock != m_vclock)
     {
         uint16_t t_bound = (m_output.status.exp_mode ? 0xFFFF : 0x0FFF);
@@ -467,15 +478,14 @@ void SoundChip::process_clock_conversion()
         convert_period(period, n_bound);
         m_output.commons.n_period = uint8_t(period);
     }
+#endif
 }
 
 void SoundChip::process_channels_remapping()
 {
-#if defined(PSG_CHANNELS_REMAPPING)
-    State& state = m_states[m_sindex];
-
+#if defined(PROCESS_CHANNELS_REMAPPING)
     // restrict stereo modes available for exp mode
-    m_dstereo = (state.status.exp_mode && m_sstereo != Stereo::ABC && m_sstereo != Stereo::ACB)
+    m_dstereo = (m_output.status.exp_mode && m_sstereo != Stereo::ABC && m_sstereo != Stereo::ACB)
         ? Stereo::ABC
         : m_sstereo;
 
@@ -484,47 +494,46 @@ void SoundChip::process_channels_remapping()
         const auto swap_register = [&](uint8_t reg_l, uint8_t reg_r)
         {
             uint8_t data_l, data_r;
-            GetRegister(reg_l, data_l);
-            GetRegister(reg_r, data_r);
-            SetRegister(reg_l, data_r);
-            SetRegister(reg_r, data_l);
+            get_register(m_output, Reg(reg_l), data_l);
+            get_register(m_output, Reg(reg_r), data_r);
+            set_register(m_output, Reg(reg_l), data_r);
+            set_register(m_output, Reg(reg_r), data_l);
         };
 
         const auto swap_channels = [&](uint8_t l, uint8_t r)
         {
             // swap tone period and tone volume/envelope enable
-            swap_register(A_Fine   + 2 * l, A_Fine   + 2 * r);
-            swap_register(A_Coarse + 2 * l, A_Coarse + 2 * r);
-            swap_register(A_Volume + l, A_Volume + r);
+            swap_register(uint8_t(Reg::A_Fine) + 2 * l, uint8_t(Reg::A_Fine) + 2 * r);
+            swap_register(uint8_t(Reg::A_Coarse) + 2 * l, uint8_t(Reg::A_Coarse) + 2 * r);
+            swap_register(uint8_t(Reg::A_Volume) + l, uint8_t(Reg::A_Volume) + r);
 
-            if (state.status.exp_mode)
+            if (m_output.status.exp_mode)
             {
                 // swap tone duty cycle and envelope period
-                swap_register(A_Duty + l, A_Duty + r);
+                swap_register(uint8_t(Reg::A_Duty) + l, uint8_t(Reg::A_Duty) + r);
                 swap_register(pgm_read_byte(e_fine + l), pgm_read_byte(e_fine + r));
                 swap_register(pgm_read_byte(e_coarse + l), pgm_read_byte(e_coarse + r));
 
                 // swap envelope shape
                 uint8_t shape_l = pgm_read_byte(e_shape + l);
                 uint8_t shape_r = pgm_read_byte(e_shape + r);
-                bool schanged_l = isb_set(state.status.changed, shape_l);
-                bool schanged_r = isb_set(state.status.changed, shape_r);
+                bool schanged_l = (m_output.status.changed & to_mask(shape_l));
+                bool schanged_r = (m_output.status.changed & to_mask(shape_r));
                 swap_register(shape_l, shape_r);
-                if (schanged_l) set_bit(state.status.changed, shape_r); 
-                else res_bit(state.status.changed, shape_r);
-                if (schanged_r) set_bit(state.status.changed, shape_l); 
-                else res_bit(state.status.changed, shape_l);
+                if (schanged_l) m_output.status.changed |= to_mask(shape_r);
+                else m_output.status.changed &= ~to_mask(shape_r);
+                if (schanged_r) m_output.status.changed |= to_mask(shape_l);
+                else m_output.status.changed &= ~to_mask(shape_l);
             }
 
             // swap bits in mixer register
             uint8_t msk_l = (0b00001001 << l);
             uint8_t msk_r = (0b00001001 << r);
-            uint8_t mix_l = ((state.commons.mixer & msk_l) >> l);
-            uint8_t mix_r = ((state.commons.mixer & msk_r) >> r);
-            res_bits(state.commons.mixer, msk_l | msk_r);
-            set_bits(state.commons.mixer, mix_l << r);
-            set_bits(state.commons.mixer, mix_r << l);
-            set_bit(state.status.changed, Mixer);
+            uint8_t mix_l = ((m_output.commons.mixer & msk_l) >> l);
+            uint8_t mix_r = ((m_output.commons.mixer & msk_r) >> r);
+            res_bits(m_output.commons.mixer, msk_l | msk_r);
+            set_bits(m_output.commons.mixer, mix_l << r);
+            set_bits(m_output.commons.mixer, mix_r << l);
         };
 
         // swap channels in pairs
@@ -558,6 +567,7 @@ void SoundChip::process_channels_remapping()
 
 void SoundChip::process_compat_mode_fix()
 {
+#if defined(PROCESS_COMPAT_MODE_FIX)
     if (GetType() == Type::AY8930)
     {
         for (int i = 0; i < 3; ++i)
@@ -580,20 +590,19 @@ void SoundChip::process_compat_mode_fix()
             }
         }
     }
+#endif
 }
-
-// -----------------------------------------------------------------------------
 
 // apply changes in registers made by processing
 void SoundChip::update_output_changes()
 {
-    uint8_t idata, odata;
+    uint8_t i_data, o_data;
     for (uint8_t reg = BankA_Fst; reg <= BankB_Lst; ++reg)
     {
-        get_register(m_input,  Reg(reg), idata);
-        get_register(m_output, Reg(reg), odata);
+        get_register(m_input,  Reg(reg), i_data);
+        get_register(m_output, Reg(reg), o_data);
 
-        if (idata != odata)
+        if (i_data != o_data)
             m_output.status.changed |= to_mask(reg);
     }
 }

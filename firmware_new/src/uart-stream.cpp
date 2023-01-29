@@ -11,8 +11,8 @@ namespace UART
 {
     namespace Stream
     {
-        MicroUART  m_uart;
-        SoundChip* m_soundChip;
+        MicroUART m_uart;
+        DoublePSG* m_psg;
         volatile uint8_t m_reg;
         volatile uint8_t m_wrp = 0;
         volatile uint8_t m_rdp = 0;
@@ -22,10 +22,10 @@ namespace UART
 
 // -----------------------------------------------------------------------------
 
-void UART::Stream::Start(SoundChip& soundChip)
+void UART::Stream::Start(DoublePSG& psg)
 {
     // prepare internal state
-    m_soundChip = &soundChip;
+    m_psg = &psg;
     m_reg = 0xFF;
 
     // start UART communication
@@ -33,6 +33,7 @@ void UART::Stream::Start(SoundChip& soundChip)
     m_uart.begin(57600);
     Timer1.setPeriod(1000);
     Timer1.enableISR(CHANNEL_A);
+    sei();
 }
 
 void UART::Stream::Stop()
@@ -69,7 +70,7 @@ ISR(TIMER1_A)
         if (m_reg < 0x10)
         {
             // handle data for register
-            m_soundChip->SetRegister(m_reg, data);
+            m_psg->SetRegister(m_reg, data);
             m_reg = 0xFF;
         }
         else if (data < 0x10)
@@ -77,6 +78,16 @@ ISR(TIMER1_A)
             // handle register number
             m_reg = data;
         }
+        else if (data == 0xFF)
+        {
+            // choose first PSG
+            m_psg->SetCurrent(0);
+        }
+        else if (data == 0xFE)
+        {
+            // choose second PSG
+            m_psg->SetCurrent(1);
+        }
     }
-    m_soundChip->Update();
+    m_psg->Update();
 }

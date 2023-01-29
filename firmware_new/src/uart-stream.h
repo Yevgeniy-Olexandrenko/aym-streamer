@@ -1,12 +1,12 @@
 #pragma 
 
-class SoundChip;
+class DoublePSG;
 
 namespace UART
 {
     namespace Stream
     {
-        void Start(SoundChip& soundChip);
+        void Start(DoublePSG& psg);
         void Stop();
     }
 };

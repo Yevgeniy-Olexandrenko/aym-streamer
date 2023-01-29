@@ -1,16 +1,15 @@
 #include "src/psg-access.h"
 #include "src/uart-stream.h"
 
-SoundChip m_soundChip;
+DoublePSG m_psg;
 
 void setup()
 {
-    m_soundChip.Init();
-    m_soundChip.SetClock(SoundChip::Clock::F1_75MHZ);
-    m_soundChip.SetStereo(SoundChip::Stereo::ABC);
+    m_psg.Init();
+    m_psg.SetClock(SinglePSG::Clock::F1_75MHZ);
+    m_psg.SetStereo(SinglePSG::Stereo::ABC);
 
-    UART::Stream::Start(m_soundChip);
-    sei();
+    UART::Stream::Start(m_psg);
 }
 
 void loop()

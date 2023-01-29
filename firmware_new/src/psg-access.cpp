@@ -10,7 +10,7 @@
 #include "psg-wiring.h"
 
 // processors
-//#define ENABLE_PROCESSING
+#define ENABLE_PROCESSING
 #define PROCESS_CLOCK_CONVERSION
 #define PROCESS_CHANNELS_REMAPPING
 #define PROCESS_COMPAT_MODE_FIX
@@ -164,7 +164,7 @@ constexpr uint32_t to_mask(const Reg& reg)
 
 // -----------------------------------------------------------------------------
 
-void SoundChip::Init()
+void SinglePSG::Init()
 {
     // init hardware and detect chip type
     PSG::Init();
@@ -175,18 +175,18 @@ void SoundChip::Init()
     Reset();
 }
 
-void SoundChip::Reset()
+void SinglePSG::Reset()
 {
     PSG::Reset();
     memset(&m_input, 0, sizeof(State));
 }
 
-SoundChip::Type SoundChip::GetType() const
+SinglePSG::Type SinglePSG::GetType() const
 {
     return Type(m_typehash);
 }
 
-void SoundChip::SetClock(Clock clock)
+void SinglePSG::SetClock(Clock clock)
 {
     if (clock >= F1_00MHZ && clock <= F2_00MHZ)
     {
@@ -197,24 +197,24 @@ void SoundChip::SetClock(Clock clock)
     }
 }
 
-SoundChip::Clock SoundChip::GetClock() const
+SinglePSG::Clock SinglePSG::GetClock() const
 {
     return m_vclock;
 }
 
-void SoundChip::SetStereo(Stereo stereo)
+void SinglePSG::SetStereo(Stereo stereo)
 {
     m_sstereo = stereo;
     m_dstereo = stereo;
 }
 
-SoundChip::Stereo SoundChip::GetStereo() const
+SinglePSG::Stereo SinglePSG::GetStereo() const
 {
     return m_dstereo;
 }
 
 // set register data indirectly via bank switching
-void SoundChip::SetRegister(uint8_t reg, uint8_t data)
+void SinglePSG::SetRegister(uint8_t reg, uint8_t data)
 {
 #ifdef ENABLE_PROCESSING
     // register number must be in range 0x00-0x0F
@@ -235,7 +235,7 @@ void SoundChip::SetRegister(uint8_t reg, uint8_t data)
 }
 
 // get register data indirectly via bank switching
-void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
+void SinglePSG::GetRegister(uint8_t reg, uint8_t& data) const
 {
 #ifdef ENABLE_PROCESSING
     // register number must be in range 0x00-0x0F
@@ -256,7 +256,7 @@ void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
 }
 
 // set register data directly
-void SoundChip::SetRegister(Reg reg, uint8_t  data)
+void SinglePSG::SetRegister(Reg reg, uint8_t  data)
 {
 #ifdef ENABLE_PROCESSING
     set_register(m_input, reg, data);
@@ -264,7 +264,7 @@ void SoundChip::SetRegister(Reg reg, uint8_t  data)
 }
 
 // get register data directly
-void SoundChip::GetRegister(Reg reg, uint8_t& data) const
+void SinglePSG::GetRegister(Reg reg, uint8_t& data) const
 {
 #ifdef ENABLE_PROCESSING
     get_register(m_input, reg, data);
@@ -272,7 +272,7 @@ void SoundChip::GetRegister(Reg reg, uint8_t& data) const
 }
 
 // process state and write to PSG
-void SoundChip::Update()
+void SinglePSG::Update()
 {
 #ifdef ENABLE_PROCESSING
     if (m_input.status.changed)
@@ -290,7 +290,7 @@ void SoundChip::Update()
 
 // -----------------------------------------------------------------------------
 
-void SoundChip::detect_type()
+void SinglePSG::detect_type()
 {
     m_typehash = 0x00000007;
     do_test_wr_rd_regs(0x00);
@@ -301,12 +301,12 @@ void SoundChip::detect_type()
     do_test_wr_rd_exp_mode(0xB0);
 }
 
-void SoundChip::update_hash(uint8_t data)
+void SinglePSG::update_hash(uint8_t data)
 {
     m_typehash = (31 * m_typehash + uint32_t(data)); 
 }
 
-void SoundChip::do_test_wr_rd_regs(uint8_t offset)
+void SinglePSG::do_test_wr_rd_regs(uint8_t offset)
 {
     for (uint8_t data, reg = offset; reg < (offset + 16); ++reg)
     {
@@ -324,7 +324,7 @@ void SoundChip::do_test_wr_rd_regs(uint8_t offset)
     }
 }
 
-void SoundChip::do_test_wr_rd_latch(uint8_t offset)
+void SinglePSG::do_test_wr_rd_latch(uint8_t offset)
 {
     for (uint8_t data, reg = offset; reg < (offset + 16); ++reg)
     {
@@ -338,7 +338,7 @@ void SoundChip::do_test_wr_rd_latch(uint8_t offset)
     }
 }
 
-void SoundChip::do_test_wr_rd_exp_mode(uint8_t mode_bank)
+void SinglePSG::do_test_wr_rd_exp_mode(uint8_t mode_bank)
 {
     PSG::Address(Mode_Bank);
     PSG::Write(mode_bank | 0x0F);
@@ -356,7 +356,7 @@ void SoundChip::do_test_wr_rd_exp_mode(uint8_t mode_bank)
     }
 }
 
-void SoundChip::set_register(State& state, Reg reg, uint8_t data)
+void SinglePSG::set_register(State& state, Reg reg, uint8_t data)
 {
     // preserve the state of exp mode and bank of regs
     // separately from the shape of channel A envelope
@@ -403,7 +403,7 @@ void SoundChip::set_register(State& state, Reg reg, uint8_t data)
     state.status.changed |= to_mask(reg);
 }
 
-void SoundChip::get_register(const State& state, Reg reg, uint8_t& data) const
+void SinglePSG::get_register(const State& state, Reg reg, uint8_t& data) const
 {
     // map register to corresponding field of state
     switch(reg)
@@ -447,21 +447,21 @@ void SoundChip::get_register(const State& state, Reg reg, uint8_t& data) const
 }
 
 static const uint8_t e_fine[] PROGMEM = {
-    uint8_t(SoundChip::Reg::EA_Fine),
-    uint8_t(SoundChip::Reg::EB_Fine),
-    uint8_t(SoundChip::Reg::EC_Fine)};
+    uint8_t(SinglePSG::Reg::EA_Fine),
+    uint8_t(SinglePSG::Reg::EB_Fine),
+    uint8_t(SinglePSG::Reg::EC_Fine)};
 
 static const uint8_t e_coarse[] PROGMEM = {
-    uint8_t(SoundChip::Reg::EA_Coarse),
-    uint8_t(SoundChip::Reg::EB_Coarse),
-    uint8_t(SoundChip::Reg::EC_Coarse)};
+    uint8_t(SinglePSG::Reg::EA_Coarse),
+    uint8_t(SinglePSG::Reg::EB_Coarse),
+    uint8_t(SinglePSG::Reg::EC_Coarse)};
 
 static const uint8_t e_shape[] PROGMEM = {
-    uint8_t(SoundChip::Reg::EA_Shape),
-    uint8_t(SoundChip::Reg::EB_Shape),
-    uint8_t(SoundChip::Reg::EC_Shape)};
+    uint8_t(SinglePSG::Reg::EA_Shape),
+    uint8_t(SinglePSG::Reg::EB_Shape),
+    uint8_t(SinglePSG::Reg::EC_Shape)};
 
-void SoundChip::process_clock_conversion()
+void SinglePSG::process_clock_conversion()
 {
 #if defined(PROCESS_CLOCK_CONVERSION)
     if (m_rclock != m_vclock)
@@ -491,7 +491,7 @@ void SoundChip::process_clock_conversion()
 #endif
 }
 
-void SoundChip::process_channels_remapping()
+void SinglePSG::process_channels_remapping()
 {
 #if defined(PROCESS_CHANNELS_REMAPPING)
     // restrict stereo modes available for exp mode
@@ -575,7 +575,7 @@ void SoundChip::process_channels_remapping()
 #endif
 }
 
-void SoundChip::process_compat_mode_fix()
+void SinglePSG::process_compat_mode_fix()
 {
 #if defined(PROCESS_COMPAT_MODE_FIX)
     if (GetType() == Type::AY8930)
@@ -604,7 +604,7 @@ void SoundChip::process_compat_mode_fix()
 }
 
 // apply changes in registers made by processing
-void SoundChip::update_output_changes()
+void SinglePSG::update_output_changes()
 {
     uint8_t i_data, o_data;
     for (uint8_t reg = BankA_Fst; reg <= BankB_Lst; ++reg)
@@ -618,7 +618,7 @@ void SoundChip::update_output_changes()
 }
 
 // write changes in output state to the PSG
-void SoundChip::write_output_state()
+void SinglePSG::write_output_state()
 {
     uint8_t data;
     bool switch_banks = false;
@@ -674,4 +674,84 @@ void SoundChip::write_output_state()
             PSG::Write(data);
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+
+// TODO
+void DoublePSG::Init()
+{
+    m_psg[0].Init();
+    m_psg[1].Init();
+    SetCurrent(0);
+}
+
+// TODO
+void DoublePSG::Reset()
+{
+    m_psg[0].Reset();
+    m_psg[1].Reset();
+    SetCurrent(0);
+}
+
+SinglePSG::Type DoublePSG::GetType() const
+{
+    m_psg[m_current].GetType();
+}
+
+// TODO
+void DoublePSG::SetClock(SinglePSG::Clock clock)
+{
+    m_psg[0].SetClock(clock);
+    m_psg[1].SetClock(clock);
+}
+
+// TODO
+SinglePSG::Clock DoublePSG::GetClock() const
+{
+    m_psg[m_current].GetClock();
+}
+
+void DoublePSG::SetStereo(SinglePSG::Stereo stereo)
+{
+    m_psg[m_current].SetStereo(stereo);
+}
+
+SinglePSG::Stereo DoublePSG::GetStereo() const
+{
+    return m_psg[m_current].GetStereo();
+}
+
+void DoublePSG::SetCurrent(uint8_t index)
+{
+    if (index <= 1) m_current = index;
+}
+
+void DoublePSG::SetRegister(uint8_t reg, uint8_t data)
+{
+    m_psg[m_current].SetRegister(reg, data);
+}
+
+void DoublePSG::GetRegister(uint8_t reg, uint8_t& data) const
+{
+    m_psg[m_current].GetRegister(reg, data);
+}
+
+void DoublePSG::SetRegister(SinglePSG::Reg reg, uint8_t data)
+{
+    m_psg[m_current].SetRegister(reg, data);
+}
+
+void DoublePSG::GetRegister(SinglePSG::Reg reg, uint8_t& data) const
+{
+    m_psg[m_current].GetRegister(reg, data);
+}
+
+void DoublePSG::Update()
+{
+    PSG::Address(0xFF);
+    m_psg[0].Update();
+
+    PSG::Address(0xFE);
+    m_psg[1].Update();
 }

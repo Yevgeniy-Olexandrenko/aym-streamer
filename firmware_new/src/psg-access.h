@@ -24,7 +24,7 @@ namespace PSG
 // High Level Interface
 // -----------------------------------------------------------------------------
 
-class SoundChip
+class SinglePSG
 {
     union Period
     {
@@ -185,4 +185,30 @@ private:
     Stereo   m_sstereo  = Stereo::ABC;
     Stereo   m_dstereo  = Stereo::ABC;
     State    m_input, m_output;
+};
+
+// TODO: chip detection and handling
+class DoublePSG
+{
+public:
+    void Init();
+    void Reset();
+    SinglePSG::Type GetType() const;
+
+    void SetClock(SinglePSG::Clock clock);
+    SinglePSG::Clock GetClock() const;
+
+    void SetStereo(SinglePSG::Stereo stereo);
+    SinglePSG::Stereo GetStereo() const;
+
+    void SetCurrent(uint8_t index);
+    void SetRegister(uint8_t reg, uint8_t data);
+    void GetRegister(uint8_t reg, uint8_t& data) const;
+    void SetRegister(SinglePSG::Reg reg, uint8_t data);
+    void GetRegister(SinglePSG::Reg reg, uint8_t& data) const;
+    void Update();
+
+private:
+    SinglePSG m_psg[2];
+    uint8_t m_current;
 };

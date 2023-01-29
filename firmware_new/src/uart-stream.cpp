@@ -1,19 +1,22 @@
-#include <GyverTimers.h>
 #include "uart-stream.h"
 #include "psg-access.h"
-#include "uart.h"
 
-//#define DEBUG_DIRRECT_WRITE
+#include <avr/interrupt.h>
+#define  MU_TX_BUF 0
+#define  MU_RX_BUF 0
+#include <MicroUART.h>
+#include <GyverTimers.h>
 
 namespace UART
 {
     namespace Stream
     {
-        volatile SoundChip* m_soundChip;
-        volatile uint8_t m_buf[256];
+        MicroUART  m_uart;
+        SoundChip* m_soundChip;
+        volatile uint8_t m_reg;
         volatile uint8_t m_wrp = 0;
         volatile uint8_t m_rdp = 0;
-        volatile uint8_t m_reg;
+        volatile uint8_t m_buf[256];
     }
 }
 
@@ -26,10 +29,8 @@ void UART::Stream::Start(SoundChip& soundChip)
     m_reg = 0xFF;
 
     // start UART communication
-    UART_Open(57600);
-    UART_EnableRXInt(true);
-
     // start sound chip update timer
+    m_uart.begin(57600);
     Timer1.setPeriod(1000);
     Timer1.enableISR(CHANNEL_A);
 }
@@ -37,24 +38,20 @@ void UART::Stream::Start(SoundChip& soundChip)
 void UART::Stream::Stop()
 {
     // stop sound chip update timer
-    Timer1.stop();
-
     // stop UART communication
-    UART_Close();
+    Timer1.stop();
+    m_uart.end();
 }
 
 // -----------------------------------------------------------------------------
 
-ISR(USART_RX_vect)
+void MU_serialEvent()
 {
+    // store data in circular buffer and
+    // delay sound chip update procedure
     using namespace UART::Stream;
-    if (bit_is_clear(UCSR0A, FE0))
-    {
-        // store data in circular buffer and
-        // delay sound chip update procedure
-        m_buf[m_wrp++] = UDR0;
-        Timer1.restart();
-    }
+    m_buf[m_wrp++] = m_uart.read();
+    Timer1.restart();
 }
 
 ISR(TIMER1_A) 

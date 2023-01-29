@@ -7,50 +7,44 @@
 #include <MicroUART.h>
 #include <GyverTimers.h>
 
-namespace UART
-{
-    namespace Stream
-    {
-        MicroUART m_uart;
-        SinglePSG* m_psg;
-        uint8_t m_reg;
-        uint8_t m_wrp = 0;
-        uint8_t m_rdp = 0;
-        uint8_t m_buf[256];
-    }
-}
+// shared class instance
+uart_stream UARTStream;
 
-// -----------------------------------------------------------------------------
+// hidden internals common to 
+// all instances of the class
+static volatile MicroUART m_uart;
+static volatile SinglePSG* m_psg;
+static volatile uint8_t m_reg;
+static volatile uint8_t m_wrp = 0;
+static volatile uint8_t m_rdp = 0;
+static volatile uint8_t m_buf[256];
 
-void UART::Stream::Start(SinglePSG& psg)
+void uart_stream::Start(SinglePSG& psg)
 {
     // prepare internal state
     m_psg = &psg;
     m_reg = 0xFF;
 
-    // start UART communication
-    // start sound chip update timer
+    // start UART for communication
+    // and timer for PSG update
     m_uart.begin(57600);
     Timer1.setPeriod(1000);
     Timer1.enableISR(CHANNEL_A);
     sei();
 }
 
-void UART::Stream::Stop()
+void uart_stream::Stop()
 {
-    // stop sound chip update timer
-    // stop UART communication
+    // stop PSG update timer and
+    // communication via UART
     Timer1.stop();
     m_uart.end();
 }
-
-// -----------------------------------------------------------------------------
 
 void MU_serialEvent()
 {
     // store data in circular buffer and
     // delay sound chip update procedure
-    using namespace UART::Stream;
     m_buf[m_wrp++] = m_uart.read();
 }
 
@@ -61,7 +55,6 @@ ISR(TIMER1_A)
     Timer1.pause(); sei();
 
     // process received data in buffer
-    using namespace UART::Stream;
     while (m_rdp != m_wrp)
     {
         uint8_t data = m_buf[m_rdp++];

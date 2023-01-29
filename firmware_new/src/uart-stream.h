@@ -1,12 +1,12 @@
-#pragma 
+#pragma once
 
 class SinglePSG;
 
-namespace UART
+class uart_stream
 {
-    namespace Stream
-    {
-        void Start(SinglePSG& psg);
-        void Stop();
-    }
+public:
+    void Start(SinglePSG& psg);
+    void Stop();
 };
+
+extern uart_stream UARTStream;

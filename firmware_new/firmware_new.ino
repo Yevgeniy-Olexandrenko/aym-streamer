@@ -8,8 +8,7 @@ void setup()
     m_psg.Init();
     m_psg.SetClock(SinglePSG::Clock::F1_75MHZ);
     m_psg.SetStereo(SinglePSG::Stereo::ABC);
-
-    UART::Stream::Start(m_psg);
+    UARTStream.Start(m_psg);
 }
 
 void loop()

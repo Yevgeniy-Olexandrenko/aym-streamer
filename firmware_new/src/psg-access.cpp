@@ -10,6 +10,7 @@
 #include "psg-wiring.h"
 
 // processors
+//#define ENABLE_PROCESSING
 #define PROCESS_CLOCK_CONVERSION
 #define PROCESS_CHANNELS_REMAPPING
 #define PROCESS_COMPAT_MODE_FIX
@@ -215,6 +216,7 @@ SoundChip::Stereo SoundChip::GetStereo() const
 // set register data indirectly via bank switching
 void SoundChip::SetRegister(uint8_t reg, uint8_t data)
 {
+#ifdef ENABLE_PROCESSING
     // register number must be in range 0x00-0x0F
     if (reg < 0x10)
     {
@@ -226,11 +228,16 @@ void SoundChip::SetRegister(uint8_t reg, uint8_t data)
         }
         set_register(m_input, Reg(reg), data);
     }
+#else
+    PSG::Address(reg);
+    PSG::Write(data);
+#endif
 }
 
 // get register data indirectly via bank switching
 void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
 {
+#ifdef ENABLE_PROCESSING
     // register number must be in range 0x00-0x0F
     if (reg < 0x10)
     {
@@ -242,23 +249,32 @@ void SoundChip::GetRegister(uint8_t reg, uint8_t& data) const
         }
         get_register(m_input, Reg(reg), data);
     }
+#else
+    PSG::Address(reg);
+    PSG::Read(data);
+#endif
 }
 
 // set register data directly
 void SoundChip::SetRegister(Reg reg, uint8_t  data)
 {
+#ifdef ENABLE_PROCESSING
     set_register(m_input, reg, data);
+#endif
 }
 
 // get register data directly
 void SoundChip::GetRegister(Reg reg, uint8_t& data) const
 {
+#ifdef ENABLE_PROCESSING
     get_register(m_input, reg, data);
+#endif
 }
 
 // process state and write to PSG
 void SoundChip::Update()
 {
+#ifdef ENABLE_PROCESSING
     if (m_input.status.changed)
     {
         m_output = m_input;
@@ -269,6 +285,7 @@ void SoundChip::Update()
         write_output_state();
         m_input.status.changed = 0;
     }
+#endif
 }
 
 // -----------------------------------------------------------------------------

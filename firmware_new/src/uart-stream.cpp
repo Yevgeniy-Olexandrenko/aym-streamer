@@ -12,18 +12,18 @@ uart_stream UARTStream;
 
 // hidden internals common to 
 // all instances of the class
-static volatile MicroUART m_uart;
 static volatile SinglePSG* m_psg;
+static volatile MicroUART  m_uart;
+static volatile uint8_t m_buf[64];
+static volatile uint8_t m_wrp;
+static volatile uint8_t m_rdp;
 static volatile uint8_t m_reg;
-static volatile uint8_t m_wrp = 0;
-static volatile uint8_t m_rdp = 0;
-static volatile uint8_t m_buf[256];
 
 void uart_stream::Start(SinglePSG& psg)
 {
     // prepare internal state
-    m_psg = &psg;
-    m_reg = 0xFF;
+    m_psg = &psg; m_reg = 0xFF;
+    m_wrp = 0x00; m_rdp = 0x00;
 
     // start UART for communication
     // and timer for PSG update
@@ -46,6 +46,7 @@ void MU_serialEvent()
     // store data in circular buffer and
     // delay sound chip update procedure
     m_buf[m_wrp++] = m_uart.read();
+    m_wrp &= sizeof(m_buf) - 1;
 }
 
 ISR(TIMER1_A) 
@@ -58,6 +59,8 @@ ISR(TIMER1_A)
     while (m_rdp != m_wrp)
     {
         uint8_t data = m_buf[m_rdp++];
+        m_rdp &= sizeof(m_buf) - 1;
+
         if (m_reg < 0x10)
         {
             // handle data for register

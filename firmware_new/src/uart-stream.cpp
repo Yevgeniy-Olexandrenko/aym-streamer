@@ -12,17 +12,17 @@ namespace UART
     namespace Stream
     {
         MicroUART m_uart;
-        DoublePSG* m_psg;
-        volatile uint8_t m_reg;
-        volatile uint8_t m_wrp = 0;
-        volatile uint8_t m_rdp = 0;
-        volatile uint8_t m_buf[256];
+        SinglePSG* m_psg;
+        uint8_t m_reg;
+        uint8_t m_wrp = 0;
+        uint8_t m_rdp = 0;
+        uint8_t m_buf[256];
     }
 }
 
 // -----------------------------------------------------------------------------
 
-void UART::Stream::Start(DoublePSG& psg)
+void UART::Stream::Start(SinglePSG& psg)
 {
     // prepare internal state
     m_psg = &psg;
@@ -52,15 +52,13 @@ void MU_serialEvent()
     // delay sound chip update procedure
     using namespace UART::Stream;
     m_buf[m_wrp++] = m_uart.read();
-    Timer1.restart();
 }
 
 ISR(TIMER1_A) 
 {
-    // enable interrupts for data receiving
-    // from UART stream in background
-    Timer1.pause();
-    sei();
+    // lock update timer and enable interrupts
+    // to handle incoming data in the background
+    Timer1.pause(); sei();
 
     // process received data in buffer
     using namespace UART::Stream;
@@ -80,14 +78,11 @@ ISR(TIMER1_A)
         }
         else if (data == 0xFF)
         {
-            // choose first PSG
-            m_psg->SetCurrent(0);
-        }
-        else if (data == 0xFE)
-        {
-            // choose second PSG
-            m_psg->SetCurrent(1);
+            // handle frame begining
+            m_psg->Update();
         }
     }
-    m_psg->Update();
+
+    // unlock update timer
+    Timer1.resume();
 }

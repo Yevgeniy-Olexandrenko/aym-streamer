@@ -1,7 +1,7 @@
 #include "src/psg-access.h"
 #include "src/uart-stream.h"
 
-DoublePSG m_psg;
+SinglePSG m_psg;
 
 void setup()
 {

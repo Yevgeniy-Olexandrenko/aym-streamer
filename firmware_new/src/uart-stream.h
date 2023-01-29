@@ -1,12 +1,12 @@
 #pragma 
 
-class DoublePSG;
+class SinglePSG;
 
 namespace UART
 {
     namespace Stream
     {
-        void Start(DoublePSG& psg);
+        void Start(SinglePSG& psg);
         void Stop();
     }
 };

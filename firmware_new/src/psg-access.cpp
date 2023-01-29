@@ -11,9 +11,9 @@
 
 // processors
 #define ENABLE_PROCESSING
-#define PROCESS_CLOCK_CONVERSION
-#define PROCESS_CHANNELS_REMAPPING
-#define PROCESS_COMPAT_MODE_FIX
+//#define PROCESS_CLOCK_CONVERSION
+//#define PROCESS_CHANNELS_REMAPPING
+//#define PROCESS_COMPAT_MODE_FIX
 
 // helpers
 #define set_bits(reg, bits) reg |=  (bits)

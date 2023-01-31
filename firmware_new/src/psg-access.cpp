@@ -9,12 +9,6 @@
 #include "psg-access.h"
 #include "psg-wiring.h"
 
-// processors
-#define ENABLE_PROCESSING
-//#define PROCESS_CLOCK_CONVERSION
-//#define PROCESS_CHANNELS_REMAPPING
-//#define PROCESS_COMPAT_MODE_FIX
-
 // helpers
 #define set_bits(reg, bits) reg |=  (bits)
 #define res_bits(reg, bits) reg &= ~(bits)
@@ -674,84 +668,4 @@ void SinglePSG::write_output_state()
             PSG::Write(data);
         }
     }
-}
-
-// -----------------------------------------------------------------------------
-
-// TODO
-void DoublePSG::Init()
-{
-    m_psg[0].Init();
-    m_psg[1].Init();
-    SetCurrent(0);
-}
-
-// TODO
-void DoublePSG::Reset()
-{
-    m_psg[0].Reset();
-    m_psg[1].Reset();
-    SetCurrent(0);
-}
-
-SinglePSG::Type DoublePSG::GetType() const
-{
-    m_psg[m_current].GetType();
-}
-
-// TODO
-void DoublePSG::SetClock(SinglePSG::Clock clock)
-{
-    m_psg[0].SetClock(clock);
-    m_psg[1].SetClock(clock);
-}
-
-// TODO
-SinglePSG::Clock DoublePSG::GetClock() const
-{
-    m_psg[m_current].GetClock();
-}
-
-void DoublePSG::SetStereo(SinglePSG::Stereo stereo)
-{
-    m_psg[m_current].SetStereo(stereo);
-}
-
-SinglePSG::Stereo DoublePSG::GetStereo() const
-{
-    return m_psg[m_current].GetStereo();
-}
-
-void DoublePSG::SetCurrent(uint8_t index)
-{
-    if (index <= 1) m_current = index;
-}
-
-void DoublePSG::SetRegister(uint8_t reg, uint8_t data)
-{
-    m_psg[m_current].SetRegister(reg, data);
-}
-
-void DoublePSG::GetRegister(uint8_t reg, uint8_t& data) const
-{
-    m_psg[m_current].GetRegister(reg, data);
-}
-
-void DoublePSG::SetRegister(SinglePSG::Reg reg, uint8_t data)
-{
-    m_psg[m_current].SetRegister(reg, data);
-}
-
-void DoublePSG::GetRegister(SinglePSG::Reg reg, uint8_t& data) const
-{
-    m_psg[m_current].GetRegister(reg, data);
-}
-
-void DoublePSG::Update()
-{
-    PSG::Address(0xFF);
-    m_psg[0].Update();
-
-    PSG::Address(0xFE);
-    m_psg[1].Update();
 }

@@ -20,11 +20,11 @@ void setup()
     // print firmware wellcome
     UARTStream.Println('-', 16);
     UARTStream.Println(F("  AYM STREAMER"));
-    UARTStream.Println(F("  FW: v1.0"));
+    UARTStream.Println(F("  FW: v2.0"));
     UARTStream.Println('-', 16);
 
     // print PSG info
-    UARTStream.Print(F("PSG type: "));
+    UARTStream.Print(F("chip: "));
     switch(m_psg.GetType())
     {
     case SinglePSG::Type::NotFound:   UARTStream.Println(F("Not Found!")); break;
@@ -34,9 +34,11 @@ void setup()
     case SinglePSG::Type::AY8913A:    UARTStream.Println(F("AY-3-8913A")); break;
     case SinglePSG::Type::AY8930:     UARTStream.Println(F("Microchip AY8930")); break;
     case SinglePSG::Type::YM2149F:    UARTStream.Println(F("Yamaha YM2149F")); break;
-    case SinglePSG::Type::AVRAY_FW26: UARTStream.Println(F("Emulator AVR-AY (FW:26)")); break;
+    case SinglePSG::Type::AVRAY_FW26: UARTStream.Println(F("AVR-AY (FW:26)")); break;
     default:                          UARTStream.Println(F("Bad or Unknown!")); break;
     }
+    UARTStream.Print(F("clock: "));
+    UARTStream.Println(uint32_t(m_psg.GetClock()));
 }
 
 void loop()

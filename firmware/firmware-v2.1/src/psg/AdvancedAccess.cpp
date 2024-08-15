@@ -49,11 +49,13 @@ namespace psg
 
     void AdvancedAccess::SetClock(Clock clock)
     {
-        if (clock >= F1_00MHZ && clock <= F2_00MHZ)
-        {
-            SimpleAccess::SetClock(clock);
-            m_clock = clock;
-        }
+        // limit the clock frequency range
+        if (clock < F1_00MHZ) clock = F1_00MHZ;
+        if (clock > F2_00MHZ) clock = F2_00MHZ;
+
+        // set real/virtual clock frequency
+        SimpleAccess::SetClock(clock);
+        m_clock = clock;
     }
 
     void AdvancedAccess::SetDefaultClock()
@@ -251,7 +253,7 @@ namespace psg
             // safe period conversion based on clock ratio
             const auto convert_period = [&](uint16_t& period, uint16_t bound)
             {
-                uint32_t converted = ((period * (rclock >> 8) / (vclock >> 9) + 1) >> 1);
+                uint32_t converted = ((period * (rclock >> 5) / (vclock >> 6) + 1) >> 1);
                 period = uint16_t(converted > bound ? bound : converted);
             };
 

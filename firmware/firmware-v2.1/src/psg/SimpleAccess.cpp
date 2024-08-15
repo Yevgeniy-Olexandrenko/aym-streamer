@@ -108,14 +108,21 @@ namespace psg
 
     void SimpleAccess::SetClock(Clock clock)
     {
+        // limit the clock frequency range
+        if (clock < 1000000) clock = 1000000;
+        if (clock > 2000000) clock = 2000000;
+
+        // choosing a divider for the closest clock frequency
+        m_clockDiv = uint8_t(F_CPU / clock);
+        uint32_t minClock = (F_CPU / (m_clockDiv + 1));
+        uint32_t maxClock = (F_CPU / (m_clockDiv + 0));
+        if (clock - minClock < maxClock - clock) m_clockDiv++;
+
         // configure Timer2 as a clock source for PSG
         TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
         TCCR2B = (1 << WGM22 ) | (1 << CS20 );
-
-        // configure Timer2 divider
-        m_clockDiv = uint8_t(F_CPU / clock);
-        OCR2A = (m_clockDiv - 1);
-        OCR2B = (m_clockDiv / 2);
+        OCR2A  = (m_clockDiv - 1);
+        OCR2B  = (m_clockDiv / 2);
     }
 
     void SimpleAccess::SetDefaultClock()

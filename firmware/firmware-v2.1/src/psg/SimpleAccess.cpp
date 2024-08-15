@@ -1,6 +1,5 @@
 #include <avr/io.h>
 #include <util/delay.h>
-
 #include "SimpleAccess.h"
 #include "WiringConfig.h"
 

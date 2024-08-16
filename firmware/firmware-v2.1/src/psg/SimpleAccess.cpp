@@ -133,13 +133,15 @@ namespace psg
     void SimpleAccess::SetRegister(uint8_t reg, uint8_t data)
     {
         // this behavior can be overridden
-        Address(reg); Write(data);
+        const_cast<SimpleAccess*>(this)->Address(reg); 
+        const_cast<SimpleAccess*>(this)->Write(data);
     }
 
     void SimpleAccess::GetRegister(uint8_t reg, uint8_t& data) const
     {
         // this behavior can be overridden
-        Address(reg); Read(data);
+        const_cast<SimpleAccess*>(this)->Address(reg); 
+        const_cast<SimpleAccess*>(this)->Read(data);
     }
 
     // -------------------------------------------------------------------------

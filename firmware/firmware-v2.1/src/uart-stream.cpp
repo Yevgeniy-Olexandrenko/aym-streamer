@@ -8,22 +8,24 @@
 #include <MicroUART.h>
 #include <GyverTimers.h>
 
+//#define SIMPLE_ACCESS
+
 // shared class instance
 uart_stream UARTStream;
 
 // shared references and objects
-static volatile psg::AdvancedAccess* m_psg;
-static volatile MicroUART m_uart;
+static psg::AdvancedAccess* m_psg = nullptr;
+static MicroUART m_uart;
 
 // handling input binary data
-static volatile uint8_t m_buf[64];
+static uint8_t m_buf[64];
 static volatile uint8_t m_wrp;
 static volatile uint8_t m_rdp;
 static volatile uint8_t m_reg;
 
 // handling input strings
-static volatile uart_stream::Handler m_handler = nullptr;
-static volatile uint8_t m_str[64];
+static uart_stream::Handler m_handler = nullptr;
+static uint8_t m_str[64];
 static volatile uint8_t m_stp;
 
 // -----------------------------------------------------------------------------
@@ -38,7 +40,7 @@ void uart_stream::Start(psg::AdvancedAccess& psg)
     // start UART for communication
     // and timer for PSG update
     m_uart.begin(57600);
-    Timer1.setPeriod(1000);
+    Timer1.setPeriod(5000);
     Timer1.enableISR(CHANNEL_A);
     sei();
 }
@@ -191,7 +193,11 @@ ISR(TIMER1_A)
         if (m_reg < 0x10)
         {
             // handle data for register
+        #ifdef SIMPLE_ACCESS
+            m_psg->SimpleAccess::SetRegister(m_reg, data);
+        #else
             m_psg->SetRegister(m_reg, data);
+        #endif
             m_reg = 0xFF;
         }
         else
@@ -200,7 +206,11 @@ ISR(TIMER1_A)
             if (data == 0xFF)
             {
                 // handle frame begining
+            #ifdef SIMPLE_ACCESS
+                // DO NOTHING
+            #else
                 m_psg->Update();
+            #endif
                 m_stp = 0x00;
             }
             else if (data >= 0x20 && data <= 0x7F)
@@ -219,7 +229,7 @@ ISR(TIMER1_A)
                     if (m_handler)
                     {
                         m_str[m_stp] = 0;
-                        m_handler(m_str);
+                        m_handler((const char*)m_str);
                     }
                 }
                 else

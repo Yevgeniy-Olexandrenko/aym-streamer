@@ -14,7 +14,7 @@ void setup()
     // power on and configure PSG
     m_psg.PowerOn();
     m_psg.SetClock(psg::F1_75MHZ);
-    m_psg.SetStereo(psg::Stereo::ACB);
+    //m_psg.SetStereo(psg::Stereo::ACB);
 
     // start and configure UART stream
     UARTStream.Start(m_psg);

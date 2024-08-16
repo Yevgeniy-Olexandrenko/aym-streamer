@@ -2,10 +2,9 @@
 
 #include "SimpleAccess.h"
 
-#define ENABLE_PROCESSING
-#define PROCESS_CLOCK_CONVERSION
-//#define PROCESS_CHANNELS_REMAPPING
-//#define PROCESS_COMPAT_MODE_FIX
+//#define DISABLE_CLOCK_CONVERSION
+#define DISABLE_CHANNELS_REMAPPING
+#define DISABLE_COMPATIBLE_MODE_FIX
 
 namespace psg
 {
@@ -72,13 +71,13 @@ namespace psg
 
     class AdvancedAccess : public SimpleAccess
     {
-        union Period
+        union Period // 2 bytes
         {
             uint16_t full;
             struct { uint8_t fine, coarse; };
         };
 
-        struct Channel
+        struct Channel // 7 bytes
         {
             Period  t_period;
             uint8_t t_volume;
@@ -87,7 +86,7 @@ namespace psg
             uint8_t e_shape;
         };
 
-        struct Commons
+        struct Commons // 4 bytes
         {
             uint8_t n_period;
             uint8_t n_and_mask;
@@ -95,13 +94,13 @@ namespace psg
             uint8_t mixer;
         };
 
-        struct Status
+        struct Status // 5 bytes
         {
             uint32_t changed;
             uint8_t  exp_mode;
         };
 
-        struct State
+        struct State // 30 bytes
         {
             Channel channels[3];
             Commons commons;
@@ -130,12 +129,12 @@ namespace psg
 
         void process_clock_conversion();
         void process_channels_remapping();
-        void process_compat_mode_fix();
+        void process_compatible_mode_fix();
 
-        void update_output_changes();
-        void write_output_state();
+        void check_output_changes();
+        void write_output_to_chip();
 
-    private:
+    private: // 66 bytes
         uint32_t m_clock { 0 };
         Stereo m_sstereo { Stereo::ABC };
         Stereo m_dstereo { Stereo::ABC };

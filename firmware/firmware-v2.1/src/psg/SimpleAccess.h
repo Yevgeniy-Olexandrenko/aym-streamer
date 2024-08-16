@@ -56,7 +56,7 @@ namespace psg
         void test_wr_rd_latch(uint8_t offset);
         void test_wr_rd_exp_mode(uint8_t mode_bank);
 
-    private:
+    private: // 5 bytes
         uint32_t m_typeHash { 0 };
         uint8_t  m_clockDiv { 0 };
     };

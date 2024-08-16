@@ -71,10 +71,9 @@ namespace psg
         return m_dstereo;
     }
     
-    // set register data indirectly via bank switching
     void AdvancedAccess::SetRegister(uint8_t reg, uint8_t data)
     {
-    #ifdef ENABLE_PROCESSING
+        // set register data indirectly via bank switching
         // register number must be in range 0x00-0x0F
         if (reg < 0x10)
         {
@@ -86,15 +85,11 @@ namespace psg
             }
             set_register(m_input, Reg(reg), data);
         }
-    #else
-        SimpleAccess::SetRegister(reg, data);
-    #endif
     }
 
-    // get register data indirectly via bank switching
     void AdvancedAccess::GetRegister(uint8_t reg, uint8_t& data) const
     {
-    #ifdef ENABLE_PROCESSING
+        // get register data indirectly via bank switching
         // register number must be in range 0x00-0x0F
         if (reg < 0x10)
         {
@@ -106,42 +101,36 @@ namespace psg
             }
             get_register(m_input, Reg(reg), data);
         }
-    #else
-        SimpleAccess::GetRegister(reg, data);
-    #endif
     }
 
-    // set register data directly
     void AdvancedAccess::SetRegister(Reg reg, uint8_t data)
     {
-    #ifdef ENABLE_PROCESSING
+        // set register data directly
         set_register(m_input, reg, data);
-    #endif
     }
 
-    // get register data directly
     void AdvancedAccess::GetRegister(Reg reg, uint8_t& data) const
     {
-    #ifdef ENABLE_PROCESSING
+        // get register data directly
         get_register(m_input, reg, data);
-    #endif
     }
 
-    // process state and write to PSG
     void AdvancedAccess::Update()
     {
-    #ifdef ENABLE_PROCESSING
         if (m_input.status.changed)
         {
-            m_output = m_input;
+            // copy input state to output and reset changes
+            memcpy(&m_output, &m_input, sizeof(State));
+            m_input.status.changed = 0;
+
+            // process outout state and write to PSG
             process_clock_conversion();
             process_channels_remapping();
-            process_compat_mode_fix();
-            update_output_changes();
-            write_output_state();
-            m_input.status.changed = 0;
+            process_compatible_mode_fix();
+            
+            check_output_changes();
+            write_output_to_chip();
         }
-    #endif
     }
 
     // -------------------------------------------------------------------------
@@ -238,7 +227,7 @@ namespace psg
 
     void AdvancedAccess::process_clock_conversion()
     {
-    #if defined(PROCESS_CLOCK_CONVERSION)
+    #ifndef DISABLE_CLOCK_CONVERSION
         const Clock vclock = GetClock();
         const Clock rclock = SimpleAccess::GetClock();
 
@@ -271,7 +260,7 @@ namespace psg
 
     void AdvancedAccess::process_channels_remapping()
     {
-    #if defined(PROCESS_CHANNELS_REMAPPING)
+    #ifndef DISABLE_CHANNELS_REMAPPING
         // restrict stereo modes available for exp mode
         m_dstereo = (m_output.status.exp_mode && m_sstereo != Stereo::ABC && m_sstereo != Stereo::ACB)
             ? Stereo::ABC
@@ -355,9 +344,9 @@ namespace psg
     #endif
     }
 
-    void AdvancedAccess::process_compat_mode_fix()
+    void AdvancedAccess::process_compatible_mode_fix()
     {
-    #if defined(PROCESS_COMPAT_MODE_FIX)
+    #ifndef DISABLE_COMPATIBLE_MODE_FIX
         if (GetType() == Type::AY8930)
         {
             for (int i = 0; i < 3; ++i)
@@ -383,9 +372,9 @@ namespace psg
     #endif
     }
 
-    // apply changes in registers made by processing
-    void AdvancedAccess::update_output_changes()
+    void AdvancedAccess::check_output_changes()
     {
+        // apply changes in registers made by processing
         uint8_t i_data, o_data;
         for (uint8_t reg = BankA_Fst; reg <= BankB_Lst; ++reg)
         {
@@ -397,12 +386,10 @@ namespace psg
         }
     }
 
-    // write changes in output state to the PSG
-    void AdvancedAccess::write_output_state()
+    void AdvancedAccess::write_output_to_chip()
     {
-        uint8_t data;
-        bool switch_banks = false;
-
+        // write changes in output state to the PSG
+        uint8_t data; bool switch_banks = false;
         if (GetType() == Type::AY8930 && m_output.status.exp_mode)
         {
             // check for changes in registers of bank B

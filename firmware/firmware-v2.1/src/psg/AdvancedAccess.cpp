@@ -249,6 +249,7 @@ namespace psg
                 convert_period(m_output.channels[i].t_period.full, t_bound);
                 convert_period(m_output.channels[i].e_period.full, 0xFFFF);
             }
+            m_output.status.changed |= 0b01100001111111; // hack
 
             // convert noise period
             uint16_t period = m_output.commons.n_period;

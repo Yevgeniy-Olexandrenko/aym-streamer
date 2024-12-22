@@ -12,10 +12,7 @@
 #define USE_M328_DRIVER
 #endif
 
-#if defined(__AVR_ATmega8A__) || defined(__AVR_ATmega8__)
-#define USE_M328_DRIVER
-#endif
-
-#if defined(__AVR_ATmega48PB__) || defined(__AVR_ATmega48PA__) || defined(__AVR_ATmega48P__) || defined(__AVR_ATmega48A__) || defined(__AVR_ATmega48__)
-#define USE_M328_DRIVER
-#endif
+// TODO
+// #if defined(__AVR_ATmega8A__) || defined(__AVR_ATmega8__)
+// #define USE_M328_DRIVER
+// #endif

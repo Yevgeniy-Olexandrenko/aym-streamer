@@ -72,22 +72,22 @@ namespace PowerSG
     template <typename driver_t>
     class Advanced : public Simple<driver_t>
     {
-        union Period // 2 bytes
+        union period_t // 2 bytes
         {
             uint16_t full;
             struct { uint8_t fine, coarse; };
         };
 
-        struct Channel // 7 bytes
+        struct channel_t // 7 bytes
         {
-            Period  t_period;
-            uint8_t t_volume;
-            uint8_t t_duty;
-            Period  e_period;
-            uint8_t e_shape;
+            period_t t_period;
+            uint8_t  t_volume;
+            uint8_t  t_duty;
+            period_t e_period;
+            uint8_t  e_shape;
         };
 
-        struct Commons // 4 bytes
+        struct commons_t // 4 bytes
         {
             uint8_t n_period;
             uint8_t n_and_mask;
@@ -95,38 +95,38 @@ namespace PowerSG
             uint8_t mixer;
         };
 
-        struct Status // 5 bytes
+        struct status_t // 5 bytes
         {
             uint32_t changed;
             uint8_t  exp_mode;
         };
 
-        struct State // 30 bytes
+        struct state_t // 30 bytes
         {
-            Channel channels[3];
-            Commons commons;
-            Status  status;
+            channel_t channels[3];
+            commons_t commons;
+            status_t  status;
         };
 
     public:
-        void Reset() override;
+        void reset() override;
  
-        void SetDefaultClock() override;
-        void SetClock(clk_t clock) override;
-       clk_t GetClock() const override;
+        void setDefaultClock() override;
+        void setClock(Clock clock) override;
+       Clock getClock() const override;
 
-        void SetStereo(Stereo stereo);
-      Stereo GetStereo() const;
+        void setStereo(Stereo stereo);
+      Stereo getStereo() const;
 
-        void SetRegister(raddr_t addr, rdata_t data) override;
-        void GetRegister(raddr_t addr, rdata_t &data) override;
-        void SetRegister(Reg reg, rdata_t data);
-        void GetRegister(Reg reg, rdata_t &data);
-        void Update() override;
+        void setRegister(raddr_t addr, rdata_t data) override;
+        void getRegister(raddr_t addr, rdata_t &data) override;
+        void setRegister(Reg reg, rdata_t data);
+        void getRegister(Reg reg, rdata_t &data);
+        void update() override;
 
     private:
-        void set_register(State& state, Reg reg, rdata_t data);
-        void get_register(const State& state, Reg reg, rdata_t &data) const;
+        void set_register(state_t& state, Reg reg, rdata_t data);
+        void get_register(const state_t& state, Reg reg, rdata_t &data) const;
 
         void process_clock_conversion();
         void process_channels_remapping();
@@ -136,11 +136,11 @@ namespace PowerSG
         void write_output_to_chip();
 
     private: // 66 bytes
-        uint32_t m_clock { 0 };
-        Stereo m_sstereo { Stereo::ABC };
-        Stereo m_dstereo { Stereo::ABC };
-        State m_input;
-        State m_output;
+        uint32_t m_clock   { 0 };
+        Stereo   m_sstereo { Stereo::ABC };
+        Stereo   m_dstereo { Stereo::ABC };
+        state_t  m_input;
+        state_t  m_output;
     };
 }
 

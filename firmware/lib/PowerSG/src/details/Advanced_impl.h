@@ -32,51 +32,51 @@ namespace PowerSG
     };
 
     template <typename driver_t>
-    void Advanced<driver_t>::Reset()
+    void Advanced<driver_t>::reset()
     {
-        Simple<driver_t>::Reset();
-        memset(&m_input, 0, sizeof(State));
+        Simple<driver_t>::reset();
+        memset(&m_input, 0, sizeof(state_t));
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::SetDefaultClock()
+    void Advanced<driver_t>::setDefaultClock()
     {
-        SetClock(F1_77MHZ);
+        setClock(F1_77MHZ);
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::SetClock(clk_t clk)
+    void Advanced<driver_t>::setClock(Clock clock)
     {
         // limit the clock frequency range
-        if (clk < F1_00MHZ) clk = F1_00MHZ;
-        if (clk > F2_00MHZ) clk = F2_00MHZ;
+        if (clock < F1_00MHZ) clock = F1_00MHZ;
+        if (clock > F2_00MHZ) clock = F2_00MHZ;
 
         // set real/virtual clock frequency
-        Simple<driver_t>::SetClock(clk);
-        m_clock = clk;
+        Simple<driver_t>::setClock(clock);
+        m_clock = clock;
     }
 
     template <typename driver_t>
-    clk_t Advanced<driver_t>::GetClock() const
+    Clock Advanced<driver_t>::getClock() const
     {
         return m_clock;
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::SetStereo(Stereo stereo)
+    void Advanced<driver_t>::setStereo(Stereo stereo)
     {
         m_sstereo = stereo;
         m_dstereo = stereo;
     }
 
     template <typename driver_t>
-    Stereo Advanced<driver_t>::GetStereo() const
+    Stereo Advanced<driver_t>::getStereo() const
     {
         return m_dstereo;
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::SetRegister(raddr_t addr, rdata_t data)
+    void Advanced<driver_t>::setRegister(raddr_t addr, rdata_t data)
     {
         // set register data indirectly via bank switching
         // register address must be in range 0x00-0x0F
@@ -93,7 +93,7 @@ namespace PowerSG
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::GetRegister(raddr_t addr, rdata_t &data)
+    void Advanced<driver_t>::getRegister(raddr_t addr, rdata_t &data)
     {
         // get register data indirectly via bank switching
         // register address must be in range 0x00-0x0F
@@ -110,26 +110,26 @@ namespace PowerSG
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::SetRegister(Reg reg, rdata_t data)
+    void Advanced<driver_t>::setRegister(Reg reg, rdata_t data)
     {
         // set register data directly
         set_register(m_input, reg, data);
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::GetRegister(Reg reg, rdata_t &data)
+    void Advanced<driver_t>::getRegister(Reg reg, rdata_t &data)
     {
         // get register data directly
         get_register(m_input, reg, data);
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::Update()
+    void Advanced<driver_t>::update()
     {
         if (m_input.status.changed)
         {
             // copy input state to output and reset changes
-            memcpy(&m_output, &m_input, sizeof(State));
+            memcpy(&m_output, &m_input, sizeof(state_t));
             m_input.status.changed = 0;
 
             // process outout state and write to PSG
@@ -143,7 +143,7 @@ namespace PowerSG
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::set_register(State &state, Reg reg, rdata_t data)
+    void Advanced<driver_t>::set_register(state_t &state, Reg reg, rdata_t data)
     {
         // preserve the state of exp mode and bank of regs
         // separately from the shape of channel A envelope
@@ -191,7 +191,7 @@ namespace PowerSG
     }
 
     template <typename driver_t>
-    void Advanced<driver_t>::get_register(const State &state, Reg reg, rdata_t &data) const
+    void Advanced<driver_t>::get_register(const state_t &state, Reg reg, rdata_t &data) const
     {
         // map register to corresponding field of state
         switch(reg)
@@ -238,8 +238,8 @@ namespace PowerSG
     void Advanced<driver_t>::process_clock_conversion()
     {
     #ifndef DISABLE_CLOCK_CONVERSION
-        const clk_t vclock = GetClock();
-        const clk_t rclock = Simple<driver_t>::GetClock();
+        const Clock vclock = getClock();
+        const Clock rclock = Simple<driver_t>::getClock();
 
         if (rclock != vclock)
         {
@@ -360,7 +360,7 @@ namespace PowerSG
     void Advanced<driver_t>::process_compatible_mode_fix()
     {
     #ifndef DISABLE_COMPATIBLE_MODE_FIX
-        if (this->GetChipId() == chipid_t::AY8930)
+        if (this->getChipId() == ChipId::AY8930)
         {
             for (int i = 0; i < 3; ++i)
             {
@@ -405,7 +405,7 @@ namespace PowerSG
     {
         // write changes in output state to the PSG
         uint8_t data; bool switch_banks = false;
-        if (this->GetChipId() == chipid_t::AY8930 && m_output.status.exp_mode)
+        if (this->getChipId() == ChipId::AY8930 && m_output.status.exp_mode)
         {
             // check for changes in registers of bank B
             for (uint8_t reg = BankB_Fst; reg <= BankB_Lst; ++reg)
@@ -419,12 +419,12 @@ namespace PowerSG
                         switch_banks = true;
                         get_register(m_output, Reg::Mode_Bank, data);
                         data &= 0x0F; data |= 0xB0;
-                        Simple<driver_t>::SetRegister(Mode_Bank, data);
+                        Simple<driver_t>::setRegister(Mode_Bank, data);
                     }
 
                     // send register data to chip (within bank B)
                     get_register(m_output, Reg(reg), data);
-                    Simple<driver_t>::SetRegister(reg & 0x0F, data);
+                    Simple<driver_t>::setRegister(reg & 0x0F, data);
                 }
             }
 
@@ -434,7 +434,7 @@ namespace PowerSG
                 // so we switch back to bank A
                 get_register(m_output, Reg::Mode_Bank, data);
                 data &= 0x0F; data |= 0xA0;
-                Simple<driver_t>::SetRegister(Mode_Bank, data);
+                Simple<driver_t>::setRegister(Mode_Bank, data);
             }
         }
 
@@ -449,7 +449,7 @@ namespace PowerSG
 
                 // send register data to chip (within bank A)
                 get_register(m_output, Reg(reg), data);
-                Simple<driver_t>::SetRegister(reg & 0x0F, data);
+                Simple<driver_t>::setRegister(reg & 0x0F, data);
             }
         }
     }

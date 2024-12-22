@@ -2,48 +2,48 @@
 namespace PowerSG
 {
     template <typename driver_t>
-    void Simple<driver_t>::PowerOn()
+    void Simple<driver_t>::begin()
     {
         m_driver.chip_power_on();
-        SetDefaultClock();
-        Reset();
+        setDefaultClock();
+        reset();
     }
 
     template <typename driver_t>
-    void Simple<driver_t>::Reset()
+    void Simple<driver_t>::reset()
     {
         m_driver.chip_reset();
     }
 
     template <typename driver_t>
-    void Simple<driver_t>::SetDefaultClock()
+    void Simple<driver_t>::setDefaultClock()
     {
         // ZX-Spectrum PSG clock
-        SetClock(1773400);
+        setClock(1773400);
     }
 
     template <typename driver_t>
-    void Simple<driver_t>::SetClock(clk_t clk)
+    inline void Simple<driver_t>::setClock(Clock clock)
     {
         // limit the clock frequency range
-        if (clk < 1000000) clk = 1000000;
-        if (clk > 2000000) clk = 2000000;
-        m_driver.chip_set_clock(clk);
+        if (clock < 1000000) clock = 1000000;
+        if (clock > 2000000) clock = 2000000;
+        m_driver.chip_set_clock(clock);
     }
 
     template <typename driver_t>
-    clk_t Simple<driver_t>::GetClock() const
+    Clock Simple<driver_t>::getClock() const
     {
-        clk_t clk = 0;
-        const_cast<Simple*>(this)->m_driver.chip_get_clock(clk);
-        return clk;
+        Clock clock = 0;
+        const_cast<Simple*>(this)->m_driver.chip_get_clock(clock);
+        return clock;
     }
 
     template <typename driver_t>
-    chipid_t Simple<driver_t>::GetChipId()
+    ChipId Simple<driver_t>::getChipId()
     {
         // detect type of PSG on first request
-        if (GetClock() != 0 && !m_chipid)
+        if (getClock() != 0 && !m_chipid)
         {
             m_chipid = 7;
             test_wr_rd_regs(0x00);
@@ -52,13 +52,13 @@ namespace PowerSG
             test_wr_rd_latch(0x10);
             test_wr_rd_exp_mode(0xA0);
             test_wr_rd_exp_mode(0xB0);
-            Reset();
+            reset();
         }
-        return chipid_t(m_chipid);
+        return ChipId(m_chipid);
     }
 
     template <typename driver_t>
-    void Simple<driver_t>::SetRegister(raddr_t addr, rdata_t data)
+    void Simple<driver_t>::setRegister(raddr_t addr, rdata_t data)
     {
         // this behavior can be overridden
         m_driver.chip_address(addr);
@@ -66,7 +66,7 @@ namespace PowerSG
     }
 
     template <typename driver_t>
-    void Simple<driver_t>::GetRegister(raddr_t addr, rdata_t &data)
+    void Simple<driver_t>::getRegister(raddr_t addr, rdata_t &data)
     {
         // this behavior can be overridden
         m_driver.chip_address(addr);
@@ -74,13 +74,13 @@ namespace PowerSG
     }
 
     template <typename driver_t>
-    void Simple<driver_t>::Update()
+    void Simple<driver_t>::update()
     {
         // for compatibility with descendants
     }
 
     template <typename driver_t>
-    void Simple<driver_t>::update_hash(rdata_t data)
+    void Simple<driver_t>::update_chipid(rdata_t data)
     {
         m_chipid = (31 * m_chipid + uint32_t(data));
     }
@@ -101,7 +101,7 @@ namespace PowerSG
         {
             m_driver.chip_address(addr);
             m_driver.chip_read(data);
-            update_hash(data);
+            update_chipid(data);
         }
     }
 
@@ -117,7 +117,7 @@ namespace PowerSG
             m_driver.chip_address(addr);
             m_driver.chip_write(data);
             m_driver.chip_read(data);
-            update_hash(data);
+            update_chipid(data);
         }
     }
 
@@ -137,7 +137,7 @@ namespace PowerSG
         {
             m_driver.chip_address(addr);
             m_driver.chip_read(data);
-            update_hash(data);
+            update_chipid(data);
         }
     }
 }

@@ -68,27 +68,27 @@ namespace PowerSG
         release_data_bus();
     }
 
-    void m328_driver::chip_set_clock(clk_t clk)
+    void m328_driver::chip_set_clock(uint32_t clock)
     {
         // choosing a divider for the closest clock frequency
-        m_clkDiv = uint8_t(F_CPU / clk);
-        uint32_t minClk = (F_CPU / (m_clkDiv + 1));
-        uint32_t maxClk = (F_CPU / (m_clkDiv + 0));
-        if (clk - minClk < maxClk - clk) m_clkDiv++;
+        m_clockDiv = uint8_t(F_CPU / clock);
+        uint32_t minClock = (F_CPU / (m_clockDiv + 1));
+        uint32_t maxClock = (F_CPU / (m_clockDiv + 0));
+        if (clock - minClock < maxClock - clock) m_clockDiv++;
 
         // configure Timer2 as a clock source for PSG
         TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
         TCCR2B = (1 << WGM22 ) | (1 << CS20 );
-        OCR2A  = (m_clkDiv - 1);
-        OCR2B  = (m_clkDiv / 2);
+        OCR2A  = (m_clockDiv - 1);
+        OCR2B  = (m_clockDiv / 2);
     }
 
-    void m328_driver::chip_get_clock(clk_t &clk)
+    void m328_driver::chip_get_clock(uint32_t &clock)
     {
         // real PSG clock based on Timer2 divider
-        if (m_clkDiv != 0)
+        if (m_clockDiv != 0)
         {
-            clk = (F_CPU / m_clkDiv);
+            clock = (F_CPU / m_clockDiv);
         }
     }
 
@@ -101,7 +101,7 @@ namespace PowerSG
         wait_for_delay(tRB);
     }
 
-    void m328_driver::chip_address(raddr_t addr)
+    void m328_driver::chip_address(uint8_t addr)
     {
         // 'Latch Address' sequence
         set_ctrl_bus_addr();
@@ -112,7 +112,7 @@ namespace PowerSG
         release_data_bus();
     }
 
-    void m328_driver::chip_write(rdata_t data)
+    void m328_driver::chip_write(uint8_t data)
     {
         // 'Write to PSG' sequence
         set_data_bus(data);
@@ -123,7 +123,7 @@ namespace PowerSG
         release_data_bus();
     }
 
-    void m328_driver::chip_read(rdata_t &data)
+    void m328_driver::chip_read(uint8_t &data)
     {
         // 'Read from PSG' sequence
         set_ctrl_bus_read();

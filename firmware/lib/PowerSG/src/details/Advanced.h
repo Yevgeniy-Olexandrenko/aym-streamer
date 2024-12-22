@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SimpleAccess.h"
+#include "Simple.h"
 
 //#define DISABLE_CLOCK_CONVERSION
 //#define DISABLE_CHANNELS_REMAPPING
@@ -69,7 +69,7 @@ namespace PowerSG
         BankB_Lst = uint8_t(Reg::N_OrMask)  // numeric value of the last register in bank B
     };
 
-    class AdvancedAccess : public SimpleAccess
+    class Advanced : public Simple
     {
         union Period // 2 bytes
         {

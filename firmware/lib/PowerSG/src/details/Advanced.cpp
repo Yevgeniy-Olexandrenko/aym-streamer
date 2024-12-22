@@ -1,6 +1,6 @@
 #include <string.h>
 #include <avr/pgmspace.h>
-#include "AdvancedAccess.h"
+#include "Advanced.h"
 
 namespace PowerSG
 {
@@ -33,45 +33,45 @@ namespace PowerSG
 
     // -------------------------------------------------------------------------
 
-    void AdvancedAccess::Reset()
+    void Advanced::Reset()
     {
-        SimpleAccess::Reset();
+        Simple::Reset();
         memset(&m_input, 0, sizeof(State));
     }
 
-    Clock AdvancedAccess::GetClock() const
+    Clock Advanced::GetClock() const
     {
         return m_clock;
     }
 
-    void AdvancedAccess::SetClock(Clock clock)
+    void Advanced::SetClock(Clock clock)
     {
         // limit the clock frequency range
         if (clock < F1_00MHZ) clock = F1_00MHZ;
         if (clock > F2_00MHZ) clock = F2_00MHZ;
 
         // set real/virtual clock frequency
-        SimpleAccess::SetClock(clock);
+        Simple::SetClock(clock);
         m_clock = clock;
     }
 
-    void AdvancedAccess::SetDefaultClock()
+    void Advanced::SetDefaultClock()
     {
         SetClock(F1_77MHZ);
     }
 
-    void AdvancedAccess::SetStereo(Stereo stereo)
+    void Advanced::SetStereo(Stereo stereo)
     {
         m_sstereo = stereo;
         m_dstereo = stereo;
     }
 
-    Stereo AdvancedAccess::GetStereo() const
+    Stereo Advanced::GetStereo() const
     {
         return m_dstereo;
     }
     
-    void AdvancedAccess::SetRegister(uint8_t reg, uint8_t data)
+    void Advanced::SetRegister(uint8_t reg, uint8_t data)
     {
         // set register data indirectly via bank switching
         // register number must be in range 0x00-0x0F
@@ -87,7 +87,7 @@ namespace PowerSG
         }
     }
 
-    void AdvancedAccess::GetRegister(uint8_t reg, uint8_t& data) const
+    void Advanced::GetRegister(uint8_t reg, uint8_t& data) const
     {
         // get register data indirectly via bank switching
         // register number must be in range 0x00-0x0F
@@ -103,19 +103,19 @@ namespace PowerSG
         }
     }
 
-    void AdvancedAccess::SetRegister(Reg reg, uint8_t data)
+    void Advanced::SetRegister(Reg reg, uint8_t data)
     {
         // set register data directly
         set_register(m_input, reg, data);
     }
 
-    void AdvancedAccess::GetRegister(Reg reg, uint8_t& data) const
+    void Advanced::GetRegister(Reg reg, uint8_t& data) const
     {
         // get register data directly
         get_register(m_input, reg, data);
     }
 
-    void AdvancedAccess::Update()
+    void Advanced::Update()
     {
         if (m_input.status.changed)
         {
@@ -135,7 +135,7 @@ namespace PowerSG
 
     // -------------------------------------------------------------------------
 
-    void AdvancedAccess::set_register(State& state, Reg reg, uint8_t data)
+    void Advanced::set_register(State& state, Reg reg, uint8_t data)
     {
         // preserve the state of exp mode and bank of regs
         // separately from the shape of channel A envelope
@@ -182,7 +182,7 @@ namespace PowerSG
         state.status.changed |= to_mask(reg);
     }
 
-    void AdvancedAccess::get_register(const State& state, Reg reg, uint8_t& data) const
+    void Advanced::get_register(const State& state, Reg reg, uint8_t& data) const
     {
         // map register to corresponding field of state
         switch(reg)
@@ -225,11 +225,11 @@ namespace PowerSG
         }
     }
 
-    void AdvancedAccess::process_clock_conversion()
+    void Advanced::process_clock_conversion()
     {
     #ifndef DISABLE_CLOCK_CONVERSION
         const Clock vclock = GetClock();
-        const Clock rclock = SimpleAccess::GetClock();
+        const Clock rclock = Simple::GetClock();
 
         if (rclock != vclock)
         {
@@ -259,7 +259,7 @@ namespace PowerSG
     #endif
     }
 
-    void AdvancedAccess::process_channels_remapping()
+    void Advanced::process_channels_remapping()
     {
     #ifndef DISABLE_CHANNELS_REMAPPING
         // restrict stereo modes available for exp mode
@@ -345,7 +345,7 @@ namespace PowerSG
     #endif
     }
 
-    void AdvancedAccess::process_compatible_mode_fix()
+    void Advanced::process_compatible_mode_fix()
     {
     #ifndef DISABLE_COMPATIBLE_MODE_FIX
         if (GetType() == Type::AY8930)
@@ -373,7 +373,7 @@ namespace PowerSG
     #endif
     }
 
-    void AdvancedAccess::check_output_changes()
+    void Advanced::check_output_changes()
     {
         // apply changes in registers made by processing
         uint8_t i_data, o_data;
@@ -387,7 +387,7 @@ namespace PowerSG
         }
     }
 
-    void AdvancedAccess::write_output_to_chip()
+    void Advanced::write_output_to_chip()
     {
         // write changes in output state to the PSG
         uint8_t data; bool switch_banks = false;
@@ -405,12 +405,12 @@ namespace PowerSG
                         switch_banks = true;
                         get_register(m_output, Reg::Mode_Bank, data);
                         data &= 0x0F; data |= 0xB0;
-                        SimpleAccess::SetRegister(Mode_Bank, data);
+                        Simple::SetRegister(Mode_Bank, data);
                     }
 
                     // send register data to chip (within bank B)
                     get_register(m_output, Reg(reg), data);
-                    SimpleAccess::SetRegister(reg & 0x0F, data);
+                    Simple::SetRegister(reg & 0x0F, data);
                 }
             }
 
@@ -420,7 +420,7 @@ namespace PowerSG
                 // so we switch back to bank A
                 get_register(m_output, Reg::Mode_Bank, data);
                 data &= 0x0F; data |= 0xA0;
-                SimpleAccess::SetRegister(Mode_Bank, data);
+                Simple::SetRegister(Mode_Bank, data);
             }
         }
 
@@ -435,7 +435,7 @@ namespace PowerSG
 
                 // send register data to chip (within bank A)
                 get_register(m_output, Reg(reg), data);
-                SimpleAccess::SetRegister(reg & 0x0F, data);
+                Simple::SetRegister(reg & 0x0F, data);
             }
         }
     }

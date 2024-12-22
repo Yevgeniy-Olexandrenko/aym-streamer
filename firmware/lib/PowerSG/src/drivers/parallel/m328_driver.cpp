@@ -4,7 +4,7 @@
 #include "m328_driver.h"
 #include "m328_wiring.h"
 
-#include <avr/delay.h>
+#include <util/delay.h>
 #include "drivers/DriverHelper.h"
 
 #define wait_for_delay(ns) _delay_us(0.001f * (ns))

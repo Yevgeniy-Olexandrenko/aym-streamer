@@ -1,5 +1,4 @@
 #include "Simple.h"
-
 namespace PowerSG
 {
     template <typename driver_t>
@@ -36,7 +35,7 @@ namespace PowerSG
     clk_t Simple<driver_t>::GetClock() const
     {
         clk_t clk = 0;
-        m_driver.chip_get_clock(clk);
+        const_cast<Simple*>(this)->m_driver.chip_get_clock(clk);
         return clk;
     }
 

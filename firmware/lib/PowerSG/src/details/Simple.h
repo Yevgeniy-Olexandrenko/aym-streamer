@@ -43,3 +43,5 @@ namespace PowerSG
         uint32_t m_chipid { 0 };
     };
 }
+
+#include "Simple_impl.h"

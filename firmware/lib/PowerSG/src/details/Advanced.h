@@ -69,7 +69,8 @@ namespace PowerSG
         BankB_Lst = uint8_t(Reg::N_OrMask)  // numeric value of the last register in bank B
     };
 
-    class Advanced : public Simple
+    template <typename driver_t>
+    class Advanced : public Simple<driver_t>
     {
         union Period // 2 bytes
         {
@@ -109,23 +110,23 @@ namespace PowerSG
 
     public:
         void Reset() override;
-
-       Clock GetClock() const override;
-        void SetClock(Clock clock) override;
+ 
         void SetDefaultClock() override;
+        void SetClock(clk_t clock) override;
+       clk_t GetClock() const override;
 
         void SetStereo(Stereo stereo);
       Stereo GetStereo() const;
 
-        void SetRegister(uint8_t reg, uint8_t data) override;
-        void GetRegister(uint8_t reg, uint8_t& data) const override;
-        void SetRegister(Reg reg, uint8_t data);
-        void GetRegister(Reg reg, uint8_t& data) const;
-        void Update();
+        void SetRegister(raddr_t addr, rdata_t data) override;
+        void GetRegister(raddr_t addr, rdata_t &data) override;
+        void SetRegister(Reg reg, rdata_t data);
+        void GetRegister(Reg reg, rdata_t &data);
+        void Update() override;
 
     private:
-        void set_register(State& state, Reg reg, uint8_t data);
-        void get_register(const State& state, Reg reg, uint8_t& data) const;
+        void set_register(State& state, Reg reg, rdata_t data);
+        void get_register(const State& state, Reg reg, rdata_t &data) const;
 
         void process_clock_conversion();
         void process_channels_remapping();
@@ -142,3 +143,5 @@ namespace PowerSG
         State m_output;
     };
 }
+
+#include "Advanced_impl.h"

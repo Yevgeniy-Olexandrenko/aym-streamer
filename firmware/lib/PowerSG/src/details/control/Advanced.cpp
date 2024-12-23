@@ -1,5 +1,7 @@
 #include <string.h>
 #include <avr/pgmspace.h>
+
+#include "Advanced.h"
 #include "drivers/DriverHelper.h"
 
 namespace PowerSG
@@ -16,67 +18,68 @@ namespace PowerSG
         return to_mask(reg, 0);
     }
 
-    const uint8_t e_fine[] PROGMEM = 
+    const raddr_t e_fine[] PROGMEM = 
     {
-        uint8_t(Reg::EA_Fine), uint8_t(Reg::EB_Fine), uint8_t(Reg::EC_Fine)
+        raddr_t(Reg::EA_Fine),
+        raddr_t(Reg::EB_Fine),
+        raddr_t(Reg::EC_Fine)
     };
 
-    const uint8_t e_coarse[] PROGMEM = 
+    const raddr_t e_coarse[] PROGMEM = 
     {
-        uint8_t(Reg::EA_Coarse), uint8_t(Reg::EB_Coarse), uint8_t(Reg::EC_Coarse)
+        raddr_t(Reg::EA_Coarse), 
+        raddr_t(Reg::EB_Coarse), 
+        raddr_t(Reg::EC_Coarse)
     };
 
-    const uint8_t e_shape[] PROGMEM = 
+    const raddr_t e_shape[] PROGMEM = 
     {
-        uint8_t(Reg::EA_Shape), uint8_t(Reg::EB_Shape), uint8_t(Reg::EC_Shape)
+        raddr_t(Reg::EA_Shape), 
+        raddr_t(Reg::EB_Shape), 
+        raddr_t(Reg::EC_Shape)
     };
 
-    template <typename driver_t>
-    void Advanced<driver_t>::reset()
+    Advanced::Advanced(Driver &driver)
+        : Simple(driver)
+        , m_clock(0)
+        , m_sstereo(Stereo::ABC)
+        , m_dstereo(Stereo::ABC)
+    {}
+
+    void Advanced::reset()
     {
-        Simple<driver_t>::reset();
+        Simple::reset();
         memset(&m_input, 0, sizeof(state_t));
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::setDefaultClock()
-    {
-        setClock(F1_77MHZ);
-    }
-
-    template <typename driver_t>
-    void Advanced<driver_t>::setClock(Clock clock)
+    void Advanced::setClock(Clock clock)
     {
         // limit the clock frequency range
         if (clock < F1_00MHZ) clock = F1_00MHZ;
         if (clock > F2_00MHZ) clock = F2_00MHZ;
 
         // set real/virtual clock frequency
-        Simple<driver_t>::setClock(clock);
+        Simple::setClock(clock);
         m_clock = clock;
     }
 
-    template <typename driver_t>
-    Clock Advanced<driver_t>::getClock() const
+    Clock Advanced::getClock() const
     {
         return m_clock;
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::setStereo(Stereo stereo)
+    void Advanced::setStereo(Stereo stereo)
     {
         m_sstereo = stereo;
         m_dstereo = stereo;
     }
 
-    template <typename driver_t>
-    Stereo Advanced<driver_t>::getStereo() const
+    Stereo Advanced::getStereo() const
     {
         return m_dstereo;
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::setRegister(raddr_t addr, rdata_t data)
+    void Advanced::setRegister(raddr_t addr, rdata_t data)
     {
         // set register data indirectly via bank switching
         // register address must be in range 0x00-0x0F
@@ -92,8 +95,7 @@ namespace PowerSG
         }
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::getRegister(raddr_t addr, rdata_t &data)
+    void Advanced::getRegister(raddr_t addr, rdata_t &data) const
     {
         // get register data indirectly via bank switching
         // register address must be in range 0x00-0x0F
@@ -109,22 +111,19 @@ namespace PowerSG
         }
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::setRegister(Reg reg, rdata_t data)
+    void Advanced::setRegister(Reg reg, rdata_t data)
     {
         // set register data directly
         set_register(m_input, reg, data);
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::getRegister(Reg reg, rdata_t &data)
+    void Advanced::getRegister(Reg reg, rdata_t &data) const
     {
         // get register data directly
         get_register(m_input, reg, data);
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::update()
+    void Advanced::update()
     {
         if (m_input.status.changed)
         {
@@ -142,12 +141,11 @@ namespace PowerSG
         }
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::set_register(state_t &state, Reg reg, rdata_t data)
+    void Advanced::set_register(state_t &state, Reg reg, rdata_t data)
     {
         // preserve the state of exp mode and bank of regs
         // separately from the shape of channel A envelope
-        if ((uint8_t(reg) & 0x0F) == Mode_Bank)
+        if ((raddr_t(reg) & 0x0F) == Mode_Bank)
         {
             state.status.exp_mode = (data & 0xF0);
             data &= 0x0F; reg = Reg::Mode_Bank;
@@ -190,8 +188,7 @@ namespace PowerSG
         state.status.changed |= to_mask(reg);
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::get_register(const state_t &state, Reg reg, rdata_t &data) const
+    void Advanced::get_register(const state_t &state, Reg reg, rdata_t &data) const
     {
         // map register to corresponding field of state
         switch(reg)
@@ -228,29 +225,28 @@ namespace PowerSG
 
         // combine the current state of exp mode and bank
         // of regs with the shape of channel A envelope
-        if ((uint8_t(reg) & 0x0F) == Mode_Bank)
+        if ((raddr_t(reg) & 0x0F) == Mode_Bank)
         {
             data |= state.status.exp_mode;
         }
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::process_clock_conversion()
+    void Advanced::process_clock_conversion()
     {
     #ifndef DISABLE_CLOCK_CONVERSION
         const Clock vclock = getClock();
-        const Clock rclock = Simple<driver_t>::getClock();
+        const Clock rclock = Simple::getClock();
 
         if (rclock != vclock)
         {
-            uint16_t t_bound = (m_output.status.exp_mode ? 0xFFFF : 0x0FFF);
-            uint16_t n_bound = (m_output.status.exp_mode ? 0x00FF : 0x001F);
+            rpair_t t_bound = (m_output.status.exp_mode ? 0xFFFF : 0x0FFF);
+            rpair_t n_bound = (m_output.status.exp_mode ? 0x00FF : 0x001F);
 
             // safe period conversion based on clock ratio
-            const auto convert_period = [&](uint16_t& period, uint16_t bound)
+            const auto convert_period = [&](rpair_t& period, rpair_t bound)
             {
                 uint32_t converted = ((period * (rclock >> 5) / (vclock >> 6) + 1) >> 1);
-                period = uint16_t(converted > bound ? bound : converted);
+                period = rpair_t(converted > bound ? bound : converted);
             };
 
             // convert tone and envelope periods
@@ -262,15 +258,14 @@ namespace PowerSG
             m_output.status.changed |= 0b01100001111111; // hack
 
             // convert noise period
-            uint16_t period = m_output.commons.n_period;
+            rpair_t period = m_output.commons.n_period;
             convert_period(period, n_bound);
-            m_output.commons.n_period = uint8_t(period);
+            m_output.commons.n_period = rdata_t(period);
         }
     #endif
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::process_channels_remapping()
+    void Advanced::process_channels_remapping()
     {
     #ifndef DISABLE_CHANNELS_REMAPPING
         // restrict stereo modes available for exp mode
@@ -280,32 +275,32 @@ namespace PowerSG
 
         if (m_dstereo != Stereo::ABC)
         {
-            const auto swap_register = [&](uint8_t reg_l, uint8_t reg_r)
+            const auto swap_register = [&](raddr_t reg_l, raddr_t reg_r)
             {
-                uint8_t data_l, data_r;
+                rdata_t data_l, data_r;
                 get_register(m_output, Reg(reg_l), data_l);
                 get_register(m_output, Reg(reg_r), data_r);
                 set_register(m_output, Reg(reg_l), data_r);
                 set_register(m_output, Reg(reg_r), data_l);
             };
 
-            const auto swap_channels = [&](uint8_t l, uint8_t r)
+            const auto swap_channels = [&](raddr_t l, raddr_t r)
             {
                 // swap tone period and tone volume/envelope enable
-                swap_register(uint8_t(Reg::A_Fine) + 2 * l, uint8_t(Reg::A_Fine) + 2 * r);
-                swap_register(uint8_t(Reg::A_Coarse) + 2 * l, uint8_t(Reg::A_Coarse) + 2 * r);
-                swap_register(uint8_t(Reg::A_Volume) + l, uint8_t(Reg::A_Volume) + r);
+                swap_register(raddr_t(Reg::A_Fine) + 2 * l, raddr_t(Reg::A_Fine) + 2 * r);
+                swap_register(raddr_t(Reg::A_Coarse) + 2 * l, raddr_t(Reg::A_Coarse) + 2 * r);
+                swap_register(raddr_t(Reg::A_Volume) + l, raddr_t(Reg::A_Volume) + r);
 
                 if (m_output.status.exp_mode)
                 {
                     // swap tone duty cycle and envelope period
-                    swap_register(uint8_t(Reg::A_Duty) + l, uint8_t(Reg::A_Duty) + r);
+                    swap_register(raddr_t(Reg::A_Duty) + l, raddr_t(Reg::A_Duty) + r);
                     swap_register(pgm_read_byte(e_fine + l), pgm_read_byte(e_fine + r));
                     swap_register(pgm_read_byte(e_coarse + l), pgm_read_byte(e_coarse + r));
 
                     // swap envelope shape
-                    uint8_t shape_l = pgm_read_byte(e_shape + l);
-                    uint8_t shape_r = pgm_read_byte(e_shape + r);
+                    raddr_t shape_l = pgm_read_byte(e_shape + l);
+                    raddr_t shape_r = pgm_read_byte(e_shape + r);
                     bool schanged_l = (m_output.status.changed & to_mask(shape_l));
                     bool schanged_r = (m_output.status.changed & to_mask(shape_r));
                     swap_register(shape_l, shape_r);
@@ -316,10 +311,10 @@ namespace PowerSG
                 }
 
                 // swap bits in mixer register
-                uint8_t msk_l = (0b00001001 << l);
-                uint8_t msk_r = (0b00001001 << r);
-                uint8_t mix_l = ((m_output.commons.mixer & msk_l) >> l);
-                uint8_t mix_r = ((m_output.commons.mixer & msk_r) >> r);
+                rdata_t msk_l = (0b00001001 << l);
+                rdata_t msk_r = (0b00001001 << r);
+                rdata_t mix_l = ((m_output.commons.mixer & msk_l) >> l);
+                rdata_t mix_r = ((m_output.commons.mixer & msk_r) >> r);
                 res_bits(m_output.commons.mixer, msk_l | msk_r);
                 set_bits(m_output.commons.mixer, mix_l << r);
                 set_bits(m_output.commons.mixer, mix_r << l);
@@ -356,15 +351,14 @@ namespace PowerSG
     #endif
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::process_compatible_mode_fix()
+    void Advanced::process_compatible_mode_fix()
     {
     #ifndef DISABLE_COMPATIBLE_MODE_FIX
-        if (this->getChipId() == ChipId::AY8930)
+        if (getChipId() == ChipId::AY8930)
         {
             for (int i = 0; i < 3; ++i)
             {
-                uint8_t volume = m_output.channels[i].t_volume;
+                rdata_t volume = m_output.channels[i].t_volume;
                 if (m_output.status.exp_mode) volume >>= 1;
 
                 // get tone, noise and envelope enable flags
@@ -385,32 +379,30 @@ namespace PowerSG
     #endif    
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::check_output_changes()
+    void Advanced::check_output_changes()
     {
         // apply changes in registers made by processing
-        uint8_t i_data, o_data;
-        for (uint8_t reg = BankA_Fst; reg <= BankB_Lst; ++reg)
+        rdata_t i_data, o_data;
+        for (raddr_t addr = BankA_Fst; addr <= BankB_Lst; ++addr)
         {
-            get_register(m_input,  Reg(reg), i_data);
-            get_register(m_output, Reg(reg), o_data);
+            get_register(m_input,  Reg(addr), i_data);
+            get_register(m_output, Reg(addr), o_data);
 
             if (i_data != o_data)
-                m_output.status.changed |= to_mask(reg);
+                m_output.status.changed |= to_mask(addr);
         }
     }
 
-    template <typename driver_t>
-    void Advanced<driver_t>::write_output_to_chip()
+    void Advanced::write_output_to_chip()
     {
         // write changes in output state to the PSG
-        uint8_t data; bool switch_banks = false;
+        rdata_t data; bool switch_banks = false;
         if (this->getChipId() == ChipId::AY8930 && m_output.status.exp_mode)
         {
             // check for changes in registers of bank B
-            for (uint8_t reg = BankB_Fst; reg <= BankB_Lst; ++reg)
+            for (raddr_t addr = BankB_Fst; addr <= BankB_Lst; ++addr)
             {
-                if (m_output.status.changed & to_mask(reg))
+                if (m_output.status.changed & to_mask(addr))
                 {
                     // we have changes, so first
                     // of all we switch to bank B
@@ -419,12 +411,12 @@ namespace PowerSG
                         switch_banks = true;
                         get_register(m_output, Reg::Mode_Bank, data);
                         data &= 0x0F; data |= 0xB0;
-                        Simple<driver_t>::setRegister(Mode_Bank, data);
+                        Simple::setRegister(Mode_Bank, data);
                     }
 
                     // send register data to chip (within bank B)
-                    get_register(m_output, Reg(reg), data);
-                    Simple<driver_t>::setRegister(reg & 0x0F, data);
+                    get_register(m_output, Reg(addr), data);
+                    Simple::setRegister(addr & 0x0F, data);
                 }
             }
 
@@ -434,22 +426,22 @@ namespace PowerSG
                 // so we switch back to bank A
                 get_register(m_output, Reg::Mode_Bank, data);
                 data &= 0x0F; data |= 0xA0;
-                Simple<driver_t>::setRegister(Mode_Bank, data);
+                Simple::setRegister(Mode_Bank, data);
             }
         }
 
         // check for changes in registers of bank A
-        for (uint8_t reg = BankA_Fst; reg <= BankA_Lst; ++reg)
+        for (raddr_t addr = BankA_Fst; addr <= BankA_Lst; ++addr)
         {
-            if (m_output.status.changed & to_mask(reg))
+            if (m_output.status.changed & to_mask(addr))
             {
                 // skip the 'mode/bank' register if 
                 // we've done a bank switch before
-                if (switch_banks && reg == Mode_Bank) continue;
+                if (switch_banks && addr == Mode_Bank) continue;
 
                 // send register data to chip (within bank A)
-                get_register(m_output, Reg(reg), data);
-                Simple<driver_t>::setRegister(reg & 0x0F, data);
+                get_register(m_output, Reg(addr), data);
+                Simple::setRegister(addr & 0x0F, data);
             }
         }
     }

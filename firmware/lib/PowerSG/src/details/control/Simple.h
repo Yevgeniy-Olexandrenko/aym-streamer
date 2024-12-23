@@ -16,24 +16,26 @@ namespace PowerSG
     using Clock = uint32_t;
     using raddr_t = uint8_t;
     using rdata_t = uint8_t;
-    
-    template <typename driver_t> class Simple
+
+    class Simple
     {
     public:
+        Simple(Driver& driver);
+
         // power on and reset operations with PSG
-        virtual void begin();
+        void begin();
         virtual void reset();
         
         // set/get operations with PSG configuration
-        virtual   void setDefaultClock();
-        virtual   void setClock(Clock clock);
-        virtual  Clock getClock() const;
-        virtual ChipId getChipId();
+        void setDefaultClock();
+        virtual void  setClock(Clock clock);
+        virtual Clock getClock() const;
+        ChipId getChipId() const;
 
         // set/get operations with PSG registers
+        void mute();
         virtual void setRegister(raddr_t addr, rdata_t data);
-        virtual void getRegister(raddr_t addr, rdata_t &data);
-        virtual void update();
+        virtual void getRegister(raddr_t addr, rdata_t &data) const;
 
     private:
         // tests to detect the type of PSG
@@ -42,10 +44,8 @@ namespace PowerSG
         void test_wr_rd_latch(raddr_t offset);
         void test_wr_rd_exp_mode(rdata_t mode_bank);
 
-    private: // 5 bytes
-        driver_t m_driver;
-        uint32_t m_chipid { 0 };
+    private:
+        Driver&  m_driver;
+        uint32_t m_chipid;
     };
 }
-
-#include "Simple_impl.h"

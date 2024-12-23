@@ -1,5 +1,5 @@
 #include "drivers/DriverEnable.h"
-#if defined(USE_M328_DRIVER)
+#if defined(USE_M328_PDRIVER)
 
 #include "m328_driver.h"
 #include "m328_wiring.h"

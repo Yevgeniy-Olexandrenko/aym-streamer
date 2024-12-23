@@ -62,46 +62,47 @@ namespace PowerSG
 
     enum
     {
-        Mode_Bank = uint8_t(Reg::EA_Shape), // numeric value of the AY8930 mode/bank register
-        BankA_Fst = uint8_t(Reg::A_Fine),   // numeric value of the first register in bank A
-        BankA_Lst = uint8_t(Reg::EA_Shape), // numeric value of the last register in bank A
-        BankB_Fst = uint8_t(Reg::EB_Fine),  // numeric value of the first register in bank B
-        BankB_Lst = uint8_t(Reg::N_OrMask)  // numeric value of the last register in bank B
+        Mode_Bank = raddr_t(Reg::EA_Shape), // numeric value of the AY8930 mode/bank register
+        BankA_Fst = raddr_t(Reg::A_Fine),   // numeric value of the first register in bank A
+        BankA_Lst = raddr_t(Reg::EA_Shape), // numeric value of the last register in bank A
+        BankB_Fst = raddr_t(Reg::EB_Fine),  // numeric value of the first register in bank B
+        BankB_Lst = raddr_t(Reg::N_OrMask)  // numeric value of the last register in bank B
     };
 
-    template <typename driver_t>
-    class Advanced : public Simple<driver_t>
+    using rpair_t = uint16_t;
+
+    class Advanced : public Simple
     {
-        union period_t // 2 bytes
+        union period_t
         {
-            uint16_t full;
-            struct { uint8_t fine, coarse; };
+            rpair_t full;
+            struct { rdata_t fine, coarse; };
         };
 
-        struct channel_t // 7 bytes
+        struct channel_t
         {
             period_t t_period;
-            uint8_t  t_volume;
-            uint8_t  t_duty;
+            rdata_t  t_volume;
+            rdata_t  t_duty;
             period_t e_period;
-            uint8_t  e_shape;
+            rdata_t  e_shape;
         };
 
-        struct commons_t // 4 bytes
+        struct commons_t
         {
-            uint8_t n_period;
-            uint8_t n_and_mask;
-            uint8_t n_or_mask;
-            uint8_t mixer;
+            rdata_t n_period;
+            rdata_t n_and_mask;
+            rdata_t n_or_mask;
+            rdata_t mixer;
         };
 
-        struct status_t // 5 bytes
+        struct status_t
         {
             uint32_t changed;
             uint8_t  exp_mode;
         };
 
-        struct state_t // 30 bytes
+        struct state_t
         {
             channel_t channels[3];
             commons_t commons;
@@ -109,20 +110,20 @@ namespace PowerSG
         };
 
     public:
+        Advanced(Driver& driver);
         void reset() override;
  
-        void setDefaultClock() override;
         void setClock(Clock clock) override;
-       Clock getClock() const override;
+        Clock getClock() const override;
 
         void setStereo(Stereo stereo);
-      Stereo getStereo() const;
+        Stereo getStereo() const;
 
         void setRegister(raddr_t addr, rdata_t data) override;
-        void getRegister(raddr_t addr, rdata_t &data) override;
+        void getRegister(raddr_t addr, rdata_t &data) const override;
         void setRegister(Reg reg, rdata_t data);
-        void getRegister(Reg reg, rdata_t &data);
-        void update() override;
+        void getRegister(Reg reg, rdata_t &data) const;
+        void update();
 
     private:
         void set_register(state_t& state, Reg reg, rdata_t data);
@@ -135,13 +136,11 @@ namespace PowerSG
         void check_output_changes();
         void write_output_to_chip();
 
-    private: // 66 bytes
-        uint32_t m_clock   { 0 };
-        Stereo   m_sstereo { Stereo::ABC };
-        Stereo   m_dstereo { Stereo::ABC };
+    private:
+        uint32_t m_clock;
+        Stereo   m_sstereo;
+        Stereo   m_dstereo;
         state_t  m_input;
         state_t  m_output;
     };
 }
-
-#include "Advanced_impl.h"

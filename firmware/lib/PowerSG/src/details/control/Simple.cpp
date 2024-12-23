@@ -1,29 +1,30 @@
 #include "Simple.h"
+
 namespace PowerSG
 {
-    template <typename driver_t>
-    void Simple<driver_t>::begin()
+    Simple::Simple(Driver &driver)
+        : m_driver(driver)
+    {}
+
+    void Simple::begin()
     {
         m_driver.chip_power_on();
         setDefaultClock();
         reset();
     }
 
-    template <typename driver_t>
-    void Simple<driver_t>::reset()
+    void Simple::reset()
     {
         m_driver.chip_reset();
     }
 
-    template <typename driver_t>
-    void Simple<driver_t>::setDefaultClock()
+    void Simple::setDefaultClock()
     {
         // ZX-Spectrum PSG clock
         setClock(1773400);
     }
 
-    template <typename driver_t>
-    inline void Simple<driver_t>::setClock(Clock clock)
+    void Simple::setClock(Clock clock)
     {
         // limit the clock frequency range
         if (clock < 1000000) clock = 1000000;
@@ -31,62 +32,59 @@ namespace PowerSG
         m_driver.chip_set_clock(clock);
     }
 
-    template <typename driver_t>
-    Clock Simple<driver_t>::getClock() const
+    Clock Simple::getClock() const
     {
         Clock clock = 0;
-        const_cast<Simple*>(this)->m_driver.chip_get_clock(clock);
+        auto& cless = const_cast<Simple&>(*this);
+        cless.m_driver.chip_get_clock(clock);
         return clock;
     }
 
-    template <typename driver_t>
-    ChipId Simple<driver_t>::getChipId()
+    ChipId Simple::getChipId() const
     {
         // detect type of PSG on first request
         if (getClock() != 0 && !m_chipid)
         {
-            m_chipid = 7;
-            test_wr_rd_regs(0x00);
-            test_wr_rd_regs(0x10);
-            test_wr_rd_latch(0x00);
-            test_wr_rd_latch(0x10);
-            test_wr_rd_exp_mode(0xA0);
-            test_wr_rd_exp_mode(0xB0);
-            reset();
+            auto& cless = const_cast<Simple&>(*this);
+            cless.m_chipid = 7;
+            cless.test_wr_rd_regs(0x00);
+            cless.test_wr_rd_regs(0x10);
+            cless.test_wr_rd_latch(0x00);
+            cless.test_wr_rd_latch(0x10);
+            cless.test_wr_rd_exp_mode(0xA0);
+            cless.test_wr_rd_exp_mode(0xB0);
+            cless.reset();
         }
         return ChipId(m_chipid);
     }
 
-    template <typename driver_t>
-    void Simple<driver_t>::setRegister(raddr_t addr, rdata_t data)
+    void Simple::mute()
+    {
+        setRegister(0x08, 0x00);
+        setRegister(0x09, 0x00);
+        setRegister(0x0A, 0x00);
+    }
+
+    void Simple::setRegister(raddr_t addr, rdata_t data)
     {
         // this behavior can be overridden
         m_driver.chip_address(addr);
         m_driver.chip_write(data);
     }
 
-    template <typename driver_t>
-    void Simple<driver_t>::getRegister(raddr_t addr, rdata_t &data)
+    void Simple::getRegister(raddr_t addr, rdata_t &data) const
     {
         // this behavior can be overridden
         m_driver.chip_address(addr);
         m_driver.chip_read(data);
     }
 
-    template <typename driver_t>
-    void Simple<driver_t>::update()
-    {
-        // for compatibility with descendants
-    }
-
-    template <typename driver_t>
-    void Simple<driver_t>::update_chipid(rdata_t data)
+    void Simple::update_chipid(rdata_t data)
     {
         m_chipid = (31 * m_chipid + uint32_t(data));
     }
 
-    template <typename driver_t>
-    void Simple<driver_t>::test_wr_rd_regs(raddr_t offset)
+    void Simple::test_wr_rd_regs(raddr_t offset)
     {
         rdata_t data;
         for (raddr_t addr = offset; addr < (offset + 14); ++addr)
@@ -105,8 +103,7 @@ namespace PowerSG
         }
     }
 
-    template <typename driver_t>
-    void Simple<driver_t>::test_wr_rd_latch(raddr_t offset)
+    void Simple::test_wr_rd_latch(raddr_t offset)
     {
         rdata_t data;
         for (raddr_t addr = offset; addr < (offset + 14); ++addr)
@@ -121,8 +118,7 @@ namespace PowerSG
         }
     }
 
-    template <typename driver_t>
-    void Simple<driver_t>::test_wr_rd_exp_mode(rdata_t mode_bank)
+    void Simple::test_wr_rd_exp_mode(rdata_t mode_bank)
     {
         m_driver.chip_address(0x0D);
         m_driver.chip_write(mode_bank | 0x0F);

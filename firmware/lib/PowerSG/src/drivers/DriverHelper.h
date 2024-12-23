@@ -1,6 +1,5 @@
 #pragma once
 
-// helpers
 #define set_bits(reg, bits) reg |=  (bits)
 #define res_bits(reg, bits) reg &= ~(bits)
 

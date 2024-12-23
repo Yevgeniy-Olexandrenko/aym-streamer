@@ -1,6 +1,6 @@
 #pragma once
 
-#include "details/Simple.h"
-#include "details/Advanced.h"
-#include "DefSAccess.h"
-#include "DefPAccess.h"
+#include "drivers/PDriver.h"
+#include "drivers/SDriver.h"
+#include "details/control/Simple.h"
+#include "details/control/Advanced.h"

@@ -66,6 +66,8 @@ namespace PSG
 		void SetClock(Clock clock);
 		Clock GetClock() const;
 
+		// get returns the stereo applied on the chip by the
+		// last commit: only ABC and ACB are used in exp mode
 		void SetStereo(Stereo stereo);
 		Stereo GetStereo() const;
 
@@ -86,8 +88,8 @@ namespace PSG
 
 	private:
 		Clock m_clock;
-		Stereo m_sstereo{ Stereo::ABC };
-		Stereo m_dstereo{ Stereo::ABC };
+		Stereo m_sstereo{ Stereo::ABC }; // stereo set by the host
+		Stereo m_dstereo{ Stereo::ABC }; // stereo applied on the chip
 		state_t m_input, m_output;
 	};
 }

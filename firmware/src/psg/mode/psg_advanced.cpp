@@ -49,13 +49,24 @@ namespace PSG
 		BankB_Lst = N_OrMask,  // last register in bank B
 	};
 
-	const raddr_t e_fine   [] PROGMEM = { EA_Fine,   EB_Fine,   EC_Fine   };
-	const raddr_t e_coarse [] PROGMEM = { EA_Coarse, EB_Coarse, EC_Coarse };
-	const raddr_t e_shape  [] PROGMEM = { EA_Shape,  EB_Shape,  EC_Shape  };
+	const raddr_t e_shape[] PROGMEM = { EA_Shape, EB_Shape, EC_Shape };
 
 	constexpr uint32_t to_mask(raddr_t reg)
 	{
 		return (UINT32_C(1) << reg);
+	}
+
+	template<typename T>
+	inline void swap_values(T& a, T& b)
+	{
+		T t = a; a = b; b = t;
+	}
+
+	// swap the values of two bits given by masks
+	template<typename T>
+	inline void swap_bits(T& value, T mask_a, T mask_b)
+	{
+		if (bool(value & mask_a) != bool(value & mask_b)) value ^= (mask_a | mask_b);
 	}
 
 	// masks of all registers and of envelope shape registers
@@ -101,8 +112,8 @@ namespace PSG
 
 	void Advanced::SetStereo(Stereo stereo)
 	{
+		// the next commit applies the stereo on the chip
 		m_sstereo = stereo;
-		m_dstereo = stereo;
 	}
 
 	Stereo Advanced::GetStereo() const
@@ -334,84 +345,47 @@ namespace PSG
 	void Advanced::process_channels_remapping()
 	{
 	#ifndef DISABLE_CHANNELS_REMAPPING
-		// restrict stereo modes available for exp mode
-		m_dstereo = (m_output.status.exp_mode && m_sstereo != Stereo::ABC && m_sstereo != Stereo::ACB)
-			? Stereo::ABC
-			: m_sstereo;
+		// only ABC and ACB in exp mode, as in psg-tools
+		const bool exp_mode = m_output.status.exp_mode;
+		m_dstereo = (exp_mode && m_sstereo != Stereo::ACB) ? Stereo::ABC : m_sstereo;
 
 		if (m_dstereo != Stereo::ABC)
 		{
-			const auto swap_register = [&](raddr_t reg_l, raddr_t reg_r)
+			const auto swap_channels = [&](uint8_t l, uint8_t r)
 			{
-				rdata_t data_l, data_r;
-				get_register(m_output, Reg(reg_l), data_l);
-				get_register(m_output, Reg(reg_r), data_r);
-				set_register(m_output, Reg(reg_l), data_r);
-				set_register(m_output, Reg(reg_r), data_l);
-			};
+				channel_t& ch_l = m_output.channels[l];
+				channel_t& ch_r = m_output.channels[r];
 
-			const auto swap_channels = [&](raddr_t l, raddr_t r)
-			{
-				// swap tone period and tone volume/envelope enable
-				swap_register(A_Fine + 2 * l, A_Fine + 2 * r);
-				swap_register(A_Coarse + 2 * l, A_Coarse + 2 * r);
-				swap_register(A_Volume + l, A_Volume + r);
+				// tone period, duty cycle and volume/envelope enable
+				swap_values(ch_l.t_period.full, ch_r.t_period.full);
+				swap_values(ch_l.t_duty, ch_r.t_duty);
+				swap_values(ch_l.t_volume, ch_r.t_volume);
 
-				if (m_output.status.exp_mode)
+				// each channel has its own envelope in exp mode, a shape
+				// write restarts the envelope, so the change moves too
+				if (exp_mode)
 				{
-					// swap tone duty cycle and envelope period
-					swap_register(A_Duty + l, A_Duty + r);
-					swap_register(pgm_read_byte(e_fine + l), pgm_read_byte(e_fine + r));
-					swap_register(pgm_read_byte(e_coarse + l), pgm_read_byte(e_coarse + r));
-
-					// swap envelope shape
-					raddr_t shape_l = pgm_read_byte(e_shape + l);
-					raddr_t shape_r = pgm_read_byte(e_shape + r);
-					bool schanged_l = (m_output.status.changed & to_mask(shape_l));
-					bool schanged_r = (m_output.status.changed & to_mask(shape_r));
-					swap_register(shape_l, shape_r);
-					if (schanged_l) m_output.status.changed |= to_mask(shape_r);
-					else m_output.status.changed &= ~to_mask(shape_r);
-					if (schanged_r) m_output.status.changed |= to_mask(shape_l);
-					else m_output.status.changed &= ~to_mask(shape_l);
+					swap_values(ch_l.e_period.full, ch_r.e_period.full);
+					swap_values(ch_l.e_shape, ch_r.e_shape);
+					swap_bits(m_output.status.changed,
+						to_mask(pgm_read_byte(e_shape + l)),
+						to_mask(pgm_read_byte(e_shape + r)));
 				}
 
-				// swap bits in mixer register
-				rdata_t msk_l = (0b00001001 << l);
-				rdata_t msk_r = (0b00001001 << r);
-				rdata_t mix_l = ((m_output.commons.mixer & msk_l) >> l);
-				rdata_t mix_r = ((m_output.commons.mixer & msk_r) >> r);
-				res_bits(m_output.commons.mixer, msk_l | msk_r);
-				set_bits(m_output.commons.mixer, mix_l << r);
-				set_bits(m_output.commons.mixer, mix_r << l);
+				// tone and noise enable bits in mixer
+				swap_bits(m_output.commons.mixer, rdata_t(0x01 << l), rdata_t(0x01 << r));
+				swap_bits(m_output.commons.mixer, rdata_t(0x08 << l), rdata_t(0x08 << r));
 			};
 
 			// swap channels in pairs
 			switch(m_dstereo)
 			{
-			case Stereo::ACB:
-				swap_channels(1, 2); // B <-> C
-				break;
-
-			case Stereo::BAC:
-				swap_channels(0, 1); // A <-> B
-				break;
-
-			case Stereo::BCA:
-				swap_channels(0, 1); // A <-> B
-				swap_channels(1, 2); // B <-> C
-				break;
-
-			case Stereo::CAB:
-				swap_channels(1, 2); // B <-> C
-				swap_channels(0, 1); // A <-> B
-				break;
-
-			case Stereo::CBA:
-				swap_channels(0, 2); // A <-> C
-				break;
-
-			default: break;
+			case Stereo::ABC: break;
+			case Stereo::ACB: swap_channels(1, 2); break; // B <-> C
+			case Stereo::BAC: swap_channels(0, 1); break; // A <-> B
+			case Stereo::BCA: swap_channels(0, 1); swap_channels(1, 2); break; // A <-> B, B <-> C
+			case Stereo::CAB: swap_channels(1, 2); swap_channels(0, 1); break; // B <-> C, A <-> B
+			case Stereo::CBA: swap_channels(0, 2); break; // A <-> C
 			}
 		}
 	#endif

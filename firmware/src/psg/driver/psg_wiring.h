@@ -24,6 +24,8 @@
 // | ANALOG C    | 38        | 1         | 18        | --      | --        | Analog output channel C    |
 // +-------------+-----------+-----------+-----------+---------+-----------+----------------------------+
 
+#pragma once
+
 #include <avr/io.h>
 
 // data bus bits DA0-DA3 (Arduino pins A0-A3)

@@ -1,6 +1,7 @@
 #include "psg_driver.h"
 #include "psg_wiring.h"
 #include <util/delay.h>
+#include <avr/interrupt.h>
 
 #define wait_for_delay(ns) _delay_us(0.001f * (ns))
 #define BUS_MASK (1 << BUS_BDIR | 1 << BUS_BC1)
@@ -11,16 +12,22 @@ namespace PSG
 	{
 		static uint32_t s_clock;
 
-		enum // timing delays (nano seconds)
+		// timing delays (nano seconds), the strictest values of
+		// AY-3-8910/8912 (GI, Microchip), YM2149, YM3439 and AY8930
+		enum
 		{
-			tAS = 400, // Address Setup Time
-			tAH = 100, // Address Hold Time
-			tDW = 500, // Write Data Pulse Width
-			tDH = 100, // Write Data Hold Time
-			tDA = 400, // Read Data Access Time
-			tTS = 100, // Tristate Delay Time
-			tRW = 500, // Reset Pulse Width
-			tRB = 100  // Reset to Bus Control Delay Time
+			tAS = 400,  // Address Setup Time (GI)
+			tAH = 100,  // Address Hold Time (GI)
+			tDW = 500,  // Write Data Pulse Width (GI, Microchip)
+			tDH = 100,  // Write Data Hold Time (GI)
+			tDA = 500,  // Read Data Access Time, max (GI)
+			tTS = 200,  // Tristate Delay Time, max (GI)
+			tRW = 3000, // Reset Pulse Width (AY8930: 2 clock periods, 2 us at 1 MHz)
+			tRB = 100,  // Reset to Bus Control Delay Time (GI, YM2149)
+
+			// AVR input synchronizer delays the pin value
+			// in PINx register up to 1.5 CPU clock cycles
+			tSY = int(2 * 1000000000UL / F_CPU)
 		};
 
 		inline void set_data_bus(uint8_t data)
@@ -36,7 +43,7 @@ namespace PSG
 
 		inline void get_data_bus(uint8_t& data)
 		{
-			// get bata bits from input ports
+			// get data bits from input ports
 			data = (LSB_PIN & LSB_MASK) | (MSB_PIN & MSB_MASK);
 		}
 
@@ -77,10 +84,11 @@ namespace PSG
 			s_clock = (uint32_t(F_CPU) / clockDiv);
 
 			// configure Timer2 as a clock source for PSG
+			uint8_t compare = uint8_t(clockDiv - 1);
 			TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
 			TCCR2B = (1 << WGM22 ) | (1 << CS20 );
-			OCR2A  = (clockDiv - 1);
-			OCR2B  = (clockDiv / 2);
+			OCR2A  = compare;
+			OCR2B  = compare / 2; // duty 50-56% (40-60% allowed)
 		}
 
 		void GetClock(uint32_t &clock)
@@ -113,9 +121,15 @@ namespace PSG
 		{
 			// 'Write to PSG' sequence
 			set_data_bus(data);
+
+			// the write pulse is limited to 10 us (GI, Microchip,
+			// YM2149, YM3439), so interrupts must not stretch it
+			uint8_t sreg = SREG; cli();
 			set_ctrl_bus_write();
 			wait_for_delay(tDW);
 			set_ctrl_bus_inact();
+			SREG = sreg;
+
 			wait_for_delay(tDH);
 			release_data_bus();
 		}
@@ -124,7 +138,7 @@ namespace PSG
 		{
 			// 'Read from PSG' sequence
 			set_ctrl_bus_read();
-			wait_for_delay(tDA);
+			wait_for_delay(tDA + tSY);
 			get_data_bus(data);
 			set_ctrl_bus_inact();
 			wait_for_delay(tTS);

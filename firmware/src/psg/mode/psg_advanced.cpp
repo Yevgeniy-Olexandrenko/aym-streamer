@@ -151,6 +151,7 @@ namespace PSG
 			}
 			get_register(m_input, Reg(addr), data);
 		}
+		else data = 0xFF;
 	}
 
 	void Advanced::Commit()
@@ -179,10 +180,12 @@ namespace PSG
 	void Advanced::set_register(state_t &state, Reg reg, rdata_t data)
 	{
 		// preserve the state of exp mode and bank of regs
-		// separately from the shape of channel A envelope
+		// separately from the shape of channel A envelope,
+		// only AY8930 has exp mode: 0xA0 bank A, 0xB0 bank B
 		if ((reg & 0x0F) == Mode_Bank)
 		{
-			state.status.exp_mode = (data & 0xF0);
+			bool exp_mode = (GetChipId() == ChipId::AY8930 && (data & 0xE0) == 0xA0);
+			state.status.exp_mode = (exp_mode ? (data & 0xF0) : 0x00);
 			data &= 0x0F; reg = Mode_Bank;
 		}
 
@@ -217,6 +220,9 @@ namespace PSG
 			case C_Duty:    state.channels[2].t_duty = data; break;
 			case N_AndMask: state.commons.n_and_mask = data; break;
 			case N_OrMask:  state.commons.n_or_mask = data; break;
+
+			// I/O ports and unused addresses
+			default: return;
 		}
 
 		// mark register as changed
@@ -225,6 +231,9 @@ namespace PSG
 
 	void Advanced::get_register(const state_t &state, Reg reg, rdata_t &data) const
 	{
+		// the 'mode/bank' register is in both banks
+		if ((reg & 0x0F) == Mode_Bank) reg = Mode_Bank;
+
 		// map register to corresponding field of state
 		switch(reg)
 		{
@@ -256,11 +265,14 @@ namespace PSG
 			case C_Duty:    data = state.channels[2].t_duty; break;
 			case N_AndMask: data = state.commons.n_and_mask; break;
 			case N_OrMask:  data = state.commons.n_or_mask; break;
+
+			// I/O ports and unused addresses
+			default: data = 0xFF; return;
 		}
 
 		// combine the current state of exp mode and bank
 		// of regs with the shape of channel A envelope
-		if ((reg & 0x0F) == Mode_Bank)
+		if (reg == Mode_Bank)
 		{
 			data |= state.status.exp_mode;
 		}

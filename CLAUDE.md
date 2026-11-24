@@ -60,17 +60,29 @@ cd "/c/Program Files (x86)/Arduino" && ./arduino-builder.exe -compile -hardware 
 ## Firmware architecture (`firmware/src/`)
 
 Layered, each layer only uses the one below:
-- `psg/driver/` (`PSG::Driver`): bus timing for latch address / write / read / reset (delays from
-  the datasheets), Timer2 clock setup. Direct port access, no Arduino API.
-- `psg/mode/psg_basic` (`PSG::Basic`): power on, reset, clock (clamped to 1-2 MHz), direct register
-  writes, and chip detection: `compute_chipid` runs write/read tests (incl. AY8930 expanded mode)
-  and hashes the read-back values into a `ChipId` enum value.
-- `psg/mode/psg_advanced` (`PSG::Advanced`): a shadow copy of all 25 registers (bank A
-  `0x00-0x0D`, AY8930 bank B `0x10-0x1A`). `SetRegister` takes addresses `0x00-0x0F` and follows
-  the bank selected through R13 (`exp_mode` `0xA0`/`0xB0`); `Commit()` processes the changed state
-  and writes only changed registers to the chip: clock conversion (virtual vs real clock), stereo
-  channel remapping (ABC/ACB/...), the AY8930 pure-envelope fix, and bank switching for AY8930.
-  Features can be compiled out with the `DISABLE_*` defines at the top of `psg_advanced.h`.
+- `psg/driver/` (`PSG::Driver`): bus timing for latch address / write / read / reset (the
+  strictest delays of all supported chip datasheets; the write pulse runs with interrupts off),
+  Timer2 clock setup (the real clock of the divider is cached). Direct port access, no Arduino API.
+- `psg/mode/psg_basic` (`PSG::Basic`): power on, reset (clears all registers, used to mute), clock
+  (clamped to 1-2 MHz, `GetClock` gives the real clock), direct register writes and reads
+  (`0x00-0x0F`), and chip detection: `compute_chipid` runs write/read tests (incl. AY8930 expanded
+  mode) and hashes the read-back values into a `ChipId` enum value. Changing the tests or the bus
+  timing can change the hashes: then the `ChipId` constants must be measured again on the chips.
+- `psg/mode/psg_advanced` (`PSG::Advanced`): hides the methods of `Basic` (no virtual calls).
+  `m_input` is the state the host wrote (all 25 registers: bank A `0x00-0x0D`, AY8930 bank B
+  `0x10-0x1A`), read back by `GetRegister`. `SetRegister` takes addresses `0x00-0x0F` and follows
+  the bank selected through R13 (expanded mode only on AY8930: `0xA0`/`0xB0`). `Commit()` copies
+  the input to `m_output`, processes it (clock conversion as in psg-tools `ChipClockRateConvert`,
+  stereo channel remapping with only ABC/ACB in expanded mode, the AY8930 pure-envelope fix) and
+  writes only the registers that differ from the previous `m_output`, which mirrors the chip, plus
+  the envelope shapes the host wrote. The write order is that of psg-tools `ChipEncoder`. Features
+  can be compiled out with the `DISABLE_*` defines at the top of `psg_advanced.h` (debug only).
+- `psg/mode/psg_turbosound` (`PSG::TurboSound<PSGMode>`): two chips of `Basic` or `Advanced` mode
+  behind one API, no direct access to them. `PowerOn` detects the board (`SingleChip` or
+  `TurboSound`) apart from the chip types; `Select(0/1)` sets the current chip; the chip is
+  selected on the bus by a latch address cycle `0xFF`/`0xFE` (only when it changes). Clock and
+  reset are common for both chips. On a single chip board the calls for chip 1 are ignored; a chip
+  that is not found still gets the data. `Commit` and `SetStereo` exist only for `Advanced`.
 - `uart/`: `uart_driver` (USART0, interrupt RX into a ring buffer) and `uart_protocol` (parse the
   host stream). Both files are still empty: this is the next piece of work.
 

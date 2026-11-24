@@ -6,14 +6,14 @@ namespace PSG
 {
 	enum class Board : uint8_t
 	{
-		SingleChip, // one PSG in the socket of the streamer
-		TurboSound  // TurboSound adapter with two PSG sockets
+		SingleChip, // one PSG
+		TurboSound  // two PSG, the chip is selected
 	};
 
-	// Two PSG on the TurboSound adapter, both of Basic or of Advanced mode.
-	// The adapter selects the chip by a latch address cycle with 0xFF (chip 0)
-	// or 0xFE (chip 1). Both chips share the clock and the RESET# signal.
-	// The calls for a chip that is not found (ChipId::NotFound) are ignored.
+	// Two PSG of Basic or of Advanced mode. The chip is selected by a latch
+	// address cycle with 0xFF (chip 0) or 0xFE (chip 1). Both chips share the
+	// clock and the RESET# signal. On a single chip board the calls for chip 1
+	// are ignored.
 	template<class PSGMode>
 	class TurboSound
 	{
@@ -22,13 +22,13 @@ namespace PSG
 		void PowerOn()
 		{
 			// the bus pins must be set before the first selection,
-			// the selection of the adapter is unknown after power on
+			// the selected chip is unknown after power on
 			Driver::PowerOn();
 			m_on_bus = 0xFF;
 			select_on_bus(0);
 			m_psg[0].PowerOn();
 
-			// with the adapter each chip keeps its own value, a single
+			// with TurboSound each chip keeps its own value, a single
 			// chip keeps the last value written, no chip gives 0xFF
 			rdata_t data0, data1;
 			select_on_bus(0); Driver::Address(0x00); Driver::Write(0x55);
@@ -42,7 +42,7 @@ namespace PSG
 			select_on_bus(1); Driver::Address(0x00); Driver::Write(0x00);
 			select_on_bus(0); Driver::Address(0x00); Driver::Write(0x00);
 
-			// chip 1 only on the adapter
+			// chip 1 only with TurboSound
 			if (m_board == Board::TurboSound)
 			{
 				select_on_bus(1);
@@ -100,7 +100,7 @@ namespace PSG
 
 		void SetRegister(raddr_t addr, rdata_t data)
 		{
-			if (is_found(m_current))
+			if (is_present(m_current))
 			{
 				select_on_bus(m_current);
 				m_psg[m_current].SetRegister(addr, data);
@@ -109,7 +109,7 @@ namespace PSG
 
 		void GetRegister(raddr_t addr, rdata_t &data)
 		{
-			if (is_found(m_current))
+			if (is_present(m_current))
 			{
 				select_on_bus(m_current);
 				m_psg[m_current].GetRegister(addr, data);
@@ -122,7 +122,7 @@ namespace PSG
 		{
 			for (uint8_t chip = 0; chip < 2; ++chip)
 			{
-				if (is_found(chip))
+				if (is_present(chip))
 				{
 					select_on_bus(chip);
 					m_psg[chip].Commit();
@@ -131,10 +131,11 @@ namespace PSG
 		}
 
 	private:
-		bool is_found(uint8_t chip) const
+		bool is_present(uint8_t chip) const
 		{
-			// a chip is NotFound until its PowerOn finds it
-			return (m_psg[chip].GetChipId() != ChipId::NotFound);
+			// chip 1 only with TurboSound, a chip that
+			// is not found also gets the data
+			return (chip == 0 || m_board == Board::TurboSound);
 		}
 
 		// latch 0xFF or 0xFE only when the selection changes
@@ -151,6 +152,6 @@ namespace PSG
 		PSGMode m_psg[2];
 		Board   m_board{ Board::SingleChip };
 		uint8_t m_current{ 0 };    // chip selected by Select
-		uint8_t m_on_bus{ 0xFF };  // chip selected on the adapter, 0xFF unknown
+		uint8_t m_on_bus{ 0xFF };  // chip selected on the bus, 0xFF unknown
 	};
 }

@@ -76,8 +76,8 @@ namespace PSG
 		void process_channels_remapping();
 		void process_compatible_mode_fix();
 
-		void check_output_changes();
-		void write_output_to_chip(bool mode_switch);
+		void check_output_changes(const state_t& chip);
+		void write_output_to_chip(const state_t& chip);
 
 	private:
 		Clock m_clock;

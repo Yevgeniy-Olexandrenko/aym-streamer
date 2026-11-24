@@ -58,10 +58,19 @@ namespace PSG
 		return (UINT32_C(1) << reg);
 	}
 
+	// masks of all registers and of envelope shape registers
+	constexpr uint32_t all_regs_mask =
+		(to_mask(BankA_Lst + 1) - to_mask(BankA_Fst)) |
+		(to_mask(BankB_Lst + 1) - to_mask(BankB_Fst));
+	constexpr uint32_t e_shape_mask =
+		to_mask(EA_Shape) | to_mask(EB_Shape) | to_mask(EC_Shape);
+
 	void Advanced::Reset()
 	{
+		// after reset all registers of the chip are zero
 		Basic::Reset();
 		memset(&m_input, 0, sizeof(state_t));
+		memset(&m_output, 0, sizeof(state_t));
 	}
 
 	void Advanced::SetClock(Clock clock)
@@ -128,8 +137,10 @@ namespace PSG
 	{
 		if (m_input.status.changed)
 		{
-			// the output state still has the previous mode
-			bool mode_switch = (bool(m_input.status.exp_mode) != bool(m_output.status.exp_mode));
+			// the output state of the previous commit
+			// is the state of registers on the chip
+			state_t chip;
+			memcpy(&chip, &m_output, sizeof(state_t));
 
 			// copy input state to output and reset changes
 			memcpy(&m_output, &m_input, sizeof(state_t));
@@ -140,8 +151,8 @@ namespace PSG
 			process_channels_remapping();
 			process_compatible_mode_fix();
 			
-			check_output_changes();
-			write_output_to_chip(mode_switch);
+			check_output_changes(chip);
+			write_output_to_chip(chip);
 		}
 	}
 
@@ -259,7 +270,6 @@ namespace PSG
 				convert_period(m_output.channels[i].t_period.full, t_bound);
 				convert_period(m_output.channels[i].e_period.full, 0xFFFF);
 			}
-			m_output.status.changed |= 0b01100001111111; // hack
 
 			// convert noise period
 			rpair_t period = m_output.commons.n_period;
@@ -383,25 +393,40 @@ namespace PSG
 	#endif    
 	}
 
-	void Advanced::check_output_changes()
+	void Advanced::check_output_changes(const state_t& chip)
 	{
-		// apply changes in registers made by processing
-		rdata_t i_data, o_data;
+		// a write to the envelope shape register restarts
+		// the envelope, so keep the shape writes of the host
+		m_output.status.changed &= e_shape_mask;
+
+		// the mode switch clears all registers of the chip
+		if (bool(m_output.status.exp_mode) != bool(chip.status.exp_mode))
+		{
+			m_output.status.changed = all_regs_mask;
+			return;
+		}
+
+		// write the registers that differ from the chip
+		rdata_t o_data, c_data;
 		for (raddr_t addr = BankA_Fst; addr <= BankB_Lst; ++addr)
 		{
-			get_register(m_input,  Reg(addr), i_data);
-			get_register(m_output, Reg(addr), o_data);
+			// skip the gap between bank A and bank B
+			if (addr == BankA_Lst + 1) addr = BankB_Fst;
 
-			if (i_data != o_data)
+			get_register(m_output, Reg(addr), o_data);
+			get_register(chip, Reg(addr), c_data);
+
+			if (o_data != c_data)
 				m_output.status.changed |= to_mask(addr);
 		}
 	}
 
-	void Advanced::write_output_to_chip(bool mode_switch)
+	void Advanced::write_output_to_chip(const state_t& chip)
 	{
 		// write changes in output state to the PSG
 		// in the same order as ChipEncoder in psg-tools
 		const bool has_exp_mode = (GetChipId() == ChipId::AY8930);
+		const bool mode_switch = (bool(m_output.status.exp_mode) != bool(chip.status.exp_mode));
 		const bool exp_mode = (has_exp_mode && m_output.status.exp_mode);
 
 		rdata_t data, mode_bank;

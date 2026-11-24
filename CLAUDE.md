@@ -83,8 +83,14 @@ Layered, each layer only uses the one below:
   selected on the bus by a latch address cycle `0xFF`/`0xFE` (only when it changes). Clock and
   reset are common for both chips. On a single chip board the calls for chip 1 are ignored; a chip
   that is not found still gets the data. `Commit` and `SetStereo` exist only for `Advanced`.
-- `uart/`: `uart_driver` (USART0, interrupt RX into a ring buffer) and `uart_protocol` (parse the
-  host stream). Both files are still empty: this is the next piece of work.
+- `uart/uart_driver` (`UART::Driver`): USART0 receiver only, 57600 8N1 (U2X, 57143 baud). The RX
+  ISR puts bytes into a 128-byte ring buffer (one-byte indexes, no `cli`); lost bytes (frame
+  error, overrun, full buffer) increment an error counter.
+- `uart/uart_protocol` (`UART::Protocol`): parses the psg-tools stream in the main loop. `0xFF`
+  commits the previous frame (so the chips follow the host frame timer, one frame late) and
+  selects chip 0, `0xFE` selects chip 1, then `addr, data` pairs go to `SetRegister`. A bad
+  address or a driver error skips to the next `0xFF`. Timer1 runs free at F_CPU/1024 (no ISR):
+  when no frame comes for 100 ms the chips are reset (muted). No banner and no TX yet.
 
 Keep the code free of Arduino runtime classes (`Serial`, `delay`, ...) where the old code avoided
 them; use registers directly. Store constant tables in `PROGMEM`.

@@ -14,21 +14,18 @@ namespace PSG
 
 		// timing delays (nano seconds), the strictest values of
 		// AY-3-8910/8912 (GI, Microchip), YM2149, YM3439 and AY8930
-		enum
-		{
-			tAS = 400,  // Address Setup Time (GI)
-			tAH = 100,  // Address Hold Time (GI)
-			tDW = 500,  // Write Data Pulse Width (GI, Microchip)
-			tDH = 100,  // Write Data Hold Time (GI)
-			tDA = 500,  // Read Data Access Time, max (GI)
-			tTS = 200,  // Tristate Delay Time, max (GI)
-			tRW = 3000, // Reset Pulse Width (AY8930: 2 clock periods, 2 us at 1 MHz)
-			tRB = 100,  // Reset to Bus Control Delay Time (GI, YM2149)
+		static constexpr uint16_t tAS = 400;  // Address Setup Time (GI)
+		static constexpr uint16_t tAH = 100;  // Address Hold Time (GI)
+		static constexpr uint16_t tDW = 500;  // Write Data Pulse Width (GI, Microchip)
+		static constexpr uint16_t tDH = 100;  // Write Data Hold Time (GI)
+		static constexpr uint16_t tDA = 500;  // Read Data Access Time, max (GI)
+		static constexpr uint16_t tTS = 200;  // Tristate Delay Time, max (GI)
+		static constexpr uint16_t tRW = 3000; // Reset Pulse Width (AY8930: 2 clock periods, 2 us at 1 MHz)
+		static constexpr uint16_t tRB = 100;  // Reset to Bus Control Delay Time (GI, YM2149)
 
-			// AVR input synchronizer delays the pin value
-			// in PINx register up to 1.5 CPU clock cycles
-			tSY = int(2 * 1000000000UL / F_CPU)
-		};
+		// AVR input synchronizer delays the pin value
+		// in PINx register up to 1.5 CPU clock cycles
+		static constexpr uint16_t tSY = uint16_t(2 * 1000000000UL / F_CPU);
 
 		inline void set_data_bus(uint8_t data)
 		{

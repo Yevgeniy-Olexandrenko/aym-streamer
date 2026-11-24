@@ -51,11 +51,13 @@ namespace PSG
 			m_current = 0;
 		}
 
-		// RESET# is common for both chips
+		// RESET# is common for both chips, the selected chip
+		// is unknown after reset: latch it again on next use
 		void Reset()
 		{
 			m_psg[0].Reset();
 			m_psg[1].Reset();
+			m_on_bus = 0xFF;
 		}
 
 		// the clock is common for both chips

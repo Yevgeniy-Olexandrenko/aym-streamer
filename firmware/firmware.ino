@@ -11,7 +11,6 @@ void setup()
 
 	// TODO
 
-	m_psg[chip].Mute();
 	m_psg[chip].Commit();
 	
 	// TODO

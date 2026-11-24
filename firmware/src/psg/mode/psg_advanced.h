@@ -56,16 +56,21 @@ namespace PSG
 		};
 
 	public:
-		void Reset() override;
+		// these methods hide the methods of Basic,
+		// there are no virtual calls between them
+		void PowerOn();
+		void Reset();
 
-		void SetClock(Clock clock) override;
-		Clock GetClock() const override;
+		// get returns the clock requested by the host,
+		// commit converts periods to the real chip clock
+		void SetClock(Clock clock);
+		Clock GetClock() const;
 
 		void SetStereo(Stereo stereo);
 		Stereo GetStereo() const;
 
-		void SetRegister(raddr_t addr, rdata_t data) override;
-		void GetRegister(raddr_t addr, rdata_t &data) const override;
+		void SetRegister(raddr_t addr, rdata_t data);
+		void GetRegister(raddr_t addr, rdata_t &data) const;
 		void Commit();
 
 	private:

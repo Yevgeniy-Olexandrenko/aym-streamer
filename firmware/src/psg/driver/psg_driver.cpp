@@ -108,9 +108,11 @@ namespace PSG
 
 		void Address(uint8_t addr)
 		{
-			// 'Latch Address' sequence
-			set_ctrl_bus_addr();
+			// 'Latch Address' sequence, the address goes on the bus
+			// before BDIR/BC1: else the bus pull-ups give 0xFF for a
+			// short time, and TurboSound logic selects a wrong chip
 			set_data_bus(addr);
+			set_ctrl_bus_addr();
 			wait_for_delay(tAS);
 			set_ctrl_bus_inact();
 			wait_for_delay(tAH);

@@ -65,6 +65,15 @@ namespace PSG
 	constexpr uint32_t e_shape_mask =
 		to_mask(EA_Shape) | to_mask(EB_Shape) | to_mask(EC_Shape);
 
+	void Advanced::PowerOn()
+	{
+		// the chip is reset with the default clock
+		Basic::PowerOn();
+		m_clock = Clock::F_DEF;
+		memset(&m_input, 0, sizeof(state_t));
+		memset(&m_output, 0, sizeof(state_t));
+	}
+
 	void Advanced::Reset()
 	{
 		// after reset all registers of the chip are zero

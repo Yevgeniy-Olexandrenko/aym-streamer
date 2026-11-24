@@ -37,23 +37,24 @@ namespace PSG
 
 	void Basic::SetRegister(raddr_t addr, rdata_t data)
 	{
-		// this behavior can be overridden
-		Driver::Address(addr);
-		Driver::Write(data);
+		// the chip ignores addresses above 0x0F
+		if (addr < 0x10)
+		{
+			Driver::Address(addr);
+			Driver::Write(data);
+		}
 	}
 
 	void Basic::GetRegister(raddr_t addr, rdata_t &data) const
 	{
-		// this behavior can be overridden
-		Driver::Address(addr);
-		Driver::Read(data);
-	}
-
-	void Basic::Mute()
-	{
-		SetRegister(0x08, 0x00);
-		SetRegister(0x09, 0x00);
-		SetRegister(0x0A, 0x00);
+		// the chip ignores addresses above 0x0F,
+		// the bus pull-ups give 0xFF instead
+		if (addr < 0x10)
+		{
+			Driver::Address(addr);
+			Driver::Read(data);
+		}
+		else data = 0xFF;
 	}
 
 	void Basic::compute_chipid()

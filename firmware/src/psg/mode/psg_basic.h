@@ -32,19 +32,21 @@ namespace PSG
 	class Basic
 	{
 	public:
-		// power on and reset operations with PSG
-		virtual void PowerOn();
-		virtual void Reset();
-		
-		// set/get operations with PSG configuration
-		virtual void SetClock(Clock clock);
-		virtual Clock GetClock() const;
+		// power on and reset operations with PSG,
+		// reset also clears all registers (mute)
+		void PowerOn();
+		void Reset();
+
+		// set/get operations with PSG configuration,
+		// get returns the real clock set by the divider
+		void SetClock(Clock clock);
+		Clock GetClock() const;
 		ChipId GetChipId() const;
 
 		// set/get operations with PSG registers
-		virtual void SetRegister(raddr_t addr, rdata_t data);
-		virtual void GetRegister(raddr_t addr, rdata_t &data) const;
-		void Mute();
+		// directly on the chip (address 0x00-0x0F)
+		void SetRegister(raddr_t addr, rdata_t data);
+		void GetRegister(raddr_t addr, rdata_t &data) const;
 
 	private:
 		// tests to detect the type of PSG

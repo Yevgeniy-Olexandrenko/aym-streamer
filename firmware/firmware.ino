@@ -1,18 +1,17 @@
-#include "src/psg/mode/psg_advanced.h"
+#include "src/psg/mode/psg_turbosound.h"
 
-PSG::Advanced m_psg[2];
-int chip = 0;
+PSG::TurboSound<PSG::Advanced> m_psg;
 
 void setup()
 {
-	m_psg[chip].PowerOn();
-	m_psg[chip].SetClock(PSG::Clock::F_1750000);
-	m_psg[chip].SetStereo(PSG::Stereo::ACB);
+	m_psg.PowerOn();
+	m_psg.SetClock(PSG::Clock::F_1750000);
+	m_psg.SetStereo(PSG::Stereo::ACB);
 
 	// TODO
 
-	m_psg[chip].Commit();
-	
+	m_psg.Commit();
+
 	// TODO
 
 }

@@ -254,27 +254,70 @@ namespace PSG
 
 		if (rclock != vclock)
 		{
-			rpair_t t_bound = (m_output.status.exp_mode ? 0xFFFF : 0x0FFF);
-			rpair_t n_bound = (m_output.status.exp_mode ? 0x00FF : 0x001F);
+			// the same algorithm as ChipClockRateConvert in psg-tools
+			const bool exp_mode = m_output.status.exp_mode;
+			const rpair_t t_bound = (exp_mode ? 0xFFFF : 0x0FFF);
+			const rpair_t n_bound = (exp_mode ? 0x00FF : 0x001F);
+			const rdata_t e_enable = (exp_mode ? 0x20 : 0x10);
 
-			// safe period conversion based on clock ratio
-			const auto convert_period = [&](rpair_t& period, rpair_t bound)
+			// period * rclock / vclock, rounded to nearest. The period is
+			// split into bytes, so all products fit 32 bits up to 2 MHz
+			const auto convert_period = [&](rpair_t period, rpair_t bound)
 			{
-				uint32_t converted = ((period * (rclock >> 5) / (vclock >> 6) + 1) >> 1);
-				period = rpair_t(converted > bound ? bound : converted);
+				uint32_t hi = (uint32_t(period >> 8) * rclock);
+				uint32_t lo = ((hi % vclock) * 256 + uint32_t(period & 0xFF) * rclock + vclock / 2);
+				uint32_t converted = ((hi / vclock) * 256 + lo / vclock);
+				return rpair_t(converted > bound ? bound : converted);
 			};
 
-			// convert tone and envelope periods
-			for (int i = 0; i < 3; ++i)
+			// one period is a power of two multiple of another
+			const auto is_synced = [](rpair_t tone, rpair_t envelope)
 			{
-				convert_period(m_output.channels[i].t_period.full, t_bound);
-				convert_period(m_output.channels[i].e_period.full, 0xFFFF);
+				if (!tone || !envelope) return false;
+				uint32_t lo = (tone < envelope ? tone : envelope);
+				rpair_t  hi = (tone < envelope ? envelope : tone);
+				while (lo < hi) lo <<= 1;
+				return (lo == hi);
+			};
+
+			// convert envelope periods: each channel has its own
+			// envelope in exp mode, channel A envelope is common
+			// for all channels in comp mode
+			rpair_t e_src[3];
+			for (uint8_t i = 0; i < (exp_mode ? 3 : 1); ++i)
+			{
+				channel_t& channel = m_output.channels[i];
+				e_src[i] = channel.e_period.full;
+				channel.e_period.full = convert_period(e_src[i], 0xFFFF);
+			}
+
+			// convert tone periods
+			for (uint8_t i = 0; i < 3; ++i)
+			{
+				channel_t& channel = m_output.channels[i];
+				const channel_t& envelope = m_output.channels[exp_mode ? i : 0];
+				const rpair_t t_period = channel.t_period.full;
+				const rpair_t e_period = e_src[exp_mode ? i : 0];
+
+				// tone and periodic envelope are often tuned to a power of
+				// two ratio (buzzer, sync bass), separate rounding of each
+				// period makes them beat, so derive tone from envelope
+				if (is_synced(t_period, e_period) &&
+					!isb_set(m_output.commons.mixer, i) &&
+					(channel.t_volume & e_enable) &&
+					(envelope.e_shape & 0x09) == 0x08)
+				{
+					uint32_t converted = ((uint32_t(t_period) * envelope.e_period.full + e_period / 2) / e_period);
+					channel.t_period.full = rpair_t(converted > t_bound ? t_bound : converted);
+				}
+				else
+				{
+					channel.t_period.full = convert_period(t_period, t_bound);
+				}
 			}
 
 			// convert noise period
-			rpair_t period = m_output.commons.n_period;
-			convert_period(period, n_bound);
-			m_output.commons.n_period = rdata_t(period);
+			m_output.commons.n_period = rdata_t(convert_period(m_output.commons.n_period, n_bound));
 		}
 	#endif
 	}

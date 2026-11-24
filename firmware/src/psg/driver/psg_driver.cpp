@@ -9,6 +9,8 @@ namespace PSG
 {
 	namespace Driver
 	{
+		static uint32_t s_clock;
+
 		enum // timing delays (nano seconds)
 		{
 			tAS = 400, // Address Setup Time
@@ -69,9 +71,10 @@ namespace PSG
 		{
 			// choosing a divider for the closest clock frequency
 			uint8_t  clockDiv = uint8_t(F_CPU / clock);
-			uint32_t minClock = (F_CPU / (clockDiv + 1));
-			uint32_t maxClock = (F_CPU / (clockDiv + 0));
+			uint32_t minClock = (uint32_t(F_CPU) / (clockDiv + 1));
+			uint32_t maxClock = (uint32_t(F_CPU) / (clockDiv + 0));
 			if (clock - minClock < maxClock - clock) clockDiv++;
+			s_clock = (uint32_t(F_CPU) / clockDiv);
 
 			// configure Timer2 as a clock source for PSG
 			TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
@@ -83,8 +86,7 @@ namespace PSG
 		void GetClock(uint32_t &clock)
 		{
 			// real PSG clock based on Timer2 divider
-			uint8_t clockDiv = (OCR2A + 1);
-			clock = (F_CPU / clockDiv);
+			clock = s_clock;
 		}
 
 		void Reset()

@@ -83,14 +83,29 @@ Layered, each layer only uses the one below:
   selected on the bus by a latch address cycle `0xFF`/`0xFE` (only when it changes). Clock and
   reset are common for both chips. On a single chip board the calls for chip 1 are ignored; a chip
   that is not found still gets the data. `Commit` and `SetStereo` exist only for `Advanced`.
-- `uart/uart_driver` (`UART::Driver`): USART0 receiver only, 57600 8N1 (U2X, 57143 baud). The RX
-  ISR puts bytes into a 128-byte ring buffer (one-byte indexes, no `cli`); lost bytes (frame
-  error, overrun, full buffer) increment an error counter.
-- `uart/uart_protocol` (`UART::Protocol`): parses the psg-tools stream in the main loop. `0xFF`
-  commits the previous frame (so the chips follow the host frame timer, one frame late) and
-  selects chip 0, `0xFE` selects chip 1, then `addr, data` pairs go to `SetRegister`. A bad
-  address or a driver error skips to the next `0xFF`. Timer1 runs free at F_CPU/1024 (no ISR):
-  when no frame comes for 100 ms the chips are reset (muted). No banner and no TX yet.
+- `uart/uart_driver` (`UART::Driver`): USART0 at 57600 8N1 (U2X, 57143 baud). The RX ISR puts
+  bytes into a 128-byte ring buffer (one-byte indexes, no `cli`); lost bytes (frame error,
+  overrun, full buffer) increment an error counter. `Write` sends a byte and waits for the
+  transmitter (short replies only, no TX buffer).
+- `uart/uart_protocol`: `UART::Parser` turns the received bytes into events in the main loop.
+  `0xFF` is a frame (the previous frame is committed, so the chips follow the host frame timer,
+  one frame late) and selects chip 0, `0xFE` selects chip 1, then `addr, data` pairs go to
+  `SetRegister`. A bad address or a driver error skips to the next `0xFF`. A printable char where
+  an address is expected starts a text command, `\r`/`\n` ends it (16 chars max, `0xFF` aborts
+  it). The protocol knows only the config (see below); other texts go to the text handler that
+  the streamer passes to `Start`. Timer1 runs free at F_CPU/1024 (no ISR): when no frame comes
+  for 100 ms the chips are reset (muted). `UART::Protocol<PSGMode>` sends the events to
+  `TurboSound<Basic>` or `TurboSound<Advanced>`; the mode differences are overloads (`Commit`,
+  `Configure`). It also gives the streamer `Configure` (no reply), `GetConfig` (the config in
+  use), `SendInfo`, `GetChips`, and text output helpers (`WriteText`, `WriteHex`, `WriteConfig`,
+  `WriteLineEnd`, `ChipName`).
+- `firmware.ino` is the streamer: it picks the type with `using PSGMode = PSG::Advanced;` (or
+  `PSG::Basic`), two firmwares to study the hardware and the host processing. Its text handler
+  has the terminal commands, not a part of the protocol: `info` (the config reply without a
+  change), `chip` (a line `E6D5F1AE - AY8910`, the `ChipId` hash and the type, for each chip),
+  `save` (the config in use to EEPROM, for Basic the real clock and ABC, with a magic byte and a
+  checksum; replies the saved config, e.g. `ABC1750000`). At the start a valid saved config is
+  applied, for hosts that do not send one; a host config overrides it until the next start.
 
 Keep the code free of Arduino runtime classes (`Serial`, `delay`, ...) where the old code avoided
 them; use registers directly. Store constant tables in `PROGMEM`.
@@ -103,8 +118,21 @@ psg-tools lives next to this repo at `D:\projects\github\psg-tools` (C++17, Wind
 The host side of the serial protocol is
 `psg-tools/psg-tools/psg_audio/sources/player/streamer/Streamer.cpp`. The firmware must match it,
 and a protocol change must be made on both sides:
-- On open, if the port's RTS control is enabled, the host reads a text banner at **9600** baud
-  (`ReciveText`), then switches to **57600 8N1**, DTR and RTS disabled.
+- The host opens the port at **57600 8N1**, DTR and RTS disabled. With RTS enabled by the driver,
+  opening the port resets the MCU: the firmware is ready after the bootloader and `PowerOn`.
+- The config: before each track (`DeviceInit`) the host sends `ABC1773400\n`, the stereo and the
+  clock of the destination chip. The streamer replies with 4 lines (`\r\n`): its type
+  (`Advanced`/`Basic`), the stereo and the clock it uses (`ACB1773400`), the type of chip 0 and of
+  chip 1 (`NotFound`, `Compatible`, `AY8910`, `AY8930`, `YM2149`, `Unknown`). Advanced takes both
+  and processes the stream; Basic only sets the nearest clock divider and replies its real clock
+  and `ABC`. After open the host sends the config again every 250 ms for up to 3 s (the MCU may
+  still start); a streamer that does not reply is not asked again. Its last info, if it sent one
+  (also unasked, e.g. once after the start), is kept; without any, the host uses 1.7734 MHz, ABC
+  and one chip (AYPlayer, AVR-AY and other simple streamers).
+- The host sets its destination chip from the reply: the clock (its own `ChipClockRateConvert`
+  then converts to it), the models (the second chip only for two-chip tracks, not when it is
+  `NotFound`). When the reply stereo is the one sent, the host does not reorder the channels
+  (`Output::DeviceRemapsChannels`), else it does it itself.
 - Each frame (paced by the host at the song's frame rate, usually 50 Hz) is sent as one packet:
   for each chip a marker `0xFF` (chip 0) or `0xFE` (chip 1, TurboSound), followed by `addr, data`
   pairs of the changed registers only.
@@ -112,6 +140,5 @@ and a protocol change must be made on both sides:
   psg-tools' `ChipEncoder` (R13 first on a mode change, else last, after returning to bank A). Every
   R13 write restarts envelope A on the chip.
 - On close the host writes an empty (silent) frame.
-- The host assumes a 1.7734 MHz chip and stereo ABC unless the user chooses otherwise; it does all
-  clock conversion and stereo remapping itself, so the firmware does not need to repeat it for
-  psg-tools streams.
+- AYPlayer (`software/AYPlayer_v137`) sends only the frames (`0xFF` and pairs of registers 0-13),
+  no text: the firmware must keep working without the config.

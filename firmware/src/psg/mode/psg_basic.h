@@ -6,11 +6,11 @@ namespace PSG
 {
 	enum class ChipId : uint32_t
 	{
-		NotFound   = 0x67E019C7, // chip not found
-		Compatible = 0xF56B7047, // Variants: WF19054, JFC95101, KC89C72 etc
-		AY8910     = 0x2CFF954F, // GI AY-3-8910A, Microchip AY38910A/P
-		AY8930     = 0x4EFE6E06, // Microchip AY8930
-		YM2149F    = 0x1D750557, // Yamaha YM2149F
+		NotFound   = 0x67E019C7, // [x] chip not found
+		Compatible = 0xBD95F7C7, // [x] Variants: WF19054, JFC95101, KC89C72 etc
+		AY8910     = 0xE6D5F1AE, // [x] GI AY-3-8910A, Microchip AY38910A/P
+		AY8930     = 0x4EFE6E06, // [ ] Microchip AY8930
+		YM2149F    = 0x1D750557, // [ ] Yamaha YM2149F
 	};
 
 	enum class Clock : uint32_t

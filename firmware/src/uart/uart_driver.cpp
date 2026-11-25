@@ -30,7 +30,7 @@ namespace UART
 			UBRR0  = UBRR;
 			UCSR0A = (1 << U2X0);                  // double speed mode
 			UCSR0C = (1 << UCSZ01 | 1 << UCSZ00);  // async, 8 data bits, no parity, 1 stop bit
-			UCSR0B = (1 << RXCIE0 | 1 << RXEN0);   // receiver and its interrupt on
+			UCSR0B = (1 << RXCIE0 | 1 << RXEN0 | 1 << TXEN0); // receiver, its interrupt and transmitter on
 		}
 
 		bool Read(uint8_t &data)
@@ -45,6 +45,13 @@ namespace UART
 		uint8_t GetErrors()
 		{
 			return s_errors;
+		}
+
+		void Write(uint8_t data)
+		{
+			// UDRE0 is set when the transmit buffer can take a byte
+			while (!(UCSR0A & (1 << UDRE0)));
+			UDR0 = data;
 		}
 	}
 }

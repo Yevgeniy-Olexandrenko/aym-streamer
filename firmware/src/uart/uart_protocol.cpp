@@ -1,6 +1,7 @@
 #include "uart_protocol.h"
 #include "uart_driver.h"
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 
 namespace UART
 {
@@ -8,7 +9,43 @@ namespace UART
 	// When no frame comes for 100 ms (5 frames at 50 Hz), the chips are reset.
 	static constexpr uint16_t FRAME_TIMEOUT = uint16_t(uint32_t(F_CPU) / 1024 / 10);
 
-	void Protocol::Start()
+	// the channels of each PSG::Stereo value, 3 chars each
+	static const char s_stereo[] PROGMEM = "ABCACBBACBCACABCBA";
+
+	void WriteText(const char* text_P)
+	{
+		while (char c = pgm_read_byte(text_P++)) Driver::Write(c);
+	}
+
+	void WriteLineEnd()
+	{
+		Driver::Write('\r');
+		Driver::Write('\n');
+	}
+
+	void WriteHex(uint32_t value)
+	{
+		for (uint8_t i = 8; i-- > 0;)
+		{
+			uint8_t digit = uint8_t(value >> (4 * i)) & 0x0F;
+			Driver::Write(digit < 10 ? '0' + digit : 'A' - 10 + digit);
+		}
+	}
+
+	const char* ChipName(PSG::ChipId chip)
+	{
+		switch (chip)
+		{
+		case PSG::ChipId::NotFound:   return PSTR("NotFound");
+		case PSG::ChipId::Compatible: return PSTR("Compatible");
+		case PSG::ChipId::AY8910:     return PSTR("AY8910");
+		case PSG::ChipId::AY8930:     return PSTR("AY8930");
+		case PSG::ChipId::YM2149F:    return PSTR("YM2149");
+		}
+		return PSTR("Unknown");
+	}
+
+	void Parser::Start()
 	{
 		// Timer1 in normal mode counts freely, no interrupts: the main loop
 		// reads TCNT1, no ISR uses the 16-bit registers of Timer1
@@ -20,7 +57,7 @@ namespace UART
 		m_errors = Driver::GetErrors();
 	}
 
-	void Protocol::Process(psg_t& psg)
+	Parser::Event Parser::Next()
 	{
 		uint8_t data;
 		while (Driver::Read(data))
@@ -33,43 +70,137 @@ namespace UART
 				m_state = State::Marker;
 			}
 
-			if (m_state == State::Data)
-			{
-				psg.SetRegister(m_addr, data);
-				m_state = State::Address;
-			}
-			else if (data == 0xFF)
-			{
-				// a new frame starts at the time of the host frame
-				// timer: write the previous frame to the chips
-				psg.Commit();
-				psg.Select(0);
-				m_state = State::Address;
-				m_playing = true;
-				m_frame_time = TCNT1;
-			}
-			else if (m_state == State::Address)
-			{
-				if (data == 0xFE)
-				{
-					psg.Select(1);
-				}
-				else if (data < 0x10)
-				{
-					m_addr = data;
-					m_state = State::Data;
-				}
-				else m_state = State::Marker;
-			}
+			Event event = parse_byte(data);
+			if (event != Event::None) return event;
 		}
 
-		// the host stopped: mute the chips, the last frame is
-		// lost but the host sends all registers on a new start
 		if (m_playing && uint16_t(TCNT1 - m_frame_time) >= FRAME_TIMEOUT)
 		{
-			psg.Reset();
 			m_state = State::Marker;
 			m_playing = false;
+			return Event::Timeout;
 		}
+		return Event::None;
+	}
+
+	Parser::Event Parser::parse_byte(uint8_t data)
+	{
+		bool printable = (data >= 0x20 && data < 0x7F);
+
+		if (m_state == State::Data)
+		{
+			m_data = data;
+			m_state = State::Address;
+			return Event::Register;
+		}
+
+		if (data == 0xFF)
+		{
+			m_state = State::Address;
+			m_playing = true;
+			m_frame_time = TCNT1;
+			return Event::Frame;
+		}
+
+		if (m_state == State::Text)
+		{
+			if (data == '\r' || data == '\n')
+			{
+				m_state = State::Marker;
+				return parse_text();
+			}
+			else if (printable)
+			{
+				// a too long text is not a command
+				if (m_length < TEXT_SIZE) m_text[m_length++] = data;
+				else m_length = 0xFF;
+			}
+			else m_state = State::Marker;
+		}
+		else if (printable)
+		{
+			// a printable char is never an address
+			m_text[0] = data;
+			m_length = 1;
+			m_state = State::Text;
+		}
+		else if (m_state == State::Address)
+		{
+			if (data == 0xFE) return Event::Chip1;
+			if (data < 0x10)
+			{
+				m_addr = data;
+				m_state = State::Data;
+			}
+			else m_state = State::Marker;
+		}
+		return Event::None;
+	}
+
+	Parser::Event Parser::parse_text()
+	{
+		// 0xFF: the text was too long
+		if (m_length > TEXT_SIZE) return Event::None;
+		if (parse_config()) return Event::Config;
+
+		m_text[m_length] = '\0';
+		return Event::Text;
+	}
+
+	void Parser::SetConfig(PSG::Stereo stereo, PSG::Clock clock)
+	{
+		m_stereo = stereo;
+		m_clock = clock;
+	}
+
+	bool Parser::parse_config()
+	{
+		// 'ABC1773400': the order of the channels, the clock in Hz
+		if (m_length != 10) return false;
+
+		uint8_t a = m_text[0] - 'A';
+		uint8_t b = m_text[1] - 'A';
+		uint8_t c = m_text[2] - 'A';
+		if (a > 2 || b > 2 || c > 2 || a == b || a == c || b == c) return false;
+
+		uint32_t clock = 0;
+		for (uint8_t i = 3; i < 10; ++i)
+		{
+			uint8_t digit = m_text[i] - '0';
+			if (digit > 9) return false;
+			clock = clock * 10 + digit;
+		}
+
+		// ABC, ACB, BAC, BCA, CAB, CBA: two values for each first channel
+		m_stereo = PSG::Stereo(2 * a + (b > c));
+		m_clock = PSG::Clock(clock);
+		return true;
+	}
+
+	void WriteConfig(PSG::Stereo stereo, PSG::Clock clock)
+	{
+		const char* channels_P = s_stereo + 3 * uint8_t(stereo);
+		for (uint8_t i = 0; i < 3; ++i) Driver::Write(pgm_read_byte(channels_P + i));
+
+		// the clock is 7 digits, from 1000000 to 2000000 Hz
+		char digits[7];
+		uint32_t value = uint32_t(clock);
+		for (uint8_t i = 7; i-- > 0; value /= 10) digits[i] = char('0' + value % 10);
+		for (uint8_t i = 0; i < 7; ++i) Driver::Write(digits[i]);
+	}
+
+	void Parser::SendInfo(bool advanced, PSG::Stereo stereo,
+		PSG::Clock clock, PSG::ChipId chip0, PSG::ChipId chip1)
+	{
+		WriteText(advanced ? PSTR("Advanced") : PSTR("Basic"));
+		WriteLineEnd();
+
+		WriteConfig(stereo, clock);
+		WriteLineEnd();
+
+		WriteText(ChipName(chip0));
+		WriteLineEnd();
+		WriteText(ChipName(chip1));
+		WriteLineEnd();
 	}
 }

@@ -1,9 +1,19 @@
 #pragma once
 
+#include <avr/pgmspace.h>
 #include "../psg/model/psg_turbosound.h"
 
 namespace UART
 {
+	struct psg_config_t { PSG::Stereo stereo; PSG::Clock clock; };
+
+	// text output for the replies of the streamer
+	void WriteText(const char* text_P);
+	void WriteHexU32(uint32_t value);
+	void WriteConfig(const psg_config_t& config);
+	void WriteChipName(PSG::ChipId chipid);
+	void WriteLineEnd();
+
 	// The stream of the host: each frame is one packet, 0xFF (chip 0)
 	// and for TurboSound 0xFE (chip 1), each followed by the 'addr, data'
 	// pairs of the changed registers. Addresses are 0x00-0x0F, so 0xFF
@@ -11,9 +21,8 @@ namespace UART
 	//
 	// A printable char where an address is expected starts a text command,
 	// '\r' or '\n' ends it. The command 'ABC1773400' sets the stereo and
-	// the clock, the reply is 4 lines: the streamer type, the stereo and
-	// the clock it uses, the type of chip 0 and of chip 1. Other commands
-	// go to the text handler of the streamer.
+	// the clock, the protocol replies with SendInfo. Other commands go to
+	// the text handler of the streamer.
 	class Parser
 	{
 	public:
@@ -23,7 +32,7 @@ namespace UART
 			Frame,    // 0xFF: a new frame, chip 0
 			Chip1,    // 0xFE: chip 1
 			Register, // a register: GetAddr, GetData
-			Config,   // the config command: GetStereo, GetClock
+			Config,   // the config command: GetConfig
 			Text,     // other text command: GetText
 			Timeout   // no frame for 100 ms
 		};
@@ -38,14 +47,8 @@ namespace UART
 		uint8_t     GetData()   const { return m_data; }
 		const char* GetText()   const { return m_text; }
 
-		// the last config, also set by the streamer
-		PSG::Stereo GetStereo() const { return m_stereo; }
-		PSG::Clock  GetClock()  const { return m_clock; }
-		void SetConfig(PSG::Stereo stereo, PSG::Clock clock);
-
-		// send the reply to the config command
-		static void SendInfo(bool advanced, PSG::Stereo stereo,
-			PSG::Clock clock, PSG::ChipId chip0, PSG::ChipId chip1);
+		// the stereo and the clock of the config command
+		const psg_config_t& GetConfig() const { return m_config; }
 
 	private:
 		Event parse_byte(uint8_t data);
@@ -71,38 +74,10 @@ namespace UART
 		uint16_t    m_frame_time{ 0 };  // Timer1 count at the last frame
 		uint8_t     m_length{ 0 };      // 0xFF when the text is too long
 		char        m_text[TEXT_SIZE + 1];
-		PSG::Stereo m_stereo{ PSG::Stereo::ABC };
-		PSG::Clock  m_clock{ PSG::Clock::F_DEF };
+		psg_config_t m_config{ PSG::Stereo::ABC, PSG::Clock::F_DEF };
 	};
 
-	// text output for the replies of the streamer
-	void WriteText(const char* text_P);
-	void WriteHex(uint32_t value);
-	void WriteConfig(PSG::Stereo stereo, PSG::Clock clock); // 'ABC1773400'
-	void WriteLineEnd();
-	const char* ChipName(PSG::ChipId chip); // in PROGMEM
-
-	// The parts of the protocol that differ between the models. Basic does
-	// not process the stream: it takes only the clock of the config, and
-	// the reply gives the real clock and stereo ABC.
-	inline bool IsAdvanced(PSG::TurboSound<PSG::Basic>&) { return false; }
-	inline bool IsAdvanced(PSG::TurboSound<PSG::Advanced>&) { return true; }
-
-	inline void Commit(PSG::TurboSound<PSG::Basic>&) {}
-	inline void Commit(PSG::TurboSound<PSG::Advanced>& psg) { psg.Commit(); }
-
-	inline void Configure(PSG::TurboSound<PSG::Basic>& psg, PSG::Stereo, PSG::Clock clock)
-	{
-		psg.SetClock(clock);
-	}
-
-	inline void Configure(PSG::TurboSound<PSG::Advanced>& psg, PSG::Stereo stereo, PSG::Clock clock)
-	{
-		psg.SetClock(clock);
-		psg.SetStereo(stereo);
-	}
-
-	// The host stream to the chips of Basic or of Advanced model.
+	// The host stream to the TurboSound chips of Basic or of Advanced model.
 	template<class PSGModel>
 	class Protocol
 	{
@@ -131,7 +106,7 @@ namespace UART
 				case Event::Frame:
 					// a new frame starts at the time of the host frame
 					// timer: write the previous frame to the chips
-					UART::Commit(psg);
+					commit(psg);
 					psg.Select(0);
 					break;
 
@@ -144,7 +119,7 @@ namespace UART
 					break;
 
 				case Event::Config:
-					UART::Configure(psg, m_parser.GetStereo(), m_parser.GetClock());
+					SetConfig(psg, m_parser.GetConfig());
 					SendInfo(psg);
 					break;
 
@@ -161,43 +136,63 @@ namespace UART
 			}
 		}
 
-		// apply a config as the config command does, without a reply
-		void Configure(psg_t& psg, PSG::Stereo stereo, PSG::Clock clock)
+		// Apply a config as the config command does, without a reply.
+		// The reset puts the chips into a known state before a new stream.
+		static void SetConfig(psg_t& psg, const psg_config_t& config)
 		{
-			m_parser.SetConfig(stereo, clock);
-			UART::Configure(psg, stereo, clock);
+			psg.Reset();
+			psg.SetClock(config.clock);
+			set_stereo(psg, config.stereo);
 		}
 
-		// The config the streamer uses, as the reply gives it: Advanced
+		// The config the chips use, as the reply gives it: Advanced
 		// clamps the clock to 1-2 MHz, Basic plays ABC on the real clock.
-		void GetConfig(psg_t& psg, PSG::Stereo& stereo, PSG::Clock& clock)
+		static psg_config_t GetConfig(psg_t& psg)
 		{
-			stereo = (IsAdvanced(psg) ? m_parser.GetStereo() : PSG::Stereo::ABC);
-			clock = psg.GetClock();
+			return psg_config_t{ get_stereo(psg), psg.GetClock() };
 		}
 
-		// send the reply to the config command
-		void SendInfo(psg_t& psg)
+		// The reply to the config command, 4 lines: the streamer type, the
+		// stereo and the clock it uses, the type of chip 0 and of chip 1.
+		static void SendInfo(psg_t& psg)
 		{
-			PSG::Stereo stereo; PSG::Clock clock;
-			GetConfig(psg, stereo, clock);
+			WriteText(is_advanced() ? PSTR("Advanced") : PSTR("Basic"));
+			WriteLineEnd();
+			WriteConfig(GetConfig(psg));
+			WriteLineEnd();
 
-			PSG::ChipId chip0, chip1;
-			GetChips(psg, chip0, chip1);
-			Parser::SendInfo(IsAdvanced(psg), stereo, clock, chip0, chip1);
+			uint8_t selected = psg.GetSelected();
+			for (uint8_t chip = 0; chip < 2; ++chip)
+			{
+				psg.Select(chip);
+				WriteChipName(psg.GetChipId());
+				WriteLineEnd();
+			}
+			psg.Select(selected);
 		}
 
-		// the types of both chips, the selected chip is kept
-		static void GetChips(psg_t& psg, PSG::ChipId& chip0, PSG::ChipId& chip1)
-		{
-			uint8_t chip = psg.GetSelected();
-			psg.Select(0); chip0 = psg.GetChipId();
-			psg.Select(1); chip1 = psg.GetChipId();
-			psg.Select(chip);
-		}
+	private:
+		// the model differences, specialized below
+		static bool is_advanced();
+		static void set_stereo(psg_t& psg, PSG::Stereo stereo);
+		static PSG::Stereo get_stereo(psg_t& psg);
+		static void commit(psg_t& psg);
 
 	private:
 		Parser m_parser;
 		TextHandler m_handler{ nullptr };
 	};
+
+	// Basic does not process the stream: it writes each register at once,
+	// and the channels go to the outputs as wired, so the stereo is ABC.
+	template<> inline bool Protocol<PSG::Basic>::is_advanced() { return false; }
+	template<> inline void Protocol<PSG::Basic>::set_stereo(psg_t&, PSG::Stereo) {}
+	template<> inline PSG::Stereo Protocol<PSG::Basic>::get_stereo(psg_t&) { return PSG::Stereo::ABC; }
+	template<> inline void Protocol<PSG::Basic>::commit(psg_t&) {}
+
+	// Advanced writes a frame on commit and remaps the channels.
+	template<> inline bool Protocol<PSG::Advanced>::is_advanced() { return true; }
+	template<> inline void Protocol<PSG::Advanced>::set_stereo(psg_t& psg, PSG::Stereo stereo) { psg.SetStereo(stereo); }
+	template<> inline PSG::Stereo Protocol<PSG::Advanced>::get_stereo(psg_t& psg) { return psg.GetStereo(); }
+	template<> inline void Protocol<PSG::Advanced>::commit(psg_t& psg) { psg.Update(); }
 }

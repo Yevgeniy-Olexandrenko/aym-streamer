@@ -32,9 +32,9 @@ namespace PSG
 	class Basic
 	{
 	public:
-		// power on and reset operations with PSG,
+		// init and reset operations with PSG,
 		// reset also clears all registers (mute)
-		void PowerOn();
+		void Init();
 		void Reset();
 
 		// set/get operations with PSG configuration,
@@ -46,7 +46,7 @@ namespace PSG
 		// set/get operations with PSG registers
 		// directly on the chip (address 0x00-0x0F)
 		void SetRegister(raddr_t addr, rdata_t data);
-		void GetRegister(raddr_t addr, rdata_t &data) const;
+		rdata_t GetRegister(raddr_t addr) const;
 
 	private:
 		// tests to detect the type of PSG

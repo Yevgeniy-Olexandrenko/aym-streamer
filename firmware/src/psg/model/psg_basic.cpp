@@ -2,7 +2,7 @@
 
 namespace PSG
 {
-	void Basic::PowerOn()
+	void Basic::Init()
 	{
 		Driver::PowerOn();
 		SetClock(Clock::F_DEF);
@@ -45,16 +45,17 @@ namespace PSG
 		}
 	}
 
-	void Basic::GetRegister(raddr_t addr, rdata_t &data) const
+	rdata_t Basic::GetRegister(raddr_t addr) const
 	{
 		// the chip ignores addresses above 0x0F,
 		// the bus pull-ups give 0xFF instead
+		rdata_t data = 0xFF;
 		if (addr < 0x10)
 		{
 			Driver::Address(addr);
 			Driver::Read(data);
 		}
-		else data = 0xFF;
+		return data;
 	}
 
 	void Basic::compute_chipid()

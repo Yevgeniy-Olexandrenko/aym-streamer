@@ -76,10 +76,10 @@ namespace PSG
 	constexpr uint32_t e_shape_mask =
 		to_mask(EA_Shape) | to_mask(EB_Shape) | to_mask(EC_Shape);
 
-	void Advanced::PowerOn()
+	void Advanced::Init()
 	{
 		// the chip is reset with the default clock
-		Basic::PowerOn();
+		Basic::Init();
 		m_clock = Clock::F_DEF;
 		memset(&m_input, 0, sizeof(state_t));
 		memset(&m_output, 0, sizeof(state_t));
@@ -99,9 +99,11 @@ namespace PSG
 		if (clock < Clock::F_MIN) clock = Clock::F_MIN;
 		if (clock > Clock::F_MAX) clock = Clock::F_MAX;
 
-		// set real/virtual clock frequency
+		// set real/virtual clock frequency and
+		// convert the periods on the chip to it
 		Basic::SetClock(clock);
 		m_clock = clock;
+		update_output();
 	}
 
 	Clock Advanced::GetClock() const
@@ -112,13 +114,16 @@ namespace PSG
 
 	void Advanced::SetStereo(Stereo stereo)
 	{
-		// the next commit applies the stereo on the chip
-		m_sstereo = stereo;
+	#ifndef DISABLE_CHANNELS_REMAPPING
+		// remap the channels on the chip at once
+		m_stereo = stereo;
+		update_output();
+	#endif
 	}
 
 	Stereo Advanced::GetStereo() const
 	{
-		return m_dstereo;
+		return m_stereo;
 	}
 
 	void Advanced::SetRegister(raddr_t addr, rdata_t data)
@@ -137,10 +142,11 @@ namespace PSG
 		}
 	}
 
-	void Advanced::GetRegister(raddr_t addr, rdata_t &data) const
+	rdata_t Advanced::GetRegister(raddr_t addr) const
 	{
 		// get register data indirectly via bank switching
 		// register address must be in range 0x00-0x0F
+		rdata_t data = 0xFF;
 		if (addr < 0x10)
 		{
 			// redirect access to registers of bank B if
@@ -151,30 +157,31 @@ namespace PSG
 			}
 			get_register(m_input, Reg(addr), data);
 		}
-		else data = 0xFF;
+		return data;
 	}
 
-	void Advanced::Commit()
+	void Advanced::Update()
 	{
-		if (m_input.status.changed)
-		{
-			// the output state of the previous commit
-			// is the state of registers on the chip
-			state_t chip;
-			memcpy(&chip, &m_output, sizeof(state_t));
+		if (m_input.status.changed) update_output();
+	}
 
-			// copy input state to output and reset changes
-			memcpy(&m_output, &m_input, sizeof(state_t));
-			m_input.status.changed = 0;
+	void Advanced::update_output()
+	{
+		// the output state of the previous update
+		// is the state of registers on the chip
+		state_t chip;
+		memcpy(&chip, &m_output, sizeof(state_t));
 
-			// process output state and write to PSG
-			process_clock_conversion();
-			process_channels_remapping();
-			process_compatible_mode_fix();
-			
-			check_output_changes(chip);
-			write_output_to_chip(chip);
-		}
+		// copy input state to output and reset changes
+		memcpy(&m_output, &m_input, sizeof(state_t));
+		m_input.status.changed = 0;
+
+		// process output state and write to PSG
+		process_clock_conversion();
+		process_channels_remapping();
+		process_compatible_mode_fix();
+		check_output_changes(chip);
+		write_output_to_chip(chip);
 	}
 
 	void Advanced::set_register(state_t &state, Reg reg, rdata_t data)
@@ -357,11 +364,10 @@ namespace PSG
 	void Advanced::process_channels_remapping()
 	{
 	#ifndef DISABLE_CHANNELS_REMAPPING
-		// only ABC and ACB in exp mode, as in psg-tools
 		const bool exp_mode = m_output.status.exp_mode;
-		m_dstereo = (exp_mode && m_sstereo != Stereo::ACB) ? Stereo::ABC : m_sstereo;
+		const Stereo stereo = GetStereo();
 
-		if (m_dstereo != Stereo::ABC)
+		if (stereo != Stereo::ABC)
 		{
 			const auto swap_channels = [&](uint8_t l, uint8_t r)
 			{
@@ -390,7 +396,7 @@ namespace PSG
 			};
 
 			// swap channels in pairs
-			switch(m_dstereo)
+			switch(stereo)
 			{
 			case Stereo::ABC: break;
 			case Stereo::ACB: swap_channels(1, 2); break; // B <-> C

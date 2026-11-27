@@ -11,7 +11,7 @@ namespace PSG
 	enum Reg : uint8_t;
 
 	enum class Stereo : uint8_t
-	{ 
+	{
 		ABC, ACB, BAC, BCA, CAB, CBA
 	};
 
@@ -58,27 +58,29 @@ namespace PSG
 	public:
 		// these methods hide the methods of Basic,
 		// there are no virtual calls between them
-		void PowerOn();
+		void Init();
 		void Reset();
 
-		// get returns the clock requested by the host,
-		// commit converts periods to the real chip clock
+		// get returns the clock requested by the host, the
+		// periods on the chip are converted to the real clock
 		void SetClock(Clock clock);
 		Clock GetClock() const;
 
-		// get returns the stereo applied on the chip by the
-		// last commit: only ABC and ACB are used in exp mode
+		// The host picks a stereo that suits the stream. In exp mode
+		// it must be ABC or ACB: other layouts move channel A to bank B,
+		// and each bank switch restarts the envelope on chip channel A.
 		void SetStereo(Stereo stereo);
 		Stereo GetStereo() const;
 
 		void SetRegister(raddr_t addr, rdata_t data);
-		void GetRegister(raddr_t addr, rdata_t &data) const;
-		void Commit();
+		rdata_t GetRegister(raddr_t addr) const;
+		void Update();
 
 	private:
 		void set_register(state_t& state, Reg reg, rdata_t data);
 		void get_register(const state_t& state, Reg reg, rdata_t &data) const;
 
+		void update_output();
 		void process_clock_conversion();
 		void process_channels_remapping();
 		void process_compatible_mode_fix();
@@ -88,8 +90,7 @@ namespace PSG
 
 	private:
 		Clock m_clock;
-		Stereo m_sstereo{ Stereo::ABC }; // stereo set by the host
-		Stereo m_dstereo{ Stereo::ABC }; // stereo applied on the chip
+		Stereo m_stereo{ Stereo::ABC };
 		state_t m_input, m_output;
 	};
 }

@@ -71,18 +71,18 @@ Layered, each layer only uses the one below:
 - `psg/model/psg_advanced` (`PSG::Advanced`): hides the methods of `Basic` (no virtual calls).
   `m_input` is the state the host wrote (all 25 registers: bank A `0x00-0x0D`, AY8930 bank B
   `0x10-0x1A`), read back by `GetRegister`. `SetRegister` takes addresses `0x00-0x0F` and follows
-  the bank selected through R13 (expanded mode only on AY8930: `0xA0`/`0xB0`). `Commit()` copies
+  the bank selected through R13 (expanded mode only on AY8930: `0xA0`/`0xB0`). `Update()` copies
   the input to `m_output`, processes it (clock conversion as in psg-tools `ChipClockRateConvert`,
-  stereo channel remapping with only ABC/ACB in expanded mode, the AY8930 pure-envelope fix) and
+  stereo channel remapping of any layout, the AY8930 pure-envelope fix) and
   writes only the registers that differ from the previous `m_output`, which mirrors the chip, plus
   the envelope shapes the host wrote. The write order is that of psg-tools `ChipEncoder`. Features
   can be compiled out with the `DISABLE_*` defines at the top of `psg_advanced.h` (debug only).
 - `psg/model/psg_turbosound` (`PSG::TurboSound<PSGModel>`): two chips of `Basic` or `Advanced` model
-  behind one API, no direct access to them. `PowerOn` detects the board (`SingleChip` or
+  behind one API, no direct access to them. `Init` detects the board (`SingleChip` or
   `TurboSound`) apart from the chip types; `Select(0/1)` sets the current chip; the chip is
   selected on the bus by a latch address cycle `0xFF`/`0xFE` (only when it changes). Clock and
   reset are common for both chips. On a single chip board the calls for chip 1 are ignored; a chip
-  that is not found still gets the data. `Commit` and `SetStereo` exist only for `Advanced`.
+  that is not found still gets the data. `Update` and `SetStereo` exist only for `Advanced`.
 - `uart/uart_driver` (`UART::Driver`): USART0 at 57600 8N1 (U2X, 57143 baud). The RX ISR puts
   bytes into a 128-byte ring buffer (one-byte indexes, no `cli`); lost bytes (frame error,
   overrun, full buffer) increment an error counter. `Write` sends a byte and waits for the
@@ -95,10 +95,12 @@ Layered, each layer only uses the one below:
   it). The protocol knows only the config (see below); other texts go to the text handler that
   the streamer passes to `Start`. Timer1 runs free at F_CPU/1024 (no ISR): when no frame comes
   for 100 ms the chips are reset (muted). `UART::Protocol<PSGModel>` sends the events to
-  `TurboSound<Basic>` or `TurboSound<Advanced>`; the model differences are overloads (`Commit`,
-  `Configure`). It also gives the streamer `Configure` (no reply), `GetConfig` (the config in
-  use), `SendInfo`, `GetChips`, and text output helpers (`WriteText`, `WriteHex`, `WriteConfig`,
-  `WriteLineEnd`, `ChipName`).
+  `TurboSound<Basic>` or `TurboSound<Advanced>`; the model differences are specializations of its
+  private members (`is_advanced`, `commit`, `set_stereo`, `get_stereo`), the models have no stubs
+  for the protocol. It also gives the streamer `SetConfig` (a `psg_config_t`, the stereo and the
+  clock; resets the chips, no reply), `GetConfig` (the config the chips use, from the model),
+  `SendInfo`, and text output helpers (`WriteText`, `WriteHexU32`, `WriteConfig`,
+  `WriteChipName`, `WriteLineEnd`).
 - `firmware.ino` is the streamer: it picks the PSG model with `using PSGModel = PSG::Advanced;` (or
   `PSG::Basic`), two firmwares to study the hardware and the host processing. Its text handler
   has the terminal commands, not a part of the protocol: `info` (the config reply without a
@@ -119,13 +121,15 @@ The host side of the serial protocol is
 `psg-tools/psg-tools/psg_audio/sources/player/streamer/Streamer.cpp`. The firmware must match it,
 and a protocol change must be made on both sides:
 - The host opens the port at **57600 8N1**, DTR and RTS disabled. With RTS enabled by the driver,
-  opening the port resets the MCU: the firmware is ready after the bootloader and `PowerOn`.
+  opening the port resets the MCU: the firmware is ready after the bootloader and `Init`.
 - The config: before each track (`DeviceInit`) the host sends `ABC1773400\n`, the stereo and the
   clock of the destination chip. The streamer replies with 4 lines (`\r\n`): its type
   (`Advanced`/`Basic`), the stereo and the clock it uses (`ACB1773400`), the type of chip 0 and of
-  chip 1 (`NotFound`, `Compatible`, `AY8910`, `AY8930`, `YM2149`, `Unknown`). Advanced takes both
-  and processes the stream; Basic only sets the nearest clock divider and replies its real clock
-  and `ABC`. After open the host sends the config again every 250 ms for up to 3 s (the MCU may
+  chip 1 (`NotFound`, `Compatible`, `AY8910`, `AY8930`, `YM2149`, `Unknown`). The streamer resets
+  the chips first (a known state for the new stream). Advanced takes both and processes the
+  stream; Basic only sets the nearest clock divider and replies its real clock and `ABC`. The host
+  picks the stereo: for a stream with AY8930 expanded mode only ABC or ACB, as psg-tools does
+  (other layouts move channel A envelope writes to bank B, and each R13 write restarts it). After open the host sends the config again every 250 ms for up to 3 s (the MCU may
   still start); a streamer that does not reply is not asked again. Its last info, if it sent one
   (also unasked, e.g. once after the start), is kept; without any, the host uses 1.7734 MHz, ABC
   and one chip (AYPlayer, AVR-AY and other simple streamers).

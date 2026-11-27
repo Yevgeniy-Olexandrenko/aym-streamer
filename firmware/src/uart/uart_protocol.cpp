@@ -17,13 +17,7 @@ namespace UART
 		while (char c = pgm_read_byte(text_P++)) Driver::Write(c);
 	}
 
-	void WriteLineEnd()
-	{
-		Driver::Write('\r');
-		Driver::Write('\n');
-	}
-
-	void WriteHex(uint32_t value)
+	void WriteHexU32(uint32_t value)
 	{
 		for (uint8_t i = 8; i-- > 0;)
 		{
@@ -32,17 +26,36 @@ namespace UART
 		}
 	}
 
-	const char* ChipName(PSG::ChipId chip)
+	void WriteConfig(const psg_config_t& config)
 	{
-		switch (chip)
+		const char* channels_P = s_stereo + 3 * uint8_t(config.stereo);
+		for (uint8_t i = 0; i < 3; ++i) Driver::Write(pgm_read_byte(channels_P + i));
+
+		// the clock is 7 digits, from 1000000 to 2000000 Hz
+		char digits[7];
+		uint32_t value = uint32_t(config.clock);
+		for (uint8_t i = 7; i-- > 0; value /= 10) digits[i] = char('0' + value % 10);
+		for (uint8_t i = 0; i < 7; ++i) Driver::Write(digits[i]);
+	}
+
+	void WriteChipName(PSG::ChipId chipid)
+	{
+		const char* name_P = PSTR("Unknown");
+		switch (chipid)
 		{
-		case PSG::ChipId::NotFound:   return PSTR("NotFound");
-		case PSG::ChipId::Compatible: return PSTR("Compatible");
-		case PSG::ChipId::AY8910:     return PSTR("AY8910");
-		case PSG::ChipId::AY8930:     return PSTR("AY8930");
-		case PSG::ChipId::YM2149F:    return PSTR("YM2149");
+		case PSG::ChipId::NotFound:   name_P = PSTR("NotFound");   break;
+		case PSG::ChipId::Compatible: name_P = PSTR("Compatible"); break;
+		case PSG::ChipId::AY8910:     name_P = PSTR("AY8910");     break;
+		case PSG::ChipId::AY8930:     name_P = PSTR("AY8930");     break;
+		case PSG::ChipId::YM2149F:    name_P = PSTR("YM2149");     break;
 		}
-		return PSTR("Unknown");
+		WriteText(name_P);
+	}
+
+	void WriteLineEnd()
+	{
+		Driver::Write('\r');
+		Driver::Write('\n');
 	}
 
 	void Parser::Start()
@@ -147,12 +160,6 @@ namespace UART
 		return Event::Text;
 	}
 
-	void Parser::SetConfig(PSG::Stereo stereo, PSG::Clock clock)
-	{
-		m_stereo = stereo;
-		m_clock = clock;
-	}
-
 	bool Parser::parse_config()
 	{
 		// 'ABC1773400': the order of the channels, the clock in Hz
@@ -172,35 +179,8 @@ namespace UART
 		}
 
 		// ABC, ACB, BAC, BCA, CAB, CBA: two values for each first channel
-		m_stereo = PSG::Stereo(2 * a + (b > c));
-		m_clock = PSG::Clock(clock);
+		m_config.stereo = PSG::Stereo(2 * a + (b > c));
+		m_config.clock = PSG::Clock(clock);
 		return true;
-	}
-
-	void WriteConfig(PSG::Stereo stereo, PSG::Clock clock)
-	{
-		const char* channels_P = s_stereo + 3 * uint8_t(stereo);
-		for (uint8_t i = 0; i < 3; ++i) Driver::Write(pgm_read_byte(channels_P + i));
-
-		// the clock is 7 digits, from 1000000 to 2000000 Hz
-		char digits[7];
-		uint32_t value = uint32_t(clock);
-		for (uint8_t i = 7; i-- > 0; value /= 10) digits[i] = char('0' + value % 10);
-		for (uint8_t i = 0; i < 7; ++i) Driver::Write(digits[i]);
-	}
-
-	void Parser::SendInfo(bool advanced, PSG::Stereo stereo,
-		PSG::Clock clock, PSG::ChipId chip0, PSG::ChipId chip1)
-	{
-		WriteText(advanced ? PSTR("Advanced") : PSTR("Basic"));
-		WriteLineEnd();
-
-		WriteConfig(stereo, clock);
-		WriteLineEnd();
-
-		WriteText(ChipName(chip0));
-		WriteLineEnd();
-		WriteText(ChipName(chip1));
-		WriteLineEnd();
 	}
 }

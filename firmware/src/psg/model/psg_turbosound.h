@@ -18,15 +18,15 @@ namespace PSG
 	class TurboSound
 	{
 	public:
-		// power on the chips, detect the board and the chips
-		void PowerOn()
+		// init the chips, detect the board and the chips
+		void Init()
 		{
 			// the bus pins must be set before the first selection,
 			// the selected chip is unknown after power on
 			Driver::PowerOn();
 			m_on_bus = 0xFF;
 			select_on_bus(0);
-			m_psg[0].PowerOn();
+			m_psg[0].Init();
 
 			// with TurboSound each chip keeps its own value, a single
 			// chip keeps the last value written, no chip gives 0xFF
@@ -46,7 +46,7 @@ namespace PSG
 			if (m_board == Board::TurboSound)
 			{
 				select_on_bus(1);
-				m_psg[1].PowerOn();
+				m_psg[1].Init();
 			}
 			m_current = 0;
 		}
@@ -60,18 +60,31 @@ namespace PSG
 			m_on_bus = 0xFF;
 		}
 
-		// the clock is common for both chips
+		// the clock is common for both chips, Advanced
+		// writes the converted periods to each chip
 		void SetClock(Clock clock)
 		{
-			m_psg[0].SetClock(clock);
-			m_psg[1].SetClock(clock);
+			for (uint8_t chip = 0; chip < 2; ++chip)
+			{
+				if (is_present(chip))
+				{
+					select_on_bus(chip);
+					m_psg[chip].SetClock(clock);
+				}
+			}
 		}
 
 		// Advanced only, the same stereo for both chips
 		void SetStereo(Stereo stereo)
 		{
-			m_psg[0].SetStereo(stereo);
-			m_psg[1].SetStereo(stereo);
+			for (uint8_t chip = 0; chip < 2; ++chip)
+			{
+				if (is_present(chip))
+				{
+					select_on_bus(chip);
+					m_psg[chip].SetStereo(stereo);
+				}
+			}
 		}
 
 		Board GetBoard() const
@@ -100,6 +113,12 @@ namespace PSG
 			return m_psg[m_current].GetChipId();
 		}
 
+		// Advanced only, the stereo of the current chip
+		Stereo GetStereo() const
+		{
+			return m_psg[m_current].GetStereo();
+		}
+
 		void SetRegister(raddr_t addr, rdata_t data)
 		{
 			if (is_present(m_current))
@@ -109,25 +128,25 @@ namespace PSG
 			}
 		}
 
-		void GetRegister(raddr_t addr, rdata_t &data)
+		rdata_t GetRegister(raddr_t addr)
 		{
 			if (is_present(m_current))
 			{
 				select_on_bus(m_current);
-				m_psg[m_current].GetRegister(addr, data);
+				return m_psg[m_current].GetRegister(addr);
 			}
-			else data = 0xFF;
+			return 0xFF;
 		}
 
 		// Advanced only, write the changes of both chips
-		void Commit()
+		void Update()
 		{
 			for (uint8_t chip = 0; chip < 2; ++chip)
 			{
 				if (is_present(chip))
 				{
 					select_on_bus(chip);
-					m_psg[chip].Commit();
+					m_psg[chip].Update();
 				}
 			}
 		}
@@ -152,8 +171,8 @@ namespace PSG
 
 	private:
 		PSGModel m_psg[2];
-		Board   m_board{ Board::SingleChip };
-		uint8_t m_current{ 0 };    // chip selected by Select
-		uint8_t m_on_bus{ 0xFF };  // chip selected on the bus, 0xFF unknown
+		Board    m_board{ Board::SingleChip };
+		uint8_t  m_current{ 0 };    // chip selected by Select
+		uint8_t  m_on_bus{ 0xFF };  // chip selected on the bus, 0xFF unknown
 	};
 }

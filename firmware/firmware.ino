@@ -7,18 +7,11 @@
 using PSGModel = PSG::Advanced;
 
 PSG::TurboSound<PSGModel> m_psg;
-UART::Protocol<PSGModel> m_protocol;
+UART::Protocol<PSGModel>  m_protocol;
 
 // The config saved by the 'save' command, applied at the start. It is
 // for hosts that do not send the config. A host config overrides it.
-struct config_t
-{
-	uint8_t     magic;
-	PSG::Stereo stereo;
-	PSG::Clock  clock;
-	uint8_t     check;
-};
-
+struct config_t { uint8_t magic; UART::psg_config_t psg; uint8_t check; };
 static constexpr uint8_t CONFIG_MAGIC = 0xA5;
 static config_t EEMEM s_config;
 
@@ -35,10 +28,9 @@ static void load_config()
 {
 	config_t config;
 	eeprom_read_block(&config, &s_config, sizeof(config));
-	if (config.magic == CONFIG_MAGIC && config.check == config_check(config) &&
-		config.stereo <= PSG::Stereo::CBA)
+	if (config.magic == CONFIG_MAGIC && config.check == config_check(config))
 	{
-		m_protocol.Configure(m_psg, config.stereo, config.clock);
+		m_protocol.SetConfig(m_psg, config.psg);
 	}
 }
 
@@ -47,27 +39,29 @@ static void save_config()
 	// the config the streamer uses: for Basic the real clock and ABC
 	config_t config;
 	config.magic = CONFIG_MAGIC;
-	m_protocol.GetConfig(m_psg, config.stereo, config.clock);
+	config.psg = m_protocol.GetConfig(m_psg);
 	config.check = config_check(config);
 
 	// the update writes only the changed bytes, 3.3 ms each
 	eeprom_update_block(&config, &s_config, sizeof(config));
-	UART::WriteConfig(config.stereo, config.clock);
+	UART::WriteConfig(config.psg);
 	UART::WriteLineEnd();
 }
 
 static void send_chips()
 {
-	// 'E6D5F1AE - AY8910' for each chip
-	PSG::ChipId chips[2];
-	m_protocol.GetChips(m_psg, chips[0], chips[1]);
-	for (PSG::ChipId chip : chips)
+	// 'E6D5F1AE - AY8910' for each chip, the selected chip is kept
+	uint8_t selected = m_psg.GetSelected();
+	for (uint8_t chip = 0; chip < 2; ++chip)
 	{
-		UART::WriteHex(uint32_t(chip));
+		m_psg.Select(chip);
+		PSG::ChipId id = m_psg.GetChipId();
+		UART::WriteHexU32(uint32_t(id));
 		UART::WriteText(PSTR(" - "));
-		UART::WriteText(UART::ChipName(chip));
+		UART::WriteChipName(id);
 		UART::WriteLineEnd();
 	}
+	m_psg.Select(selected);
 }
 
 // The text commands for a terminal, they are not a part of the protocol:
@@ -92,7 +86,7 @@ static void handle_text(const char* text)
 
 void setup()
 {
-	m_psg.PowerOn();
+	m_psg.Init();
 	load_config();
 	m_protocol.Start(handle_text);
 }

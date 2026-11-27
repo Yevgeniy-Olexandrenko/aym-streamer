@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../psg/mode/psg_turbosound.h"
+#include "../psg/model/psg_turbosound.h"
 
 namespace UART
 {
@@ -82,7 +82,7 @@ namespace UART
 	void WriteLineEnd();
 	const char* ChipName(PSG::ChipId chip); // in PROGMEM
 
-	// The parts of the protocol that differ between the modes. Basic does
+	// The parts of the protocol that differ between the models. Basic does
 	// not process the stream: it takes only the clock of the config, and
 	// the reply gives the real clock and stereo ABC.
 	inline bool IsAdvanced(PSG::TurboSound<PSG::Basic>&) { return false; }
@@ -102,12 +102,12 @@ namespace UART
 		psg.SetStereo(stereo);
 	}
 
-	// The host stream to the chips of Basic or of Advanced mode.
-	template<class PSGMode>
+	// The host stream to the chips of Basic or of Advanced model.
+	template<class PSGModel>
 	class Protocol
 	{
 	public:
-		using psg_t = PSG::TurboSound<PSGMode>;
+		using psg_t = PSG::TurboSound<PSGModel>;
 		using TextHandler = void (*)(const char* text);
 
 		// the handler gets the text commands that are not the config

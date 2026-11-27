@@ -10,11 +10,11 @@ namespace PSG
 		TurboSound  // two PSG, the chip is selected
 	};
 
-	// Two PSG of Basic or of Advanced mode. The chip is selected by a latch
+	// Two PSG of Basic or of Advanced model. The chip is selected by a latch
 	// address cycle with 0xFF (chip 0) or 0xFE (chip 1). Both chips share the
 	// clock and the RESET# signal. On a single chip board the calls for chip 1
 	// are ignored.
-	template<class PSGMode>
+	template<class PSGModel>
 	class TurboSound
 	{
 	public:
@@ -151,7 +151,7 @@ namespace PSG
 		}
 
 	private:
-		PSGMode m_psg[2];
+		PSGModel m_psg[2];
 		Board   m_board{ Board::SingleChip };
 		uint8_t m_current{ 0 };    // chip selected by Select
 		uint8_t m_on_bus{ 0xFF };  // chip selected on the bus, 0xFF unknown

@@ -54,7 +54,7 @@ cd "/c/Program Files (x86)/Arduino" && ./arduino-builder.exe -compile -hardware 
 - The build path must exist (`mkdir -p`); `-build-cache` speeds up rebuilds of the core.
 - It prints flash and RAM usage at the end. RAM is 2 KB: watch the global variables figure.
 - Arduino compiles `firmware.ino` plus everything under `firmware/src/` recursively; includes are
-  relative (`"src/psg/mode/psg_advanced.h"`, `"../driver/psg_driver.h"`).
+  relative (`"src/psg/model/psg_advanced.h"`, `"../driver/psg_driver.h"`).
 - There are no tests and no linter. Checking on hardware is done by the user.
 
 ## Firmware architecture (`firmware/src/`)
@@ -63,12 +63,12 @@ Layered, each layer only uses the one below:
 - `psg/driver/` (`PSG::Driver`): bus timing for latch address / write / read / reset (the
   strictest delays of all supported chip datasheets; the write pulse runs with interrupts off),
   Timer2 clock setup (the real clock of the divider is cached). Direct port access, no Arduino API.
-- `psg/mode/psg_basic` (`PSG::Basic`): power on, reset (clears all registers, used to mute), clock
+- `psg/model/psg_basic` (`PSG::Basic`): power on, reset (clears all registers, used to mute), clock
   (clamped to 1-2 MHz, `GetClock` gives the real clock), direct register writes and reads
   (`0x00-0x0F`), and chip detection: `compute_chipid` runs write/read tests (incl. AY8930 expanded
   mode) and hashes the read-back values into a `ChipId` enum value. Changing the tests or the bus
   timing can change the hashes: then the `ChipId` constants must be measured again on the chips.
-- `psg/mode/psg_advanced` (`PSG::Advanced`): hides the methods of `Basic` (no virtual calls).
+- `psg/model/psg_advanced` (`PSG::Advanced`): hides the methods of `Basic` (no virtual calls).
   `m_input` is the state the host wrote (all 25 registers: bank A `0x00-0x0D`, AY8930 bank B
   `0x10-0x1A`), read back by `GetRegister`. `SetRegister` takes addresses `0x00-0x0F` and follows
   the bank selected through R13 (expanded mode only on AY8930: `0xA0`/`0xB0`). `Commit()` copies
@@ -77,7 +77,7 @@ Layered, each layer only uses the one below:
   writes only the registers that differ from the previous `m_output`, which mirrors the chip, plus
   the envelope shapes the host wrote. The write order is that of psg-tools `ChipEncoder`. Features
   can be compiled out with the `DISABLE_*` defines at the top of `psg_advanced.h` (debug only).
-- `psg/mode/psg_turbosound` (`PSG::TurboSound<PSGMode>`): two chips of `Basic` or `Advanced` mode
+- `psg/model/psg_turbosound` (`PSG::TurboSound<PSGModel>`): two chips of `Basic` or `Advanced` model
   behind one API, no direct access to them. `PowerOn` detects the board (`SingleChip` or
   `TurboSound`) apart from the chip types; `Select(0/1)` sets the current chip; the chip is
   selected on the bus by a latch address cycle `0xFF`/`0xFE` (only when it changes). Clock and
@@ -94,12 +94,12 @@ Layered, each layer only uses the one below:
   an address is expected starts a text command, `\r`/`\n` ends it (16 chars max, `0xFF` aborts
   it). The protocol knows only the config (see below); other texts go to the text handler that
   the streamer passes to `Start`. Timer1 runs free at F_CPU/1024 (no ISR): when no frame comes
-  for 100 ms the chips are reset (muted). `UART::Protocol<PSGMode>` sends the events to
-  `TurboSound<Basic>` or `TurboSound<Advanced>`; the mode differences are overloads (`Commit`,
+  for 100 ms the chips are reset (muted). `UART::Protocol<PSGModel>` sends the events to
+  `TurboSound<Basic>` or `TurboSound<Advanced>`; the model differences are overloads (`Commit`,
   `Configure`). It also gives the streamer `Configure` (no reply), `GetConfig` (the config in
   use), `SendInfo`, `GetChips`, and text output helpers (`WriteText`, `WriteHex`, `WriteConfig`,
   `WriteLineEnd`, `ChipName`).
-- `firmware.ino` is the streamer: it picks the type with `using PSGMode = PSG::Advanced;` (or
+- `firmware.ino` is the streamer: it picks the PSG model with `using PSGModel = PSG::Advanced;` (or
   `PSG::Basic`), two firmwares to study the hardware and the host processing. Its text handler
   has the terminal commands, not a part of the protocol: `info` (the config reply without a
   change), `chip` (a line `E6D5F1AE - AY8910`, the `ChipId` hash and the type, for each chip),

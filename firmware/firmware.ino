@@ -1,13 +1,13 @@
 #include <avr/eeprom.h>
 #include <avr/pgmspace.h>
-#include "src/psg/mode/psg_turbosound.h"
+#include "src/psg/model/psg_turbosound.h"
 #include "src/uart/uart_protocol.h"
 
-// the streamer type: PSG::Basic or PSG::Advanced
-using PSGMode = PSG::Advanced;
+// the PSG model of the streamer: PSG::Basic or PSG::Advanced
+using PSGModel = PSG::Advanced;
 
-PSG::TurboSound<PSGMode> m_psg;
-UART::Protocol<PSGMode> m_protocol;
+PSG::TurboSound<PSGModel> m_psg;
+UART::Protocol<PSGModel> m_protocol;
 
 // The config saved by the 'save' command, applied at the start. It is
 // for hosts that do not send the config. A host config overrides it.

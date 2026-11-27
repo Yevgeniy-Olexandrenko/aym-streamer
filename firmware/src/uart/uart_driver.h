@@ -21,5 +21,5 @@ namespace UART
 
 		// send one byte, wait while the transmit buffer is full
 		void Write(uint8_t data);
-	};
+	}
 }

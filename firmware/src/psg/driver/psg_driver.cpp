@@ -11,6 +11,7 @@ namespace PSG
 	namespace Driver
 	{
 		static uint32_t s_clock;
+		static uint8_t  s_chip; // chip selected on the bus, 0 or 1
 
 		// timing delays (nano seconds), the strictest values of
 		// AY-3-8910/8912 (GI, Microchip), YM2149, YM3439 and AY8930
@@ -101,6 +102,11 @@ namespace PSG
 			wait_for_delay(tRW);
 			set_bit(SIG_PORT, SIG_RES);
 			wait_for_delay(tRB);
+
+			// latch the selected chip again: the latch is unknown after
+			// power on, noise can change it, some TurboSound boards
+			// reset it with RESET#. Without TurboSound it is chip 0.
+			Address(0xFF - s_chip);
 		}
 
 		void Address(uint8_t addr)
@@ -114,6 +120,9 @@ namespace PSG
 			set_ctrl_bus_inact();
 			wait_for_delay(tAH);
 			release_data_bus();
+
+			// each latch of 0xF8-0xFF selects a TurboSound chip
+			if (addr >= 0xF8) s_chip = (~addr & 0x01);
 		}
 
 		void Write(uint8_t data)
@@ -141,6 +150,12 @@ namespace PSG
 			get_data_bus(data);
 			set_ctrl_bus_inact();
 			wait_for_delay(tTS);
+		}
+
+		void Select(uint8_t chip)
+		{
+			// latch 0xFF or 0xFE only when the selection changes
+			if (s_chip != chip) Address(0xFF - chip);
 		}
 	}
 }

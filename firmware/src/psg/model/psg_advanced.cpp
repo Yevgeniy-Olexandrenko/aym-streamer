@@ -80,7 +80,6 @@ namespace PSG
 	{
 		// the chip is reset with the default clock
 		Basic::Init();
-		m_clock = Clock::F_DEF;
 		memset(&m_input, 0, sizeof(state_t));
 		memset(&m_output, 0, sizeof(state_t));
 	}
@@ -91,6 +90,15 @@ namespace PSG
 		Basic::Reset();
 		memset(&m_input, 0, sizeof(state_t));
 		memset(&m_output, 0, sizeof(state_t));
+	}
+
+	void Advanced::Mute()
+	{
+		// the chip is silent, the input keeps the state of
+		// the host: the next Update writes the volumes back
+		Basic::Mute();
+		for (uint8_t i = 0; i < 3; ++i) m_output.channels[i].t_volume = 0;
+		m_input.status.changed |= (to_mask(A_Volume) | to_mask(B_Volume) | to_mask(C_Volume));
 	}
 
 	void Advanced::SetClock(Clock clock)
@@ -414,7 +422,7 @@ namespace PSG
 	#ifndef DISABLE_COMPATIBLE_MODE_FIX
 		if (GetChipId() == ChipId::AY8930)
 		{
-			for (int i = 0; i < 3; ++i)
+			for (uint8_t i = 0; i < 3; ++i)
 			{
 				rdata_t volume = m_output.channels[i].t_volume;
 				if (m_output.status.exp_mode) volume >>= 1;

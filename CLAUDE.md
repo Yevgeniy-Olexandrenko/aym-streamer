@@ -62,12 +62,16 @@ cd "/c/Program Files (x86)/Arduino" && ./arduino-builder.exe -compile -hardware 
 Layered, each layer only uses the one below:
 - `psg/driver/` (`PSG::Driver`): bus timing for latch address / write / read / reset (the
   strictest delays of all supported chip datasheets; the write pulse runs with interrupts off),
-  Timer2 clock setup (the real clock of the divider is cached). Direct port access, no Arduino API.
-- `psg/model/psg_basic` (`PSG::Basic`): power on, reset (clears all registers, used to mute), clock
-  (clamped to 1-2 MHz, `GetClock` gives the real clock), direct register writes and reads
-  (`0x00-0x0F`), and chip detection: `compute_chipid` runs write/read tests (incl. AY8930 expanded
-  mode) and hashes the read-back values into a `ChipId` enum value. Changing the tests or the bus
-  timing can change the hashes: then the `ChipId` constants must be measured again on the chips.
+  Timer2 clock setup (the real clock of the divider is cached), the TurboSound chip select
+  (`Select`: a latch of `0xFF`/`0xFE`, only when it changes; every latch of `0xF8-0xFF` is
+  tracked, `Reset` latches the selected chip again, chip 0 from the start). Direct port
+  access, no Arduino API.
+- `psg/model/psg_basic` (`PSG::Basic`): power on, reset (clears all registers), mute (volumes to
+  zero), clock (clamped to 1-2 MHz, `GetClock` gives the real clock), direct register writes and
+  reads (`0x00-0x0F`), and chip detection: `compute_chipid` runs write/read tests (incl. AY8930
+  expanded mode) and hashes the read-back values into a `ChipId` enum value. Changing the tests or
+  the bus timing can change the hashes: then the `ChipId` constants must be measured again on the
+  chips.
 - `psg/model/psg_advanced` (`PSG::Advanced`): hides the methods of `Basic` (no virtual calls).
   `m_input` is the state the host wrote (all 25 registers: bank A `0x00-0x0D`, AY8930 bank B
   `0x10-0x1A`), read back by `GetRegister`. `SetRegister` takes addresses `0x00-0x0F` and follows
@@ -79,10 +83,10 @@ Layered, each layer only uses the one below:
   can be compiled out with the `DISABLE_*` defines at the top of `psg_advanced.h` (debug only).
 - `psg/model/psg_turbosound` (`PSG::TurboSound<PSGModel>`): two chips of `Basic` or `Advanced` model
   behind one API, no direct access to them. `Init` detects the board (`SingleChip` or
-  `TurboSound`) apart from the chip types; `Select(0/1)` sets the current chip; the chip is
-  selected on the bus by a latch address cycle `0xFF`/`0xFE` (only when it changes). Clock and
-  reset are common for both chips. On a single chip board the calls for chip 1 are ignored; a chip
-  that is not found still gets the data. `Update` and `SetStereo` exist only for `Advanced`.
+  `TurboSound`) apart from the chip types; `Select(0/1)` sets the current chip, the driver
+  selects it on the bus before each access. Clock and reset are common for both chips. On a
+  single chip board the calls for chip 1 are ignored; a chip that is not found still gets the data.
+  `Update` and `SetStereo` exist only for `Advanced`.
 - `uart/uart_driver` (`UART::Driver`): USART0 at 57600 8N1 (U2X, 57143 baud). The RX ISR puts
   bytes into a 128-byte ring buffer (one-byte indexes, no `cli`); lost bytes (frame error,
   overrun, full buffer) increment an error counter. `Write` sends a byte and waits for the
@@ -94,11 +98,12 @@ Layered, each layer only uses the one below:
   an address is expected starts a text command, `\r`/`\n` ends it (16 chars max, `0xFF` aborts
   it). The protocol knows only the config (see below); other texts go to the text handler that
   the streamer passes to `Start`. Timer1 runs free at F_CPU/1024 (no ISR): when no frame comes
-  for 100 ms the chips are reset (muted). `UART::Protocol<PSGModel>` sends the events to
-  `TurboSound<Basic>` or `TurboSound<Advanced>`; the model differences are specializations of its
-  private members (`is_advanced`, `commit`, `set_stereo`, `get_stereo`), the models have no stubs
-  for the protocol. It also gives the streamer `SetConfig` (a `psg_config_t`, the stereo and the
-  clock; resets the chips, no reply), `GetConfig` (the config the chips use, from the model),
+  for 100 ms the chips are muted (`Mute`: Advanced keeps the state, the next frame restores it).
+  `UART::Protocol<PSGModel>` sends the events to `TurboSound<Basic>` or `TurboSound<Advanced>`;
+  the model differences are specializations of its private members (`is_advanced`, `commit`,
+  `set_stereo`, `get_stereo`), the models have no stubs for the protocol.
+  It also gives the streamer `SetConfig` (a `psg_config_t`, the stereo and the clock; resets the
+  chips, no reply), `GetConfig` (the config the chips use, from the model),
   `SendInfo`, and text output helpers (`WriteText`, `WriteHexU32`, `WriteConfig`,
   `WriteChipName`, `WriteLineEnd`).
 - `firmware.ino` is the streamer: it picks the PSG model with `using PSGModel = PSG::Advanced;` (or

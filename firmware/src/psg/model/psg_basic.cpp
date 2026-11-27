@@ -15,6 +15,15 @@ namespace PSG
 		Driver::Reset();
 	}
 
+	void Basic::Mute()
+	{
+		// volume registers of channels A, B and C
+		for (raddr_t addr = 0x08; addr <= 0x0A; ++addr)
+		{
+			SetRegister(addr, 0x00);
+		}
+	}
+
 	void Basic::SetClock(Clock clock)
 	{
 		// limit the clock frequency range

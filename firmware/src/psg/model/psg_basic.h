@@ -32,10 +32,11 @@ namespace PSG
 	class Basic
 	{
 	public:
-		// init and reset operations with PSG,
-		// reset also clears all registers (mute)
+		// init and reset operations with PSG, reset clears
+		// all registers, mute sets the volumes to zero only
 		void Init();
 		void Reset();
+		void Mute();
 
 		// set/get operations with PSG configuration,
 		// get returns the real clock set by the divider

@@ -60,6 +60,7 @@ namespace PSG
 		// there are no virtual calls between them
 		void Init();
 		void Reset();
+		void Mute();
 
 		// get returns the clock requested by the host, the
 		// periods on the chip are converted to the real clock
@@ -89,7 +90,7 @@ namespace PSG
 		void write_output_to_chip(const state_t& chip);
 
 	private:
-		Clock m_clock;
+		Clock m_clock{ Clock::F_DEF };
 		Stereo m_stereo{ Stereo::ABC };
 		state_t m_input, m_output;
 	};

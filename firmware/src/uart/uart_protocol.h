@@ -128,9 +128,9 @@ namespace UART
 					break;
 
 				case Event::Timeout:
-					// the host stopped: mute the chips, the last frame is
-					// lost but the host sends all registers on a new start
-					psg.Reset();
+					// the host stopped: mute the chips. Advanced keeps the
+					// state, the next frame of the host restores it
+					psg.Mute();
 					break;
 				}
 			}

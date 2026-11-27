@@ -9,8 +9,8 @@ namespace PSG
 		NotFound   = 0x67E019C7, // [x] chip not found
 		Compatible = 0xBD95F7C7, // [x] Variants: WF19054, JFC95101, KC89C72 etc
 		AY8910     = 0xE6D5F1AE, // [x] GI AY-3-8910A, Microchip AY38910A/P
-		AY8930     = 0x4EFE6E06, // [ ] Microchip AY8930
-		YM2149F    = 0x1D750557, // [ ] Yamaha YM2149F
+		AY8930     = 0x1728F586, // [x] Microchip AY8930
+		YM2149F    = 0x4F5494D7, // [X] Yamaha YM2149F
 	};
 
 	enum class Clock : uint32_t

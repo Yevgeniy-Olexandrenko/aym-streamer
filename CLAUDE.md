@@ -88,9 +88,12 @@ Layered, each layer only uses the one below:
   single chip board the calls for chip 1 are ignored; a chip that is not found still gets the data.
   `Update` and `SetStereo` exist only for `Advanced`.
 - `uart/uart_driver` (`UART::Driver`): USART0 at 57600 8N1 (U2X, 57143 baud). The RX ISR puts
-  bytes into a 128-byte ring buffer (one-byte indexes, no `cli`); lost bytes (frame error,
-  overrun, full buffer) increment an error counter. `Write` sends a byte and waits for the
-  transmitter (short replies only, no TX buffer).
+  bytes into a 256-byte ring buffer (one-byte indexes wrap by themselves, no `cli`); lost bytes
+  (frame error, overrun, full buffer) increment an error counter. `Write` sends a byte and waits
+  for the transmitter (short replies only, no TX buffer). `SetFlowControl` (the player only)
+  turns on XON/XOFF: the ISR sends XOFF at 120 bytes, `Read` sends XON at 60. Measured with Tera
+  Term in 64-byte chunks: up to 2 chunks (~120 bytes) still come after XOFF; without chunks the
+  CH340 driver sends ~2 KB after it.
 - `uart/uart_protocol`: `UART::Parser` turns the received bytes into events in the main loop.
   `0xFF` is a frame (the previous frame is committed, so the chips follow the host frame timer,
   one frame late) and selects chip 0, `0xFE` selects chip 1, then `addr, data` pairs go to
@@ -106,6 +109,22 @@ Layered, each layer only uses the one below:
   chips, no reply), `GetConfig` (the config the chips use, from the model),
   `SendInfo`, and text output helpers (`WriteText`, `WriteHexU32`, `WriteConfig`,
   `WriteChipName`, `WriteLineEnd`).
+- The player (in `uart_protocol`): the text `PSG` with `0x1A` (the signature of a PSG file) starts
+  it, so a terminal can play a PSG file of psg-tools without a host. Tera Term: Flow control
+  Xon/Xoff, Send file Binary, Delay type "per sendsize", Send size 64, Delay time 2 ms. The
+  format: a header of 16 bytes (frame rate in byte 5 from version 10) or of 4 bytes, `0xFF` a
+  frame, `0xFE N` N * 4 frames (N = 0: none), `0xFD` the end, `R V` a register (`0x00-0x0F` chip
+  0, `0x80-0x8F` chip 1, others skipped). `UART::FrameTimer` makes the ticks on Timer1 (the
+  period keeps its fraction). The registers of a frame go to the model at once, the frame is
+  committed on its tick; a late frame makes the tick wait and plays at once when it comes. The
+  first tick is 3 frames after the header, so the sender fills the buffer. `0xFD`, or no byte for
+  100 ms while the player waits (a pause in Tera Term, the end of the file), mutes the chips; the
+  next frame restores them. The player stays on until the MCU reset. A printable char is never
+  an address of a PSG file, so in the player it starts a text: the signature of the next file,
+  the terminal commands, or the config command of a host, which ends the player (the host stream
+  goes on, as `0xFE` differs: chip 1 in the stream, frames in PSG). The player resets the chips
+  at each file and uses the config in use (stereo, clock). Real tracks need ~1 KB/s at most
+  (median frame 5-9 bytes), far below the 5.7 KB/s of the line.
 - `firmware.ino` is the streamer: it picks the PSG model with `using PSGModel = PSG::Advanced;` (or
   `PSG::Basic`), two firmwares to study the hardware and the host processing. Its text handler
   has the terminal commands, not a part of the protocol: `info` (the config reply without a

@@ -21,5 +21,10 @@ namespace UART
 
 		// send one byte, wait while the transmit buffer is full
 		void Write(uint8_t data);
+
+		// XON/XOFF for a sender that is faster than the main loop:
+		// the RX ISR sends XOFF when the buffer is nearly full, Read
+		// sends XON when it drains
+		void SetFlowControl(bool on);
 	}
 }

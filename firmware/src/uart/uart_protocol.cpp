@@ -75,16 +75,37 @@ namespace UART
 		uint8_t data;
 		while (Driver::Read(data))
 		{
-			// a lost byte breaks the pairs: skip to the next frame
+			// a lost byte breaks the pairs: skip to the next frame,
+			// the player has no sync byte and goes on
 			uint8_t errors = Driver::GetErrors();
 			if (errors != m_errors)
 			{
 				m_errors = errors;
-				m_state = State::Marker;
+				if (!m_player) m_state = State::Marker;
 			}
 
+			m_waiting = false;
+			m_muted = false;
 			Event event = parse_byte(data);
 			if (event != Event::None) return event;
+		}
+
+		if (m_player)
+		{
+			// the player waits for a byte: no byte for 100 ms
+			// is a pause or the end of the file, mute once
+			uint16_t time = TCNT1;
+			if (!m_waiting)
+			{
+				m_waiting = true;
+				m_wait_time = time;
+			}
+			else if (!m_muted && uint16_t(time - m_wait_time) >= FRAME_TIMEOUT)
+			{
+				m_muted = true;
+				return Event::PlayMute;
+			}
+			return Event::None;
 		}
 
 		if (m_playing && uint16_t(TCNT1 - m_frame_time) >= FRAME_TIMEOUT)
@@ -98,7 +119,8 @@ namespace UART
 
 	Parser::Event Parser::parse_byte(uint8_t data)
 	{
-		bool printable = (data >= 0x20 && data < 0x7F);
+		if (m_state == State::Text) return parse_text_byte(data);
+		if (m_state >= State::Header) return parse_play(data);
 
 		if (m_state == State::Data)
 		{
@@ -115,27 +137,10 @@ namespace UART
 			return Event::Frame;
 		}
 
-		if (m_state == State::Text)
-		{
-			if (data == '\r' || data == '\n')
-			{
-				m_state = State::Marker;
-				return parse_text();
-			}
-			else if (printable)
-			{
-				// a too long text is not a command
-				if (m_length < TEXT_SIZE) m_text[m_length++] = data;
-				else m_length = 0xFF;
-			}
-			else m_state = State::Marker;
-		}
-		else if (printable)
+		if (is_printable(data))
 		{
 			// a printable char is never an address
-			m_text[0] = data;
-			m_length = 1;
-			m_state = State::Text;
+			start_text(data);
 		}
 		else if (m_state == State::Address)
 		{
@@ -148,6 +153,48 @@ namespace UART
 			else m_state = State::Marker;
 		}
 		return Event::None;
+	}
+
+	void Parser::start_text(uint8_t data)
+	{
+		m_text[0] = data;
+		m_length = 1;
+		m_state = State::Text;
+	}
+
+	Parser::Event Parser::parse_text_byte(uint8_t data)
+	{
+		// the stream or the player goes on after the text
+		const State next = (m_player ? State::PlayAddr : State::Marker);
+		if (data == '\r' || data == '\n')
+		{
+			m_state = next;
+			Event event = parse_text();
+
+			// the config in the player comes from a host:
+			// back to the stream of the host
+			if (event == Event::Config && m_player) leave_play();
+			return event;
+		}
+		if (is_printable(data))
+		{
+			// a too long text is not a command
+			if (m_length < TEXT_SIZE) m_text[m_length++] = data;
+			else m_length = 0xFF;
+			return Event::None;
+		}
+		if (data == 0x1A && m_length == 3 &&
+			m_text[0] == 'P' && m_text[1] == 'S' && m_text[2] == 'G')
+		{
+			// the signature of a PSG file, the header goes on
+			m_state = State::Header;
+			m_length = 4;
+			return Event::None;
+		}
+
+		// another byte ends the text, parse it again
+		m_state = next;
+		return parse_byte(data);
 	}
 
 	Parser::Event Parser::parse_text()
@@ -182,5 +229,125 @@ namespace UART
 		m_config.stereo = PSG::Stereo(2 * a + (b > c));
 		m_config.clock = PSG::Clock(clock);
 		return true;
+	}
+
+	Parser::Event Parser::parse_play(uint8_t data)
+	{
+		switch (m_state)
+		{
+		case State::Header:
+			// byte 4 is the version, byte 5 the frame rate (version 10
+			// and later). A version 0xFF is a header of 4 bytes, then
+			// this 0xFF opens frame 1: the player starts at it.
+			if (m_length == 4)
+			{
+				if (data == 0xFF)
+				{
+					m_rate = 50;
+					return start_play();
+				}
+				m_data = data;
+			}
+			else if (m_length == 5)
+			{
+				m_rate = (m_data >= 10 && data ? data : 50);
+			}
+			if (++m_length == 16) return start_play();
+			break;
+
+		case State::PlayAddr:
+			// a printable char is never an address of a PSG file:
+			// a command, or the signature of the next file
+			if (is_printable(data)) start_text(data);
+			else if (data == 0xFF)
+			{
+				m_frames = 1;
+				return Event::PlayFrame;
+			}
+			else if (data == 0xFE) m_state = State::PlaySkip;
+			else if (data == 0xFD) return Event::PlayMute;
+			else
+			{
+				m_addr = data;
+				m_state = State::PlayData;
+			}
+			break;
+
+		case State::PlayData:
+			// 0x00-0x0F chip 0, 0x80-0x8F chip 1, the other
+			// registers are of other devices (MSX): skip them
+			m_state = State::PlayAddr;
+			if (m_addr & 0x70) break;
+			m_chip = (m_addr >> 7);
+			m_addr &= 0x0F;
+			m_data = data;
+			return Event::Register;
+
+		default: // State::PlaySkip
+			// 0xFE 0 opens no frame, the frame goes on
+			m_state = State::PlayAddr;
+			if (data)
+			{
+				m_frames = uint16_t(data) * 4;
+				return Event::PlayFrame;
+			}
+			break;
+		}
+		return Event::None;
+	}
+
+	Parser::Event Parser::start_play()
+	{
+		// the frame timeout of the stream does not work in the player
+		m_state = State::PlayAddr;
+		m_player = true;
+		m_playing = false;
+		m_waiting = false;
+		m_muted = false;
+		Driver::SetFlowControl(true);
+		return Event::Play;
+	}
+
+	void Parser::leave_play()
+	{
+		m_state = State::Marker;
+		m_player = false;
+		Driver::SetFlowControl(false);
+	}
+
+	// Timer1 counts in one second
+	static constexpr uint16_t TIMER_RATE = uint16_t(uint32_t(F_CPU) / 1024);
+
+	void FrameTimer::Start(uint8_t rate, uint8_t delay)
+	{
+		m_rate = rate;
+		m_period = TIMER_RATE / rate;
+		m_rest = uint8_t(TIMER_RATE % rate);
+		m_sum = 0;
+		m_tick = TCNT1;
+		while (delay--) Next();
+	}
+
+	bool FrameTimer::IsDue() const
+	{
+		return int16_t(TCNT1 - m_tick) >= 0;
+	}
+
+	void FrameTimer::Next()
+	{
+		// the fractions sum up to one more count now and then
+		m_tick += m_period;
+		if (m_sum >= m_rate - m_rest)
+		{
+			m_sum -= (m_rate - m_rest);
+			m_tick++;
+		}
+		else m_sum += m_rest;
+	}
+
+	void FrameTimer::Restart()
+	{
+		m_tick = TCNT1;
+		Next();
 	}
 }

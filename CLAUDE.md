@@ -53,8 +53,9 @@ cd "/c/Program Files (x86)/Arduino" && ./arduino-builder.exe -compile -hardware 
 
 - The build path must exist (`mkdir -p`); `-build-cache` speeds up rebuilds of the core.
 - It prints flash and RAM usage at the end. RAM is 2 KB: watch the global variables figure.
-- Arduino compiles `firmware.ino` plus everything under `firmware/src/` recursively; includes are
-  relative (`"src/psg/model/psg_advanced.h"`, `"../driver/psg_driver.h"`).
+- Arduino compiles `firmware.ino` plus everything under `firmware/src/` recursively. The sketch
+  folder is not on the include path of the files in `src/`: only `firmware.ino` includes
+  `"src/..."`, the files in `src/` include relative to themselves (`"../driver/psg_driver.h"`).
 - There are no tests and no linter. Checking on hardware is done by the user.
 
 ## Firmware architecture (`firmware/src/`)
@@ -68,7 +69,7 @@ Layered, each layer only uses the one below:
   access, no Arduino API.
 - `psg/model/psg_basic` (`PSG::Basic`): power on, reset (clears all registers), mute (volumes to
   zero), clock (clamped to 1-2 MHz, `GetClock` gives the real clock), direct register writes and
-  reads (`0x00-0x0F`), and chip detection: `compute_chipid` runs write/read tests (incl. AY8930
+  reads (`0x00-0x0F`), and chip detection: `detect_chipid` runs write/read tests (incl. AY8930
   expanded mode) and hashes the read-back values into a `ChipId` enum value. Changing the tests or
   the bus timing can change the hashes: then the `ChipId` constants must be measured again on the
   chips.
@@ -79,24 +80,23 @@ Layered, each layer only uses the one below:
   the input to `m_output`, processes it (clock conversion as in psg-tools `ChipClockRateConvert`,
   stereo channel remapping of any layout, the AY8930 pure-envelope fix) and
   writes only the registers that differ from the previous `m_output`, which mirrors the chip, plus
-  the envelope shapes the host wrote. The write order is that of psg-tools `ChipEncoder`. Features
-  can be compiled out with the `DISABLE_*` defines at the top of `psg_advanced.h` (debug only).
+  the envelope shapes the host wrote. The write order is that of psg-tools `ChipEncoder`.
 - `psg/model/psg_turbosound` (`PSG::TurboSound<PSGModel>`): two chips of `Basic` or `Advanced` model
   behind one API, no direct access to them. `Init` detects the board (`SingleChip` or
   `TurboSound`) apart from the chip types; `Select(0/1)` sets the current chip, the driver
   selects it on the bus before each access. Clock and reset are common for both chips. On a
   single chip board the calls for chip 1 are ignored; a chip that is not found still gets the data.
   `Update` and `SetStereo` exist only for `Advanced`.
-- `uart/uart_driver` (`UART::Driver`): USART0 at 57600 8N1 (U2X, 57143 baud). The RX ISR puts
+- `uart/driver/uart_driver` (`UART::Driver`): USART0 at 57600 8N1 (U2X, 57143 baud). The RX ISR puts
   bytes into a 256-byte ring buffer (one-byte indexes wrap by themselves, no `cli`); lost bytes
   (frame error, overrun, full buffer) increment an error counter. `Write` sends a byte and waits
   for the transmitter (short replies only, no TX buffer). `SetFlowControl` (the player only)
   turns on XON/XOFF: the ISR sends XOFF at 120 bytes, `Read` sends XON at 60. Measured with Tera
   Term in 64-byte chunks: up to 2 chunks (~120 bytes) still come after XOFF; without chunks the
   CH340 driver sends ~2 KB after it.
-- `uart/uart_protocol`: `UART::Parser` turns the received bytes into events in the main loop.
-  `0xFF` is a frame (the previous frame is committed, so the chips follow the host frame timer,
-  one frame late) and selects chip 0, `0xFE` selects chip 1, then `addr, data` pairs go to
+- `uart/protocol/uart_protocol`: `UART::Parser` turns the received bytes into events in the main
+  loop. `0xFF` is a frame (the previous frame is committed, so the chips follow the host frame
+  timer, one frame late) and selects chip 0, `0xFE` selects chip 1, then `addr, data` pairs go to
   `SetRegister`. A bad address or a driver error skips to the next `0xFF`. A printable char where
   an address is expected starts a text command, `\r`/`\n` ends it (16 chars max, `0xFF` aborts
   it). The protocol knows only the config (see below); other texts go to the text handler that
@@ -149,17 +149,17 @@ and a protocol change must be made on both sides:
 - The config: before each track (`DeviceInit`) the host sends `ABC1773400\n`, the stereo and the
   clock of the destination chip. The streamer replies with 4 lines (`\r\n`): its type
   (`Advanced`/`Basic`), the stereo and the clock it uses (`ACB1773400`), the type of chip 0 and of
-  chip 1 (`NotFound`, `Compatible`, `AY8910`, `AY8930`, `YM2149`, `Unknown`). The streamer resets
+  chip 1 (`NONE`, `VARIANT`, `AY8910`, `AY8930`, `YM2149`, `Unknown`). The streamer resets
   the chips first (a known state for the new stream). Advanced takes both and processes the
   stream; Basic only sets the nearest clock divider and replies its real clock and `ABC`. The host
   picks the stereo: for a stream with AY8930 expanded mode only ABC or ACB, as psg-tools does
-  (other layouts move channel A envelope writes to bank B, and each R13 write restarts it). After open the host sends the config again every 250 ms for up to 3 s (the MCU may
-  still start); a streamer that does not reply is not asked again. Its last info, if it sent one
+  (other layouts move channel A envelope writes to bank B, and each R13 write restarts it). After
+  open the host sends the config again every 250 ms for up to 3 s (the MCU may still start); a streamer that does not reply is not asked again. Its last info, if it sent one
   (also unasked, e.g. once after the start), is kept; without any, the host uses 1.7734 MHz, ABC
   and one chip (AYPlayer, AVR-AY and other simple streamers).
 - The host sets its destination chip from the reply: the clock (its own `ChipClockRateConvert`
   then converts to it), the models (the second chip only for two-chip tracks, not when it is
-  `NotFound`). When the reply stereo is the one sent, the host does not reorder the channels
+  `NONE`). When the reply stereo is the one sent, the host does not reorder the channels
   (`Output::DeviceRemapsChannels`), else it does it itself.
 - Each frame (paced by the host at the song's frame rate, usually 50 Hz) is sent as one packet:
   for each chip a marker `0xFF` (chip 0) or `0xFE` (chip 1, TurboSound), followed by `addr, data`

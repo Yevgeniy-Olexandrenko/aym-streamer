@@ -76,10 +76,10 @@ namespace PSG
 		{
 			// choosing a divider for the closest clock frequency
 			uint8_t  clockDiv = uint8_t(F_CPU / clock);
-			uint32_t minClock = (uint32_t(F_CPU) / (clockDiv + 1));
-			uint32_t maxClock = (uint32_t(F_CPU) / (clockDiv + 0));
+			uint32_t minClock = uint32_t(F_CPU) / (clockDiv + 1);
+			uint32_t maxClock = uint32_t(F_CPU) / (clockDiv + 0);
 			if (clock - minClock < maxClock - clock) clockDiv++;
-			s_clock = (uint32_t(F_CPU) / clockDiv);
+			s_clock = uint32_t(F_CPU) / clockDiv;
 
 			// configure Timer2 as a clock source for PSG
 			uint8_t compare = uint8_t(clockDiv - 1);
@@ -95,25 +95,32 @@ namespace PSG
 			clock = s_clock;
 		}
 
+		void Select(uint8_t chip)
+		{
+			if (s_chip != chip)       // latch 0xFF or 0xFE only
+				Address(0xFF - chip); // when the selection changes
+		}
+
+		// 'Reset PSG' sequence
 		void Reset()
 		{
-			// 'Reset PSG' sequence
 			res_bit(SIG_PORT, SIG_RES);
 			wait_for_delay(tRW);
 			set_bit(SIG_PORT, SIG_RES);
 			wait_for_delay(tRB);
 
-			// latch the selected chip again: the latch is unknown after
-			// power on, noise can change it, some TurboSound boards
-			// reset it with RESET#. Without TurboSound it is chip 0.
+			// latch the selected chip again:
+			// the latch is unknown after power on, noise can change
+			// it, some TurboSound boards reset it with RESET#
 			Address(0xFF - s_chip);
 		}
 
+		// 'Latch Address' sequence
 		void Address(uint8_t addr)
 		{
-			// 'Latch Address' sequence, the address goes on the bus
-			// before BDIR/BC1: else the bus pull-ups give 0xFF for a
-			// short time, and TurboSound logic selects a wrong chip
+			// the address goes on the bus before BDIR/BC1:
+			// else the bus pull-ups give 0xFF for a short time,
+			// and TurboSound logic selects a wrong chip
 			set_data_bus(addr);
 			set_ctrl_bus_addr();
 			wait_for_delay(tAS);
@@ -121,41 +128,33 @@ namespace PSG
 			wait_for_delay(tAH);
 			release_data_bus();
 
-			// each latch of 0xF8-0xFF selects a TurboSound chip
-			if (addr >= 0xF8) s_chip = (~addr & 0x01);
+			if (addr >= 0xF8)         // each latch of 0xF8-0xFF
+				s_chip = (~addr & 1); // selects a TurboSound chip
 		}
 
+		// 'Write to PSG' sequence
 		void Write(uint8_t data)
 		{
-			// 'Write to PSG' sequence
-			set_data_bus(data);
-
 			// the write pulse is limited to 10 us (GI, Microchip,
 			// YM2149, YM3439), so interrupts must not stretch it
-			uint8_t sreg = SREG; cli();
+			set_data_bus(data);
+			disable_interrupts();
 			set_ctrl_bus_write();
 			wait_for_delay(tDW);
 			set_ctrl_bus_inact();
-			SREG = sreg;
-
+			restore_interrupts();
 			wait_for_delay(tDH);
 			release_data_bus();
 		}
 
+		// 'Read from PSG' sequence
 		void Read(uint8_t &data)
 		{
-			// 'Read from PSG' sequence
 			set_ctrl_bus_read();
 			wait_for_delay(tDA + tSY);
 			get_data_bus(data);
 			set_ctrl_bus_inact();
 			wait_for_delay(tTS);
-		}
-
-		void Select(uint8_t chip)
-		{
-			// latch 0xFF or 0xFE only when the selection changes
-			if (s_chip != chip) Address(0xFF - chip);
 		}
 	}
 }

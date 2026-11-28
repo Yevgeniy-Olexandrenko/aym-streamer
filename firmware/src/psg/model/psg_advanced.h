@@ -2,10 +2,6 @@
 
 #include "psg_basic.h"
 
-//#define DISABLE_CLOCK_CONVERSION
-//#define DISABLE_CHANNELS_REMAPPING
-//#define DISABLE_COMPATIBLE_MODE_FIX
-
 namespace PSG
 {
 	enum Reg : uint8_t;
@@ -18,12 +14,7 @@ namespace PSG
 	class Advanced : public Basic
 	{
 		using rpair_t = uint16_t;
-
-		union period_t
-		{
-			rpair_t full;
-			struct { rdata_t fine, coarse; };
-		};
+		union period_t { rpair_t full; struct { rdata_t fine, coarse; }; };
 
 		struct channel_t
 		{
@@ -85,7 +76,6 @@ namespace PSG
 		void process_clock_conversion();
 		void process_channels_remapping();
 		void process_compatible_mode_fix();
-
 		void check_output_changes(const state_t& chip);
 		void write_output_to_chip(const state_t& chip);
 

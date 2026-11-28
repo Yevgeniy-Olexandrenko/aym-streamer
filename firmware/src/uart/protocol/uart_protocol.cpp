@@ -1,5 +1,5 @@
 #include "uart_protocol.h"
-#include "uart_driver.h"
+#include "../driver/uart_driver.h"
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
@@ -43,11 +43,11 @@ namespace UART
 		const char* name_P = PSTR("Unknown");
 		switch (chipid)
 		{
-		case PSG::ChipId::NotFound:   name_P = PSTR("NotFound");   break;
-		case PSG::ChipId::Compatible: name_P = PSTR("Compatible"); break;
-		case PSG::ChipId::AY8910:     name_P = PSTR("AY8910");     break;
-		case PSG::ChipId::AY8930:     name_P = PSTR("AY8930");     break;
-		case PSG::ChipId::YM2149F:    name_P = PSTR("YM2149");     break;
+		case PSG::ChipId::AY8910:  name_P = PSTR("AY8910" ); break;
+		case PSG::ChipId::AY8930:  name_P = PSTR("AY8930" ); break;
+		case PSG::ChipId::YM2149:  name_P = PSTR("YM2149" ); break;
+		case PSG::ChipId::VARIANT: name_P = PSTR("VARIANT"); break;
+		case PSG::ChipId::NONE:    name_P = PSTR("NONE"   ); break;
 		}
 		WriteText(name_P);
 	}

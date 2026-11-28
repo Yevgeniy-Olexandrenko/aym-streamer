@@ -1,7 +1,7 @@
 #include <avr/eeprom.h>
 #include <avr/pgmspace.h>
 #include "src/psg/model/psg_turbosound.h"
-#include "src/uart/uart_protocol.h"
+#include "src/uart/protocol/uart_protocol.h"
 
 // the PSG model of the streamer: PSG::Basic or PSG::Advanced
 using PSGModel = PSG::Advanced;

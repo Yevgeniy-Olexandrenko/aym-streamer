@@ -1,6 +1,7 @@
 #pragma once
 
 #include "psg_advanced.h"
+#include "../driver/psg_driver.h"
 
 namespace PSG
 {

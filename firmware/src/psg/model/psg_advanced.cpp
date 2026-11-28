@@ -1,5 +1,6 @@
 
 #include "psg_advanced.h"
+#include "../driver/psg_driver.h"
 #include <avr/pgmspace.h>
 #include <string.h>
 
@@ -69,12 +70,18 @@ namespace PSG
 		if (bool(value & mask_a) != bool(value & mask_b)) value ^= (mask_a | mask_b);
 	}
 
-	// masks of all registers and of envelope shape registers
+	// masks of all registers
 	constexpr uint32_t all_regs_mask =
 		(to_mask(BankA_Lst + 1) - to_mask(BankA_Fst)) |
 		(to_mask(BankB_Lst + 1) - to_mask(BankB_Fst));
+
+	// masks of envelope shape registers
 	constexpr uint32_t e_shape_mask =
 		to_mask(EA_Shape) | to_mask(EB_Shape) | to_mask(EC_Shape);
+
+	// masks of volume registers
+	constexpr uint32_t volume_mask =
+		to_mask(A_Volume) | to_mask(B_Volume) | to_mask(C_Volume);
 
 	void Advanced::Init()
 	{
@@ -97,8 +104,9 @@ namespace PSG
 		// the chip is silent, the input keeps the state of
 		// the host: the next Update writes the volumes back
 		Basic::Mute();
-		for (uint8_t i = 0; i < 3; ++i) m_output.channels[i].t_volume = 0;
-		m_input.status.changed |= (to_mask(A_Volume) | to_mask(B_Volume) | to_mask(C_Volume));
+		for (uint8_t i = 0; i < 3; ++i)
+			m_output.channels[i].t_volume = 0;
+		m_input.status.changed |= volume_mask;
 	}
 
 	void Advanced::SetClock(Clock clock)
@@ -122,11 +130,9 @@ namespace PSG
 
 	void Advanced::SetStereo(Stereo stereo)
 	{
-	#ifndef DISABLE_CHANNELS_REMAPPING
 		// remap the channels on the chip at once
 		m_stereo = stereo;
 		update_output();
-	#endif
 	}
 
 	Stereo Advanced::GetStereo() const
@@ -295,7 +301,6 @@ namespace PSG
 
 	void Advanced::process_clock_conversion()
 	{
-	#ifndef DISABLE_CLOCK_CONVERSION
 		const uint32_t vclock = uint32_t(GetClock());
 		const uint32_t rclock = uint32_t(Basic::GetClock());
 
@@ -303,8 +308,8 @@ namespace PSG
 		{
 			// the same algorithm as ChipClockRateConvert in psg-tools
 			const bool exp_mode = m_output.status.exp_mode;
-			const rpair_t t_bound = (exp_mode ? 0xFFFF : 0x0FFF);
-			const rpair_t n_bound = (exp_mode ? 0x00FF : 0x001F);
+			const rpair_t t_bounds = (exp_mode ? 0xFFFF : 0x0FFF);
+			const rpair_t n_bounds = (exp_mode ? 0x00FF : 0x001F);
 			const rdata_t e_enable = (exp_mode ? 0x20 : 0x10);
 
 			// period * rclock / vclock, rounded to nearest. The period is
@@ -355,26 +360,22 @@ namespace PSG
 					(envelope.e_shape & 0x09) == 0x08)
 				{
 					uint32_t converted = ((uint32_t(t_period) * envelope.e_period.full + e_period / 2) / e_period);
-					channel.t_period.full = rpair_t(converted > t_bound ? t_bound : converted);
+					channel.t_period.full = rpair_t(converted > t_bounds ? t_bounds : converted);
 				}
 				else
 				{
-					channel.t_period.full = convert_period(t_period, t_bound);
+					channel.t_period.full = convert_period(t_period, t_bounds);
 				}
 			}
 
 			// convert noise period
-			m_output.commons.n_period = rdata_t(convert_period(m_output.commons.n_period, n_bound));
+			m_output.commons.n_period = rdata_t(convert_period(m_output.commons.n_period, n_bounds));
 		}
-	#endif
 	}
 
 	void Advanced::process_channels_remapping()
 	{
-	#ifndef DISABLE_CHANNELS_REMAPPING
-		const bool exp_mode = m_output.status.exp_mode;
 		const Stereo stereo = GetStereo();
-
 		if (stereo != Stereo::ABC)
 		{
 			const auto swap_channels = [&](uint8_t l, uint8_t r)
@@ -389,7 +390,7 @@ namespace PSG
 
 				// each channel has its own envelope in exp mode, a shape
 				// write restarts the envelope, so the change moves too
-				if (exp_mode)
+				if (m_output.status.exp_mode)
 				{
 					swap_values(ch_l.e_period.full, ch_r.e_period.full);
 					swap_values(ch_l.e_shape, ch_r.e_shape);
@@ -414,12 +415,10 @@ namespace PSG
 			case Stereo::CBA: swap_channels(0, 2); break; // A <-> C
 			}
 		}
-	#endif
 	}
 
 	void Advanced::process_compatible_mode_fix()
 	{
-	#ifndef DISABLE_COMPATIBLE_MODE_FIX
 		if (GetChipId() == ChipId::AY8930)
 		{
 			for (uint8_t i = 0; i < 3; ++i)
@@ -442,7 +441,6 @@ namespace PSG
 				}
 			}
 		}
-	#endif    
 	}
 
 	void Advanced::check_output_changes(const state_t& chip)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <avr/pgmspace.h>
-#include "../psg/model/psg_turbosound.h"
+#include "../../psg/model/psg_turbosound.h"
 
 namespace UART
 {

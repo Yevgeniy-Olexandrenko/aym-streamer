@@ -1,4 +1,5 @@
 #include "psg_basic.h"
+#include "../driver/psg_driver.h"
 
 namespace PSG
 {
@@ -6,7 +7,7 @@ namespace PSG
 	{
 		Driver::PowerOn();
 		SetClock(Clock::F_DEF);
-		compute_chipid();
+		detect_chipid();
 		Reset();
 	}
 
@@ -67,7 +68,7 @@ namespace PSG
 		return data;
 	}
 
-	void Basic::compute_chipid()
+	void Basic::detect_chipid()
 	{
 		Driver::Reset();
 		m_chipid = ChipId(7);
